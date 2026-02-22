@@ -1,6 +1,7 @@
 import React from "react";
 import "./OpheliaLogin.css";
 import logo from "../assets/ophelina_logo-sinFondo.png";
+import { Link } from "react-router-dom";
 
 export default function OpheliaLogin() {
   return (
@@ -28,7 +29,10 @@ export default function OpheliaLogin() {
   </form>
 
   <p className="sign-up-label">
-    ¿No tienes cuenta? <span className="sign-up-link">Regístrate</span>
+    ¿No tienes cuenta?{" "}
+    <Link to="/register" className="sign-up-link">
+      Regístrate
+    </Link>
   </p>
 
   <div className="buttons-container">

@@ -1,12 +1,16 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import OpheliaLogin from "./components/OpheliaLogin";
-
+import OpheliaRegister from "./components/OpheliaRegister";
 
 function App() {
- return <OpheliaLogin />;
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<OpheliaLogin />} />
+        <Route path="/register" element={<OpheliaRegister />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
