@@ -1,47 +1,58 @@
 import React from "react";
 import "./OpheliaLogin.css";
 import logo from "../assets/ophelina_logo-sinFondo.png";
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
 export default function OpheliaLogin() {
+
+  const navigate = useNavigate();
+
+  const handleLogin = (e) => {
+    e.preventDefault(); // evita que recargue la página
+
+    // Aquí después irá tu lógica real de login
+    // Por ahora solo redirige al home
+    navigate("/home");
+  };
+
   return (
     <div className="login-container">
-      <div className="overlay-pattern"></div>
-
-      {/* LEFT SIDE LOGO */}
       <div className="left-section">
         <img src={logo} alt="Ophelia Logo" className="logo-image" />
       </div>
 
-      {/* RIGHT SIDE LOGIN */}
-      <div className="form-container">
-  <p className="title">Iniciar Sesión</p>
+  <div className="form-container">
+        <p className="title">Iniciar Sesión</p>
 
-  <form className="form">
-    <input type="email" className="input" placeholder="Email" />
-    <input type="password" className="input" placeholder="Contraseña" />
+        <form className="form" onSubmit={handleLogin}>
+          <input type="email" className="input" placeholder="Email" />
+          <input type="password" className="input" placeholder="Contraseña" />
 
-    <p className="page-link">
-      <span className="page-link-label">¿Olvidaste tu contraseña?</span>
-    </p>
+          <p className="page-link">
+            <span className="page-link-label">
+              ¿Olvidaste tu contraseña?
+            </span>
+          </p>
 
-    <button type="submit" className="form-btn">Ingresar</button>
-  </form>
+          <button type="submit" className="form-btn">
+            Ingresar
+          </button>
+        </form>
 
-  <p className="sign-up-label">
-    ¿No tienes cuenta?{" "}
-    <Link to="/register" className="sign-up-link">
-      Regístrate
-    </Link>
-  </p>
+        <p className="sign-up-label">
+          ¿No tienes cuenta?{" "}
+          <Link to="/register" className="sign-up-link">
+            Regístrate
+          </Link>
+        </p>
 
-  <div className="buttons-container">
+        <div className="buttons-container">
+          <div className="google-login-button">
+            <span>Continuar con Google</span>
+          </div>
+        </div>
+      </div>
 
-    <div className="google-login-button">
-      <span>Continuar con Google</span>
-    </div>
-  </div>
-</div>
+      
     </div>
   );
 }
