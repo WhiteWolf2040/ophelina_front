@@ -21,11 +21,11 @@ function App() {
         <Route path="/register" element={<OpheliaRegister />} />
         <Route path="/home" element={<Dueno />} />
         <Route path="/clientes/*" element={<ClientesLayout />} />
-<<<<<<< HEAD
+
         <Route path="/pagos/*" element={<PagosLayout />} />
         <Route path="/empenos/*" element={<EmpenosLayout />} />
-=======
->>>>>>> 658105c (responsivo)
+
+
       </Routes>
     </Router>
   );
