@@ -1,6 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import OpheliaLogin from "./components/OpheliaLogin";
 import OpheliaRegister from "./components/OpheliaRegister";
+import Dueno from "./Home/Dueno";
+import ClientesLayout from "./DuenoClientes/ClientesLayout";
+import PagosLayout from "./DuenoPagos/PagosLayout";
+import EmpenosLayout from "./DuenoEmpeno/EmpenosLayout";
 
 function App() {
   return (
@@ -8,6 +12,11 @@ function App() {
       <Routes>
         <Route path="/" element={<OpheliaLogin />} />
         <Route path="/register" element={<OpheliaRegister />} />
+        <Route path="/home" element={<Dueno />} />
+        <Route path="/clientes/*" element={<ClientesLayout />} />
+        <Route path="/pagos/*" element={<PagosLayout />} />
+        <Route path="/empenos/*" element={<EmpenosLayout />} />
+        
       </Routes>
     </Router>
   );
