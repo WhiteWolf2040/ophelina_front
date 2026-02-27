@@ -17,7 +17,9 @@ const ClientesLista = ({ clientes }) => {
 
       <div className="content">
         <div className="top-header">
+          
           <h2>Clientes</h2>
+      
 
           <button
             className="btn-gold"
