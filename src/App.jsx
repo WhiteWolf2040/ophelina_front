@@ -2,10 +2,15 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import OpheliaLogin from "./components/OpheliaLogin";
 import OpheliaRegister from "./components/OpheliaRegister";
 import LandingPage from "./components/LandingPage";
+
 import Dueno from "./Home/Dueno";
 import ClientesLayout from "./DuenoClientes/ClientesLayout";
 import PagosLayout from "./DuenoPagos/PagosLayout";
 import EmpenosLayout from "./DuenoEmpeno/EmpenosLayout";
+
+import Dueno from "./Home/Dueno";
+import ClientesLayout from "./DuenoClientes/ClientesLayout";
+
 
 function App() {
   return (
@@ -16,8 +21,11 @@ function App() {
         <Route path="/register" element={<OpheliaRegister />} />
         <Route path="/home" element={<Dueno />} />
         <Route path="/clientes/*" element={<ClientesLayout />} />
+<<<<<<< HEAD
         <Route path="/pagos/*" element={<PagosLayout />} />
         <Route path="/empenos/*" element={<EmpenosLayout />} />
+=======
+>>>>>>> 658105c (responsivo)
       </Routes>
     </Router>
   );

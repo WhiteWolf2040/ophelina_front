@@ -18,9 +18,13 @@ const ClientesLista = ({ clientes }) => {
       <div className="content">
         <div className="top-header">
 
+
           
           <h2>Clientes</h2>
       
+
+          <h2>Clientes</h2>
+
 
           <h2>Clientes</h2>
 

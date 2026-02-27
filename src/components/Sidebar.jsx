@@ -6,8 +6,11 @@ import "./Sidebar.css";
 const Sidebar = () => {
   return (
 
-    <div className="sidebar">
 
+
+
+
+    <div classNamze="sidebar">
 
       <div className="sidebar-logo">
          <img src={logo} alt="Ophelia Logo" className="logo-image" />

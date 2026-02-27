@@ -4,13 +4,11 @@ import Chart from "react-apexcharts";
 import "./dueno.css";
 
 const Dueno = () => {
-  // Estados para modales
   const [showActivos, setShowActivos] = useState(false);
   const [showVencidos, setShowVencidos] = useState(false);
   const [showProximos, setShowProximos] = useState(false);
   const [showIngresos, setShowIngresos] = useState(false);
 
-  // Configuración de la gráfica (Series y Opciones)
   const chartData = {
     series: [
       {
@@ -26,7 +24,7 @@ const Dueno = () => {
       chart: {
         type: "bar",
         height: 350,
-        toolbar: { show: false }
+        toolbar: { show: false },
       },
       plotOptions: {
         bar: {
@@ -59,18 +57,19 @@ const Dueno = () => {
 
   return (
     <div className="owner-layout">
-      
       <Sidebar />
 
       <div className="owner-content">
-        
+
         <div className="owner-header">
           <h1>Hola, Dueño</h1>
         </div>
 
+        {/* CARDS */}
         <div className="stats-row">
           <div className="stat-card" onClick={() => setShowActivos(true)}>
-            <img src="/Calendario.svg" alt="calendario" />
+            <h3>Empeños Activos</h3>
+            <p>0</p>
           </div>
 
           <div className="stat-card" onClick={() => setShowVencidos(true)}>
@@ -94,23 +93,27 @@ const Dueno = () => {
           </div>
         </div>
 
+        {/* GRÁFICA */}
         <div className="chart-section">
           <h2>Resumen de Ingresos</h2>
           <Chart
             options={chartData.options}
             series={chartData.series}
             type="bar"
-            height="100%" 
+            height="100%"
           />
         </div>
 
+        {/* ALERTAS */}
         <div className="alerts-section">
           <h2>Alertas Importantes</h2>
           <div className="alerts-box">
+            {/* Aquí irán las alertas */}
           </div>
         </div>
-
       </div>
+
+      {/* ================= MODALES ================= */}
 
       {showActivos && (
         <div className="modal">
@@ -148,7 +151,6 @@ const Dueno = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

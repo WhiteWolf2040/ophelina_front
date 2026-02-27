@@ -8,15 +8,13 @@ export default function OpheliaLogin() {
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
-    e.preventDefault(); // evita que recargue la página
-
-    // Aquí después irá tu lógica real de login
-    // Por ahora solo redirige al home
+    e.preventDefault();
     navigate("/home");
   };
 
   return (
     <div className="login-container">
+
       <div className="overlay-pattern"></div>
 
       <div className="left-section">
@@ -54,6 +52,7 @@ export default function OpheliaLogin() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }
