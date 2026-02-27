@@ -60,10 +60,13 @@
 .alerts-box {
   height: 150px;
   background: white;
+
   color: black;
+
   border-radius: 15px;
   box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
 }
+
 
 
 /*  Diseño del fuckin modal */
@@ -129,5 +132,23 @@
     color: #1e3a8a;
     font-size: 1.2rem;
     margin-bottom: 15px;
+}
+
+
+/* MODAL */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  width: 500px;
 }
 
