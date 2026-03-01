@@ -1,77 +1,62 @@
-import React, { useState } from "react";
-import { Routes, Route } from "react-router-dom";
-import ClientesLista from "./ClientesLista";
-import ClienteNuevo from "./ClienteNuevo";
-import ClienteDetalle from "./ClienteDetalle";
-import ClienteEditar from "./ClienteEditar";
+import { useState } from "react";
+import { Outlet } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
+import "./Clientes.css";
 
 const ClientesLayout = () => {
-
   const [clientes, setClientes] = useState([
-    {
-      id: 1,
-      nombre: "Adalay Arrizmendi",
-      telefono: "9992345674",
-      email: "apyArriz@gmail.com",
-      direccion: "Calle 1",
-      fecha: "10/02/2023",
-    }
+    { 
+      id: 1, 
+      nombre: "Adalay Arrizmendi", 
+      telefono: "9992345674", 
+      email: "apyArriz@gmail.com", 
+      direccion: "Calle 23 #456, Centro", 
+      fecha: "10/02/2023" 
+    },
+    { 
+      id: 2, 
+      nombre: "Juan Pérez", 
+      telefono: "9991234567", 
+      email: "juan@gmail.com", 
+      direccion: "Av. Principal #123", 
+      fecha: "15/02/2023" 
+    },
+    { 
+      id: 3, 
+      nombre: "María García", 
+      telefono: "9997654321", 
+      email: "maria@gmail.com", 
+      direccion: "Calle 34 #567", 
+      fecha: "20/02/2023" 
+    },
   ]);
 
   const agregarCliente = (nuevoCliente) => {
-    const clienteConId = {
-      ...nuevoCliente,
-      id: Date.now()
-    };
+    setClientes([...clientes, { ...nuevoCliente, id: Date.now() }]);
+  };
 
-    setClientes([...clientes, clienteConId]);
+  const editarCliente = (id, clienteEditado) => {
+    setClientes(clientes.map(c => 
+      c.id === id ? { ...c, ...clienteEditado } : c
+    ));
   };
 
   const eliminarCliente = (id) => {
-    const nuevosClientes = clientes.filter(c => c.id !== id);
-    setClientes(nuevosClientes);
+    setClientes(clientes.filter(c => c.id !== id));
   };
 
-  const actualizarCliente = (clienteActualizado) => {
-  const nuevosClientes = clientes.map((c) =>
-    c.id === clienteActualizado.id ? clienteActualizado : c
-  );
-
-  setClientes(nuevosClientes);
-};
-
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={<ClientesLista clientes={clientes} />}
-      />
-
-      <Route
-        path="nuevo"
-        element={<ClienteNuevo agregarCliente={agregarCliente} />}
-      />
-
-      <Route
-        path=":id"
-        element={
-          <ClienteDetalle
-            clientes={clientes}
-            eliminarCliente={eliminarCliente}
-          />
-        }
-      />
-
-      <Route
-        path="editar/:id"
-        element={
-          <ClienteEditar
-            clientes={clientes}
-            actualizarCliente={actualizarCliente}
-          />
-        }
-      />
-    </Routes>
+    <div className="dashboard">
+      <Sidebar />
+      <div className="content">
+        <Outlet context={{ 
+          clientes, 
+          agregarCliente, 
+          editarCliente, 
+          eliminarCliente 
+        }} />
+      </div>
+    </div>
   );
 };
 

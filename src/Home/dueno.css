@@ -1,30 +1,38 @@
-.owner-layout {
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.dashboard {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
   background-color: #f4f1ea;
 }
 
-.owner-content {
+.content {
   flex: 1;
-  padding: 30px;
+  padding: 40px 50px;
   overflow-y: auto;
+  transition: margin-left 0.3s ease;
+}
+
+/* ===== HEADER - MANTIENE TU DISEÑO ===== */
+.owner-header {
+  margin-bottom: 25px;
 }
 
 .owner-header h1 {
-  margin-bottom: 25px;
+  margin: 0 0 25px 0;
   font-size: 28px;
   color: #1e3a8a;
 }
 
-/* CARDS */
+/* ===== CARDS - MANTIENE TU DISEÑO ===== */
 .stats-row {
   display: flex;
   gap: 20px;
   margin-bottom: 30px;
+  flex-wrap: wrap;
 }
 
 .stat-card {
-  flex: 1;
+  flex: 1 1 180px;
   background: white;
   padding: 20px;
   border-radius: 15px;
@@ -32,130 +40,375 @@
   cursor: pointer;
   transition: 0.3s;
   color: #1e3a8a;
+  min-width: 160px;
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0px 8px 25px rgba(30, 58, 138, 0.15);
+}
+
+.stat-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.stat-number {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e3a8a;
 }
 
 .gold-card {
   background: #facc15;
 }
 
-/* GRÁFICA */
-.chart-section {
-  height: 300px;
-  background: white;
-  border-radius: 15px;
-  margin-bottom: 30px;
-  box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
+.gold-card h3 {
+  color: #1e3a8a;
 }
 
-/* ALERTAS */
-.alerts-section h2 {
-  margin-bottom: 15px;
-  color: black;
+.gold-card .stat-number {
+  color: #1e3a8a;
 }
 
-.alerts-box {
-  height: 150px;
-  background: white;
-
-  color: black;
-
-
-  border-radius: 15px;
-  box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
-}
-
-
-
-
-/*  Diseño del fuckin modal */
-.modal {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 30px; /* Un poco más de aire */
-  border-radius: 12px;
-  width: 450px; 
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-  animation: fadeIn 0.2s ease-in-out;
-
-
-  display: flex;
-  flex-direction: column; 
-  gap: 15px;             
-  text-align: center;  
-  color: black;
-}
-
-/* Ajuste para el título */
-.modal h2 {
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-/* Ajuste para el contenido */
-.modal p {
-  margin: 0;
-  color: #444;
-  line-height: 1.5;
-}
-
-.modal-buttons {
-  display: flex;
-  justify-content: center; /* Centra los botones */
-  gap: 15px;               /* Espacio entre botones */
-  margin-top: 20px;
-}
-
-.modal-buttons button {
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    border: none;
-    font-weight: bold;
-}
-
+/* ===== GRÁFICA - MANTIENE TU DISEÑO ===== */
 .chart-section {
   background: white;
   border-radius: 15px;
   padding: 20px;
   margin-bottom: 30px;
   box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
-  height: 400px; /* Un poco más de espacio para la gráfica */
-  color:black;
+  height: 400px;
+  color: black;
 }
 
 .chart-section h2 {
-    color: #1e3a8a;
-    font-size: 1.2rem;
-    margin-bottom: 15px;
+  color: #1e3a8a;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
+.chart-wrapper {
+  height: 320px;
+  width: 100%;
+}
 
+/* ===== ALERTAS - MANTIENE TU DISEÑO MEJORADO ===== */
+.alerts-section h2 {
+  margin-bottom: 15px;
+  color: #1e3a8a;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-/* MODAL */
-.modal {
+.alerts-box {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: #f8f9fa;
+  border-left: 4px solid;
+}
+
+.alert-item:last-child {
+  margin-bottom: 0;
+}
+
+.alert-item.warning {
+  border-left-color: #facc15;
+  background: #fef9e7;
+}
+
+.alert-item.danger {
+  border-left-color: #dc3545;
+  background: #fee;
+}
+
+.alert-item.success {
+  border-left-color: #10b981;
+  background: #e6f7f0;
+}
+
+.alert-icon {
+  font-size: 20px;
+}
+
+.alert-text {
+  font-size: 14px;
+  color: #333;
+}
+
+/* ===== MODALES - ESTILO CLIENTES ===== */
+.modal-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.2s ease;
+  padding: 20px;
 }
 
-.modal-content {
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-detalle {
   background: white;
-  padding: 30px;
-  border-radius: 15px;
-  width: 500px;
-
+  border-radius: 28px;
+  width: 700px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+  position: relative;
 }
 
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 
+.modal-cerrar {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #999;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s;
+  z-index: 10;
+}
 
+.modal-cerrar:hover {
+  background-color: #f0f0f0;
+  color: #333;
+  transform: rotate(90deg);
+}
 
+.modal-header {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2a4a9e 100%);
+  color: white;
+  padding: 40px 30px 30px;
+  border-radius: 28px 28px 0 0;
+}
+
+.modal-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 28px;
+  font-weight: 600;
+  padding-right: 40px;
+}
+
+.cliente-id {
+  display: inline-block;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.modal-body {
+  padding: 30px;
+}
+
+.tabla-container-modal {
+  overflow-x: auto;
+}
+
+.tabla-modal {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-modal th {
+  text-align: left;
+  padding: 15px 10px;
+  background-color: #f8f9fa;
+  color: #1e3a8a;
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 2px solid #d3b372;
+}
+
+.tabla-modal td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+
+.tabla-modal tr:hover {
+  background-color: #f5f5f5;
+}
+
+.badge-danger {
+  background-color: #ffebee;
+  color: #dc3545;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.modal-acciones {
+  display: flex;
+  gap: 15px;
+  padding: 20px 30px 30px;
+  border-top: 1px solid #eee;
+}
+
+.btn-cancelar {
+  flex: 1;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  background-color: #e9e9e9;
+  color: #333;
+}
+
+.btn-cancelar:hover {
+  background-color: #d5d5d5;
+  transform: translateY(-2px);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .content {
+    padding: 20px 15px;
+    margin-top: 60px;
+  }
+
+  .owner-header h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .stats-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stat-card {
+    width: 100%;
+  }
+
+  .chart-section {
+    padding: 15px;
+    height: 350px;
+  }
+
+  .chart-wrapper {
+    height: 280px;
+  }
+
+  .alerts-box {
+    padding: 15px;
+  }
+
+  .alert-item {
+    padding: 10px;
+  }
+
+  /* Modales responsive */
+  .modal-detalle {
+    border-radius: 20px;
+  }
+
+  .modal-header {
+    padding: 30px 20px 20px;
+  }
+
+  .modal-header h2 {
+    font-size: 24px;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-acciones {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .btn-cancelar {
+    width: 100%;
+  }
+
+  .tabla-modal th,
+  .tabla-modal td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+}
+
+/* Tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .content {
+    padding: 30px 25px;
+  }
+
+  .stats-row {
+    flex-wrap: wrap;
+  }
+
+  .stat-card {
+    flex: 1 1 calc(50% - 10px);
+  }
+
+  .chart-wrapper {
+    height: 300px;
+  }
+}
