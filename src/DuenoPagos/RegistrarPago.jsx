@@ -13,7 +13,7 @@ const RegistrarPago = ({ agregarPago }) => {
   ];
 
   const metodosPago = ["Efectivo", "Transferencia", "Tarjeta"];
-  const tiposPago = ["Interes", "Liquidacion"];
+  const tiposPago = ["Interés", "Liquidación", "Abono"];
 
   const [form, setForm] = useState({
     empenoId: "",
@@ -23,47 +23,45 @@ const RegistrarPago = ({ agregarPago }) => {
     monto: "",
   });
   
-const handleSubmit = (e) => {
-  e.preventDefault();
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  const nuevoPago = {
-    cliente: empenosActivos.find(e => e.id == form.empenoId)?.cliente,
-    articulo: "Empeño",
-    monto: form.monto,
-    tipo: form.tipo,
-    fecha: form.fecha,
+    const empenoSeleccionado = empenosActivos.find(e => e.id == form.empenoId);
+    
+    const nuevoPago = {
+      id: Date.now(),
+      cliente: empenoSeleccionado?.cliente || "Cliente",
+      articulo: "Empeño",
+      monto: form.monto,
+      tipo: form.tipo,
+      metodo: form.metodo,
+      fecha: form.fecha,
+    };
+
+    agregarPago(nuevoPago);
+    navigate("/pagos");
   };
-
-  agregarPago(nuevoPago);
-
-  navigate("/pagos");
-};
 
   return (
     <div className="dashboard">
       <Sidebar />
 
       <div className="content">
-        <div className="top-header">
-          <div className="pagos-title">
-            
-            <h2>Registrar Pago</h2>
-          </div>
+        {/* HEADER */}
+        <div className="header-container">
+          <h2>Registrar Pago</h2>
         </div>
 
-        <div className="table-card">
-          <h3>Información del Pago</h3>
-
+        {/* FORMULARIO - ESTILO CLIENTES */}
+        <div className="form-card">
           <form onSubmit={handleSubmit} className="form-grid">
-
-            {/* EMPEÑOS */}
-            <div>
-              <label>Empeños</label>
+            
+            {/* Empeños */}
+            <div className="form-group">
+              <label>Empeño *</label>
               <select
                 value={form.empenoId}
-                onChange={(e) =>
-                  setForm({ ...form, empenoId: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, empenoId: e.target.value })}
                 required
               >
                 <option value="">Seleccionar empeño</option>
@@ -75,14 +73,12 @@ const handleSubmit = (e) => {
               </select>
             </div>
 
-            {/* METODO */}
-            <div>
-              <label>Método de pago</label>
+            {/* Método de pago */}
+            <div className="form-group">
+              <label>Método de pago *</label>
               <select
                 value={form.metodo}
-                onChange={(e) =>
-                  setForm({ ...form, metodo: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, metodo: e.target.value })}
                 required
               >
                 <option value="">Seleccionar método</option>
@@ -94,14 +90,12 @@ const handleSubmit = (e) => {
               </select>
             </div>
 
-            {/* TIPO */}
-            <div>
-              <label>Tipo de Pago</label>
+            {/* Tipo de Pago */}
+            <div className="form-group">
+              <label>Tipo de Pago *</label>
               <select
                 value={form.tipo}
-                onChange={(e) =>
-                  setForm({ ...form, tipo: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, tipo: e.target.value })}
                 required
               >
                 <option value="">Seleccionar tipo</option>
@@ -113,37 +107,33 @@ const handleSubmit = (e) => {
               </select>
             </div>
 
-            {/* FECHA */}
-            <div>
-              <label>Fecha</label>
+            {/* Fecha */}
+            <div className="form-group">
+              <label>Fecha *</label>
               <input
                 type="date"
                 value={form.fecha}
-                onChange={(e) =>
-                  setForm({ ...form, fecha: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, fecha: e.target.value })}
                 required
               />
             </div>
 
-            {/* MONTO */}
-            <div className="full-width">
-              <label>Monto de Pago</label>
+            {/* Monto de Pago - full width */}
+            <div className="form-group full-width">
+              <label>Monto de Pago *</label>
               <input
                 type="number"
-                placeholder="Ingrese monto"
+                placeholder="Ej: 1500"
                 value={form.monto}
-                onChange={(e) =>
-                  setForm({ ...form, monto: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, monto: e.target.value })}
                 required
               />
             </div>
 
-            {/* BOTONES */}
+            {/* Botones */}
             <div className="form-buttons">
               <button type="submit" className="btn-gold">
-                Guardar
+                Guardar Pago
               </button>
 
               <button

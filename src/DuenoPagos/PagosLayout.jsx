@@ -15,7 +15,7 @@ const PagosLayout = () => {
       tipo: "Interes",
       fecha: "10/05/2024",
     },
-  
+    
   ]);
 
   const agregarPago = (nuevoPago) => {

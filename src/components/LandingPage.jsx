@@ -92,7 +92,7 @@ const Navbar = memo(() => (
       <a href="#nosotros">Nosotros</a>
       <a href="#suscripciones">Suscripciones</a>
       <a href="#contacto">Contacto</a>
-      <Link to="/loging" style={{ textDecoration: 'none' }}>
+      <Link to="/login" style={{ textDecoration: 'none' }}>
         <button className="btn-login" aria-label="Iniciar sesión">Iniciar Sesión</button>
       </Link>
     </nav>
