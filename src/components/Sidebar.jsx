@@ -1,60 +1,122 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import logo from "../assets/Ophelina_White.png";
 import "./Sidebar.css";
 
 const Sidebar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const closeSidebar = () => {
+    setIsOpen(false);
+  };
+
   return (
+    <>
+      {/* Botón hamburguesa para móvil */}
+      <button 
+        className={`sidebar-toggle ${isOpen ? 'active' : ''}`}
+        onClick={toggleSidebar}
+        aria-label="Menú"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
 
+      {/* Sidebar */}
+      <div className={`sidebar ${isOpen ? 'open' : ''}`}>
+        <div className="sidebar-logo">
+          <img src={logo} alt="Ophelia Logo" className="logo-image" />
+          
+        </div>
 
-    <div className="sidebar">
+        <nav className="sidebar-menu">
+          <NavLink 
+            to="/home" 
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={closeSidebar}
+          >
+            Dashboard
+          </NavLink>
 
+          <NavLink 
+            to="/clientes" 
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={closeSidebar}
+          >
+            Clientes
+          </NavLink>
 
-      <div className="sidebar-logo">
-         <img src={logo} alt="Ophelia Logo" className="logo-image" />
+          <NavLink 
+            to="/pagos" 
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={closeSidebar}
+          >
+            Pagos
+          </NavLink>
+
+          <NavLink 
+            to="/empenos" 
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={closeSidebar}
+          >
+            Empeños
+          </NavLink>
+          
+          <NavLink 
+            to="/inventario" 
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={closeSidebar}
+          >
+            Inventario
+          </NavLink>
+
+          <NavLink 
+            to="/tienda" 
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={closeSidebar}
+          >
+            Tienda en línea
+          </NavLink>
+
+          <NavLink 
+            to="/reportes" 
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={closeSidebar}
+          >
+            Reportes
+          </NavLink>
+
+          <NavLink 
+            to="/configuracion" 
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            onClick={closeSidebar}
+          >
+            Configuraciones
+          </NavLink>
+
+          <NavLink 
+            to="/" 
+            className="sidebar-link logout"
+            onClick={closeSidebar}
+          >
+            Cerrar sesión
+          </NavLink>
+        </nav>
       </div>
 
-      <nav className="sidebar-menu">
-        <NavLink to="/home" className="sidebar-link">
-          Dashboard
-        </NavLink>
-
-        <NavLink to="/clientes" className="sidebar-link">
-          Clientes
-        </NavLink>
-
-          <NavLink to="/pagos" className="sidebar-link">
-          Pagos
-        </NavLink>
-
-          <NavLink to="/empenos" className="sidebar-link">
-          Empeños
-        </NavLink>
-        
-        <NavLink to="/inventario" className="sidebar-link">
-          Inventario
-        </NavLink>
-
-           <NavLink to="/tienda" className="sidebar-link">
-          Tienda en linea
-        </NavLink>
-
-
-        <NavLink to="/reportes" className="sidebar-link">
-          Reportes
-        </NavLink>
-
-        <NavLink to="/configuraciones" className="sidebar-link">
-          Configuraciones
-        </NavLink>
-
-
-
-        <NavLink to="/" className="sidebar-link logout">
-          Cerrar sesión
-        </NavLink>
-      </nav>
-    </div>
+      {/* Overlay para móvil */}
+      {isOpen && (
+        <div 
+          className="sidebar-overlay"
+          onClick={closeSidebar}
+        />
+      )}
+    </>
   );
 };
 

@@ -25,49 +25,84 @@ const ClienteNuevo = ({ agregarCliente }) => {
       <Sidebar />
 
       <div className="content">
-        <div className="top-header">
+        <div className="header-container">
           <h2>Nuevo Cliente</h2>
         </div>
 
-        <div className="table-card">
-          <form onSubmit={handleSubmit} className="form-grid">
-            <input
-              placeholder="Nombre completo"
-              required
-              onChange={(e) =>
-                setForm({ ...form, nombre: e.target.value })
-              }
-            />
+        <div className="form-card">
+          <form onSubmit={handleSubmit}>
+            <div className="form-grid">
+              <div className="form-group">
+                <label htmlFor="nombre">Nombre completo *</label>
+                <input
+                  id="nombre"
+                  type="text"
+                  placeholder="Ej: Juan Pérez"
+                  value={form.nombre}
+                  required
+                  onChange={(e) =>
+                    setForm({ ...form, nombre: e.target.value })
+                  }
+                />
+              </div>
 
-            <input
-              placeholder="Teléfono"
-              required
-              onChange={(e) =>
-                setForm({ ...form, telefono: e.target.value })
-              }
-            />
+              <div className="form-group">
+                <label htmlFor="telefono">Teléfono *</label>
+                <input
+                  id="telefono"
+                  type="tel"
+                  placeholder="Ej: 9992345674"
+                  value={form.telefono}
+                  required
+                  onChange={(e) =>
+                    setForm({ ...form, telefono: e.target.value })
+                  }
+                />
+              </div>
 
-            <input
-              type="email"
-              placeholder="Email"
-              required
-              onChange={(e) =>
-                setForm({ ...form, email: e.target.value })
-              }
-            />
+              <div className="form-group">
+                <label htmlFor="email">Email *</label>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="Ej: cliente@email.com"
+                  value={form.email}
+                  required
+                  onChange={(e) =>
+                    setForm({ ...form, email: e.target.value })
+                  }
+                />
+              </div>
 
-            <input
-              className="full-width"
-              placeholder="Dirección"
-              required
-              onChange={(e) =>
-                setForm({ ...form, direccion: e.target.value })
-              }
-            />
+              <div className="form-group">
+                <label htmlFor="fecha">Fecha de registro</label>
+                <input
+                  id="fecha"
+                  type="text"
+                  value={form.fecha}
+                  readOnly
+                  className="fecha-input"
+                />
+              </div>
+
+              <div className="form-group full-width">
+                <label htmlFor="direccion">Dirección *</label>
+                <input
+                  id="direccion"
+                  type="text"
+                  placeholder="Ej: Calle Principal #123"
+                  value={form.direccion}
+                  required
+                  onChange={(e) =>
+                    setForm({ ...form, direccion: e.target.value })
+                  }
+                />
+              </div>
+            </div>
 
             <div className="form-buttons">
               <button type="submit" className="btn-gold">
-                Guardar
+                Guardar Cliente
               </button>
 
               <button
