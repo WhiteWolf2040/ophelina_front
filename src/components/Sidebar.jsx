@@ -51,13 +51,13 @@ const Sidebar = () => {
             Inventario
           </NavLink>
           <NavLink to="/tienda" className="sidebar-link" onClick={closeSidebar}>
-            Tienda en líneax|
+            Tienda en línea
           </NavLink>
           <NavLink to="/reportes" className="sidebar-link" onClick={closeSidebar}>
             Reportes
           </NavLink>
-          <NavLink to="/configuraciones" className="sidebar-link" onClick={closeSidebar}>
-            Configuraciones
+          <NavLink to="/configuracion" className="sidebar-link" onClick={closeSidebar}>
+            Configuracion
           </NavLink>
           <NavLink to="/" className="sidebar-link cerrar-sesion" onClick={closeSidebar}>
             Cerrar sesión
