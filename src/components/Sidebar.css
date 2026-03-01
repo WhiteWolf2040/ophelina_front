@@ -1,4 +1,16 @@
+
 /* ===== SIDEBAR BASE (TU DISEÑO ORIGINAL) ===== */
+
+
+/* Contenedor principal - usa flex para sidebar + contenido */
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* SIDEBAR - estructura corregida */
+
 .sidebar {
   width: 240px;
   height: 100vh;
