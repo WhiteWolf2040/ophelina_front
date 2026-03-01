@@ -16,106 +16,55 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Botón hamburguesa para móvil */}
-      <button 
-        className={`sidebar-toggle ${isOpen ? 'active' : ''}`}
-        onClick={toggleSidebar}
-        aria-label="Menú"
-      >
-        <span></span>
-        <span></span>
-        <span></span>
+
+      {/* Botón de hamburguesa para móvil */}
+      <button className="mobile-menu-btn" onClick={toggleSidebar}>
+        <span className="hamburger-line"></span>
+        <span className="hamburger-line"></span>
+        <span className="hamburger-line"></span>
       </button>
 
+      {/* Overlay oscuro cuando el menú está abierto */}
+      {isOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
+
       {/* Sidebar */}
-      <div className={`sidebar ${isOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
           <img src={logo} alt="Ophelia Logo" className="logo-image" />
-          
+          <button className="close-btn" onClick={closeSidebar}>×</button>
         </div>
 
         <nav className="sidebar-menu">
-          <NavLink 
-            to="/home" 
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            onClick={closeSidebar}
-          >
+          <NavLink to="/home" className="sidebar-link" onClick={closeSidebar}>
             Dashboard
           </NavLink>
-
-          <NavLink 
-            to="/clientes" 
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            onClick={closeSidebar}
-          >
+          <NavLink to="/clientes" className="sidebar-link" onClick={closeSidebar}>
             Clientes
           </NavLink>
-
-          <NavLink 
-            to="/pagos" 
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            onClick={closeSidebar}
-          >
+          <NavLink to="/pagos" className="sidebar-link" onClick={closeSidebar}>
             Pagos
           </NavLink>
-
-          <NavLink 
-            to="/empenos" 
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            onClick={closeSidebar}
-          >
+          <NavLink to="/empenos" className="sidebar-link" onClick={closeSidebar}>
             Empeños
           </NavLink>
-          
-          <NavLink 
-            to="/inventario" 
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            onClick={closeSidebar}
-          >
+          <NavLink to="/inventario" className="sidebar-link" onClick={closeSidebar}>
             Inventario
           </NavLink>
-
-          <NavLink 
-            to="/tienda" 
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            onClick={closeSidebar}
-          >
+          <NavLink to="/tienda" className="sidebar-link" onClick={closeSidebar}>
             Tienda en línea
           </NavLink>
-
-          <NavLink 
-            to="/reportes" 
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            onClick={closeSidebar}
-          >
+          <NavLink to="/reportes" className="sidebar-link" onClick={closeSidebar}>
             Reportes
           </NavLink>
-
-          <NavLink 
-            to="/configuracion" 
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            onClick={closeSidebar}
-          >
-            Configuraciones
+          <NavLink to="/configuracion" className="sidebar-link" onClick={closeSidebar}>
+            Configuracion
           </NavLink>
-
-          <NavLink 
-            to="/" 
-            className="sidebar-link logout"
-            onClick={closeSidebar}
-          >
+          <NavLink to="/" className="sidebar-link cerrar-sesion" onClick={closeSidebar}>
             Cerrar sesión
           </NavLink>
         </nav>
-      </div>
+      </aside>
 
-      {/* Overlay para móvil */}
-      {isOpen && (
-        <div 
-          className="sidebar-overlay"
-          onClick={closeSidebar}
-        />
-      )}
     </>
   );
 };

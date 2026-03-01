@@ -15,14 +15,11 @@ export default function OpheliaLogin() {
   return (
     <div className="login-container">
 
-      <div className="overlay-pattern"></div>
-
       <div className="left-section">
         <img src={logo} alt="Ophelia Logo" className="logo-image" />
       </div>
-
-      <div className="form-container">
-        <p className="title">Iniciar Sesión</p>
+<div className="r">
+<p className="title">Iniciar Sesión</p>
 
         <form className="form" onSubmit={handleLogin}>
           <input type="email" className="input" placeholder="Email" />
@@ -51,7 +48,8 @@ export default function OpheliaLogin() {
             <span>Continuar con Google</span>
           </div>
         </div>
-      </div>
+</div>
+      
 
     </div>
   );
