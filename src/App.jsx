@@ -2,13 +2,13 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import OpheliaLogin from "./components/OpheliaLogin";
 import OpheliaRegister from "./components/OpheliaRegister";
 import LandingPage from "./components/LandingPage";
+import OphelinaHome from "./Clientes/OphelinaHome";
+import MisEmpenos from "./Clientes/MisEmpenos";
+
 import Dueno from "./Home/Dueno";
 import ClientesLayout from "./DuenoClientes/ClientesLayout";
 import PagosLayout from "./DuenoPagos/PagosLayout";
 import EmpenosLayout from "./DuenoEmpeno/EmpenosLayout";
-
-import ClientesVista from "./components/clientesvista";
-import EmpeñosVista from "./components/empeñosvista";
 
 function App() {
   return (
@@ -18,8 +18,9 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/loging" element={<OpheliaLogin />} />
 
-      <Route path="/clientesvista" element={<ClientesVista />} />
-      <Route path="/empeñosvista" element={<EmpeñosVista />} />
+        <Route path="/homecliente" element={<OphelinaHome />} />
+        <Route path="/misempenos" element={<MisEmpenos />} />
+
         <Route path="/" element={<OpheliaLogin />} />
 
         <Route path="/register" element={<OpheliaRegister />} />
