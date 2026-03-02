@@ -22,7 +22,7 @@ const ClienteNuevo = ({ agregarCliente }) => {
 
   return (
     <div className="dashboard">
-      <Sidebar />
+  
 
       <div className="content">
         <div className="header-container">
