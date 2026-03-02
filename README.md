@@ -18,26 +18,24 @@ CONSOLA:
   
 (Si hay conflictos, los resuelves )
 
-3️⃣ Actualiza 
+3️⃣ Ahora subir tu rama actualizada
 
 - git add .
 - git commit -m "Resolviendo conflictos con equipo"
-
-
-4️⃣ Ahora subir tu rama actualizada
-
 - git push origin rama-(suemy o jeni) 
 
-
-5️⃣ Hacer merge a equipo
+4️⃣ Hacer merge a equipo
 
 - git checkout equipo
 - git pull origin equipo
 - git merge rama-(suemy o jeni) 
 - git push origin equipo
 
-5️⃣ 6- volver a tu rama
+
+5️⃣ volver a tu rama
+
 - git checkout rama-(suemy, jeni) 
+
 
 Listo, Si tú ya subiste tus cambios a la rama equipo, ahora solo tiene que actualizar su rama desde equipo.
 
