@@ -35,6 +35,8 @@ CONSOLA:
 - git pull origin equipo
 - git merge rama-(suemy o jeni) 
 - git push origin equipo
+
+5️⃣ 6- volver a tu rama
 - git checkout rama-(suemy, jeni) 
 
 Listo, Si tú ya subiste tus cambios a la rama equipo, ahora solo tiene que actualizar su rama desde equipo.
