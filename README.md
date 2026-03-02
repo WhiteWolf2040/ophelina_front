@@ -1,37 +1,42 @@
-✅ FORMA SIMPLE POR CONSOLA
+CONSOLA:
+✅ Primero traer lo de equipo a tu rama
+✅ Resolver conflictos en tu rama
+✅ Después subir tu rama a equipo
+
 1️⃣ Asegúrate de que tus cambios estén guardados en tu rama
 
 - git checkout rama-(suemy, jeni) 
+- git add .
+- git commit -m "mis cambios (o los cambios que hayas hecho)"
+- git push origin rama-(suemy o jeni) 
+
+
+2️⃣ Traer lo nuevo de equipo
+
+- git pull origin equipo
+  
+(Si hay conflictos, los resuelves )
+
+3️⃣ Actualiza 
 
 - git add .
+- git commit -m "Resolviendo conflictos con equipo"
 
-- git commit -m "mis cambios (o los cambios que hayas hecho)"
+
+4️⃣ Ahora subir tu rama actualizada
 
 - git push origin rama-(suemy o jeni) 
 
 
-2️⃣ Cámbiate a la rama equipo
+5️⃣ Hacer merge a equipo
 
 - git checkout equipo
-
-
-3️⃣ Actualiza equipo
-
 - git pull origin equipo
-
-
-4️⃣ Fusiona tu rama en equipo
-
-- git merge rama-su
-
-(Si hay conflictos, los resuelves y haces git add . y git commit)
-
-5️⃣ Sube equipo al remoto
-
+- git merge rama-(suemy o jeni) 
 - git push origin equipo
 
 
-Si tú ya subiste tus cambios a la rama equipo, ahora solo tiene que actualizar su rama desde equipo.
+Listo, Si tú ya subiste tus cambios a la rama equipo, ahora solo tiene que actualizar su rama desde equipo.
 
 Supongamos que diego trabaja en rama-diego (suemy o jeni).
 
