@@ -5,6 +5,7 @@ CONSOLA:
 
 1️⃣ Asegúrate de que tus cambios estén guardados en tu rama
 
+- git branch
 - git checkout rama-(suemy, jeni) 
 - git add .
 - git commit -m "mis cambios (o los cambios que hayas hecho)"
@@ -34,7 +35,7 @@ CONSOLA:
 - git pull origin equipo
 - git merge rama-(suemy o jeni) 
 - git push origin equipo
-
+- git checkout rama-(suemy, jeni) 
 
 Listo, Si tú ya subiste tus cambios a la rama equipo, ahora solo tiene que actualizar su rama desde equipo.
 
