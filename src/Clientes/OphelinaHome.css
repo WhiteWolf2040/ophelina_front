@@ -1,0 +1,425 @@
+/* Variables */
+:root {
+  --primary-blue: #0d1b3e;
+  --secondary-blue: #435b83;
+  --gold: #c5a059;
+  --gold-light: #e9c46a;
+  --gold-dark: #be981d;
+  --cream: #f5f1ea;
+  --white: #ffffff;
+  --gray-light: #f0f2f5;
+  --gray-medium: #e0e0e0;
+  --gray-dark: #333;
+  --gray-text: #777;
+  --shadow-sm: 0 4px 20px rgba(0,0,0,0.1);
+  --shadow-md: 0 10px 30px rgba(0,0,0,0.05);
+  --transition: all 0.3s ease;
+}
+
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--cream);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Dashboard 
+.dashboard {
+  min-height: 100vh;
+  background-color: var(--cream);
+} */
+ 
+/* MAIN CONTENT - CONTENEDOR VERTICAL */
+.main-content {
+  display: flex;
+  flex-direction: column; /* ¡ESTO ES CLAVE! Hace que todo sea vertical */
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 100px 20px 40px;
+}
+
+/* NAVBAR */
+.navbar {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 1200px;
+  background: var(--white);
+  padding: 12px 30px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  z-index: 100;
+}
+
+.log-container {
+  display: flex;
+  align-items: center;
+}
+
+.log-image {
+  width: 25px;
+  height: auto;
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 35px;
+}
+
+.nav-menu a {
+  text-decoration: none;
+  color: var(--gray-dark);
+  font-weight: 500;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.nav-menu a:hover {
+  color: var(--gold);
+}
+
+.nav-menu a.active {
+  color: var(--primary-blue);
+  font-weight: 600;
+  position: relative;
+}
+
+.nav-menu a.active::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--gold);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background-color: var(--gray-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* WELCOME SECTION */
+.welcome-section {
+  margin-bottom: 30px;
+}
+
+.welcome-title {
+  font-size: 32px;
+  color: var(--primary-blue);
+  font-weight: 600;
+  margin-bottom: 5px;
+  font-family: 'Bodoni Moda', serif;
+}
+
+.welcome-name {
+  color: var(--gold-dark);
+}
+
+.welcome-subtitle {
+  color: var(--gray-text);
+  font-size: 16px;
+}
+
+/* CARDS SECTION */
+.cards-section {
+  margin-bottom: 30px;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.stat-card {
+  background: var(--white);
+  border-radius: 10px;
+  padding: 20px 15px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  color: var(--gray-text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.gold-card {
+  background: linear-gradient(135deg, #f5e7c8 0%, var(--gold-light) 100%);
+}
+
+.gold-card .stat-number {
+  color: var(--primary-blue);
+}
+
+/* CONTENT SECTIONS */
+.content-section {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+}
+
+.section-title {
+  font-size: 18px;
+  color: var(--primary-blue);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.section-icon {
+  font-size: 20px;
+}
+
+/* PAWN ITEMS */
+.pawn-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-light);
+}
+
+.pawn-item:last-child {
+  border-bottom: none;
+}
+
+.pawn-info {
+  flex: 1;
+}
+
+.pawn-title {
+  font-size: 15px;
+  color: var(--primary-blue);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.pawn-date {
+  color: var(--gray-text);
+  font-size: 13px;
+}
+
+.pawn-days {
+  display: flex;
+  align-items: center;
+}
+
+.days-badge {
+  background-color: var(--gold-light);
+  color: var(--primary-blue);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* BOTTOM SECTIONS - Grid de 2 columnas */
+.bottom-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+}
+
+.bottom-sections .content-section {
+  margin-bottom: 0;
+}
+
+/* DEBT BREAKDOWN */
+.debt-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.debt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--gray-dark);
+  font-size: 14px;
+  padding: 2px 0;
+}
+
+.debt-amount {
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+.debt-divider {
+  height: 1px;
+  background: var(--gray-medium);
+  margin: 8px 0;
+}
+
+.total-row {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.total-amount {
+  color: var(--gold-dark);
+  font-weight: 700;
+}
+
+/* ACTIVITY LIST */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.activity-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-light);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.activity-badge.payment {
+  background-color: var(--gold-light);
+}
+
+.activity-badge.new {
+  background-color: var(--secondary-blue);
+  color: white;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  color: var(--primary-blue);
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.activity-detail {
+  color: var(--gray-text);
+  font-size: 12px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .bottom-sections {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    width: 95%;
+    padding: 12px 20px;
+  }
+  
+  .nav-menu {
+    gap: 20px;
+  }
+  
+  .nav-menu a {
+    font-size: 13px;
+  }
+  
+  .welcome-title {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 550px) {
+  .navbar {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+  
+  .nav-menu {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .welcome-title {
+    font-size: 24px;
+    text-align: center;
+  }
+  
+  .welcome-subtitle {
+    text-align: center;
+  }
+  
+  .pawn-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .pawn-days {
+    width: 100%;
+  }
+  
+  .days-badge {
+    width: 100%;
+    text-align: center;
+  }
+}

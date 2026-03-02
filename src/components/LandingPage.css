@@ -31,12 +31,16 @@
 
 .landing {
   font-family: 'Bodoni Moda', serif;
+
 }
 
 .navbar {
-  position: static !important; /* Fuerza posición normal */
+  position: fixed !important; /* Fijo en la parte superior */
+  top: 20px !important;
+  left: 0;
+  right: 0;
   width: 80% !important;
-  margin: 20px auto !important;
+  margin: 0 auto !important; /* Centrado horizontal */
   background: var(--white) !important;
   padding: 15px 40px !important;
   border-radius: 12px !important;
@@ -44,13 +48,10 @@
   justify-content: space-between !important;
   align-items: center !important;
   box-shadow: var(--shadow-sm) !important;
-  /* Elimina cualquier transform, top, left, etc */
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  transform: none !important;
+  z-index: 1000 !important; /* Muy alto para estar sobre todo */
+  animation: slideDown 0.5s ease; /* Animación suave al aparecer */
 }
+
 
 .logo {
   display: flex;
@@ -1058,7 +1059,16 @@
     max-width: 300px;
   }
 }
-
+@media (max-width: 480px) {
+  .navbar {
+    width: 90% !important;
+    border-radius: 10px;
+   
+    padding: 10px 15px !important;
+  }
+  
+  
+}
 /* Accesibilidad */
 @media (prefers-reduced-motion: reduce) {
   * {
