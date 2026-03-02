@@ -1,126 +1,198 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import "./MisEmpenos.css";
 import logo from "../assets/O_blue.png";
-import anillo_oro from "../assets/anillo_oro.jpg";    
-import collar_plata from "../assets/collar_plata.jpg";    
-import arete_diamante from "../assets/arete_diamante.jpg";    
-
+import anillo_oro from "../assets/anillo_oro.jpg";
+import collar_plata from "../assets/collar_plata.jpg";
+import arete_diamante from "../assets/arete_diamante.jpg";
 
 export default function MisEmpenos() {
-  const empeños = [
+  const location = useLocation();
+  const [busqueda, setBusqueda] = useState("");
+
+  // Tipos de prendas
+  const tiposPrenda = [
     {
-      id: 1,
       nombre: "Anillo de Oro 14k",
-      descripcion: "",
-      prestado: "$8,500",
-      totalPagar: "$9,775",
-      vencimiento: "4/2/2026",
       imagen: anillo_oro
     },
     {
-      id: 2,
       nombre: "Collar de Plata",
-      descripcion: "Collar de plata 925 con colgante de perlas naturales",
-      prestado: "$8,500",
-      totalPagar: "$9,775",
-      vencimiento: "4/2/2026",
       imagen: collar_plata
     },
     {
-      id: 3,
       nombre: "Aretes de Diamante",
-      descripcion: "Par de aretes con diamantes de 1 quilate cada uno.",
-      prestado: "$8,500",
-      totalPagar: "$9,775",
-      vencimiento: "4/2/2026",
       imagen: arete_diamante
     }
   ];
 
+  // Generar empeños
+  const generarEmpeños = () => {
+    const empeños = [];
+
+    const descripciones = [
+      "",
+      "Diseño clásico y elegante",
+      "Con detalles artesanales",
+      "Estilo moderno",
+      "Pieza única",
+      "Con grabados especiales"
+    ];
+
+    const preciosBase = [
+      8500, 12500, 3200, 7800, 6200,
+      4500, 9300, 11000, 2800, 8900,
+      7500, 5200, 10500
+    ];
+
+    for (let i = 0; i < 15; i++) {
+      const tipoIndex = i % 3;
+      const precioBase = preciosBase[i % preciosBase.length];
+      const interes = precioBase * 0.15;
+
+      empeños.push({
+        id: i + 1,
+        nombre: tiposPrenda[tipoIndex].nombre,
+        descripcion: descripciones[i % descripciones.length],
+        prestado: `$${precioBase.toLocaleString("en-US")}`,
+        totalPagar: `$${(precioBase + interes).toLocaleString("en-US")}`,
+        vencimiento: `${Math.floor(Math.random() * 28) + 1}/${
+          Math.floor(Math.random() * 12) + 1
+        }/2026`,
+        imagen: tiposPrenda[tipoIndex].imagen
+      });
+    }
+
+    return empeños;
+  };
+
+  const empeños = generarEmpeños();
+
+  // ✅ FILTRO DEL BUSCADOR
+  const empenosFiltrados = empeños.filter((empeño) =>
+    (
+      empeño.nombre +
+      empeño.descripcion +
+      empeño.prestado +
+      empeño.vencimiento
+    )
+      .toLowerCase()
+      .includes(busqueda.toLowerCase())
+  );
+
+  const isActive = (path) => {
+    return location.pathname === path ? "me-active" : "";
+  };
+
   return (
-    <div className="dashboard">
+    <div className="me-dashboard">
       {/* Navbar */}
-      <header className="">
-        <div className="navbar">
-          <div className="">
-            <img src={logo} alt="Ophelia Logo" className="logo-image" />
+      <header className="me-navbar-container">
+        <div className="me-navbar">
+          <div className="me-left-section">
+            <img src={logo} alt="Ophelia Logo" className="me-logo-image" />
           </div>
 
-          <nav className="nav-menu">
-            <a href="#">Historial</a>
-            <a href="#" className="active">Mis Empeños</a>
-            <a href="#">Pagos</a>
-            <a href="#">Tienda</a>
-            <div className="user-avatar">👤</div>
+          <nav className="me-nav-menu">
+            <Link to="/homecliente" className={isActive("/homecliente")}>
+              Historial
+            </Link>
+            <Link to="/misempenos" className={isActive("/misempenos")}>
+              Mis Empeños
+            </Link>
+            <Link to="/pagos" className={isActive("/pagos")}>
+              Pagos
+            </Link>
+            <Link to="/ophelina" className={isActive("/ophelina")}>
+              Tienda
+            </Link>
+            <div className="me-user-avatar">👤</div>
           </nav>
         </div>
       </header>
 
-      {/* Título principal */}
-      <section className="page-header">
-        <h1 className="page-title">Administra y consulta tus prendas empeñadas</h1>
-        
-        {/* Barra de búsqueda */}
-        <div className="search-container">
-          <input 
-            type="text" 
-            placeholder="Buscar..." 
-            className="search-input"
+      {/* Header */}
+      <section className="me-page-header">
+        <h1 className="me-page-title">
+          Administra y consulta tus prendas empeñadas
+        </h1>
+
+        <div className="me-search-container">
+          <input
+            type="text"
+            placeholder="Buscar empeño..."
+            className="me-search-input"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
           />
-          <span className="search-icon">🔍</span>
+          <span className="me-search-icon">🔍</span>
         </div>
       </section>
 
-      {/* Grid de empeños */}
-      <section className="empeños-list">
-        {empeños.map((empeño) => (
-          <div key={empeño.id} className="empeño-card">
-            {/* Contenedor superior con imagen y texto */}
-            <div className="empeño-contenido-superior">
-              {/* Imagen a la izquierda */}
-              {empeño.imagen && (
-                <div className="empeño-imagen-container">
-                  <img 
-                    src={empeño.imagen} 
+      {/* Lista */}
+      <section className="me-empenos-list">
+        {empenosFiltrados.length > 0 ? (
+          empenosFiltrados.map((empeño) => (
+            <div key={empeño.id} className="me-empeno-card">
+              <div className="me-empeno-contenido-superior">
+                <div className="me-empeno-imagen-container">
+                  <img
+                    src={empeño.imagen}
                     alt={empeño.nombre}
-                    className="empeño-imagen"
+                    className="me-empeno-imagen"
                   />
                 </div>
-              )}
-              
-              {/* Texto a la derecha */}
-              <div className="empeño-info">
-                <h2 className="empeño-nombre">{empeño.nombre}</h2>
-                
-                {empeño.descripcion && (
-                  <p className="empeño-descripcion">{empeño.descripcion}</p>
-                )}
-                
-                <div className="empeño-detalles">
-                  <div className="detalle-item">
-                    <span className="detalle-label">Prestado:</span>
-                    <span className="detalle-valor">{empeño.prestado}</span>
-                  </div>
-                  
-                  <div className="detalle-item">
-                    <span className="detalle-label">Total a pagar:</span>
-                    <span className="detalle-valor total">{empeño.totalPagar}</span>
-                  </div>
-                  
-                  <div className="detalle-item">
-                    <span className="detalle-label">Vencimiento:</span>
-                    <span className="detalle-valor">{empeño.vencimiento}</span>
+
+                <div className="me-empeno-info">
+                  <h2 className="me-empeno-nombre">{empeño.nombre}</h2>
+
+                  {empeño.descripcion && (
+                    <p className="me-empeno-descripcion">
+                      {empeño.descripcion}
+                    </p>
+                  )}
+
+                  <div className="me-empeno-detalles">
+                    <div className="me-detalle-item">
+                      <span className="me-detalle-label">Prestado:</span>
+                      <span className="me-detalle-valor">
+                        {empeño.prestado}
+                      </span>
+                    </div>
+
+                    <div className="me-detalle-item">
+                      <span className="me-detalle-label">
+                        Total a pagar:
+                      </span>
+                      <span className="me-detalle-valor me-total">
+                        {empeño.totalPagar}
+                      </span>
+                    </div>
+
+                    <div className="me-detalle-item">
+                      <span className="me-detalle-label">
+                        Vencimiento:
+                      </span>
+                      <span className="me-detalle-valor">
+                        {empeño.vencimiento}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <div className="me-empeno-accion">
+                <button className="me-btn-ver-detalles">
+                  Ver detalles
+                </button>
+              </div>
             </div>
-            
-            {/* Botones debajo, siempre dentro del card */}
-            <div className="empeño-accion">
-              <button className="btn-ver-detalles">Ver detalles</button>
-            </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="me-sin-resultados">
+            No se encontraron empeños
+          </p>
+        )}
       </section>
     </div>
   );

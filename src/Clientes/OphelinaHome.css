@@ -5,8 +5,7 @@
   --gold: #c5a059;
   --gold-light: #e9c46a;
   --gold-dark: #be981d;
-  --cream: #f5f1ea;
-  --white: #ffffff;
+  --white: #ffffff; /*esto es del navbar y otros cuadros*/
   --gray-light: #f0f2f5;
   --gray-medium: #e0e0e0;
   --gray-dark: #333;
@@ -23,23 +22,12 @@
   box-sizing: border-box;
 }
 
-body {
-  background-color: var(--cream);
-  font-family: 'Inter', sans-serif;
-}
 
-/* Dashboard 
-.dashboard {
-  min-height: 100vh;
-  background-color: var(--cream);
-} */
- 
 /* MAIN CONTENT - CONTENEDOR VERTICAL */
 .main-content {
   display: flex;
   flex-direction: column; /* ¡ESTO ES CLAVE! Hace que todo sea vertical */
   width: 100%;
-  max-width: 1200px;
   margin: 0 auto;
   padding: 100px 20px 40px;
 }
@@ -51,7 +39,6 @@ body {
   left: 50%;
   transform: translateX(-50%);
   width: 90%;
-  max-width: 1200px;
   background: var(--white);
   padding: 12px 30px;
   border-radius: 12px;
@@ -75,7 +62,9 @@ body {
 .nav-menu {
   display: flex;
   align-items: center;
+  justify-content: center; /* ← AGREGAR ESTO */
   gap: 35px;
+  flex: 1; /* ← OPCIONAL: para que ocupe espacio */
 }
 
 .nav-menu a {
@@ -123,21 +112,37 @@ body {
   margin-bottom: 30px;
 }
 
+.welcome-section {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .welcome-title {
   font-size: 32px;
   color: var(--primary-blue);
   font-weight: 600;
-  margin-bottom: 5px;
+  margin-bottom: 10px;
   font-family: 'Bodoni Moda', serif;
+  text-align: center;
+  width: 100%;
 }
 
 .welcome-name {
   color: var(--gold-dark);
+  font-size: 32px; /* Cambiado para que coincida con el título */
+  display: inline-block; /* Para que se mantenga en la misma línea */
 }
 
 .welcome-subtitle {
   color: var(--gray-text);
-  font-size: 16px;
+  font-size: 18px;
+  text-align: center;
+  width: 100%;
+  margin-top: 5px;
 }
 
 /* CARDS SECTION */
@@ -404,10 +409,7 @@ body {
     text-align: center;
   }
   
-  .welcome-subtitle {
-    text-align: center;
-  }
-  
+
   .pawn-item {
     flex-direction: column;
     align-items: flex-start;
@@ -422,4 +424,21 @@ body {
     width: 100%;
     text-align: center;
   }
+/* OphelinaHome.css - Agrega al final */
+
+/* Centrar texto de bienvenida */
+.welcome-section {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.welcome-title {
+  font-size: 32px;
+  color: var(--primary-blue);
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-family: 'Bodoni Moda', serif;
+}
+
+
 }

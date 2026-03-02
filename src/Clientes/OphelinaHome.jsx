@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom"; // Importa Link y useLocation
 import "./OphelinaHome.css";
 import logo from "../assets/O_blue.png";
 
 export default function OphelinaHome() {
+  const location = useLocation(); // Para saber en qué ruta estamos
   const [userName] = useState("Suemy Gamboa");
   const [resumen] = useState({
     activos: "5",
@@ -27,8 +29,13 @@ export default function OphelinaHome() {
     return tipo === 'pago' ? 'payment' : 'new';
   };
 
+  // Función para determinar si un link está activo
+  const isActive = (path) => {
+    return location.pathname === path ? 'active' : '';
+  };
+
   return (
-    <div className="main-content">
+  <div className="main-content" style={{ backgroundColor: '#F5F0E9' }}>
       {/* Navbar */}
       <header className="navbar">
         <div className="log-container">
@@ -36,14 +43,10 @@ export default function OphelinaHome() {
         </div>
 
         <nav className="nav-menu">
-          <a href="#" className="active">Historial</a>
-          <a href="#">Empeños</a>
-          {/* Navbar con links 
-           <Link to="/empenos" className={location.pathname === '/empenos' ? 'active' : ''}>
-          Empeños
-        </Link>*/}
-          <a href="#">Pagos</a>
-          <a href="#">Tienda</a>
+          <Link to="/homecliente" className={isActive('/homecliente')}>Historial</Link>
+          <Link to="/misempenos" className={isActive('/misempenos')}>Mis Empeños</Link>
+          <Link to="/pagos" className={isActive('/pagos')}>Pagos</Link>
+          <Link to="/ophelina" className={isActive('/ophelina')}>Tienda</Link>
           <div className="user-avatar" aria-label="Menú de usuario">👤</div>
         </nav>
       </header>
@@ -53,9 +56,9 @@ export default function OphelinaHome() {
         {/* Welcome section */}
         <section className="welcome-section">
           <h1 className="welcome-title">
-            Hola, <span className="welcome-name">{userName}</span>!
+            Hola, <span className="welcome-name">{userName}</span>
           </h1>
-          <p className="welcome-subtitle">Conoce el estado de tus empeños</p>
+          <h3 className="welcome-subtitle">Conoce el estado de tus empeños</h3>
         </section>
 
         {/* Cards resumen */}

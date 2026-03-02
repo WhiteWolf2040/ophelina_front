@@ -4,6 +4,7 @@ import OpheliaRegister from "./components/OpheliaRegister";
 import LandingPage from "./components/LandingPage";
 import OphelinaHome from "./Clientes/OphelinaHome";
 import MisEmpenos from "./Clientes/MisEmpenos";
+import OphelinaTienda from "./Clientes/OphelinaTienda"; 
 
 import Dueno from "./Home/Dueno";
 
@@ -35,42 +36,44 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/loging" element={<OpheliaLogin />} />
 
+        {/* Clientes - Rutas de clientes */}
         <Route path="/homecliente" element={<OphelinaHome />} />
         <Route path="/misempenos" element={<MisEmpenos />} />
+        <Route path="/ophelina" element={<OphelinaTienda />} /> {/* 👈 NUEVA RUTA PARA LA TIENDA */}
 
         <Route path="/" element={<OpheliaLogin />} />
 
         <Route path="/login" element={<OpheliaLogin />} />
         <Route path="/register" element={<OpheliaRegister />} />
 
-        {/* Dashboard */}
+        {/* Dashboard del dueño */}
         <Route path="/home" element={<Dueno />} />
 
-        {/* Clientes */}
+        {/* Clientes (dueño) */}
         <Route path="/clientes" element={<ClientesLayout />}>
           <Route index element={<ClientesLista />} />
           <Route path="nuevo" element={<ClienteNuevo />} />
         </Route>
 
-        {/* Pagos */}
+        {/* Pagos (dueño) */}
         <Route path="/pagos" element={<PagosLayout />}>
           <Route index element={<PagosLista />} />
           <Route path="nuevo" element={<RegistrarPago />} />
         </Route>
 
-        {/* Empeños */}
+        {/* Empeños (dueño) */}
         <Route path="/empenos" element={<EmpenosLayout />}>
           <Route index element={<EmpenosLista />} />
           <Route path="nuevo" element={<NuevoEmpeno />} />
         </Route>
 
-        {/* Inventario */}
+        {/* Inventario (dueño) */}
         <Route path="/inventario" element={<InventarioLayout />}>
           <Route index element={<InventarioLista />} />
           <Route path="nuevo" element={<NuevoInventario />} />
         </Route>
 
-        {/* Configuración */}
+        {/* Configuración (dueño) */}
         <Route path="/configuracion" element={<ConfiguracionesLayout />}>
           <Route index element={<Configuraciones />} />
         </Route>

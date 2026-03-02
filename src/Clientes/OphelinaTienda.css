@@ -1,0 +1,246 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'); 
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700&display=swap');
+
+/* Variables */
+:root {
+  --primary-blue: #0d1b3e;
+  --secondary-blue: #435b83;
+  --gold: #c5a059;
+  --gold-light: #e9c46a;
+  --gold-dark: #be981d;
+  --white: #ffffff;
+  --cream: #F5F0E9;
+  --gray-light: #f0f2f5;
+  --gray-medium: #e0e0e0;
+  --gray-dark: #333;
+  --gray-text: #777;
+  --shadow-sm: 0 4px 20px rgba(0,0,0,0.1);
+  --transition: all 0.3s ease;
+}
+
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--cream);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Contenedor principal */
+.tienda-container {
+  min-height: 100vh;
+  background-color: var(--cream);
+}
+
+.tienda-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 100px 20px 40px;
+}
+
+/* Header */
+.tienda-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.tienda-title {
+  font-family: 'Bodoni Moda', serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--primary-blue);
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+}
+
+.tienda-subtitle {
+  font-size: 18px;
+  color: var(--gray-text);
+  margin-bottom: 30px;
+}
+
+/* Buscador */
+.tienda-search-container {
+  position: relative;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.tienda-search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.6;
+  font-size: 18px;
+}
+
+.tienda-search-input {
+  width: 100%;
+  padding: 14px 20px 14px 48px;
+  border: 2px solid var(--white);
+  border-radius: 50px;
+  font-size: 16px;
+  background-color: #ffffff;
+  color: var(--primary-blue);
+  caret-color: var(--primary-blue);
+  transition: var(--transition);
+}
+
+.tienda-search-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.2);
+}
+
+.tienda-search-input::placeholder {
+  color: #999;
+}
+
+/* GRID CORREGIDO */
+.tienda-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 40px 20px;
+}
+
+/* Card */
+.tienda-card {
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: 0.35s;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.tienda-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+}
+
+/* Brillo dorado */
+.tienda-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  padding: 1px;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(197,160,89,0.4),
+    transparent
+  );
+  opacity: 0;
+  transition: 0.4s;
+}
+
+.tienda-card:hover::before {
+  opacity: 1;
+}
+
+/* Imagen */
+.tienda-imagen-container {
+  height: 170px;
+  overflow: hidden;
+}
+
+.tienda-imagen {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: 0.4s;
+}
+
+.tienda-card:hover .tienda-imagen {
+  transform: scale(1.06);
+}
+
+/* Info */
+.tienda-info {
+  padding: 12px;
+  text-align: center;
+}
+
+.tienda-nombre {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-dark);
+  margin-bottom: 6px;
+}
+
+.tienda-descripcion {
+  font-size: 13px;
+  color: var(--gray-text);
+  line-height: 1.4;
+}
+
+.tienda-precio {
+  font-weight: 600;
+  color: var(--gold);
+  margin-top: 6px;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+/* Botones */
+.tienda-acciones {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+}
+
+.tienda-btn-comprar,
+.tienda-btn-detalles {
+  flex: 1;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+  letter-spacing: 0.5px;
+  font-size: 13px;
+}
+
+.tienda-btn-comprar {
+  background: var(--gold);
+  color: white;
+}
+
+.tienda-btn-comprar:hover {
+  background: var(--gold-dark);
+}
+
+.tienda-btn-detalles {
+  background: var(--primary-blue);
+  color: white;
+}
+
+.tienda-btn-detalles:hover {
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tienda-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .tienda-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tienda-acciones {
+    flex-direction: column;
+  }
+}
