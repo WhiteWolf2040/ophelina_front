@@ -1,21 +1,19 @@
-/* ===== NAVBAR PRINCIPAL ===== */
 body {
   background-color: #f5f0e9;
+  margin: 0;
 }
+
 .Ophe-navbar {
   position: sticky;
   top: 0;
-  width: 100%;
   display: flex;
-  justify-content: center;
-  padding: 0;
-  background: transparent; 
+  justify-content: center; /* centra horizontal */
   z-index: 1000;
 }
+
 .Ophe-navbar-container {
-  margin: 20px 0; /* 🔥 ahora el espacio es margen */
   width: 92%;
-  max-width: 1250px;
+  margin: 20px 0;
   background: #ffffff;
   border-radius: 15px;
   padding: 18px 40px;
@@ -93,22 +91,258 @@ body {
 /* ===== USUARIO ===== */
 
 .Ophe-navbar-user {
+  position: relative;
   display: flex;
   align-items: center;
 }
 
+/* Icono usuario con emoji centrado */
 .Ophe-user-icon {
   width: 42px;
   height: 42px;
-  background: linear-gradient(135deg, #ffffff, #1f2d50);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 10px rgba(44, 62, 112, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
 }
 
 .Ophe-user-icon:hover {
-  background: linear-gradient(135deg, #c6a75e, #e0c58f);
+  background: linear-gradient(135deg, #dfbb66, #e0c58f);
   transform: scale(1.08);
   box-shadow: 0 4px 14px rgba(198, 167, 94, 0.35);
+}
+
+/* Dropdown */
+.notification-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 260px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  padding: 15px;
+  animation: fadeIn 0.2s ease-in-out;
+  z-index: 2000;
+}
+
+/* Header centrado */
+.notification-header {
+  text-align: center;
+}
+
+.notification-header h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c3e70;
+}
+
+.divider {
+  height: 1px;
+  background: #eee;
+  margin: 10px 0;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.bell-icon {
+  font-size: 18px;
+}
+
+.notification-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.sub-text {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+/* Logout */
+.logout-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  justify-content: flex-end;
+  font-size: 13px;
+  color: #c6a75e;
+  transition: 0.2s ease;
+}
+
+.logout-section:hover {
+  opacity: 0.7;
+}
+
+/* Animación */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Popup Styles */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.popup-content {
+  background: white;
+  border-radius: 10px;
+  padding: 25px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.popup-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+}
+
+.popup-close:hover {
+  color: #000;
+}
+
+.popup-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 20px;
+}
+
+.popup-header h3 {
+  margin: 10px 0;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge {
+  background: #ff4444;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.subtitle {
+  color: #999;
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+.price {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin: 10px 0;
+}
+
+.popup-body {
+  margin: 20px 0;
+  padding: 15px 0;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+.popup-body h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.popup-body ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.popup-body li {
+  margin-bottom: 10px;
+  padding: 5px 0;
+}
+
+.popup-body li strong {
+  display: block;
+  color: #333;
+}
+
+.popup-body li p {
+  margin: 2px 0 0 0;
+  color: #999;
+  font-size: 12px;
+}
+
+.days-left {
+  color: #ff4444;
+  font-weight: bold;
+  margin: 10px 0 0 0;
+  font-size: 16px;
+}
+
+.popup-footer {
+  margin-top: 15px;
+}
+
+.popup-footer h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.activity-item {
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.activity-item p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.activity-item p:first-child {
+  font-weight: bold;
+  color: #333;
 }

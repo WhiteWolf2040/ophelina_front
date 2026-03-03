@@ -38,6 +38,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/loging" element={<OpheliaLogin />} />
 
+
         {/* Clientes - Rutas de clientes */}
         <Route path="/homecliente" element={<OphelinaHome />} />
         <Route path="/misempenos" element={<MisEmpenos />} />

@@ -100,25 +100,30 @@ body {
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
 }
 
 .stat-card {
-  background: var(--white);
-  border-radius: 10px;
-  padding: 20px 15px;
+  border-radius: 12px;
+  padding: 25px 15px;
   text-align: center;
   box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 130px;
+  transition: 0.3s ease;
 }
 
 .stat-number {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
-  color: var(--primary-blue);
-  margin-bottom: 5px;
+  color: var(--gold-light);
+  margin-bottom: 6px;
+  line-height: 1.2;
 }
-
 .stat-label {
   color: var(--gray-text);
   font-size: 13px;
@@ -126,11 +131,16 @@ body {
 }
 
 .gold-card {
-  background: linear-gradient(135deg, #f5e7c8 0%, var(--gold-light) 100%);
+  background: linear-gradient(
+    135deg,
+    #f1dcb0 0%,
+    #d4af37 100%
+  ) !important;
 }
 
-.gold-card .stat-number {
-  color: var(--primary-blue);
+.gold-card .stat-number,
+.gold-card .stat-label {
+  color: white;
 }
 
 /* CONTENT SECTIONS */
@@ -250,7 +260,7 @@ body {
   font-weight: 700;
 }
 
-/* ACTIVITY LIST */
+/* ACTIVITY LIST - Versión sin círculos */
 .activity-list {
   display: flex;
   flex-direction: column;
@@ -258,35 +268,16 @@ body {
 }
 
 .activity-item {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--gray-light);
+  background: transparent !important;
 }
 
 .activity-item:last-child {
   border-bottom: none;
 }
 
+/* Ocultamos los círculos de actividad */
 .activity-badge {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.activity-badge.payment {
-  background-color: var(--gold-light);
-}
-
-.activity-badge.new {
-  background-color: var(--secondary-blue);
-  color: white;
+  display: none;
 }
 
 .activity-content {
