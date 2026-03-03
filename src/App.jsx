@@ -1,3 +1,4 @@
+// App.jsx - Versión corregida
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import OpheliaLogin from "./components/OpheliaLogin";
 import OpheliaRegister from "./components/OpheliaRegister";
@@ -23,6 +24,8 @@ import InventarioLayout from "./DuenoInventario/InventarioLayout";
 import InventarioLista from "./DuenoInventario/InventarioLista";
 import NuevoInventario from "./DuenoInventario/NuevoInventario";
 
+import TiendaOnline from "./DuenoTienda/TiendaOnline";
+import Reporte from "./DuenoReporte/Reporte"; // Asegúrate que el import sea correcto
 import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
@@ -30,16 +33,11 @@ function App() {
   return (
     <Router>
       <Routes>
-
         {/* Rutas públicas */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/loging" element={<OpheliaLogin />} />
-
         <Route path="/homecliente" element={<OphelinaHome />} />
         <Route path="/misempenos" element={<MisEmpenos />} />
-
-        <Route path="/" element={<OpheliaLogin />} />
-
         <Route path="/login" element={<OpheliaLogin />} />
         <Route path="/register" element={<OpheliaRegister />} />
 
@@ -70,11 +68,16 @@ function App() {
           <Route path="nuevo" element={<NuevoInventario />} />
         </Route>
 
+        {/* Tienda Online */}
+        <Route path="/tienda" element={<TiendaOnline />} />     
+        
+        {/* Reportes - CORREGIDO: eliminé el Route vacío y cambié a /reportes */}
+        <Route path="/reportes" element={<Reporte />} />
+
         {/* Configuración */}
         <Route path="/configuracion" element={<ConfiguracionesLayout />}>
           <Route index element={<Configuraciones />} />
         </Route>
-
       </Routes>
     </Router>
   );

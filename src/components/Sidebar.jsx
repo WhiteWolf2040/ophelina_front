@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import logo from "../assets/Ophelina_White.png";
+import logo from "../assets/O_White.png";
 import "./Sidebar.css";
 
 const Sidebar = () => {
@@ -30,7 +30,7 @@ const Sidebar = () => {
       {/* Sidebar */}
       <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
-          <img src={logo} alt="Ophelia Logo" className="logo-image" />
+          <img src={logo} alt="Ophelia Logo" className="logo-imagen" />
           <button className="close-btn" onClick={closeSidebar}>×</button>
         </div>
 
