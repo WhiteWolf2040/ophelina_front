@@ -101,7 +101,7 @@ const InventarioLista = () => {
 
       {/* FILTROS */}
       <div className="filtros-container">
-        <div className="buscador-container">
+        <div className="buscador">
           <input
             type="text"
             placeholder="Buscar por nombre, categoría o cliente..."
