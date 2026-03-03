@@ -1,0 +1,114 @@
+/* ===== NAVBAR PRINCIPAL ===== */
+body {
+  background-color: #f5f0e9;
+}
+.Ophe-navbar {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+  background: transparent; 
+  z-index: 1000;
+}
+.Ophe-navbar-container {
+  margin: 20px 0; /* 🔥 ahora el espacio es margen */
+  width: 92%;
+  max-width: 1250px;
+  background: #ffffff;
+  border-radius: 15px;
+  padding: 18px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== LOGO ===== */
+
+.Ophe-navbar-logo img {
+  height: 50px;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.Ophe-navbar-logo img:hover {
+  transform: scale(1.05);
+}
+
+/* ===== LINKS ===== */
+
+.Ophe-navbar-links {
+  list-style: none;
+  display: flex;
+  gap: 55px;
+  margin: 0;
+  padding: 0;
+}
+
+.Ophe-nav-item {
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  color: #2c3e70;
+  transition: all 0.3s ease;
+  position: relative;
+  padding-bottom: 6px;
+}
+
+/* Hover elegante con micro animación */
+.Ophe-nav-item:hover {
+  color: #e8c572;
+  transform: translateY(-2px);
+}
+
+/* Línea animada elegante */
+.Ophe-nav-item::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, #c6a75e, #e0c58f);
+  transition: width 0.3s ease;
+  border-radius: 2px;
+}
+
+.Ophe-nav-item:hover::after {
+  width: 100%;
+}
+
+/* Activo */
+.Ophe-active {
+  color: #c6a75e;
+}
+
+.Ophe-active::after {
+  width: 100%;
+}
+
+/* ===== USUARIO ===== */
+
+.Ophe-navbar-user {
+  display: flex;
+  align-items: center;
+}
+
+.Ophe-user-icon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #ffffff, #1f2d50);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(44, 62, 112, 0.25);
+}
+
+.Ophe-user-icon:hover {
+  background: linear-gradient(135deg, #c6a75e, #e0c58f);
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(198, 167, 94, 0.35);
+}

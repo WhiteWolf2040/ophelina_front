@@ -1,13 +1,12 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
 import "./MisEmpenos.css";
-import logo from "../assets/O_blue.png";
+import Navbar from "../ClientesNav/Navbar";
+
 import anillo_oro from "../assets/anillo_oro.jpg";
 import collar_plata from "../assets/collar_plata.jpg";
 import arete_diamante from "../assets/arete_diamante.jpg";
 
 export default function MisEmpenos() {
-  const location = useLocation();
   const [busqueda, setBusqueda] = useState("");
 
   // Tipos de prendas
@@ -80,120 +79,95 @@ export default function MisEmpenos() {
       .includes(busqueda.toLowerCase())
   );
 
-  const isActive = (path) => {
-    return location.pathname === path ? "me-active" : "";
-  };
-
   return (
-    <div className="me-dashboard">
-      {/* Navbar */}
-      <header className="me-navbar-container">
-        <div className="me-navbar">
-          <div className="me-left-section">
-            <img src={logo} alt="Ophelia Logo" className="me-logo-image" />
+    <>
+      <Navbar />
+      <div className="me-dashboard">
+
+        {/* Header */}
+        <section className="me-page-header">
+          <h1 className="me-page-title">
+            Administra y consulta tus prendas empeñadas
+          </h1>
+
+          <div className="me-search-container">
+            <input
+              type="text"
+              placeholder="Buscar empeño..."
+              className="me-search-input"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+            <span className="me-search-icon">🔍</span>
           </div>
+        </section>
 
-          <nav className="me-nav-menu">
-            <Link to="/homecliente" className={isActive("/homecliente")}>
-              Historial
-            </Link>
-            <Link to="/misempenos" className={isActive("/misempenos")}>
-              Mis Empeños
-            </Link>
-            <Link to="/pagos" className={isActive("/pagos")}>
-              Pagos
-            </Link>
-            <Link to="/ophelina" className={isActive("/ophelina")}>
-              Tienda
-            </Link>
-            <div className="me-user-avatar">👤</div>
-          </nav>
-        </div>
-      </header>
+        {/* Lista */}
+        <section className="me-empenos-list">
+          {empenosFiltrados.length > 0 ? (
+            empenosFiltrados.map((empeño) => (
+              <div key={empeño.id} className="me-empeno-card">
+                <div className="me-empeno-contenido-superior">
+                  <div className="me-empeno-imagen-container">
+                    <img
+                      src={empeño.imagen}
+                      alt={empeño.nombre}
+                      className="me-empeno-imagen"
+                    />
+                  </div>
 
-      {/* Header */}
-      <section className="me-page-header">
-        <h1 className="me-page-title">
-          Administra y consulta tus prendas empeñadas
-        </h1>
+                  <div className="me-empeno-info">
+                    <h2 className="me-empeno-nombre">{empeño.nombre}</h2>
 
-        <div className="me-search-container">
-          <input
-            type="text"
-            placeholder="Buscar empeño..."
-            className="me-search-input"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-          <span className="me-search-icon">🔍</span>
-        </div>
-      </section>
+                    {empeño.descripcion && (
+                      <p className="me-empeno-descripcion">
+                        {empeño.descripcion}
+                      </p>
+                    )}
 
-      {/* Lista */}
-      <section className="me-empenos-list">
-        {empenosFiltrados.length > 0 ? (
-          empenosFiltrados.map((empeño) => (
-            <div key={empeño.id} className="me-empeno-card">
-              <div className="me-empeno-contenido-superior">
-                <div className="me-empeno-imagen-container">
-                  <img
-                    src={empeño.imagen}
-                    alt={empeño.nombre}
-                    className="me-empeno-imagen"
-                  />
-                </div>
+                    <div className="me-empeno-detalles">
+                      <div className="me-detalle-item">
+                        <span className="me-detalle-label">Prestado:</span>
+                        <span className="me-detalle-valor">
+                          {empeño.prestado}
+                        </span>
+                      </div>
 
-                <div className="me-empeno-info">
-                  <h2 className="me-empeno-nombre">{empeño.nombre}</h2>
+                      <div className="me-detalle-item">
+                        <span className="me-detalle-label">
+                          Total a pagar:
+                        </span>
+                        <span className="me-detalle-valor me-total">
+                          {empeño.totalPagar}
+                        </span>
+                      </div>
 
-                  {empeño.descripcion && (
-                    <p className="me-empeno-descripcion">
-                      {empeño.descripcion}
-                    </p>
-                  )}
-
-                  <div className="me-empeno-detalles">
-                    <div className="me-detalle-item">
-                      <span className="me-detalle-label">Prestado:</span>
-                      <span className="me-detalle-valor">
-                        {empeño.prestado}
-                      </span>
-                    </div>
-
-                    <div className="me-detalle-item">
-                      <span className="me-detalle-label">
-                        Total a pagar:
-                      </span>
-                      <span className="me-detalle-valor me-total">
-                        {empeño.totalPagar}
-                      </span>
-                    </div>
-
-                    <div className="me-detalle-item">
-                      <span className="me-detalle-label">
-                        Vencimiento:
-                      </span>
-                      <span className="me-detalle-valor">
-                        {empeño.vencimiento}
-                      </span>
+                      <div className="me-detalle-item">
+                        <span className="me-detalle-label">
+                          Vencimiento:
+                        </span>
+                        <span className="me-detalle-valor">
+                          {empeño.vencimiento}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="me-empeno-accion">
-                <button className="me-btn-ver-detalles">
-                  Ver detalles
-                </button>
+                <div className="me-empeno-accion">
+                  <button className="me-btn-ver-detalles">
+                    Ver detalles
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
-        ) : (
-          <p className="me-sin-resultados">
-            No se encontraron empeños
-          </p>
-        )}
-      </section>
-    </div>
+            ))
+          ) : (
+            <p className="me-sin-resultados">
+              No se encontraron empeños
+            </p>
+          )}
+        </section>
+      </div>
+    </>
   );
 }

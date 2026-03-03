@@ -1,116 +1,41 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Estilos globales - estos sí pueden ser generales */
-.me-global-styles {
+/* Estilos globales */
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-.me-html, .me-body, .me-root {
+html, body, #root {
   height: 100%;
   width: 100%;
 }
 
-.me-body {
-  font-family: 'Bodoni moda', serif;
+body {
+  font-family: 'Bodoni Moda', serif;
   background-color: #F5F0E9;
   color: #3C5070;
 }
 
 /* Contenedor principal */
 .me-dashboard {
+  min-height: 100vh;
   margin: 0 auto;
-  padding: 20px;
-  background-color: #F5F0E9; /*esto le da color a mi pagina*/
-}
-
-/* Navbar */
-.me-navbar-container {
-  background-color: #FFFFFF;
-  border-radius: 12px;
-  padding: 12px 24px;
-  margin-bottom: 28px;
-  box-shadow: 0 4px 12px rgba(60, 80, 112, 0.05);
-  border: 1px solid #F5F0E9;
-  width: 100%;
-}
-
-.me-navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.me-left-section {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 0 0 auto;
-  min-width: 160px;
-}
-
-.me-logo-image {
-  height: 38px;
-  width: auto;
-}
-
-.me-nav-menu {
-  display: flex;
-  gap: 48px;
-  justify-content: center;
-  flex: 1 1 auto;
-  margin: 0 30px;
-}
-
-.me-nav-menu a {
-  text-decoration: none;
-  color: #3C5070;
-  font-weight: 500;
-  font-size: 15px;
-  padding: 6px 0;
-  position: relative;
-  transition: color 0.2s ease;
-  white-space: nowrap;
-}
-
-.me-nav-menu a:hover {
-  color: #112250;
-}
-
-.me-nav-menu a.me-active {
-  color: #112250;
-  font-weight: 600;
-}
-
-.me-nav-menu a.me-active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: #E0C58F;
-  border-radius: 2px;
-}
-
-.me-user-avatar {
-  width: 36px;
-  height: 36px;
+  padding: 40px 20px;
   background-color: #F5F0E9;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.me-user-avatar:hover {
-  transform: scale(1.05);
-  border-color: #112250;
+/* Logo */
+.me-logo-container {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-top: 20px;
+}
+
+.me-logo-image-home {
+  width: 40px;
+  height: auto;
 }
 
 /* Page Header */
@@ -119,7 +44,7 @@
 }
 
 .me-page-title {
-  font-family: 'Bodoni moda', serif;
+  font-family: 'Bodoni Moda', serif;
   font-size: 28px;
   font-weight: 600;
   color: #112250;
@@ -145,14 +70,20 @@
 .me-search-input {
   width: 100%;
   padding: 14px 20px 14px 48px;
-  border: 2px solid var(--white);
+  border: 2px solid #ffffff;
   border-radius: 50px;
   font-family: 'Inter', sans-serif;
   font-size: 16px;
   background-color: #ffffff;
-  color: #0d1b3e !important;   /* 🔥 fuerza el color */
-  caret-color: #0d1b3e;        /* color del cursor */
-  transition: var(--transition);
+  color: #0d1b3e !important;
+  caret-color: #0d1b3e;
+  transition: all 0.3s ease;
+}
+
+.me-search-input:focus {
+  outline: none;
+  border-color: #c5a059;
+  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.2);
 }
 
 .me-search-input::placeholder {
@@ -175,6 +106,12 @@
   box-shadow: 0 2px 8px rgba(18, 58, 122, 0.283);
   display: flex;
   flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.me-empeno-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(18, 58, 122, 0.4);
 }
 
 /* Contenedor superior con imagen y texto */
@@ -261,6 +198,7 @@
   justify-content: flex-end;
   border-top: 1px solid #F0F0F0;
   padding-top: 16px;
+  margin-top: auto;
 }
 
 .me-btn-ver-detalles {
@@ -278,17 +216,25 @@
 .me-btn-ver-detalles:hover {
   background-color: #112250;
   color: white;
+  transform: translateY(-2px);
+}
+
+/* Mensaje sin resultados */
+.me-sin-resultados {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .me-nav-menu {
-    gap: 30px;
-    margin: 0 20px;
-  }
-  
-  .me-left-section {
-    min-width: 140px;
+  .me-dashboard {
+    padding: 30px 20px;
   }
 }
 
@@ -298,27 +244,9 @@
   }
 }
 
-@media (max-width: 850px) {
-  .me-navbar {
-    flex-wrap: wrap;
-    gap: 14px;
-  }
-  
-  .me-nav-menu {
-    order: 3;
-    width: 100%;
-    margin: 5px 0 0;
-    gap: 25px;
-  }
-}
-
 @media (max-width: 768px) {
   .me-dashboard {
-    padding: 14px;
-  }
-  
-  .me-navbar-container {
-    padding: 12px 18px;
+    padding: 20px 15px;
   }
   
   .me-page-title {
@@ -341,18 +269,13 @@
     justify-content: center;
     gap: 10px;
   }
+  
+  .me-empeno-accion {
+    justify-content: center;
+  }
 }
 
 @media (max-width: 600px) {
-  .me-nav-menu {
-    gap: 15px;
-    flex-wrap: wrap;
-  }
-  
-  .me-nav-menu a {
-    font-size: 14px;
-  }
-  
   .me-page-title {
     font-size: 22px;
   }
@@ -369,19 +292,10 @@
 
 @media (max-width: 480px) {
   .me-dashboard {
-    padding: 10px;
+    padding: 15px 10px;
   }
   
-  .me-navbar-container {
-    padding: 10px 14px;
-  }
-  
-  .me-logo-image {
-    height: 32px;
-  }
-  
-  .me-user-avatar {
-    width: 32px;
+  .me-logo-image-home {
     height: 32px;
   }
   
@@ -392,5 +306,13 @@
   .me-empeno-imagen-container {
     width: 120px;
     height: 120px;
+  }
+  
+  .me-empeno-card {
+    padding: 15px;
+  }
+  
+  .me-empeno-nombre {
+    font-size: 18px;
   }
 }
