@@ -15,7 +15,24 @@ const PagosLayout = () => {
       tipo: "Interes",
       fecha: "10/05/2024",
     },
+
+     {
+      id: 2,
+      cliente: "Juan Pérez",
+      articulo: "Samsung Galaxy S24",
+      monto: 350,
+      tipo: "Interes",
+      fecha: "10/05/2024",
+    },
     
+      {
+      id: 3,
+      cliente: "María García",
+      articulo: "MacBook Pro",
+      monto: 1200,
+      tipo: "Interes",
+      fecha: "10/05/2024",
+    },
   ]);
 
   const agregarPago = (nuevoPago) => {
