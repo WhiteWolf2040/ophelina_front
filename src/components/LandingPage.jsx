@@ -285,7 +285,7 @@ const Landing = () => {
         <Navbar />
         
         <section className="hero-section" aria-label="Hero">
-          <div className="hero-overlay">
+          <div className="heroo-overlay">
             <div>
               <img 
                 className="LogoInicial" 
@@ -493,14 +493,14 @@ const Landing = () => {
         {/* CONTACTO */}
         <div className="Contacto" id="contacto">
           <div className="contact-header">
-            <span className="subtitle">Contáctanos</span>
+            <span className="subtitle">Dudas, comentarios y sugerencias</span>
             <h2>Comienza tu transformación digital hoy</h2>
             <p>Agenda una demo personalizada y descubre cómo Ophelia puede revolucionar tu casa de empeño</p>
           </div>
 
           <div className="contact-container">
             <div className="contact-form-card">
-              <h3>Gracias por confiar en empresas Mexicanas</h3>
+              <h3>Contáctanos</h3>
               <form onSubmit={handleSubmit} noValidate>
                 <div className="form-group">
                   <label htmlFor="nombre">Nombre completo *</label>
@@ -510,7 +510,7 @@ const Landing = () => {
                     name="nombre"
                     value={formData.nombre}
                     onChange={handleInputChange}
-                    placeholder="Ingresa tu nombre"
+                    placeholder="Ingresa tu nombre completo"
                     required
                     aria-invalid={!!errors.nombre}
                     aria-describedby={errors.nombre ? "nombre-error" : undefined}
@@ -574,31 +574,31 @@ const Landing = () => {
               <div className="info-card dark">
                 <h4>Otras formas de contacto</h4>
                 <div className="info-item">
-                  <span className="icon" aria-hidden="true">📧</span>
-                  <div>
-                    <strong>Email</strong>
-                    <p>contacto@opheina.mx</p>
+                 
+                  <div >
+                    <strong> <span className="icon" aria-hidden="true">📧</span> Email</strong>
+                    <p>contacto@ophelina.mx</p>
                   </div>
                 </div>
                 <div className="info-item">
-                  <span className="icon" aria-hidden="true">📞</span>
+                  
                   <div>
-                    <strong>Teléfono</strong>
+                    <strong><span className="icon" aria-hidden="true">📞</span> Teléfono</strong>
                     <p>+52 999 999 99 99</p>
                   </div>
                 </div>
                 <div className="info-item">
-                  <span className="icon" aria-hidden="true">📍</span>
+                  
                   <div>
-                    <strong>Oficinas</strong>
+                    <strong><span className="icon" aria-hidden="true">📍</span> Oficinas</strong>
                     <p>Mérida, Yucatan, México</p>
                   </div>
                 </div>
-                <hr />
+               
                 <div className="info-schedule">
                   <strong>Horario de atención</strong>
-                  <p>Lunes a Viernes: 9:00 - 18:00</p>
-                  <p>Sábado: 9:00 - 14:00</p>
+                  <p>Lunes a Viernes: 9:00 - 18:00 <br /> Sábado: 9:00 - 14:00</p>
+                 
                 </div>
               </div>
 

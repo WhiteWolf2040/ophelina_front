@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "./Empenos.css";
+import DiamondIcon from '@mui/icons-material/Diamond';
 
 const EmpenosLista = ({ empenos }) => {
   const navigate = useNavigate();
@@ -95,8 +96,14 @@ const EmpenosLista = ({ empenos }) => {
 
       <div className="content">
         {/* HEADER */}
-        <div className="header-container">
-          <h2>Empeños</h2>
+        <div className="tienda-header">
+           <div>
+            <h1>
+              <DiamondIcon className="title-icon" />
+              Listado de empeños
+            </h1>
+            <p className="header-sub">Gestiona y administra tus empeños</p>
+          </div>
           <button
             className="btn-nuevo"
             onClick={() => navigate("/empenos/nuevo")}

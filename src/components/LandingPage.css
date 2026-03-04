@@ -1,5 +1,5 @@
 :root {
-  --primary-blue: rgba(17, 34, 80, 1);
+  --primary-blue: #0d1b3e;
   --secondary-blue: #435b83;
   --gold: #c5a059;
   --gold-light: #e9c46a;
@@ -118,7 +118,7 @@
   height: auto;
 }
 
-.hero-overlay {
+.heroo-overlay {
   text-align: center;
   color: var(--white);
   background-image: url('../assets/fondolanding.jpg');
@@ -148,6 +148,7 @@
 .btn-primary {
   background-color: rgba(253, 255, 220, 1);
   display: flex;
+  color: #333333; /* <-- esto es el color del texto */
   gap: 10px;
   justify-content: center;
   flex-wrap: wrap;

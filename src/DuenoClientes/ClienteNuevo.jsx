@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+
 import "./Clientes.css";
 
 const ClienteNuevo = ({ agregarCliente }) => {
@@ -22,7 +22,6 @@ const ClienteNuevo = ({ agregarCliente }) => {
 
   return (
     <div className="dashboard">
-  
 
       <div className="content">
         <div className="header-container">

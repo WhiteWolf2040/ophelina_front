@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import "./Inventario.css";
+import InventoryIcon from '@mui/icons-material/Inventory';
 
 const InventarioLista = () => {
   const navigate = useNavigate();
@@ -90,7 +91,14 @@ const InventarioLista = () => {
     <>
       {/* HEADER */}
       <div className="header-container">
-        <h2>Inventario</h2>
+        <div className="tienda-header">
+            <h1 >
+              <InventoryIcon className="title-icon" />
+              Listado de prendas
+              <p className="header-sub">Gestiona los productos en venta</p>
+            </h1>
+            
+          </div>
         <button
           className="btn-nuevo"
           onClick={() => navigate("/inventario/nuevo")}
