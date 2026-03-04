@@ -285,7 +285,7 @@ const Landing = () => {
         <Navbar />
         
         <section className="hero-section" aria-label="Hero">
-          <div className="hero-overlay">
+          <div className="heroo-overlay">
             <div>
               <img 
                 className="LogoInicial" 

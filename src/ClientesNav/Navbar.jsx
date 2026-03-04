@@ -76,7 +76,7 @@ export default function Navbar() {
                   : "Ophe-nav-item"
               }
             >
-              Pagos
+              Tarjetas
             </NavLink>
           </li>
 
