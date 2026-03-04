@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "./Pagos.css";
-
+import PaymentsIcon from '@mui/icons-material/Payments';
 const PagosLista = ({ pagos }) => {
   const navigate = useNavigate();
 
@@ -93,8 +93,12 @@ const PagosLista = ({ pagos }) => {
 
       <div className="content">
         {/* HEADER */}
-        <div className="header-container">
-          <h2>Pagos</h2>
+        <div className="header-container ">
+          <div className="tienda-header">
+            <h1 > <PaymentsIcon className="title-icon"/> Listado de pagos 
+          <p className="header-sub">Gestiona los productos en venta</p></h1>
+          </div>
+          
           <button
             className="btn-nuevo"
             onClick={() => navigate("/pagos/nuevo")}

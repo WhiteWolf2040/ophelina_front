@@ -29,14 +29,31 @@
   font-size: 28px;
   color: #1e3a8a;
 }
+/* Header */
+.tienda-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+ 
+  padding: 0px 30px;
+  border-radius: 15px;
 
+}
 .header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  
+  padding: 0px 30px;
+  border-radius: 15px;
+  
+}
+.tienda-header h1 {
+  margin: 0;
+  color: #1e3a8a;
+  font-size: 28px;
 }
 
 /* ===== BOTONES DE HEADER ===== */

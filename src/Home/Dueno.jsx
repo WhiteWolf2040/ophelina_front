@@ -187,12 +187,13 @@ const Dueno = () => {
     <div className="dashboard">
       <Sidebar />
 
-      <div className="content">
+      <div className="content" >
         {/* HEADER - con botón de alertas en lugar de selector de período */}
         {/* HEADER - con botón de alertas y perfil */}
         <div className="owner-header">
-          <div className="header-top">
-            <h1>Hola, Dueño</h1>
+          <div className="header-top ">
+            <h1>Hola, Dueño  <p className="header-sub">Conoce el estado de tu casa de empeño</p></h1>
+           
             <div className="header-botones">
               {/* BOTÓN DE PERFIL */}
               <button className="btn-perfil" onClick={() => setShowPerfil(true)}>

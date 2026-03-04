@@ -1,7 +1,21 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import "./Configuraciones.css";
-
+// Importar iconos de MUI
+import BusinessIcon from '@mui/icons-material/Business';
+import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import BadgeIcon from '@mui/icons-material/Badge';
+import PercentIcon from '@mui/icons-material/Percent';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import StoreIcon from '@mui/icons-material/Store';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 const Configuraciones = () => {
   const { 
     empresa, 
@@ -172,7 +186,7 @@ const Configuraciones = () => {
       {/* SECCIÓN USUARIOS CON PAGINACIÓN */}
       <div className="config-section">
         <div className="section-header">
-          <h3>Gestión de Usuarios ({usuarios.length})</h3>
+          <h3>Empleados ({usuarios.length})</h3>
           <button 
             className="btn-nuevo"
             onClick={() => setModalUsuarioAbierto(true)}

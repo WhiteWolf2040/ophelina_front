@@ -12,18 +12,35 @@
 }
 
 /* ===== HEADER ===== */
-.header-container {
+
+
+/* Header */
+.tienda-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+ 
+  padding: 0px 30px;
+  border-radius: 15px;
+
+}
+.header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
+  
+  padding: 0px 30px;
+  border-radius: 15px;
+  
+}
+.tienda-header h1 {
+  margin: 0;
+  color: #1e3a8a;
+  font-size: 28px;
 }
 
-.header-container h2 {
-  margin: 0;
-  font-weight: 500;
-  color: #2c2c2c;
-}
 
 /* ===== BOTÓN NUEVO PAGO ===== */
 .btn-nuevo {
@@ -100,7 +117,7 @@
 }
 
 .btn-limpiar {
-  background: #b0b0b0;
+  background: #ffffff;
   border: none;
   padding: 10px 18px;
   border-radius: 8px;

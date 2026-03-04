@@ -1,7 +1,32 @@
-// TiendaOnline.jsx
-import React, { useState, useEffect } from "react";
+// TiendaOnline.jsx - Versión con iconos MUI
+import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import "./TiendaOnline.css";
+
+// Importar iconos de MUI
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import CategoryIcon from '@mui/icons-material/Category';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import ImageIcon from '@mui/icons-material/Image';
+import DescriptionIcon from '@mui/icons-material/Description';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import WarningIcon from '@mui/icons-material/Warning';
+import CloseIcon from '@mui/icons-material/Close';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ClearIcon from '@mui/icons-material/Clear';
+import BoxIcon from '@mui/icons-material/Inventory';
+import SellIcon from '@mui/icons-material/Sell';
 
 const TiendaOnline = () => {
   // Estados para productos
@@ -97,18 +122,12 @@ const TiendaOnline = () => {
 
   // Productos filtrados
   const productosFiltrados = productos.filter(producto => {
-    // Filtro por búsqueda
     const coincideBusqueda = producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
                             producto.descripcion.toLowerCase().includes(busqueda.toLowerCase()) ||
                             producto.categoria.toLowerCase().includes(busqueda.toLowerCase());
     
-    // Filtro por categoría
     const coincideCategoria = categoriaFiltro === "Todas" || producto.categoria === categoriaFiltro;
-    
-    // Filtro por estado
     const coincideEstado = estadoFiltro === "Todos" || producto.estado === estadoFiltro;
-    
-    // Filtro por visibilidad
     const coincideVisibilidad = verSoloVisibles ? producto.visible : true;
     
     return coincideBusqueda && coincideCategoria && coincideEstado && coincideVisibilidad;
@@ -121,7 +140,6 @@ const TiendaOnline = () => {
   const valorTotalInventario = productos.reduce((sum, p) => sum + (p.precio * p.stock), 0);
   const productosDestacados = productos.filter(p => p.destacado).length;
 
-  // Abrir modal para nuevo producto
   const abrirNuevoProducto = () => {
     setModoEdicion(false);
     setFormProducto({
@@ -139,7 +157,6 @@ const TiendaOnline = () => {
     setModalProductoAbierto(true);
   };
 
-  // Abrir modal para editar producto
   const abrirEditarProducto = (producto) => {
     setModoEdicion(true);
     setProductoSeleccionado(producto);
@@ -158,31 +175,26 @@ const TiendaOnline = () => {
     setModalProductoAbierto(true);
   };
 
-  // Abrir modal para ver detalle
   const abrirDetalleProducto = (producto) => {
     setProductoSeleccionado(producto);
     setModalEditarAbierto(true);
   };
 
-  // Abrir modal para confirmar eliminación
   const abrirEliminarProducto = (producto) => {
     setProductoSeleccionado(producto);
     setModalEliminarAbierto(true);
   };
 
-  // Guardar producto (nuevo o editado)
   const guardarProducto = (e) => {
     e.preventDefault();
     
     if (modoEdicion) {
-      // Editar producto existente
       setProductos(productos.map(p => 
         p.id === productoSeleccionado.id 
           ? { ...formProducto, id: p.id, precio: Number(formProducto.precio), descuento: Number(formProducto.descuento), stock: Number(formProducto.stock) }
           : p
       ));
     } else {
-      // Crear nuevo producto
       const nuevoProducto = {
         ...formProducto,
         id: productos.length + 1,
@@ -197,27 +209,23 @@ const TiendaOnline = () => {
     setModalProductoAbierto(false);
   };
 
-  // Eliminar producto
   const eliminarProducto = () => {
     setProductos(productos.filter(p => p.id !== productoSeleccionado.id));
     setModalEliminarAbierto(false);
   };
 
-  // Toggle visible (publicado/oculto)
   const toggleVisible = (id) => {
     setProductos(productos.map(p => 
       p.id === id ? { ...p, visible: !p.visible } : p
     ));
   };
 
-  // Toggle destacado
   const toggleDestacado = (id) => {
     setProductos(productos.map(p => 
       p.id === id ? { ...p, destacado: !p.destacado } : p
     ));
   };
 
-  // Manejar cambios en el formulario
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormProducto({
@@ -230,50 +238,68 @@ const TiendaOnline = () => {
     <div className="dashboard">
       <Sidebar />
 
-      <div className="content ">
+      <div className="content tienda-content">
         {/* HEADER */}
         <div className="tienda-header">
-          <div>
-            <h1>Tienda Online</h1>
-            <p className="header-sub">Gestiona los productos en venta</p>
-          </div>
+          
+            <h1>
+              <StorefrontIcon className="title-icon" />
+              Tienda Online  <p className="header-sub">Gestiona los productos en venta</p>
+            </h1>
+           
+         
           <button className="btn-nuevo-producto" onClick={abrirNuevoProducto}>
-            <span>➕</span> Nuevo Producto
+            <AddIcon />
+            Nuevo Producto
           </button>
         </div>
 
         {/* ESTADÍSTICAS */}
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-icon">📦</div>
+            <div className="stat-icon">
+              <InventoryIcon />
+            </div>
             <div className="stat-info">
               <span className="stat-label">Total Productos</span>
               <span className="stat-value">{totalProductos}</span>
             </div>
           </div>
+          
           <div className="stat-card">
-            <div className="stat-icon">👁️</div>
+            <div className="stat-icon">
+              <VisibilityIcon />
+            </div>
             <div className="stat-info">
               <span className="stat-label">Visibles</span>
               <span className="stat-value">{productosVisibles}</span>
             </div>
           </div>
+          
           <div className="stat-card">
-            <div className="stat-icon">🙈</div>
+            <div className="stat-icon">
+              <VisibilityOffIcon />
+            </div>
             <div className="stat-info">
               <span className="stat-label">Ocultos</span>
               <span className="stat-value">{productosOcultos}</span>
             </div>
           </div>
+          
           <div className="stat-card">
-            <div className="stat-icon">💰</div>
+            <div className="stat-icon">
+              <AttachMoneyIcon />
+            </div>
             <div className="stat-info">
               <span className="stat-label">Valor Total</span>
               <span className="stat-value">${valorTotalInventario.toLocaleString()}</span>
             </div>
           </div>
+          
           <div className="stat-card">
-            <div className="stat-icon">⭐</div>
+            <div className="stat-icon">
+              <StarIcon />
+            </div>
             <div className="stat-info">
               <span className="stat-label">Destacados</span>
               <span className="stat-value">{productosDestacados}</span>
@@ -284,6 +310,7 @@ const TiendaOnline = () => {
         {/* FILTROS */}
         <div className="filtros-tienda">
           <div className="buscador">
+            <SearchIcon className="buscador-icon" />
             <input
               type="text"
               placeholder="Buscar productos..."
@@ -291,7 +318,6 @@ const TiendaOnline = () => {
               onChange={(e) => setBusqueda(e.target.value)}
               className="buscador-input"
             />
-            <span className="buscador-icon">🔍</span>
           </div>
 
           <div className="filtros-selectores">
@@ -321,6 +347,7 @@ const TiendaOnline = () => {
                 checked={verSoloVisibles}
                 onChange={(e) => setVerSoloVisibles(e.target.checked)}
               />
+              <VisibilityIcon fontSize="small" />
               Solo visibles
             </label>
           </div>
@@ -335,7 +362,8 @@ const TiendaOnline = () => {
                 setVerSoloVisibles(false);
               }}
             >
-              ✕ Limpiar filtros
+              <ClearIcon fontSize="small" />
+              Limpiar filtros
             </button>
           )}
         </div>
@@ -351,16 +379,24 @@ const TiendaOnline = () => {
                     <span className="producto-descuento">-{producto.descuento}%</span>
                   )}
                   {producto.destacado && (
-                    <span className="producto-destacado">⭐</span>
+                    <span className="producto-destacado">
+                      <StarIcon />
+                    </span>
                   )}
                   {!producto.visible && (
-                    <span className="producto-oculto-badge">OCULTO</span>
+                    <span className="producto-oculto-badge">
+                      <VisibilityOffIcon fontSize="small" />
+                      OCULTO
+                    </span>
                   )}
                 </div>
                 
                 <div className="producto-info">
                   <h3>{producto.nombre}</h3>
-                  <span className="producto-categoria">{producto.categoria}</span>
+                  <span className="producto-categoria">
+                    <CategoryIcon fontSize="small" />
+                    {producto.categoria}
+                  </span>
                   
                   <div className="producto-precios">
                     {producto.descuento > 0 ? (
@@ -379,7 +415,10 @@ const TiendaOnline = () => {
                     <span className={`estado-badge estado-${producto.estado.toLowerCase().replace(/\s+/g, '-')}`}>
                       {producto.estado}
                     </span>
-                    <span className="producto-stock">Stock: {producto.stock}</span>
+                    <span className="producto-stock">
+                      <BoxIcon fontSize="small" />
+                      Stock: {producto.stock}
+                    </span>
                   </div>
                   
                   <div className="producto-acciones">
@@ -388,35 +427,35 @@ const TiendaOnline = () => {
                       onClick={() => abrirDetalleProducto(producto)}
                       title="Ver detalles"
                     >
-                      👁️
+                      <VisibilityIcon />
                     </button>
                     <button 
                       className="btn-accion editar"
                       onClick={() => abrirEditarProducto(producto)}
                       title="Editar"
                     >
-                      ✏️
+                      <EditIcon />
                     </button>
                     <button 
                       className="btn-accion toggle-visible"
                       onClick={() => toggleVisible(producto.id)}
                       title={producto.visible ? "Ocultar" : "Mostrar"}
                     >
-                      {producto.visible ? "🙈" : "👁️"}
+                      {producto.visible ? <VisibilityOffIcon /> : <VisibilityIcon />}
                     </button>
                     <button 
                       className="btn-accion destacar"
                       onClick={() => toggleDestacado(producto.id)}
                       title={producto.destacado ? "Quitar destacado" : "Destacar"}
                     >
-                      {producto.destacado ? "⭐" : "☆"}
+                      {producto.destacado ? <StarIcon /> : <StarBorderIcon />}
                     </button>
                     <button 
                       className="btn-accion eliminar"
                       onClick={() => abrirEliminarProducto(producto)}
                       title="Eliminar"
                     >
-                      🗑️
+                      <DeleteIcon />
                     </button>
                   </div>
                 </div>
@@ -424,7 +463,8 @@ const TiendaOnline = () => {
             ))
           ) : (
             <div className="sin-resultados">
-              No se encontraron productos con esos filtros
+              <SearchIcon className="empty-icon" />
+              <p>No se encontraron productos con esos filtros</p>
             </div>
           )}
         </div>
@@ -433,17 +473,25 @@ const TiendaOnline = () => {
         {modalProductoAbierto && (
           <div className="modal-overlay" onClick={() => setModalProductoAbierto(false)}>
             <div className="modal-producto" onClick={(e) => e.stopPropagation()}>
-              <button className="modal-cerrar" onClick={() => setModalProductoAbierto(false)}>×</button>
+              <button className="modal-cerrar" onClick={() => setModalProductoAbierto(false)}>
+                <CloseIcon />
+              </button>
               
               <div className="modal-header">
-                <h2>{modoEdicion ? "Editar Producto" : "Nuevo Producto"}</h2>
+                <h2>
+                  {modoEdicion ? <EditIcon className="modal-icon" /> : <AddIcon className="modal-icon" />}
+                  {modoEdicion ? "Editar Producto" : "Nuevo Producto"}
+                </h2>
               </div>
 
               <form onSubmit={guardarProducto}>
                 <div className="modal-body">
                   <div className="form-grid">
                     <div className="form-group">
-                      <label>Nombre del producto *</label>
+                      <label>
+                        <SellIcon fontSize="small" />
+                        Nombre del producto *
+                      </label>
                       <input
                         type="text"
                         name="nombre"
@@ -455,7 +503,10 @@ const TiendaOnline = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Categoría *</label>
+                      <label>
+                        <CategoryIcon fontSize="small" />
+                        Categoría *
+                      </label>
                       <select
                         name="categoria"
                         value={formProducto.categoria}
@@ -469,7 +520,10 @@ const TiendaOnline = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Precio ($) *</label>
+                      <label>
+                        <AttachMoneyIcon fontSize="small" />
+                        Precio ($) *
+                      </label>
                       <input
                         type="number"
                         name="precio"
@@ -482,7 +536,10 @@ const TiendaOnline = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Descuento (%)</label>
+                      <label>
+                        <LocalOfferIcon fontSize="small" />
+                        Descuento (%)
+                      </label>
                       <input
                         type="number"
                         name="descuento"
@@ -495,7 +552,10 @@ const TiendaOnline = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Stock *</label>
+                      <label>
+                        <BoxIcon fontSize="small" />
+                        Stock *
+                      </label>
                       <input
                         type="number"
                         name="stock"
@@ -522,7 +582,10 @@ const TiendaOnline = () => {
                     </div>
 
                     <div className="form-group full-width">
-                      <label>URL de la imagen</label>
+                      <label>
+                        <ImageIcon fontSize="small" />
+                        URL de la imagen
+                      </label>
                       <input
                         type="text"
                         name="imagen"
@@ -533,7 +596,10 @@ const TiendaOnline = () => {
                     </div>
 
                     <div className="form-group full-width">
-                      <label>Descripción</label>
+                      <label>
+                        <DescriptionIcon fontSize="small" />
+                        Descripción
+                      </label>
                       <textarea
                         name="descripcion"
                         value={formProducto.descripcion}
@@ -551,6 +617,7 @@ const TiendaOnline = () => {
                           checked={formProducto.visible}
                           onChange={handleInputChange}
                         />
+                        {formProducto.visible ? <VisibilityIcon /> : <VisibilityOffIcon />}
                         Producto visible en tienda
                       </label>
                     </div>
@@ -563,6 +630,7 @@ const TiendaOnline = () => {
                           checked={formProducto.destacado}
                           onChange={handleInputChange}
                         />
+                        {formProducto.destacado ? <StarIcon /> : <StarBorderIcon />}
                         Marcar como destacado
                       </label>
                     </div>
@@ -571,9 +639,11 @@ const TiendaOnline = () => {
 
                 <div className="modal-acciones">
                   <button type="submit" className="btn-guardar">
+                    {modoEdicion ? <EditIcon /> : <AddIcon />}
                     {modoEdicion ? "Guardar Cambios" : "Crear Producto"}
                   </button>
                   <button type="button" className="btn-cancelar" onClick={() => setModalProductoAbierto(false)}>
+                    <CloseIcon />
                     Cancelar
                   </button>
                 </div>
@@ -586,7 +656,9 @@ const TiendaOnline = () => {
         {modalEditarAbierto && productoSeleccionado && (
           <div className="modal-overlay" onClick={() => setModalEditarAbierto(false)}>
             <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-              <button className="modal-cerrar" onClick={() => setModalEditarAbierto(false)}>×</button>
+              <button className="modal-cerrar" onClick={() => setModalEditarAbierto(false)}>
+                <CloseIcon />
+              </button>
               
               <div className="modal-header">
                 <h2>{productoSeleccionado.nombre}</h2>
@@ -644,14 +716,19 @@ const TiendaOnline = () => {
                     <div className="info-item">
                       <span className="info-label">Publicado</span>
                       <span className="info-value">
-                        {productoSeleccionado.visible ? "✅ Visible" : "❌ Oculto"}
+                        {productoSeleccionado.visible ? 
+                          <CheckCircleIcon className="visible-icon" /> : 
+                          <CancelIcon className="oculto-icon" />
+                        }
+                        {productoSeleccionado.visible ? " Visible" : " Oculto"}
                       </span>
                     </div>
                     
                     <div className="info-item">
                       <span className="info-label">Destacado</span>
                       <span className="info-value">
-                        {productoSeleccionado.destacado ? "⭐ Sí" : "☆ No"}
+                        {productoSeleccionado.destacado ? <StarIcon /> : <StarBorderIcon />}
+                        {productoSeleccionado.destacado ? " Sí" : " No"}
                       </span>
                     </div>
                     
@@ -671,7 +748,8 @@ const TiendaOnline = () => {
                     abrirEditarProducto(productoSeleccionado);
                   }}
                 >
-                  ✏️ Editar
+                  <EditIcon />
+                  Editar
                 </button>
                 <button 
                   className="btn-eliminar"
@@ -680,9 +758,11 @@ const TiendaOnline = () => {
                     abrirEliminarProducto(productoSeleccionado);
                   }}
                 >
-                  🗑️ Eliminar
+                  <DeleteIcon />
+                  Eliminar
                 </button>
                 <button className="btn-cancelar" onClick={() => setModalEditarAbierto(false)}>
+                  <CloseIcon />
                   Cerrar
                 </button>
               </div>
@@ -694,7 +774,9 @@ const TiendaOnline = () => {
         {modalEliminarAbierto && productoSeleccionado && (
           <div className="modal-overlay" onClick={() => setModalEliminarAbierto(false)}>
             <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-icono">⚠️</div>
+              <div className="modal-icono">
+                <WarningIcon />
+              </div>
               <h3>¿Eliminar producto?</h3>
               <p>Estás a punto de eliminar <strong>{productoSeleccionado.nombre}</strong></p>
               <p className="advertencia">Esta acción no se puede deshacer</p>
@@ -710,6 +792,7 @@ const TiendaOnline = () => {
                   className="btn-confirmar-eliminar"
                   onClick={eliminarProducto}
                 >
+                  <DeleteIcon />
                   Sí, eliminar
                 </button>
               </div>

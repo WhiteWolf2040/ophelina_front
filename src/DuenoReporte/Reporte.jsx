@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import "./Reporte.css";
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 
 // Importar ApexCharts
 import ApexCharts from "apexcharts";
@@ -194,15 +195,20 @@ const Reportes = () => {
 
       <div className="content">
         {/* HEADER */}
-        <div className="reportes-header">
-          <div>
-            <h1>Reportes</h1>
-            <p className="header-sub">Análisis y estadísticas del negocio</p>
-          </div>
-          <button className="btn-exportar" onClick={handleExportarPDF}>
+        {/* HEADER */}
+        <div className="tienda-header">
+          
+            <h1>
+              <LeaderboardIcon className="title-icon" />
+              Tienda Online  <p className="header-sub">Visualiza y exporta tu información</p>
+            </h1>
+           
+         <button className="btn-exportar" onClick={handleExportarPDF}>
             <span>📄</span> Exportar PDF
           </button>
+          
         </div>
+        
 
         {/* FILTROS DE FECHA */}
         <div className="filtros-reportes">
