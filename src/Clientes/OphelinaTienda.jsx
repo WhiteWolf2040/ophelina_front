@@ -182,7 +182,6 @@ export default function OphelinaTienda() {
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
               />
-              <span className="search-icon">🔍</span>
             </div>
 
             <div className="categories-wrapper">

@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import "./OphelinaHome.css";
 import Navbar from "../ClientesNav/Navbar";
+import InventoryIcon from '@mui/icons-material/Inventory';
+import PaymentIcon from '@mui/icons-material/Payment';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import BoxIcon from '@mui/icons-material/Inventory';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import DiamondIcon from '@mui/icons-material/Diamond';
+import Tooltip from '@mui/material/Tooltip';
 
 export default function OphelinaHome() {
   const [userName] = useState("Suemy Gamboa");
@@ -19,18 +27,14 @@ export default function OphelinaHome() {
     total: "$38,500",
   });
   const [actividadReciente] = useState([
-    { id: 1, tipo: "pago", titulo: "Pago realizado", detalle: "Anillo de Oro - $3,500 • Hace 2 días", icono: "💰" },
-    { id: 2, tipo: "nuevo", titulo: "Nuevo empeño", detalle: "Anillo de Oro - $3,500 • Hace 2 días", icono: "✨" },
+    { id: 1, tipo: "pago", titulo: "Pago realizado", detalle: "Anillo de Oro - $3,500 • Hace 2 días", icono: <PaymentIcon sx={{ fontSize: 20 }} /> },
+    { id: 2, tipo: "nuevo", titulo: "Nuevo empeño", detalle: "Anillo de Oro - $3,500 • Hace 2 días", icono: <AddCircleOutlineIcon sx={{ fontSize: 20 }} /> },
   ]);
-
-  const getActivityClass = (tipo) => {
-    return tipo === 'pago' ? 'payment' : 'new';
-  };
 
   return (
     <>
       <Navbar />
-      <div className="main-content" style={{ backgroundColor: '#F5F0E9' }}>
+      <div className="main-content">
         {/* MAIN CONTENT */}
         <main className="home-main">
           {/* Welcome section */}
@@ -41,32 +45,77 @@ export default function OphelinaHome() {
             <h3 className="welcome-subtitle">Conoce el estado de tus empeños</h3>
           </section>
 
-          {/* Cards resumen */}
+          {/* Cards resumen - SOLO ICONOS */}
           <section className="cards-section">
             <div className="cards-grid">
-              <div className="stat-card">
-                <div className="stat-number">{resumen.activos}</div>
-                <div className="stat-label1">Activos</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-number">{resumen.totalPendiente}</div>
-                <div className="stat-label1">Total pendiente</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-number">{resumen.proximoVencimiento}</div>
-                <div className="stat-label1">Próximo vencimiento</div>
-              </div>
-              <div className="stat-card gold-card">
-                <div className="stat-number">{resumen.precioOro}</div>
-                <div className="stat-label1">Precio del oro (gr)</div>
-              </div>
+              <Tooltip 
+                title={
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Activos</div>
+                    <div style={{ fontSize: '20px', color: '#e9c46a' }}>{resumen.activos}</div>
+                  </div>
+                } 
+                placement="top" 
+                arrow
+              >
+                <div className="stat-card">
+                  <InventoryIcon sx={{ fontSize: 48, color: '#0d1b3e' }} />
+                </div>
+              </Tooltip>
+
+              <Tooltip 
+                title={
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Total pendiente</div>
+                    <div style={{ fontSize: '20px', color: '#e9c46a' }}>{resumen.totalPendiente}</div>
+                  </div>
+                } 
+                placement="top" 
+                arrow
+              >
+                <div className="stat-card">
+                  <AttachMoneyIcon sx={{ fontSize: 48, color: '#0d1b3e' }} />
+                </div>
+              </Tooltip>
+
+              <Tooltip 
+                title={
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Próximo vencimiento</div>
+                    <div style={{ fontSize: '20px', color: '#e9c46a' }}>{resumen.proximoVencimiento}</div>
+                  </div>
+                } 
+                placement="top" 
+                arrow
+              >
+                <div className="stat-card">
+                  <AccessTimeIcon sx={{ fontSize: 48, color: '#0d1b3e' }} />
+                </div>
+              </Tooltip>
+
+              <Tooltip 
+                title={
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Precio del oro (gr)</div>
+                    <div style={{ fontSize: '20px', color: '#e9c46a' }}>{resumen.precioOro}</div>
+                  </div>
+                } 
+                placement="top" 
+                arrow
+              >
+                <div className="stat-card gold-card">
+                  <DiamondIcon sx={{ fontSize: 48, color: '#ffffff' }} />
+                </div>
+              </Tooltip>
             </div>
           </section>
 
           {/* Próximos a vencer */}
           <section className="content-section">
             <h3 className="section-title">
-              <span className="section-icon">📦</span> 
+              <span className="section-icon">
+                <BoxIcon sx={{ fontSize: 24, verticalAlign: 'middle' }} />
+              </span> 
               Empeños Próximos a Vencer:
             </h3>
             
@@ -88,7 +137,9 @@ export default function OphelinaHome() {
             {/* Desglose de deuda */}
             <section className="content-section debt-section">
               <h3 className="section-title">
-                <span className="section-icon">📦</span> 
+                <span className="section-icon">
+                  <InventoryIcon sx={{ fontSize: 24, verticalAlign: 'middle' }} />
+                </span> 
                 Desglose de deuda
               </h3>
               
@@ -112,14 +163,16 @@ export default function OphelinaHome() {
             {/* Actividad reciente */}
             <section className="content-section activity-section">
               <h3 className="section-title">
-                <span className="section-icon">📦</span> 
+                <span className="section-icon">
+                  <InventoryIcon sx={{ fontSize: 24, verticalAlign: 'middle' }} />
+                </span> 
                 Actividad reciente
               </h3>
               
               <div className="activity-list">
                 {actividadReciente.map(item => (
                   <div key={item.id} className="activity-item">
-                    <div className={`activity-badge ${getActivityClass(item.tipo)}`}>
+                    <div className="activity-icon">
                       {item.icono}
                     </div>
                     <div className="activity-content">
