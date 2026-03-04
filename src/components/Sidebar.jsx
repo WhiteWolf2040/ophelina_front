@@ -36,7 +36,7 @@ const Sidebar = () => {
 
         <nav className="sidebar-menu">
           <NavLink to="/home" className="sidebar-link" onClick={closeSidebar}>
-            Dashboard
+            Home
           </NavLink>
           <NavLink to="/clientes" className="sidebar-link" onClick={closeSidebar}>
             Clientes
