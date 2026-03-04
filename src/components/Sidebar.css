@@ -1,9 +1,9 @@
-<<<<<<< HEAD
+
 
 /* Sidebar.css */
-=======
+
 /* Sidebar.css - Versión Mejorada */
->>>>>>> 10e2855e07d22c5d71786d221e54e23a91315ed5
+
 
 /* ===== VARIABLES ===== */
 :root {
@@ -55,7 +55,7 @@
   animation: fadeIn 0.3s ease;
 }
 
-<<<<<<< HEAD
+
 /* Sidebar base */
 
 
@@ -68,14 +68,15 @@
 
 /* SIDEBAR - estructura corregida */
 
-=======
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 /* ===== SIDEBAR BASE ===== */
->>>>>>> 10e2855e07d22c5d71786d221e54e23a91315ed5
+
+
 .sidebar {
   width: var(--sidebar-width);
   background: linear-gradient(180deg, #0a1a3a 0%, #1a2a4a 100%);
@@ -385,15 +386,14 @@
     padding: 14px 16px;
     font-size: 15px;
   }
-<<<<<<< HEAD
-}
 
-=======
+}
 
   .sidebar-footer {
     display: block !important; /* Siempre mostrar footer en móvil */
   }
-}
+
+
 
 /* Móviles pequeños */
 @media (max-width: 480px) {
@@ -437,4 +437,4 @@
 .sidebar.open {
   animation: slideIn 0.3s ease;
 }
->>>>>>> 10e2855e07d22c5d71786d221e54e23a91315ed5
+
