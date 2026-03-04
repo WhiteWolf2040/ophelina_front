@@ -1,3 +1,7 @@
+/* OphelinaHome.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700&display=swap');
+
 /* Variables */
 :root {
   --primary-blue: #0d1b3e;
@@ -5,7 +9,7 @@
   --gold: #c5a059;
   --gold-light: #e9c46a;
   --gold-dark: #be981d;
-  --white: #ffffff; /*esto es del navbar y otros cuadros*/
+  --white: #ffffff;
   --gray-light: #f0f2f5;
   --gray-medium: #e0e0e0;
   --gray-dark: #333;
@@ -22,98 +26,42 @@
   box-sizing: border-box;
 }
 
+body {
+  background-color: #F5F0E9;
+  font-family: 'Inter', sans-serif;
+}
 
-/* MAIN CONTENT - CONTENEDOR VERTICAL */
+/* MAIN CONTENT */
 .main-content {
-  display: flex;
-  flex-direction: column; /* ¡ESTO ES CLAVE! Hace que todo sea vertical */
+  min-height: 100vh;
   width: 100%;
   margin: 0 auto;
-  padding: 100px 20px 40px;
+  padding: 40px 20px;
+  background-color: #F5F0E9;
 }
 
-/* NAVBAR */
-.navbar {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  background: var(--white);
-  padding: 12px 30px;
-  border-radius: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: var(--shadow-sm);
-  z-index: 100;
+/* Logo opcional */
+.logo-container-home {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-top: 20px;
 }
 
-.log-container {
-  display: flex;
-  align-items: center;
-}
-
-.log-image {
-  width: 25px;
+.logo-image-home {
+  width: 40px;
   height: auto;
 }
 
-.nav-menu {
-  display: flex;
-  align-items: center;
-  justify-content: center; /* ← AGREGAR ESTO */
-  gap: 35px;
-  flex: 1; /* ← OPCIONAL: para que ocupe espacio */
-}
-
-.nav-menu a {
-  text-decoration: none;
-  color: var(--gray-dark);
-  font-weight: 500;
-  font-size: 14px;
-  transition: var(--transition);
-}
-
-.nav-menu a:hover {
-  color: var(--gold);
-}
-
-.nav-menu a.active {
-  color: var(--primary-blue);
-  font-weight: 600;
-  position: relative;
-}
-
-.nav-menu a.active::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: var(--gold);
-}
-
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  background-color: var(--gray-light);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 16px;
+/* HOME MAIN */
+.home-main {
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 /* WELCOME SECTION */
 .welcome-section {
-  margin-bottom: 30px;
-}
-
-.welcome-section {
   text-align: center;
+  margin-bottom: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -133,8 +81,8 @@
 
 .welcome-name {
   color: var(--gold-dark);
-  font-size: 32px; /* Cambiado para que coincida con el título */
-  display: inline-block; /* Para que se mantenga en la misma línea */
+  font-size: 32px;
+  display: inline-block;
 }
 
 .welcome-subtitle {
@@ -152,25 +100,30 @@
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
 }
 
 .stat-card {
-  background: var(--white);
-  border-radius: 10px;
-  padding: 20px 15px;
+  border-radius: 12px;
+  padding: 25px 15px;
   text-align: center;
   box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 130px;
+  transition: 0.3s ease;
 }
 
 .stat-number {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
-  color: var(--primary-blue);
-  margin-bottom: 5px;
+  color: var(--gold-light);
+  margin-bottom: 6px;
+  line-height: 1.2;
 }
-
 .stat-label {
   color: var(--gray-text);
   font-size: 13px;
@@ -178,11 +131,16 @@
 }
 
 .gold-card {
-  background: linear-gradient(135deg, #f5e7c8 0%, var(--gold-light) 100%);
+  background: linear-gradient(
+    135deg,
+    #f1dcb0 0%,
+    #d4af37 100%
+  ) !important;
 }
 
-.gold-card .stat-number {
-  color: var(--primary-blue);
+.gold-card .stat-number,
+.gold-card .stat-label {
+  color: white;
 }
 
 /* CONTENT SECTIONS */
@@ -302,7 +260,7 @@
   font-weight: 700;
 }
 
-/* ACTIVITY LIST */
+/* ACTIVITY LIST - Versión sin círculos */
 .activity-list {
   display: flex;
   flex-direction: column;
@@ -310,35 +268,16 @@
 }
 
 .activity-item {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--gray-light);
+  background: transparent !important;
 }
 
 .activity-item:last-child {
   border-bottom: none;
 }
 
+/* Ocultamos los círculos de actividad */
 .activity-badge {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.activity-badge.payment {
-  background-color: var(--gold-light);
-}
-
-.activity-badge.new {
-  background-color: var(--secondary-blue);
-  color: white;
+  display: none;
 }
 
 .activity-content {
@@ -368,38 +307,16 @@
 }
 
 @media (max-width: 768px) {
-  .navbar {
-    width: 95%;
-    padding: 12px 20px;
-  }
-  
-  .nav-menu {
-    gap: 20px;
-  }
-  
-  .nav-menu a {
-    font-size: 13px;
-  }
-  
   .welcome-title {
+    font-size: 28px;
+  }
+  
+  .welcome-name {
     font-size: 28px;
   }
 }
 
 @media (max-width: 550px) {
-  .navbar {
-    flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-  }
-  
-  .nav-menu {
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 15px;
-  }
-  
   .cards-grid {
     grid-template-columns: 1fr;
   }
@@ -409,7 +326,10 @@
     text-align: center;
   }
   
-
+  .welcome-name {
+    font-size: 24px;
+  }
+  
   .pawn-item {
     flex-direction: column;
     align-items: flex-start;
@@ -424,21 +344,4 @@
     width: 100%;
     text-align: center;
   }
-/* OphelinaHome.css - Agrega al final */
-
-/* Centrar texto de bienvenida */
-.welcome-section {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.welcome-title {
-  font-size: 32px;
-  color: var(--primary-blue);
-  font-weight: 600;
-  margin-bottom: 10px;
-  font-family: 'Bodoni Moda', serif;
-}
-
-
 }
