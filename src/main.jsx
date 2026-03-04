@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import "@fontsource-variable/material-symbols-rounded"; // Para iconos sin relleno
 import 'bootstrap/dist/css/bootstrap.min.css';
+import "@fontsource-variable/material-symbols-rounded";
 
 
 createRoot(document.getElementById('root')).render(

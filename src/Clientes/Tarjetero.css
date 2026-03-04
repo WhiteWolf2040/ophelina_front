@@ -1,0 +1,503 @@
+/* ===== VARIABLES ===== */
+:root {
+  --tar-primary: #3B507D;
+  --tar-primary-hover: #2a3b5f;
+  --tar-primary-light: #4a6399;
+  --tar-background: #F5F0EA;
+  --tar-glass-bg: rgba(255, 255, 255, 0.25);
+  --tar-glass-border: rgba(255, 255, 255, 0.3);
+  --tar-glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --tar-text-dark: #1a1a1a;
+  --tar-text-gray: #666666;
+  --tar-text-light: #ffffff;
+  --tar-border-light: rgba(255, 255, 255, 0.2);
+  --tar-danger: #dc2626;
+  --tar-danger-hover: #b91c1c;
+  --tar-gray: #6b7280;
+  --tar-gray-hover: #4b5563;
+}
+
+/* ===== ESTILOS GLOBALES ===== */
+body {
+  background-color: var(--tar-background);
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.tar-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+}
+
+/* ===== WRAPPER PARA CENTRAR CARDS ===== */
+.tar-cards-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* ===== ENCABEZADO ===== */
+.tar-header h1 {
+  color: var(--tar-text-dark);
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* ===== BOTONES PRINCIPALES ===== */
+.tar-main-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tar-btn-add,
+.tar-btn-edit-main {
+  padding: 0.8rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--tar-primary);
+  color: white;
+  border: 1px solid transparent;
+}
+
+.tar-btn-add:hover,
+.tar-btn-edit-main:hover:not(:disabled) {
+  background: var(--tar-primary-hover);
+}
+
+.tar-btn-edit-main {
+  background: #4a4a4a;
+}
+
+.tar-btn-edit-main:hover:not(:disabled) {
+  background: #2d2d2d;
+}
+
+.tar-btn-edit-main:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== CONTENEDOR DE LA TARJETA ===== */
+.tar-card-container {
+  display: flex;
+  gap: 2rem;
+  align-items: stretch;
+  margin: 1rem auto;
+  max-width: 1000px;
+  width: 100%;
+}
+
+/* ===== LADO IZQUIERDO - TARJETA ===== */
+.tar-card-left {
+  flex: 1;
+  max-width: 400px;
+}
+
+.tar-card {
+  background: linear-gradient(135deg, #2b3a67 0%, #1a2942 100%);
+  padding: 1.5rem;
+  color: var(--tar-text-light);
+  border-radius: 16px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.tar-chip {
+  width: 45px;
+  height: 35px;
+  background: linear-gradient(135deg, #b8860b, #daa520);
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.tar-chip::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-50%);
+}
+
+.tar-number {
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.tar-number-line1,
+.tar-number-line2 {
+  display: block;
+}
+
+.tar-number-line1 {
+  margin-bottom: 0.3rem;
+}
+
+.tar-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.tar-holder {
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+  font-size: 0.9rem;
+}
+
+/* ===== BOTONES DE ACCIÓN EN TARJETA ===== */
+.tar-card-actions {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.tar-btn-edit,
+.tar-btn-delete {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  color: white;
+  border: 1px solid transparent;
+}
+
+.tar-btn-edit {
+  background: var(--tar-primary);
+}
+
+.tar-btn-edit:hover {
+  background: var(--tar-primary-hover);
+}
+
+.tar-btn-delete {
+  background: var(--tar-danger);
+}
+
+.tar-btn-delete:hover {
+  background: var(--tar-danger-hover);
+}
+
+/* ===== LADO DERECHO - PANEL DE INFORMACIÓN ===== */
+.tar-card-right {
+  flex: 1;
+  max-width: 550px;
+}
+
+.tar-info-panel {
+  background: var(--tar-glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: var(--tar-glass-shadow);
+  height: 100%;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid var(--tar-border-light);
+}
+
+.tar-info-row {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--tar-border-light);
+}
+
+.tar-info-row:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.tar-info-label {
+  flex: 0 0 110px;
+  color: var(--tar-text-gray);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tar-info-value {
+  flex: 1;
+  color: var(--tar-text-dark);
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tar-info-value.tar-cvv-masked {
+  letter-spacing: 2px;
+  font-family: monospace;
+}
+
+/* ===== MODALES ===== */
+.tar-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.tar-modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-width: 450px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.tar-modal-content h3 {
+  color: var(--tar-text-dark);
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+/* ===== FORMULARIOS ===== */
+.tar-form-group {
+  margin-bottom: 1rem;
+}
+
+.tar-form-group label {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--tar-text-dark);
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tar-form-group input,
+.tar-form-group select {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  font-family: 'Courier New', monospace;
+}
+
+.tar-form-group input:focus,
+.tar-form-group select:focus {
+  outline: none;
+  border-color: var(--tar-primary);
+  box-shadow: 0 0 0 2px rgba(59, 80, 125, 0.1);
+}
+
+.tar-form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0;
+}
+
+.tar-form-row .tar-form-group {
+  flex: 1;
+}
+
+/* ===== BOTONES DE MODAL ===== */
+.tar-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.tar-modal-actions-row {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.tar-btn-save,
+.tar-btn-cancel,
+.tar-btn-delete-modal {
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  color: white;
+  flex: 1;
+  border: 1px solid transparent;
+}
+
+.tar-btn-save {
+  background: var(--tar-primary);
+}
+
+.tar-btn-save:hover {
+  background: var(--tar-primary-hover);
+}
+
+.tar-btn-delete-modal {
+  background: var(--tar-danger);
+}
+
+.tar-btn-delete-modal:hover {
+  background: var(--tar-danger-hover);
+}
+
+.tar-btn-cancel {
+  background: var(--tar-gray);
+  width: 100%;
+}
+
+.tar-btn-cancel:hover {
+  background: var(--tar-gray-hover);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .tar-container {
+    padding: 0 1rem;
+    margin: 1rem auto;
+  }
+
+  .tar-header h1 {
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tar-main-actions {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .tar-btn-add,
+  .tar-btn-edit-main {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tar-card-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .tar-card-left,
+  .tar-card-right {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .tar-card {
+    min-height: 180px;
+  }
+
+  .tar-number {
+    font-size: 1rem;
+  }
+
+  .tar-info-row {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .tar-info-label {
+    flex: none;
+    width: 100%;
+    font-size: 0.7rem;
+  }
+
+  .tar-info-value {
+    width: 100%;
+    padding-left: 0;
+    font-size: 0.85rem;
+  }
+
+  .tar-card-actions {
+    flex-direction: row;
+  }
+
+  .tar-form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .tar-modal-actions-row {
+    flex-direction: column;
+  }
+  
+  .tar-modal-content {
+    padding: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tar-card-actions {
+    flex-direction: column;
+  }
+  
+  .tar-btn-edit,
+  .tar-btn-delete {
+    width: 100%;
+  }
+}

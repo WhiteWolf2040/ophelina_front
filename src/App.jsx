@@ -3,9 +3,12 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import OpheliaLogin from "./components/OpheliaLogin";
 import OpheliaRegister from "./components/OpheliaRegister";
 import LandingPage from "./components/LandingPage";
+
 import OphelinaHome from "./Clientes/OphelinaHome";
 import MisEmpenos from "./Clientes/MisEmpenos";
 import OphelinaTienda from "./Clientes/OphelinaTienda"; 
+import Tarjetero from "./Clientes/Tarjetero"; 
+
 
 import Dueno from "./Home/Dueno";
 
@@ -43,6 +46,7 @@ function App() {
         <Route path="/homecliente" element={<OphelinaHome />} />
         <Route path="/misempenos" element={<MisEmpenos />} />
         <Route path="/ophelina" element={<OphelinaTienda />} /> {/* 👈 NUEVA RUTA PARA LA TIENDA */}
+        <Route path="/tarjetas" element={<Tarjetero />} /> 
 
         <Route path="/" element={<OpheliaLogin />} />
 
