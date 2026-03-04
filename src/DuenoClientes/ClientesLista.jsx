@@ -1,7 +1,29 @@
+// ClientesLista.jsx - Versión Mejorada
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "./Clientes.css";
+
+// Importar iconos de MUI
+import SearchIcon from '@mui/icons-material/Search';
+import AddIcon from '@mui/icons-material/Add';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import BadgeIcon from '@mui/icons-material/Badge';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import HistoryIcon from '@mui/icons-material/History';
+import PaymentIcon from '@mui/icons-material/Payment';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import WarningIcon from '@mui/icons-material/Warning';
+import CloseIcon from '@mui/icons-material/Close';
+import PersonIcon from '@mui/icons-material/Person';
+import GroupIcon from '@mui/icons-material/Group';
 
 const ClientesLista = () => {
   const navigate = useNavigate();
@@ -17,18 +39,25 @@ const ClientesLista = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const clientesPorPagina = 8;
 
-  // Estado para el formulario de edición
+  // Estado para el formulario de edición con nuevos campos
   const [formEditar, setFormEditar] = useState({
     nombre: "",
     telefono: "",
     email: "",
     direccion: "",
+    colonia: "",
+    ciudad: "",
+    codigoPostal: "",
+    tipoIdentificacion: "INE",
+    numeroIdentificacion: "",
     fecha: ""
   });
 
   // Filtrar clientes por búsqueda
   const clientesFiltrados = clientes.filter((cliente) =>
-    cliente.nombre.toLowerCase().includes(busqueda.toLowerCase())
+    cliente.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    (cliente.telefono && cliente.telefono.includes(busqueda)) ||
+    (cliente.email && cliente.email.toLowerCase().includes(busqueda.toLowerCase()))
   );
 
   // Calcular paginación
@@ -50,11 +79,16 @@ const ClientesLista = () => {
   const abrirModalEditar = (cliente) => {
     setClienteSeleccionado(cliente);
     setFormEditar({
-      nombre: cliente.nombre,
-      telefono: cliente.telefono,
-      email: cliente.email,
+      nombre: cliente.nombre || "",
+      telefono: cliente.telefono || "",
+      email: cliente.email || "",
       direccion: cliente.direccion || "",
-      fecha: cliente.fecha
+      colonia: cliente.colonia || "",
+      ciudad: cliente.ciudad || "",
+      codigoPostal: cliente.codigoPostal || "",
+      tipoIdentificacion: cliente.tipoIdentificacion || "INE",
+      numeroIdentificacion: cliente.numeroIdentificacion || "",
+      fecha: cliente.fecha || ""
     });
     setModalEditarAbierto(true);
     setModalAbierto(false);
@@ -115,21 +149,30 @@ const ClientesLista = () => {
 
   return (
     <div className="dashboard">
-   
-      <div className="content">
+      
+      
+      <div className="content owner-header">
         {/* HEADER */}
-        <div className="header-container">
-          <h2>Clientes</h2>
+        <div className="header-container ">
+          <div className="tienda-header">
+            <h1> <GroupIcon className="title-icon"/> Listado de clientes  
+           <p className="header-sub">Gestiona y administra tus clientes</p>
+           </h1>
+          </div>
+           
+           
           <button className="btn-nuevo" onClick={() => navigate("nuevo")}>
-            + Nuevo Registro
+            <AddIcon fontSize="small" />
+            Nuevo Registro
           </button>
         </div>
 
         {/* BUSCADOR */}
         <div className="buscador-container">
+          <SearchIcon className="buscador-icono" />
           <input
             className="buscador-input"
-            placeholder="Buscar por nombre..."
+            placeholder="Buscar por nombre, teléfono o email..."
             value={busqueda}
             onChange={(e) => {
               setBusqueda(e.target.value);
@@ -140,7 +183,7 @@ const ClientesLista = () => {
 
         {/* TARJETA DE TABLA */}
         <div className="tabla-card">
-          <h3>Lista de Clientes ({clientesFiltrados.length})</h3>
+          <h3> Total de registros: {clientesFiltrados.length}</h3>
 
           {/* Vista móvil: tarjetas */}
           <div className="vista-movil">
@@ -153,19 +196,20 @@ const ClientesLista = () => {
                       className="detalle-link"
                       onClick={() => abrirDetalle(cliente)}
                     >
-                      Ver detalles →
+                      <VisibilityIcon fontSize="small" />
                     </span>
                   </div>
                   <div className="tarjeta-cuerpo">
-                    <div>📞 {cliente.telefono}</div>
-                    <div>✉️ {cliente.email}</div>
-                    <div>📅 {cliente.fecha}</div>
+                    <div><PhoneIcon fontSize="small" /> {cliente.telefono}</div>
+                    <div><EmailIcon fontSize="small" /> {cliente.email}</div>
+                    <div><CalendarTodayIcon fontSize="small" /> {cliente.fecha}</div>
                   </div>
                 </div>
               ))
             ) : (
               <div className="sin-resultados">
-                No se encontraron clientes
+                <SearchIcon className="empty-icon" />
+                <p>No se encontraron clientes</p>
               </div>
             )}
           </div>
@@ -175,10 +219,12 @@ const ClientesLista = () => {
             <table>
               <thead>
                 <tr>
-                  <th>Nombre Completo</th>
-                  <th>Teléfono</th>
-                  <th>Email</th>
-                  <th>Fecha Registro</th>
+                  <th><PersonIcon className="title-icon" />Nombre </th>
+                  <th><PhoneIcon fontSize="small" className="table-icon" />Teléfono</th>
+                  <th><EmailIcon fontSize="small" className="table-icon" /> Email</th>
+                  <th><LocationOnIcon fontSize="small" className="table-icon" /> Dirección</th>
+                  <th><BadgeIcon fontSize="small" className="table-icon" /> Identificación</th>
+                  <th><CalendarTodayIcon fontSize="small" className="table-icon" /> Registro</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -187,23 +233,57 @@ const ClientesLista = () => {
                   clientesActuales.map((cliente) => (
                     <tr key={cliente.id}>
                       <td><strong>{cliente.nombre}</strong></td>
-                      <td>{cliente.telefono}</td>
-                      <td>{cliente.email}</td>
-                      <td>{cliente.fecha}</td>
                       <td>
-                        <button 
-                          className="btn-accion ver"
-                          onClick={() => abrirDetalle(cliente)}
-                          title="Ver detalles"
-                        >
-                          Ver
-                        </button>
+                        
+                        {cliente.telefono}
+                      </td>
+                      <td>
+                        
+                        {cliente.email}
+                      </td>
+                      <td>
+                        
+                        {cliente.direccion || "No especificada"}
+                      </td>
+                      <td>
+                        
+                        {cliente.tipoIdentificacion || "INE"} {cliente.numeroIdentificacion ? `- ${cliente.numeroIdentificacion}` : ''}
+                      </td>
+                      <td>
+                      
+                        {cliente.fecha}
+                      </td>
+                      <td>
+                        <div className="acciones-container">
+                          <button 
+                            className="btn-accion ver"
+                            onClick={() => abrirDetalle(cliente)}
+                            title="Ver detalles"
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </button>
+                          <button 
+                            className="btn-accion editar"
+                            onClick={() => abrirModalEditar(cliente)}
+                            title="Editar"
+                          >
+                            <EditIcon fontSize="small" />
+                          </button>
+                          <button 
+                            className="btn-accion eliminar"
+                            onClick={() => confirmarEliminar(cliente)}
+                            title="Eliminar"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="sin-resultados">
+                    <td colSpan="7" className="sin-resultados">
+                      <SearchIcon className="empty-icon" />
                       No se encontraron clientes
                     </td>
                   </tr>
@@ -221,7 +301,7 @@ const ClientesLista = () => {
                   onClick={irPaginaAnterior}
                   disabled={paginaActual === 1}
                 >
-                  ←
+                  <ChevronLeftIcon />
                 </button>
                 
                 <div className="paginacion-numeros">
@@ -241,7 +321,7 @@ const ClientesLista = () => {
                   onClick={irPaginaSiguiente}
                   disabled={paginaActual === totalPaginas}
                 >
-                  →
+                  <ChevronRightIcon />
                 </button>
               </div>
               <div className="paginacion-info">
@@ -256,7 +336,9 @@ const ClientesLista = () => {
       {modalAbierto && clienteSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={cerrarModal}>×</button>
+            <button className="modal-cerrar" onClick={cerrarModal}>
+              <CloseIcon />
+            </button>
             
             <div className="modal-header">
               <h2>{clienteSeleccionado.nombre}</h2>
@@ -266,31 +348,38 @@ const ClientesLista = () => {
             <div className="modal-body">
               <div className="info-grid">
                 <div className="info-item">
-                  <span className="info-label">📞 Teléfono</span>
+                  <span className="info-label"><PhoneIcon fontSize="small" /> Teléfono</span>
                   <span className="info-value">{clienteSeleccionado.telefono}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">✉️ Email</span>
+                  <span className="info-label"><EmailIcon fontSize="small" /> Email</span>
                   <span className="info-value">{clienteSeleccionado.email}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">📍 Dirección</span>
+                  <span className="info-label"><LocationOnIcon fontSize="small" /> Dirección</span>
                   <span className="info-value">{clienteSeleccionado.direccion || "No especificada"}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">📅 Fecha Registro</span>
+                  <span className="info-label"><BadgeIcon fontSize="small" /> Identificación</span>
+                  <span className="info-value">
+                    {clienteSeleccionado.tipoIdentificacion || "INE"} 
+                    {clienteSeleccionado.numeroIdentificacion ? ` - ${clienteSeleccionado.numeroIdentificacion}` : ''}
+                  </span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label"><CalendarTodayIcon fontSize="small" /> Fecha Registro</span>
                   <span className="info-value">{clienteSeleccionado.fecha}</span>
                 </div>
               </div>
 
               <div className="modal-secciones">
                 <div className="seccion">
-                  <h4>📦 Historial de Empeños</h4>
+                  <h4><HistoryIcon /> Historial de Empeños</h4>
                   <p className="sin-datos">Sin empeños registrados</p>
                 </div>
 
                 <div className="seccion">
-                  <h4>💰 Pagos Realizados</h4>
+                  <h4><PaymentIcon /> Pagos Realizados</h4>
                   <p className="sin-datos">Sin pagos registrados</p>
                 </div>
               </div>
@@ -301,13 +390,15 @@ const ClientesLista = () => {
                 className="btn-editar"
                 onClick={() => abrirModalEditar(clienteSeleccionado)}
               >
-                ✏️ Editar 
+                <EditIcon fontSize="small" />
+                Editar
               </button>
               <button 
                 className="btn-eliminar"
                 onClick={() => confirmarEliminar(clienteSeleccionado)}
               >
-                🗑️ Eliminar 
+                <DeleteIcon fontSize="small" />
+                Eliminar
               </button>
             </div>
           </div>
@@ -318,7 +409,9 @@ const ClientesLista = () => {
       {modalEditarAbierto && clienteSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
           <div className="modal-editar" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={cerrarModalEditar}>×</button>
+            <button className="modal-cerrar" onClick={cerrarModalEditar}>
+              <CloseIcon />
+            </button>
             
             <div className="modal-header">
               <h2>Editar Cliente</h2>
@@ -328,8 +421,8 @@ const ClientesLista = () => {
             <form onSubmit={handleEditarSubmit}>
               <div className="modal-body">
                 <div className="form-grid-modal">
-                  <div className="form-group-modal">
-                    <label>Nombre Completo *</label>
+                  <div className="form-group-modal full-width">
+                    <label><PersonIcon fontSize="small" /> Nombre Completo *</label>
                     <input
                       type="text"
                       value={formEditar.nombre}
@@ -340,7 +433,7 @@ const ClientesLista = () => {
                   </div>
 
                   <div className="form-group-modal">
-                    <label>Teléfono *</label>
+                    <label><PhoneIcon fontSize="small" /> Teléfono *</label>
                     <input
                       type="tel"
                       value={formEditar.telefono}
@@ -351,7 +444,7 @@ const ClientesLista = () => {
                   </div>
 
                   <div className="form-group-modal">
-                    <label>Email *</label>
+                    <label><EmailIcon fontSize="small" /> Email *</label>
                     <input
                       type="email"
                       value={formEditar.email}
@@ -362,22 +455,77 @@ const ClientesLista = () => {
                   </div>
 
                   <div className="form-group-modal">
-                    <label>Fecha de Registro</label>
+                    <label><BadgeIcon fontSize="small" /> Tipo de Identificación</label>
+                    <select
+                      value={formEditar.tipoIdentificacion}
+                      onChange={(e) => setFormEditar({...formEditar, tipoIdentificacion: e.target.value})}
+                    >
+                      <option value="INE">INE</option>
+                      <option value="Pasaporte">Pasaporte</option>
+                      <option value="Cédula Profesional">Cédula Profesional</option>
+                      <option value="Licencia de Conducir">Licencia de Conducir</option>
+                      <option value="CURP">CURP</option>
+                      <option value="Otro">Otro</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group-modal">
+                    <label><AssignmentIndIcon fontSize="small" /> Número de Identificación</label>
+                    <input
+                      type="text"
+                      value={formEditar.numeroIdentificacion}
+                      onChange={(e) => setFormEditar({...formEditar, numeroIdentificacion: e.target.value})}
+                      placeholder="Ej: INE12345678"
+                    />
+                  </div>
+
+                  <div className="form-group-modal">
+                    <label><LocationOnIcon fontSize="small" /> Dirección</label>
+                    <input
+                      type="text"
+                      value={formEditar.direccion}
+                      onChange={(e) => setFormEditar({...formEditar, direccion: e.target.value})}
+                      placeholder="Calle y número"
+                    />
+                  </div>
+
+                  <div className="form-group-modal">
+                    <label>Colonia</label>
+                    <input
+                      type="text"
+                      value={formEditar.colonia}
+                      onChange={(e) => setFormEditar({...formEditar, colonia: e.target.value})}
+                      placeholder="Ej: Centro"
+                    />
+                  </div>
+
+                  <div className="form-group-modal">
+                    <label>Ciudad</label>
+                    <input
+                      type="text"
+                      value={formEditar.ciudad}
+                      onChange={(e) => setFormEditar({...formEditar, ciudad: e.target.value})}
+                      placeholder="Ej: Mérida"
+                    />
+                  </div>
+
+                  <div className="form-group-modal">
+                    <label>Código Postal</label>
+                    <input
+                      type="text"
+                      value={formEditar.codigoPostal}
+                      onChange={(e) => setFormEditar({...formEditar, codigoPostal: e.target.value})}
+                      placeholder="Ej: 97000"
+                    />
+                  </div>
+
+                  <div className="form-group-modal">
+                    <label><CalendarTodayIcon fontSize="small" /> Fecha de Registro</label>
                     <input
                       type="text"
                       value={formEditar.fecha}
                       readOnly
                       className="campo-lectura"
-                    />
-                  </div>
-
-                  <div className="form-group-modal full-width">
-                    <label>Dirección</label>
-                    <input
-                      type="text"
-                      value={formEditar.direccion}
-                      onChange={(e) => setFormEditar({...formEditar, direccion: e.target.value})}
-                      placeholder="Ej: Calle Principal #123"
                     />
                   </div>
                 </div>
@@ -388,6 +536,7 @@ const ClientesLista = () => {
                   Cancelar
                 </button>
                 <button type="submit" className="btn-guardar-modal">
+                  <EditIcon fontSize="small" />
                   Guardar Cambios
                 </button>
               </div>
@@ -400,7 +549,9 @@ const ClientesLista = () => {
       {modalEliminar && clienteSeleccionado && (
         <div className="modal-overlay" onClick={() => setModalEliminar(false)}>
           <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-icono">⚠️</div>
+            <div className="modal-icono">
+              <WarningIcon fontSize="large" />
+            </div>
             <h3>¿Eliminar cliente?</h3>
             <p>Estás a punto de eliminar a <strong>{clienteSeleccionado.nombre}</strong></p>
             <p className="advertencia">Esta acción no se puede deshacer</p>
@@ -416,6 +567,7 @@ const ClientesLista = () => {
                 className="btn-confirmar-eliminar"
                 onClick={handleEliminar}
               >
+                <DeleteIcon fontSize="small" />
                 Sí, eliminar
               </button>
             </div>

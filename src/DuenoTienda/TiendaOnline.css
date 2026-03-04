@@ -1,7 +1,7 @@
 /* TiendaOnline.css */
 
 .tienda-content {
-  background-color: #f8f9fa;
+  background-color: #F5F0E9;
 }
 
 /* Header */
@@ -9,17 +9,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
-  background: white;
-  padding: 25px 30px;
+  margin-bottom: 30px;
+ 
+  padding: 0px 30px;
   border-radius: 15px;
-  box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
+
 }
 
 .tienda-header h1 {
   margin: 0;
   color: #1e3a8a;
-  font-size: 28px;
+  font-size: 25px;
 }
 
 .btn-nuevo-producto {
@@ -641,5 +641,201 @@
   .producto-acciones {
     flex-wrap: wrap;
     justify-content: center;
+  }
+}
+/* Añadir al final de TiendaOnline.css */
+
+/* Iconos en títulos */
+.title-icon {
+  font-size: 32px !important;
+  color: #1e3a8a;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+/* Buscador con icono */
+.buscador {
+  position: relative;
+}
+
+.buscador-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 20px !important;
+}
+
+.buscador-input {
+  padding-left: 45px !important;
+}
+
+/* Checkbox con icono */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-label svg {
+  color: #1e3a8a;
+}
+
+/* Badge de oculto con icono */
+.producto-oculto-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.producto-oculto-badge svg {
+  font-size: 14px !important;
+}
+
+/* Categoría con icono */
+.producto-categoria {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+}
+
+.producto-categoria svg {
+  font-size: 14px !important;
+}
+
+/* Stock con icono */
+.producto-stock {
+  display: flex !important;
+  align-items: center;
+  gap: 4px;
+}
+
+.producto-stock svg {
+  font-size: 14px !important;
+  color: #1e3a8a;
+}
+
+/* Botones de acción con iconos */
+.btn-accion svg {
+  font-size: 18px !important;
+}
+
+.btn-accion.ver svg {
+  color: #1e3a8a;
+}
+
+.btn-accion.editar svg {
+  color: #1e3a8a;
+}
+
+.btn-accion.toggle-visible svg {
+  color: #9333ea;
+}
+
+.btn-accion.destacar svg {
+  color: #854d0e;
+}
+
+.btn-accion.eliminar svg {
+  color: #dc2626;
+}
+
+/* Iconos en formularios */
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-group label svg {
+  color: #1e3a8a;
+  font-size: 18px !important;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 5px;
+}
+
+/* Iconos en modal de detalle */
+.visible-icon {
+  color: #10b981;
+  margin-right: 5px;
+}
+
+.oculto-icon {
+  color: #dc2626;
+  margin-right: 5px;
+}
+
+.info-value {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.info-value svg {
+  font-size: 18px !important;
+}
+
+/* Modal icon */
+.modal-icon {
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+/* Icono vacío */
+.empty-icon {
+  font-size: 48px !important;
+  color: #ccc;
+  margin-bottom: 15px;
+}
+
+/* Botones con iconos */
+.btn-nuevo-producto,
+.btn-guardar,
+.btn-cancelar,
+.btn-editar,
+.btn-eliminar,
+.btn-confirmar-eliminar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-limpiar-filtros {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Modal icono de advertencia */
+.modal-icono svg {
+  font-size: 48px !important;
+  color: #f59e0b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .checkbox-label {
+    justify-content: center;
+  }
+  
+  .producto-categoria {
+    justify-content: center;
+  }
+  
+  .producto-detalles {
+    flex-direction: column;
+    gap: 8px;
   }
 }
