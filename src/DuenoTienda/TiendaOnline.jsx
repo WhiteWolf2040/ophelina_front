@@ -230,7 +230,7 @@ const TiendaOnline = () => {
     <div className="dashboard">
       <Sidebar />
 
-      <div className="content tienda-content">
+      <div className="content ">
         {/* HEADER */}
         <div className="tienda-header">
           <div>
