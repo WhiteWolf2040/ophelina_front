@@ -46,19 +46,19 @@ export default function OphelinaHome() {
             <div className="cards-grid">
               <div className="stat-card">
                 <div className="stat-number">{resumen.activos}</div>
-                <div className="stat-label">Activos</div>
+                <div className="stat-label1">Activos</div>
               </div>
               <div className="stat-card">
                 <div className="stat-number">{resumen.totalPendiente}</div>
-                <div className="stat-label">Total pendiente</div>
+                <div className="stat-label1">Total pendiente</div>
               </div>
               <div className="stat-card">
                 <div className="stat-number">{resumen.proximoVencimiento}</div>
-                <div className="stat-label">Próximo vencimiento</div>
+                <div className="stat-label1">Próximo vencimiento</div>
               </div>
               <div className="stat-card gold-card">
                 <div className="stat-number">{resumen.precioOro}</div>
-                <div className="stat-label">Precio del oro (gr)</div>
+                <div className="stat-label1">Precio del oro (gr)</div>
               </div>
             </div>
           </section>
