@@ -10,6 +10,7 @@ const Dueno = () => {
   const [showProximos, setShowProximos] = useState(false);
   const [showIngresos, setShowIngresos] = useState(false);
   const [showAlertas, setShowAlertas] = useState(false); // Nuevo estado para alertas
+  const [showPerfil, setShowPerfil] = useState(false); // Nuevo estado para perfil
   
   // NUEVO: Estado para el selector de período
   const [periodo, setPeriodo] = useState("mensual");
@@ -36,6 +37,17 @@ const Dueno = () => {
     { id: 2, concepto: "Pago Collar - María García", monto: 3500, fecha: "24/02/2024" },
     { id: 3, concepto: "Intereses - Carlos López", monto: 450, fecha: "23/02/2024" },
   ];
+
+    // Datos del dueño para perfil
+  const datosPerfil = {
+    nombre: "Juan Carlos Rodríguez",
+    email: "juan.rodriguez@ophelina.mx",
+    telefono: "+52 999 123 4567",
+    rol: "Dueño / Administrador",
+    fechaRegistro: "15/01/2020",
+    sucursal: "Casa Matriz - Mérida",
+    fotoPerfil: "https://ui-avatars.com/api/?name=Juan+Rodriguez&size=128&background=1e3a8a&color=fff&bold=true"
+  };
 
   // Datos para TOP CLIENTES
   const topClientes = [
@@ -177,19 +189,32 @@ const Dueno = () => {
 
       <div className="content">
         {/* HEADER - con botón de alertas en lugar de selector de período */}
+        {/* HEADER - con botón de alertas y perfil */}
         <div className="owner-header">
           <div className="header-top">
             <h1>Hola, Dueño</h1>
-            {/* BOTÓN DE ALERTAS - al hacer click abre el modal */}
-            <button className="btn-alertas" onClick={() => setShowAlertas(true)}>
-              <span className="alerta-icon">🔔</span>
-              Alertas
-              {proximosVencer.length + empenosVencidos.length > 0 && (
-                <span className="alerta-badge">
-                  {proximosVencer.length + empenosVencidos.length}
-                </span>
-              )}
-            </button>
+            <div className="header-botones">
+              {/* BOTÓN DE PERFIL */}
+              <button className="btn-perfil" onClick={() => setShowPerfil(true)}>
+                <img 
+                  src={datosPerfil.fotoPerfil} 
+                  alt="Perfil" 
+                  className="perfil-foto"
+                />
+                <span className="perfil-nombre">Mi Perfil</span>
+              </button>
+
+              {/* BOTÓN DE ALERTAS */}
+              <button className="btn-alertas" onClick={() => setShowAlertas(true)}>
+                <span className="alerta-icon">🔔</span>
+                Alertas
+                {proximosVencer.length + empenosVencidos.length > 0 && (
+                  <span className="alerta-badge">
+                    {proximosVencer.length + empenosVencidos.length}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -390,7 +415,63 @@ const Dueno = () => {
         </div>
       </div>
 
-      {/* MODAL DE ALERTAS - nuevo modal que se abre con el botón */}
+      {/* MODAL DE PERFIL */}
+      {showPerfil && (
+        <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
+          <div className="modal-detalle modal-perfil" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={() => setShowPerfil(false)}>×</button>
+            
+            <div className="modal-header perfil-header">
+              <h2>Mi Perfil</h2>
+              <span className="cliente-id">Información personal</span>
+            </div>
+
+            <div className="modal-body">
+              <div className="perfil-container">
+                <div className="perfil-avatar">
+                  <img src={datosPerfil.fotoPerfil} alt={datosPerfil.nombre} />
+                </div>
+                
+                <div className="perfil-info-grid">
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Nombre completo</span>
+                    <span className="perfil-valor">{datosPerfil.nombre}</span>
+                  </div>
+                  
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Email</span>
+                    <span className="perfil-valor">{datosPerfil.email}</span>
+                  </div>
+                  
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Teléfono</span>
+                    <span className="perfil-valor">{datosPerfil.telefono}</span>
+                  </div>
+                  
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Rol</span>
+                    <span className="perfil-valor">{datosPerfil.rol}</span>
+                  </div>
+                  
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Sucursal</span>
+                    <span className="perfil-valor">{datosPerfil.sucursal}</span>
+                  </div>
+                  
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Miembro desde</span>
+                    <span className="perfil-valor">{datosPerfil.fechaRegistro}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+           
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ALERTAS */}
       {showAlertas && (
         <div className="modal-overlay" onClick={() => setShowAlertas(false)}>
           <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>

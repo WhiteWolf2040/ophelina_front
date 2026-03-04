@@ -388,6 +388,7 @@ tbody tr:first-child {
 
 .modal-detalle {
   background: white;
+  padding: 0px;
   border-radius: 28px;
   width: 700px;
   max-width: 100%;
