@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import "./Configuraciones.css";
+
 // Importar iconos de MUI
 import BusinessIcon from '@mui/icons-material/Business';
 import EditIcon from '@mui/icons-material/Edit';
@@ -16,6 +17,12 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import StoreIcon from '@mui/icons-material/Store';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import WorkIcon from '@mui/icons-material/Work';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import SettingsIcon from '@mui/icons-material/Settings';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
+
 const Configuraciones = () => {
   const { 
     empresa, 
@@ -35,7 +42,7 @@ const Configuraciones = () => {
   
   // Estados para paginación de usuarios
   const [paginaActual, setPaginaActual] = useState(1);
-  const usuariosPorPagina = 3; // 6 usuarios por página
+  const usuariosPorPagina = 6;
 
   // Calcular paginación de usuarios
   const indiceUltimo = paginaActual * usuariosPorPagina;
@@ -87,18 +94,25 @@ const Configuraciones = () => {
 
   return (
     <div className="configuraciones-container">
-      <h2 className="page-title">Configuraciones</h2>
+      <h2 className="page-title">
+        <SettingsIcon className="title-icon" />
+        Configuraciones
+      </h2>
 
       {/* SECCIÓN EMPRESA */}
       <div className="config-section">
         <div className="section-header">
-          <h3>Información de la Empresa</h3>
+          <h3>
+            <BusinessIcon className="section-icon" />
+            Información de la Empresa
+          </h3>
           {!editandoEmpresa && (
             <button 
               className="btn-editar-small"
               onClick={() => setEditandoEmpresa(true)}
             >
-              ✏️ Editar
+              <EditIcon fontSize="small" />
+              Editar
             </button>
           )}
         </div>
@@ -107,50 +121,59 @@ const Configuraciones = () => {
           <form onSubmit={handleEmpresaSubmit} className="empresa-form">
             <div className="form-grid">
               <div className="form-group">
-                <label>Nombre de la Empresa</label>
+                <label><BusinessIcon fontSize="small" /> Nombre de la Empresa</label>
                 <input
                   value={empresaForm.nombre}
                   onChange={(e) => setEmpresaForm({...empresaForm, nombre: e.target.value})}
                   required
+                  placeholder="Ej: Ophelina S.A. de C.V."
                 />
               </div>
               <div className="form-group">
-                <label>RFC</label>
+                <label><BadgeIcon fontSize="small" /> RFC</label>
                 <input
                   value={empresaForm.rfc}
                   onChange={(e) => setEmpresaForm({...empresaForm, rfc: e.target.value})}
                   required
+                  placeholder="Ej: OPH123456789"
                 />
               </div>
               <div className="form-group">
-                <label>Teléfono</label>
+                <label><PhoneIcon fontSize="small" /> Teléfono</label>
                 <input
                   value={empresaForm.telefono}
                   onChange={(e) => setEmpresaForm({...empresaForm, telefono: e.target.value})}
                   required
+                  placeholder="Ej: 999 123 4567"
                 />
               </div>
               <div className="form-group">
-                <label>Email</label>
+                <label><EmailIcon fontSize="small" /> Email</label>
                 <input
                   type="email"
                   value={empresaForm.email}
                   onChange={(e) => setEmpresaForm({...empresaForm, email: e.target.value})}
                   required
+                  placeholder="Ej: contacto@ophelina.mx"
                 />
               </div>
               <div className="form-group full-width">
-                <label>Dirección</label>
+                <label><LocationOnIcon fontSize="small" /> Dirección</label>
                 <input
                   value={empresaForm.direccion}
                   onChange={(e) => setEmpresaForm({...empresaForm, direccion: e.target.value})}
                   required
+                  placeholder="Ej: Calle 60 #123, Centro, Mérida"
                 />
               </div>
             </div>
             <div className="form-buttons">
-              <button type="submit" className="btn-gold">Guardar Cambios</button>
+              <button type="submit" className="btn-gold">
+                <SaveIcon fontSize="small" />
+                Guardar Cambios
+              </button>
               <button type="button" className="btn-cancel" onClick={() => setEditandoEmpresa(false)}>
+                <CancelIcon fontSize="small" />
                 Cancelar
               </button>
             </div>
@@ -159,23 +182,23 @@ const Configuraciones = () => {
           <div className="empresa-info">
             <div className="info-grid">
               <div className="info-item">
-                <span className="info-label">Nombre:</span>
+                <span className="info-label"><BusinessIcon fontSize="small" /> Nombre:</span>
                 <span className="info-value">{empresa.nombre}</span>
               </div>
               <div className="info-item">
-                <span className="info-label">RFC:</span>
+                <span className="info-label"><BadgeIcon fontSize="small" /> RFC:</span>
                 <span className="info-value">{empresa.rfc}</span>
               </div>
               <div className="info-item">
-                <span className="info-label">Teléfono:</span>
+                <span className="info-label"><PhoneIcon fontSize="small" /> Teléfono:</span>
                 <span className="info-value">{empresa.telefono}</span>
               </div>
               <div className="info-item">
-                <span className="info-label">Email:</span>
+                <span className="info-label"><EmailIcon fontSize="small" /> Email:</span>
                 <span className="info-value">{empresa.email}</span>
               </div>
               <div className="info-item full-width">
-                <span className="info-label">Dirección:</span>
+                <span className="info-label"><LocationOnIcon fontSize="small" /> Dirección:</span>
                 <span className="info-value">{empresa.direccion}</span>
               </div>
             </div>
@@ -186,12 +209,16 @@ const Configuraciones = () => {
       {/* SECCIÓN USUARIOS CON PAGINACIÓN */}
       <div className="config-section">
         <div className="section-header">
-          <h3>Empleados ({usuarios.length})</h3>
+          <h3>
+            <PersonIcon className="section-icon" />
+            Empleados ({usuarios.length})
+          </h3>
           <button 
             className="btn-nuevo"
             onClick={() => setModalUsuarioAbierto(true)}
           >
-            + Agregar Usuario
+            <AddIcon fontSize="small" />
+            Agregar Usuario
           </button>
         </div>
 
@@ -201,10 +228,14 @@ const Configuraciones = () => {
               <div key={usuario.id} className="usuario-card">
                 <div className="usuario-info">
                   <div className="usuario-nombre">
+                    <AssignmentIndIcon className="usuario-icon" />
                     <strong>{usuario.nombre} {usuario.apellido}</strong>
                     <span className="usuario-rol">{usuario.rol}</span>
                   </div>
-                  <div className="usuario-email">{usuario.email}</div>
+                  <div className="usuario-email">
+                    <EmailIcon fontSize="small" className="email-icon" />
+                    {usuario.email}
+                  </div>
                 </div>
                 <div className="usuario-acciones">
                   <button 
@@ -215,24 +246,27 @@ const Configuraciones = () => {
                     }}
                     title="Editar"
                   >
-                    ✏️
+                    <EditIcon fontSize="small" />
                   </button>
                   <button 
                     className="btn-icono"
                     onClick={() => abrirModalEliminar(usuario)}
                     title="Eliminar"
                   >
-                    🗑️
+                    <DeleteIcon fontSize="small" />
                   </button>
                 </div>
               </div>
             ))
           ) : (
-            <div className="sin-resultados">No hay usuarios registrados</div>
+            <div className="sin-resultados">
+              <PersonIcon className="empty-icon" />
+              <p>No hay usuarios registrados</p>
+            </div>
           )}
         </div>
 
-        {/* PAGINACIÓN - SOLO SE MUESTRA SI HAY MÁS DE UNA PÁGINA */}
+        {/* PAGINACIÓN */}
         {totalPaginas > 1 && (
           <div className="paginacion-wrapper">
             <div className="paginacion-container">
@@ -241,7 +275,7 @@ const Configuraciones = () => {
                 onClick={irPaginaAnterior}
                 disabled={paginaActual === 1}
               >
-                ←
+                <ChevronLeftIcon />
               </button>
               
               <div className="paginacion-numeros">
@@ -261,7 +295,7 @@ const Configuraciones = () => {
                 onClick={irPaginaSiguiente}
                 disabled={paginaActual === totalPaginas}
               >
-                →
+                <ChevronRightIcon />
               </button>
             </div>
             <div className="paginacion-info">
@@ -274,13 +308,17 @@ const Configuraciones = () => {
       {/* SECCIÓN INTERESES */}
       <div className="config-section">
         <div className="section-header">
-          <h3>Configuración de Intereses</h3>
+          <h3>
+            <PercentIcon className="section-icon" />
+            Configuración de Intereses
+          </h3>
           {!editandoInteres && (
             <button 
               className="btn-editar-small"
               onClick={() => setEditandoInteres(true)}
             >
-              ✏️ Editar
+              <EditIcon fontSize="small" />
+              Editar
             </button>
           )}
         </div>
@@ -289,36 +327,44 @@ const Configuraciones = () => {
           <form onSubmit={handleInteresSubmit} className="interes-form">
             <div className="form-grid">
               <div className="form-group">
-                <label>Porcentaje de Interés (%)</label>
+                <label><PercentIcon fontSize="small" /> Porcentaje de Interés (%)</label>
                 <input
                   type="number"
+                  step="0.1"
                   value={interesForm.porcentaje}
                   onChange={(e) => setInteresForm({...interesForm, porcentaje: e.target.value})}
                   required
+                  placeholder="Ej: 12.5"
                 />
               </div>
               <div className="form-group">
-                <label>Monto Mínimo ($)</label>
+                <label><AttachMoneyIcon fontSize="small" /> Monto Mínimo ($)</label>
                 <input
                   type="number"
                   value={interesForm.minimo}
                   onChange={(e) => setInteresForm({...interesForm, minimo: e.target.value})}
                   required
+                  placeholder="Ej: 1000"
                 />
               </div>
               <div className="form-group">
-                <label>Monto Máximo ($)</label>
+                <label><AttachMoneyIcon fontSize="small" /> Monto Máximo ($)</label>
                 <input
                   type="number"
                   value={interesForm.maximo}
                   onChange={(e) => setInteresForm({...interesForm, maximo: e.target.value})}
                   required
+                  placeholder="Ej: 50000"
                 />
               </div>
             </div>
             <div className="form-buttons">
-              <button type="submit" className="btn-gold">Guardar Cambios</button>
+              <button type="submit" className="btn-gold">
+                <SaveIcon fontSize="small" />
+                Guardar Cambios
+              </button>
               <button type="button" className="btn-cancel" onClick={() => setEditandoInteres(false)}>
+                <CancelIcon fontSize="small" />
                 Cancelar
               </button>
             </div>
@@ -327,15 +373,15 @@ const Configuraciones = () => {
           <div className="interes-info">
             <div className="info-grid">
               <div className="info-item">
-                <span className="info-label">Interés actual:</span>
+                <span className="info-label"><PercentIcon fontSize="small" /> Interés actual:</span>
                 <span className="info-value">{interes.porcentaje}%</span>
               </div>
               <div className="info-item">
-                <span className="info-label">Monto mínimo:</span>
+                <span className="info-label"><AttachMoneyIcon fontSize="small" /> Monto mínimo:</span>
                 <span className="info-value">${interes.minimo.toLocaleString()}</span>
               </div>
               <div className="info-item">
-                <span className="info-label">Monto máximo:</span>
+                <span className="info-label"><AttachMoneyIcon fontSize="small" /> Monto máximo:</span>
                 <span className="info-value">${interes.maximo.toLocaleString()}</span>
               </div>
             </div>

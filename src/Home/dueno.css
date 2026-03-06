@@ -29,31 +29,14 @@
   font-size: 28px;
   color: #1e3a8a;
 }
-/* Header */
-.tienda-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
- 
-  padding: 0px 30px;
-  border-radius: 15px;
 
-}
 .header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
-  
   padding: 0px 30px;
   border-radius: 15px;
-  
-}
-.tienda-header h1 {
-  margin: 0;
-  color: #1e3a8a;
-  font-size: 28px;
 }
 
 /* ===== BOTONES DE HEADER ===== */
@@ -63,17 +46,19 @@
   align-items: center;
 }
 
-/* ===== BOTÓN DE PERFIL ===== */
+/* ===== BOTÓN DE PERFIL (SOLO IMAGEN) ===== */
 .btn-perfil {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
   background: white;
   border: 2px solid #1e3a8a;
   border-radius: 50px;
-  padding: 5px 20px 5px 5px;
+  padding: 5px;
   cursor: pointer;
   transition: 0.3s;
+  width: 46px;
+  height: 46px;
 }
 
 .btn-perfil:hover {
@@ -90,24 +75,17 @@
   border: 2px solid #1e3a8a;
 }
 
-.perfil-nombre {
-  color: #1e3a8a;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-/* ===== BOTÓN DE ALERTAS ===== */
+/* ===== BOTÓN DE ALERTAS (SOLO ICONO) ===== */
 .btn-alertas {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   background: white;
   border: 2px solid #1e3a8a;
   color: #1e3a8a;
-  padding: 10px 20px;
+  width: 46px;
+  height: 46px;
   border-radius: 50px;
-  font-size: 14px;
-  font-weight: 600;
   cursor: pointer;
   transition: 0.3s;
   position: relative;
@@ -121,20 +99,27 @@
 }
 
 .alerta-icon {
-  font-size: 18px;
+  font-size: 20px !important;
 }
 
 .alerta-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
   background: #dc2626;
   color: white;
   border-radius: 20px;
-  padding: 2px 8px;
+  padding: 2px 6px;
   font-size: 11px;
   font-weight: 600;
-  margin-left: 5px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* ===== CARDS PRINCIPALES ===== */
+/* ===== CARDS PRINCIPALES CON ICONOS ===== */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -150,11 +135,26 @@
   cursor: pointer;
   transition: 0.3s;
   color: #1e3a8a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
   box-shadow: 0px 8px 25px rgba(30, 58, 138, 0.15);
+}
+
+.card-icon {
+  font-size: 32px !important;
+  color: #1e3a8a;
+  margin-bottom: 10px;
+  background: #f0f4ff;
+  padding: 8px;
+  border-radius: 12px;
+  width: 48px;
+  height: 48px;
 }
 
 .stat-card h3 {
@@ -172,6 +172,11 @@
 
 .gold-card {
   background: #facc15;
+}
+
+.gold-card .card-icon {
+  background: rgba(30, 58, 138, 0.1);
+  color: #1e3a8a;
 }
 
 .gold-card h3 {
@@ -200,6 +205,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.chart-section h2 svg {
+  font-size: 24px !important;
 }
 
 .chart-wrapper {
@@ -231,6 +240,10 @@
   gap: 8px;
 }
 
+.grafica-nueva-card h2 svg {
+  font-size: 20px !important;
+}
+
 .chart-wrapper-small {
   width: 100%;
   height: 300px;
@@ -254,6 +267,10 @@
   gap: 8px;
   border-bottom: 2px solid #f0f0f0;
   padding-bottom: 10px;
+}
+
+.nueva-seccion h2 svg {
+  font-size: 24px !important;
 }
 
 /* ===== TABLAS ===== */
@@ -315,7 +332,7 @@
   background-color: #f5f5f5;
 }
 
-/* ===== MÉTRICAS RÁPIDAS ===== */
+/* ===== MÉTRICAS RÁPIDAS CON ICONOS ===== */
 .metricas-rapidas {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -340,7 +357,7 @@
 }
 
 .metrica-icon {
-  font-size: 32px;
+  font-size: 32px !important;
   background: #f0f4ff;
   width: 50px;
   height: 50px;
@@ -348,6 +365,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 12px;
+  color: #1e3a8a;
 }
 
 .metrica-info {
@@ -370,6 +388,13 @@
 .metrica-tendencia {
   font-size: 11px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.metrica-tendencia svg {
+  font-size: 14px !important;
 }
 
 .metrica-tendencia.positiva {
@@ -380,7 +405,7 @@
   color: #dc2626;
 }
 
-/* ===== ACTIVIDAD RECIENTE ===== */
+/* ===== ACTIVIDAD RECIENTE CON ICONOS ===== */
 .actividad-lista {
   display: flex;
   flex-direction: column;
@@ -402,7 +427,7 @@
 }
 
 .actividad-icon {
-  font-size: 20px;
+  font-size: 20px !important;
   width: 36px;
   height: 36px;
   background: white;
@@ -411,6 +436,22 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.actividad-icon.success {
+  color: #10b981;
+}
+
+.actividad-icon.warning {
+  color: #f59e0b;
+}
+
+.actividad-icon.info {
+  color: #3b82f6;
+}
+
+.actividad-icon.danger {
+  color: #dc2626;
 }
 
 .actividad-detalle {
@@ -499,6 +540,13 @@
   font-size: 25px;
   font-weight: 600;
   padding-right: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-header h2 svg {
+  font-size: 28px !important;
 }
 
 .cliente-id {
@@ -577,6 +625,14 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.perfil-label svg {
+  font-size: 16px !important;
+  color: #1e3a8a;
 }
 
 .perfil-valor {
@@ -596,6 +652,10 @@
   transition: all 0.3s;
   background: #1e3a8a;
   color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .btn-editar-perfil:hover {
@@ -644,7 +704,23 @@
 }
 
 .alerta-modal-icon {
-  font-size: 24px;
+  font-size: 24px !important;
+}
+
+.alerta-modal-item.warning .alerta-modal-icon {
+  color: #f59e0b;
+}
+
+.alerta-modal-item.danger .alerta-modal-icon {
+  color: #dc2626;
+}
+
+.alerta-modal-item.success .alerta-modal-icon {
+  color: #10b981;
+}
+
+.alerta-modal-item.info .alerta-modal-icon {
+  color: #3b82f6;
 }
 
 .alerta-modal-contenido {
@@ -713,13 +789,21 @@
   font-size: 15px;
   cursor: pointer;
   transition: all 0.3s;
-  background-color: white ;
+  background-color: white;
   color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .btn-cancelar:hover {
   background-color: #d5d5d5;
   transform: translateY(-2px);
+}
+
+.btn-cancelar svg {
+  font-size: 18px !important;
 }
 
 /* ===== ANIMACIONES ===== */
@@ -780,6 +864,16 @@
     gap: 12px;
   }
 
+  .card-icon {
+    font-size: 28px !important;
+    width: 42px;
+    height: 42px;
+  }
+
+  .stat-number {
+    font-size: 20px;
+  }
+
   .header-top {
     flex-direction: column;
     align-items: flex-start;
@@ -788,18 +882,20 @@
   
   .header-botones {
     width: 100%;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: flex-end;
     gap: 10px;
   }
 
-  .btn-perfil {
-    width: 100%;
-    justify-content: center;
+  .btn-perfil,
+  .btn-alertas {
+    width: 44px;
+    height: 44px;
   }
 
-  .btn-alertas {
-    width: 100%;
-    justify-content: center;
+  .perfil-foto {
+    width: 34px;
+    height: 34px;
   }
 
   .chart-section {
@@ -873,11 +969,16 @@
   }
 }
 
-
 /* Móviles pequeños (480px) */
 @media (max-width: 480px) {
   .cards-grid {
     grid-template-columns: 1fr;
+  }
+
+  .card-icon {
+    font-size: 32px !important;
+    width: 48px;
+    height: 48px;
   }
 
   .chart-wrapper-small {
@@ -897,4 +998,7 @@
     font-size: 1rem;
   }
   
+  .header-botones {
+    justify-content: center;
+  }
 }

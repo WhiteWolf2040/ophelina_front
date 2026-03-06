@@ -1,4 +1,4 @@
-// ClientesLista.jsx - Versión Mejorada
+// ClientesLista.jsx - Versión Mejorada CON TODOS LOS CAMPOS
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
@@ -24,6 +24,8 @@ import WarningIcon from '@mui/icons-material/Warning';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
 import GroupIcon from '@mui/icons-material/Group';
+import HomeIcon from '@mui/icons-material/Home';
+import PinIcon from '@mui/icons-material/Room';
 
 const ClientesLista = () => {
   const navigate = useNavigate();
@@ -148,25 +150,7 @@ const ClientesLista = () => {
   };
 
   return (
-    <div className="dashboard">
-      
-      
-      <div className="content2 owner-header">
-        {/* HEADER */}
-        <div className="header-container ">
-          <div className="tienda-header">
-            <h1> <GroupIcon className="title-icon"/> Listado de clientes  
-           <p className="header-sub">Gestiona y administra tus clientes</p>
-           </h1>
-          </div>
-           
-           
-          <button className="btn-nuevo" onClick={() => navigate("nuevo")}>
-            <AddIcon fontSize="small" />
-            Nuevo Registro
-          </button>
-        </div>
-
+   <div className="dashboard"> <div className="content2 owner-header"> {/* HEADER */} <div className="header-container "> <div className="tienda-header"> <h1> <GroupIcon className="title-icon"/> Listado de clientes <p className="header-sub">Gestiona y administra tus clientes</p> </h1> </div> <button className="btn-nuevo" onClick={() => navigate("nuevo")}> <AddIcon fontSize="small" /> Nuevo Registro </button> </div>
         {/* BUSCADOR */}
         <div className="buscador-container">
           <SearchIcon className="buscador-icono" />
@@ -182,7 +166,7 @@ const ClientesLista = () => {
         </div>
 
         {/* TARJETA DE TABLA */}
-        <div className="tabla-card">
+        <div className=" tabla-card">
           <h3> Total de registros: {clientesFiltrados.length}</h3>
 
           {/* Vista móvil: tarjetas */}
@@ -266,22 +250,20 @@ const ClientesLista = () => {
                           >
                             <EditIcon fontSize="small" />
                           </button>
-                          {/* 
-<button 
-  className="btn-accion eliminar"
-  onClick={() => confirmarEliminar(cliente)}
-  title="Eliminar"
->
-  <DeleteIcon fontSize="small" />
-</button>
-*/}
+                          <button 
+                            className="btn-accion eliminar"
+                            onClick={() => confirmarEliminar(cliente)}
+                            title="Eliminar"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </button>
                         </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="sin-resultados">
+                    <td colSpan="6" className="sin-resultados">
                       <SearchIcon className="empty-icon" />
                       No se encontraron clientes
                     </td>
@@ -331,7 +313,7 @@ const ClientesLista = () => {
         </div>
       </div>
 
-      {/* MODAL DE DETALLE DEL CLIENTE */}
+      {/* MODAL DE DETALLE DEL CLIENTE - CON TODOS LOS CAMPOS */}
       {modalAbierto && clienteSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -345,26 +327,56 @@ const ClientesLista = () => {
             </div>
 
             <div className="modal-body">
-              <div className="info-grid">
+              <div className="info-grid-detalle">
+                {/* Teléfono */}
                 <div className="info-item">
                   <span className="info-label"><PhoneIcon fontSize="small" /> Teléfono</span>
                   <span className="info-value">{clienteSeleccionado.telefono}</span>
                 </div>
+                
+                {/* Email */}
                 <div className="info-item">
                   <span className="info-label"><EmailIcon fontSize="small" /> Email</span>
                   <span className="info-value">{clienteSeleccionado.email}</span>
                 </div>
+                
+                {/* Dirección */}
                 <div className="info-item">
                   <span className="info-label"><LocationOnIcon fontSize="small" /> Dirección</span>
                   <span className="info-value">{clienteSeleccionado.direccion || "No especificada"}</span>
                 </div>
+                
+                {/* Colonia */}
                 <div className="info-item">
-                  <span className="info-label"><BadgeIcon fontSize="small" /> Identificación</span>
-                  <span className="info-value">
-                    {clienteSeleccionado.tipoIdentificacion || "INE"} 
-                    {clienteSeleccionado.numeroIdentificacion ? ` - ${clienteSeleccionado.numeroIdentificacion}` : ''}
-                  </span>
+                  <span className="info-label"><HomeIcon fontSize="small" /> Colonia</span>
+                  <span className="info-value">{clienteSeleccionado.colonia || "No especificada"}</span>
                 </div>
+                
+                {/* Ciudad */}
+                <div className="info-item">
+                  <span className="info-label"><LocationOnIcon fontSize="small" /> Ciudad</span>
+                  <span className="info-value">{clienteSeleccionado.ciudad || "No especificada"}</span>
+                </div>
+                
+                {/* Código Postal */}
+                <div className="info-item">
+                  <span className="info-label"><PinIcon fontSize="small" /> Código Postal</span>
+                  <span className="info-value">{clienteSeleccionado.codigoPostal || "No especificado"}</span>
+                </div>
+                
+                {/* Tipo de Identificación */}
+                <div className="info-item">
+                  <span className="info-label"><BadgeIcon fontSize="small" /> Tipo de Identificación</span>
+                  <span className="info-value">{clienteSeleccionado.tipoIdentificacion || "INE"}</span>
+                </div>
+                
+                {/* Número de Identificación */}
+                <div className="info-item">
+                  <span className="info-label"><AssignmentIndIcon fontSize="small" /> Número de Identificación</span>
+                  <span className="info-value">{clienteSeleccionado.numeroIdentificacion || "No especificado"}</span>
+                </div>
+                
+                {/* Fecha de Registro */}
                 <div className="info-item">
                   <span className="info-label"><CalendarTodayIcon fontSize="small" /> Fecha Registro</span>
                   <span className="info-value">{clienteSeleccionado.fecha}</span>
@@ -489,7 +501,7 @@ const ClientesLista = () => {
                   </div>
 
                   <div className="form-group-modal">
-                    <label>Colonia</label>
+                    <label><HomeIcon fontSize="small" /> Colonia</label>
                     <input
                       type="text"
                       value={formEditar.colonia}
@@ -499,7 +511,7 @@ const ClientesLista = () => {
                   </div>
 
                   <div className="form-group-modal">
-                    <label>Ciudad</label>
+                    <label><LocationOnIcon fontSize="small" /> Ciudad</label>
                     <input
                       type="text"
                       value={formEditar.ciudad}
@@ -509,7 +521,7 @@ const ClientesLista = () => {
                   </div>
 
                   <div className="form-group-modal">
-                    <label>Código Postal</label>
+                    <label><PinIcon fontSize="small" /> Código Postal</label>
                     <input
                       type="text"
                       value={formEditar.codigoPostal}
@@ -532,12 +544,13 @@ const ClientesLista = () => {
 
               <div className="modal-acciones-editar">
                 <button 
-                className="btn-eliminar"
-                onClick={() => confirmarEliminar(clienteSeleccionado)}
-              >
-                <DeleteIcon fontSize="small" />
-                Eliminar
-              </button>
+                  type="button"
+                  className="btn-eliminar"
+                  onClick={() => confirmarEliminar(clienteSeleccionado)}
+                >
+                  <DeleteIcon fontSize="small" />
+                  Eliminar
+                </button>
                 <button type="submit" className="btn-guardar-modal">
                   <EditIcon fontSize="small" />
                   Guardar Cambios

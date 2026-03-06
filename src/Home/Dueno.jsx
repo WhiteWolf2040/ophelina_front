@@ -1,18 +1,49 @@
-// Dueno.jsx - Versión con cards en línea y botón de alertas
+// Dueno.jsx - Versión con iconos MUI
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Chart from "react-apexcharts";
 import "./dueno.css";
+
+// Importar iconos de MUI
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import WarningIcon from '@mui/icons-material/Warning';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import PeopleIcon from '@mui/icons-material/People';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import CategoryIcon from '@mui/icons-material/Category';
+import PaymentIcon from '@mui/icons-material/Payment';
+import HistoryIcon from '@mui/icons-material/History';
+import CloseIcon from '@mui/icons-material/Close';
+import StarIcon from '@mui/icons-material/Star';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import PieChartIcon from '@mui/icons-material/PieChart';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import SpeedIcon from '@mui/icons-material/Speed';
+import LoopIcon from '@mui/icons-material/Loop';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import InfoIcon from '@mui/icons-material/Info';
+import CelebrationIcon from '@mui/icons-material/Celebration';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
+import BusinessIcon from '@mui/icons-material/Business';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
 const Dueno = () => {
   const [showActivos, setShowActivos] = useState(false);
   const [showVencidos, setShowVencidos] = useState(false);
   const [showProximos, setShowProximos] = useState(false);
   const [showIngresos, setShowIngresos] = useState(false);
-  const [showAlertas, setShowAlertas] = useState(false); // Nuevo estado para alertas
-  const [showPerfil, setShowPerfil] = useState(false); // Nuevo estado para perfil
+  const [showAlertas, setShowAlertas] = useState(false);
+  const [showPerfil, setShowPerfil] = useState(false);
   
-  // NUEVO: Estado para el selector de período
   const [periodo, setPeriodo] = useState("mensual");
 
   // Datos de ejemplo para los modales
@@ -38,7 +69,7 @@ const Dueno = () => {
     { id: 3, concepto: "Intereses - Carlos López", monto: 450, fecha: "23/02/2024" },
   ];
 
-    // Datos del dueño para perfil
+  // Datos del dueño para perfil
   const datosPerfil = {
     nombre: "Juan Carlos Rodríguez",
     email: "juan.rodriguez@ophelina.mx",
@@ -67,7 +98,7 @@ const Dueno = () => {
     { id: 5, nombre: "Teléfonos", cantidad: 4, montoPromedio: 3800, categoria: "Electrónica" },
   ];
 
-  // Datos para INGRESOS POR MES (otra gráfica)
+  // Datos para INGRESOS POR MES
   const ingresosMensuales = {
     series: [
       {
@@ -187,28 +218,28 @@ const Dueno = () => {
     <div className="dashboard">
       <Sidebar />
 
-      <div className="content" >
-        {/* HEADER - con botón de alertas en lugar de selector de período */}
-        {/* HEADER - con botón de alertas y perfil */}
+      <div className="content">
+        {/* HEADER con botones de perfil y alertas sin texto */}
         <div className="owner-header">
-          <div className="header-top ">
-            <h1>Hola, Dueño  <p className="header-sub">Conoce el estado de tu casa de empeño</p></h1>
+          <div className="header-top">
+            <h1>
+              Hola, Dueño
+              <p className="header-sub">Conoce el estado de tu casa de empeño</p>
+            </h1>
            
             <div className="header-botones">
-              {/* BOTÓN DE PERFIL */}
-              <button className="btn-perfil" onClick={() => setShowPerfil(true)}>
+              {/* BOTÓN DE PERFIL - SOLO ICONO */}
+              <button className="btn-perfil" onClick={() => setShowPerfil(true)} title="Mi Perfil">
                 <img 
                   src={datosPerfil.fotoPerfil} 
                   alt="Perfil" 
                   className="perfil-foto"
                 />
-                <span className="perfil-nombre">Mi Perfil</span>
               </button>
 
-              {/* BOTÓN DE ALERTAS */}
-              <button className="btn-alertas" onClick={() => setShowAlertas(true)}>
-                <span className="alerta-icon">🔔</span>
-                Alertas
+              {/* BOTÓN DE ALERTAS - SOLO ICONO */}
+              <button className="btn-alertas" onClick={() => setShowAlertas(true)} title="Alertas">
+                <NotificationsIcon className="alerta-icon" />
                 {proximosVencer.length + empenosVencidos.length > 0 && (
                   <span className="alerta-badge">
                     {proximosVencer.length + empenosVencidos.length}
@@ -219,37 +250,45 @@ const Dueno = () => {
           </div>
         </div>
 
-        {/* CARDS - ahora en una sola fila con grid responsivo de 2 en 2 en móvil */}
+        {/* CARDS con iconos */}
         <div className="cards-grid">
           <div className="stat-card" onClick={() => setShowActivos(true)}>
+            <AssignmentIcon className="card-icon" />
             <h3>Empeños Activos</h3>
             <p className="stat-number">{empenosActivos.length}</p>
           </div>
 
           <div className="stat-card" onClick={() => setShowVencidos(true)}>
+            <WarningIcon className="card-icon" />
             <h3>Empeños Vencidos</h3>
             <p className="stat-number">{empenosVencidos.length}</p>
           </div>
 
           <div className="stat-card" onClick={() => setShowProximos(true)}>
+            <AccessTimeIcon className="card-icon" />
             <h3>Próximos a Vencer</h3>
             <p className="stat-number">{proximosVencer.length}</p>
           </div>
 
           <div className="stat-card" onClick={() => setShowIngresos(true)}>
+            <AttachMoneyIcon className="card-icon" />
             <h3>Ingresos Recientes</h3>
             <p className="stat-number">${ingresosRecientes.reduce((sum, i) => sum + i.monto, 0).toLocaleString()}</p>
           </div>
 
           <div className="stat-card gold-card">
+            <MonetizationOnIcon className="card-icon" />
             <h3>Precio del Oro</h3>
             <p className="stat-number">$850 / gramo</p>
           </div>
         </div>
 
-        {/* GRÁFICA - MANTIENE TU DISEÑO */}
+        {/* GRÁFICA PRINCIPAL */}
         <div className="chart-section">
-          <h2>📊 Resumen de Ingresos</h2>
+          <h2>
+            <BarChartIcon />
+            Resumen de Ingresos
+          </h2>
           <div className="chart-wrapper">
             <Chart
               options={chartData.options}
@@ -260,13 +299,13 @@ const Dueno = () => {
           </div>
         </div>
 
-        {/* NUEVAS SECCIONES AGREGADAS ABAJO */}
-
-        {/* Gráficas adicionales en grid */}
+        {/* GRÁFICAS ADICIONALES */}
         <div className="nuevas-graficas-grid">
-          {/* Gráfica de línea: Ingresos Mensuales */}
           <div className="grafica-nueva-card">
-            <h2>📈 Ingresos Mensuales (Capital vs Intereses)</h2>
+            <h2>
+              <TrendingUpIcon />
+              Ingresos Mensuales (Capital vs Intereses)
+            </h2>
             <Chart
               options={ingresosMensuales.options}
               series={ingresosMensuales.series}
@@ -275,9 +314,11 @@ const Dueno = () => {
             />
           </div>
 
-          {/* Gráfica de dona: Distribución por Categoría */}
           <div className="grafica-nueva-card">
-            <h2>🥧 Distribución por Categoría</h2>
+            <h2>
+              <PieChartIcon />
+              Distribución por Categoría
+            </h2>
             <Chart
               options={categoriaDistribucion.options}
               series={categoriaDistribucion.series}
@@ -289,7 +330,10 @@ const Dueno = () => {
 
         {/* Top Clientes */}
         <div className="nueva-seccion">
-          <h2>🏆 Top 5 Clientes</h2>
+          <h2>
+            <EmojiEventsIcon />
+            Top 5 Clientes
+          </h2>
           <div className="tabla-container">
             <table className="tabla-moderna">
               <thead>
@@ -316,7 +360,10 @@ const Dueno = () => {
 
         {/* Artículos más empeñados */}
         <div className="nueva-seccion">
-          <h2>🔝 Artículos Más Empeñados</h2>
+          <h2>
+            <LocalOfferIcon />
+            Artículos Más Empeñados
+          </h2>
           <div className="tabla-container">
             <table className="tabla-moderna">
               <thead>
@@ -344,69 +391,84 @@ const Dueno = () => {
         {/* Cards de métricas rápidas */}
         <div className="metricas-rapidas">
           <div className="metrica-card">
-            <span className="metrica-icon">📊</span>
+            <SpeedIcon className="metrica-icon" />
             <div className="metrica-info">
               <h4>Tasa de Interés Promedio</h4>
               <p className="metrica-valor">12.5%</p>
-              <span className="metrica-tendencia positiva">+0.5% vs mes anterior</span>
+              <span className="metrica-tendencia positiva">
+                <TrendingUpIcon fontSize="small" />
+                +0.5% vs mes anterior
+              </span>
             </div>
           </div>
 
           <div className="metrica-card">
-            <span className="metrica-icon">⏱️</span>
+            <AccessTimeIcon className="metrica-icon" />
             <div className="metrica-info">
               <h4>Tiempo Promedio de Pago</h4>
               <p className="metrica-valor">18 días</p>
-              <span className="metrica-tendencia negativa">-2 días vs mes anterior</span>
+              <span className="metrica-tendencia negativa">
+                <TrendingDownIcon fontSize="small" />
+                -2 días vs mes anterior
+              </span>
             </div>
           </div>
 
           <div className="metrica-card">
-            <span className="metrica-icon">🔄</span>
+            <LoopIcon className="metrica-icon" />
             <div className="metrica-info">
               <h4>Tasa de Retorno</h4>
               <p className="metrica-valor">68%</p>
-              <span className="metrica-tendencia positiva">+5% vs mes anterior</span>
+              <span className="metrica-tendencia positiva">
+                <TrendingUpIcon fontSize="small" />
+                +5% vs mes anterior
+              </span>
             </div>
           </div>
 
           <div className="metrica-card">
-            <span className="metrica-icon">💰</span>
+            <AttachMoneyIcon className="metrica-icon" />
             <div className="metrica-info">
               <h4>Valor Promedio por Empeño</h4>
               <p className="metrica-valor">$4,200</p>
-              <span className="metrica-tendencia positiva">+$350 vs mes anterior</span>
+              <span className="metrica-tendencia positiva">
+                <TrendingUpIcon fontSize="small" />
+                +$350 vs mes anterior
+              </span>
             </div>
           </div>
         </div>
 
         {/* Actividad Reciente */}
         <div className="nueva-seccion">
-          <h2>📋 Actividad Reciente</h2>
+          <h2>
+            <HistoryIcon />
+            Actividad Reciente
+          </h2>
           <div className="actividad-lista">
             <div className="actividad-item">
-              <span className="actividad-icon">✅</span>
+              <CheckCircleIcon className="actividad-icon success" />
               <div className="actividad-detalle">
                 <p><strong>Juan Pérez</strong> pagó su empeño <span className="actividad-monto">$5,000</span></p>
                 <small>Hace 2 horas</small>
               </div>
             </div>
             <div className="actividad-item">
-              <span className="actividad-icon">🆕</span>
+              <CelebrationIcon className="actividad-icon info" />
               <div className="actividad-detalle">
                 <p><strong>María García</strong> empeñó <strong>Collar de Plata</strong> por <span className="actividad-monto">$3,500</span></p>
                 <small>Hace 5 horas</small>
               </div>
             </div>
             <div className="actividad-item">
-              <span className="actividad-icon">⚠️</span>
+              <WarningIcon className="actividad-icon warning" />
               <div className="actividad-detalle">
                 <p><strong>Carlos López</strong> tiene un empeño por vencer mañana</p>
                 <small>Hace 1 día</small>
               </div>
             </div>
             <div className="actividad-item">
-              <span className="actividad-icon">💰</span>
+              <AttachMoneyIcon className="actividad-icon success" />
               <div className="actividad-detalle">
                 <p>Intereses generados hoy: <span className="actividad-monto">$1,250</span></p>
                 <small>Hace 3 horas</small>
@@ -420,7 +482,9 @@ const Dueno = () => {
       {showPerfil && (
         <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
           <div className="modal-detalle modal-perfil" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowPerfil(false)}>×</button>
+            <button className="modal-cerrar" onClick={() => setShowPerfil(false)}>
+              <CloseIcon />
+            </button>
             
             <div className="modal-header perfil-header">
               <h2>Mi Perfil</h2>
@@ -466,8 +530,6 @@ const Dueno = () => {
                 </div>
               </div>
             </div>
-
-           
           </div>
         </div>
       )}
@@ -476,17 +538,22 @@ const Dueno = () => {
       {showAlertas && (
         <div className="modal-overlay" onClick={() => setShowAlertas(false)}>
           <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowAlertas(false)}>×</button>
+            <button className="modal-cerrar" onClick={() => setShowAlertas(false)}>
+              <CloseIcon />
+            </button>
             
             <div className="modal-header">
-              <h2>🔔 Alertas y Notificaciones</h2>
+              <h2>
+                <NotificationsIcon />
+                Alertas y Notificaciones
+              </h2>
               <span className="cliente-id">Actualizadas hoy</span>
             </div>
 
             <div className="modal-body">
               <div className="alertas-modal-lista">
                 <div className="alerta-modal-item warning">
-                  <span className="alerta-modal-icon">⚠️</span>
+                  <WarningIcon className="alerta-modal-icon" />
                   <div className="alerta-modal-contenido">
                     <h4>{proximosVencer.length} empeños por vencer esta semana</h4>
                     <p>Próximos a vencer: {proximosVencer.map(p => p.nombre).join(', ')}</p>
@@ -495,7 +562,7 @@ const Dueno = () => {
                 </div>
 
                 <div className="alerta-modal-item danger">
-                  <span className="alerta-modal-icon">❗</span>
+                  <ErrorIcon className="alerta-modal-icon" />
                   <div className="alerta-modal-contenido">
                     <h4>{empenosVencidos.length} empeños vencidos requieren atención</h4>
                     <p>Monto total vencido: ${empenosVencidos.reduce((sum, i) => sum + i.monto, 0).toLocaleString()}</p>
@@ -504,7 +571,7 @@ const Dueno = () => {
                 </div>
 
                 <div className="alerta-modal-item success">
-                  <span className="alerta-modal-icon">📈</span>
+                  <TrendingUpIcon className="alerta-modal-icon" />
                   <div className="alerta-modal-contenido">
                     <h4>Meta mensual: 78% completada</h4>
                     <p>Faltan $25,000 para alcanzar la meta</p>
@@ -515,7 +582,7 @@ const Dueno = () => {
                 </div>
 
                 <div className="alerta-modal-item info">
-                  <span className="alerta-modal-icon">💰</span>
+                  <AttachMoneyIcon className="alerta-modal-icon" />
                   <div className="alerta-modal-contenido">
                     <h4>Ingresos del día: $1,250</h4>
                     <p>Intereses generados hoy: $450</p>
@@ -524,7 +591,7 @@ const Dueno = () => {
                 </div>
 
                 <div className="alerta-modal-item warning">
-                  <span className="alerta-modal-icon">🏅</span>
+                  <MonetizationOnIcon className="alerta-modal-icon" />
                   <div className="alerta-modal-contenido">
                     <h4>Precio del Oro: +2.5% hoy</h4>
                     <p>Precio actual: $850/gramo</p>
@@ -543,14 +610,19 @@ const Dueno = () => {
         </div>
       )}
 
-      {/* MODALES EXISTENTES */}
+      {/* MODALES EXISTENTES (con iconos en títulos) */}
       {showActivos && (
         <div className="modal-overlay" onClick={() => setShowActivos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowActivos(false)}>×</button>
+            <button className="modal-cerrar" onClick={() => setShowActivos(false)}>
+              <CloseIcon />
+            </button>
             
             <div className="modal-header">
-              <h2>Empeños Activos</h2>
+              <h2>
+                <AssignmentIcon />
+                Empeños Activos
+              </h2>
               <span className="cliente-id">Total: {empenosActivos.length}</span>
             </div>
 
@@ -591,10 +663,15 @@ const Dueno = () => {
       {showVencidos && (
         <div className="modal-overlay" onClick={() => setShowVencidos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowVencidos(false)}>×</button>
+            <button className="modal-cerrar" onClick={() => setShowVencidos(false)}>
+              <CloseIcon />
+            </button>
             
             <div className="modal-header">
-              <h2>Empeños Vencidos</h2>
+              <h2>
+                <WarningIcon />
+                Empeños Vencidos
+              </h2>
               <span className="cliente-id">Total: {empenosVencidos.length}</span>
             </div>
 
@@ -637,10 +714,15 @@ const Dueno = () => {
       {showProximos && (
         <div className="modal-overlay" onClick={() => setShowProximos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowProximos(false)}>×</button>
+            <button className="modal-cerrar" onClick={() => setShowProximos(false)}>
+              <CloseIcon />
+            </button>
             
             <div className="modal-header">
-              <h2>Próximos a Vencer</h2>
+              <h2>
+                <AccessTimeIcon />
+                Próximos a Vencer
+              </h2>
               <span className="cliente-id">Total: {proximosVencer.length}</span>
             </div>
 
@@ -683,10 +765,15 @@ const Dueno = () => {
       {showIngresos && (
         <div className="modal-overlay" onClick={() => setShowIngresos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowIngresos(false)}>×</button>
+            <button className="modal-cerrar" onClick={() => setShowIngresos(false)}>
+              <CloseIcon />
+            </button>
             
             <div className="modal-header">
-              <h2>Ingresos Recientes</h2>
+              <h2>
+                <AttachMoneyIcon />
+                Ingresos Recientes
+              </h2>
               <span className="cliente-id">
                 Total: ${ingresosRecientes.reduce((sum, i) => sum + i.monto, 0).toLocaleString()}
               </span>
