@@ -219,12 +219,12 @@ const ClientesLista = () => {
             <table>
               <thead>
                 <tr>
-                  <th><PersonIcon className="title-icon" />Nombre </th>
-                  <th><PhoneIcon fontSize="small" className="table-icon" />Teléfono</th>
-                  <th><EmailIcon fontSize="small" className="table-icon" /> Email</th>
-                  <th><LocationOnIcon fontSize="small" className="table-icon" /> Dirección</th>
-                  <th><BadgeIcon fontSize="small" className="table-icon" /> Identificación</th>
-                  <th><CalendarTodayIcon fontSize="small" className="table-icon" /> Registro</th>
+                  <th>Nombre </th>
+                  <th>Teléfono</th>
+                  <th> Email</th>
+                  <th>Dirección</th>
+                  <th>Identificación</th>
+                  <th> Registro</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
