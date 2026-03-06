@@ -97,14 +97,14 @@ body {
   justify-content: center;
   align-items: center;
   width: 100%;
-  max-width: 1100px;
+  max-width: 100px;
   margin: 0 auto;
 }
 
 .stat-cardd {
   background: var(--white);
   border-radius: 12px;
-  padding: 20px 25px;
+  padding: 25px 25px;
   text-align: center;
   box-shadow: var(--shadow-sm);
   display: flex;
