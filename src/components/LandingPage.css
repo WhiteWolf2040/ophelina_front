@@ -183,7 +183,7 @@
   margin: 10px 0;
 }
 
-.subtitle {
+.subtitle2 {
   color: var(--gold);
   font-weight: 600;
   font-size: 14px;
@@ -587,7 +587,7 @@
   z-index: 2;
 }
 
-.badge {
+.badge2 {
   position: absolute;
   top: -15px;
   left: 50%;
@@ -609,8 +609,9 @@
   margin-bottom: 25px;
 }
 
+
 .price .currency { font-size: 24px; vertical-align: top; }
-.price .amount { font-size: 48px; font-weight: bold; }
+.price .amount { font-size: 48px; font-weight: bold;  }
 .price .period { font-size: 16px; color: #888; }
 .featured .price .period { color: #ccc; }
 
@@ -711,7 +712,7 @@
   font-size: 14px;
   font-weight: 500;
 }
-
+  
 .form-group input,
 .form-group textarea {
   width: 100%;

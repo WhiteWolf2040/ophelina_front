@@ -90,7 +90,7 @@ body {
   width: 100%;
 }
 
-.cards-grid {
+.cards-gridd {
   display: flex;
   flex-wrap: wrap;
   gap: 25px;
@@ -101,7 +101,7 @@ body {
   margin: 0 auto;
 }
 
-.stat-card {
+.stat-cardd {
   background: var(--white);
   border-radius: 12px;
   padding: 25px 25px;

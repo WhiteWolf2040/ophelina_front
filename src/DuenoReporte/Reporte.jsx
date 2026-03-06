@@ -194,13 +194,13 @@ const Reportes = () => {
       <Sidebar />
 
       <div className="content">
-        {/* HEADER */}
+    
         {/* HEADER */}
         <div className="tienda-header">
           
             <h1>
               <LeaderboardIcon className="title-icon" />
-              Tienda Online  <p className="header-sub">Visualiza y exporta tu información</p>
+              Reportes <p className="header-sub">Visualiza y exporta tu información</p>
             </h1>
            
          <button className="btn-exportar" onClick={handleExportarPDF}>

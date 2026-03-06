@@ -166,11 +166,11 @@ const FeatureCard = memo(({ icon, title, desc }) => (
 
 const PricingCard = memo(({ plan }) => (
   <div className={`pricing-card ${plan.featured ? 'featured' : ''}`}>
-    {plan.badge && <div className="badge">{plan.badge}</div>}
+    {plan.badge && <div className="badge2">{plan.badge}</div>}
     <h3>{plan.name}</h3>
     <div className="price">
       <span className="currency">$</span>
-      <span className="amount">{plan.price.toLocaleString()}</span>
+      <span className="amount ">{plan.price.toLocaleString()}</span>
       <span className="period">/ mo</span>
     </div>
     <ul>
@@ -320,7 +320,7 @@ const Landing = () => {
         <div className="misionvision">
           <section className="mv-section" aria-labelledby="mv-title">
             <div className="mv-header">
-              <span className="subtitle">CARACTERÍSTICAS</span>
+              <span className="subtitle2">NOSOTROS</span>
               <h2 id="mv-title">Plataforma web todo en uno</h2>
               <p>Gestiona empeños, inventario, pagos y reportes desde una sola plataforma intuitiva.</p>
             </div>
@@ -384,7 +384,7 @@ const Landing = () => {
         {/* FUNCIONALIDADES */}
         <section className="func-section" id="nosotros" aria-labelledby="func-title">
           <div className="func-header">
-            <span className="subtitle">Funcionalidad</span>
+            <span className="subtitle2">Funcionalidad</span>
             <h2 id="func-title">Funcionalidades completas para todos</h2>
             <p>Herramientas poderosas para administradores y una experiencia superior para clientes</p>
           </div>
@@ -450,7 +450,7 @@ const Landing = () => {
         <section className="features-section" aria-labelledby="unique-title">
           <div className="features-container">
             <header className="features-header">
-              <span className="subtitle">CARACTERÍSTICAS</span>
+              <span className="subtitle2">CARACTERÍSTICAS</span>
               <h2 id="unique-title" className="features-title">Lo que nos hace únicos</h2>
               <p className="features-description">
                 Características que marcan la diferencia y potencian tu negocio
@@ -471,7 +471,7 @@ const Landing = () => {
         <div className="Planes" id="suscripciones">
           <div className="pricing-header">
             <center>
-              <span className="subtitle">Inversión</span>
+              <span className="subtitle2">Inversión</span>
               <h2>Planes flexibles para cada negocio</h2>
               <p>Elige el plan que mejor se adapte a tus necesidades. Sin sorpresas, sin costos ocultos.</p>
             </center>
@@ -493,14 +493,14 @@ const Landing = () => {
         {/* CONTACTO */}
         <div className="Contacto" id="contacto">
           <div className="contact-header">
-            <span className="subtitle">Dudas, comentarios y sugerencias</span>
+            <span className="subtitle2">CONTÁCTANOS</span>
             <h2>Comienza tu transformación digital hoy</h2>
             <p>Agenda una demo personalizada y descubre cómo Ophelia puede revolucionar tu casa de empeño</p>
           </div>
 
           <div className="contact-container">
             <div className="contact-form-card">
-              <h3>Contáctanos</h3>
+              <h3>Formulario</h3>
               <form onSubmit={handleSubmit} noValidate>
                 <div className="form-group">
                   <label htmlFor="nombre">Nombre completo *</label>
@@ -556,7 +556,7 @@ const Landing = () => {
                     value={formData.mensaje}
                     onChange={handleInputChange}
                     placeholder="Cuéntanos más sobre tu negocio"
-                    rows="4"
+                    rows="2"
                   />
                 </div>
                 

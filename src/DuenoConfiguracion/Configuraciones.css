@@ -217,7 +217,9 @@
 /* ===== MODAL USUARIO ===== */
 .modal-usuario {
   background: white;
-  border-radius: 28px;
+  border-radius: 15px;
+  padding-left: 15px;
+  padding-right: 15px;
   width: 550px;
   max-width: 95%;
   max-height: 90vh;
@@ -269,11 +271,12 @@
   }
 
   .modal-usuario {
-    border-radius: 20px;
+    border-radius: 15px;
   }
 
   .form-usuario-grid {
     grid-template-columns: 1fr;
+    
   }
 }
 
