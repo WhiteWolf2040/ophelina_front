@@ -3,6 +3,14 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "./Pagos.css";
 import PaymentsIcon from '@mui/icons-material/Payments';
+
+// Importar iconos de MUI
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+
+
+
 const PagosLista = ({ pagos }) => {
   const navigate = useNavigate();
 
@@ -196,54 +204,58 @@ const PagosLista = ({ pagos }) => {
           </div>
 
           {/* Vista desktop: tabla */}
-          <div className="vista-desktop">
-            <table>
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Artículo</th>
-                  <th>Monto</th>
-                  <th>Tipo</th>
-                  <th>Fecha</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
+  {/* Vista desktop: tabla */}
+<div className="vista-desktop">
+  <table>
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Artículo</th>
+        <th>Monto</th>
+        <th>Tipo</th>
+        <th>Fecha</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
 
-              <tbody>
-                {pagosActuales.length > 0 ? (
-                  pagosActuales.map((pago) => (
-                    <tr key={pago.id}>
-                      <td><strong>{pago.cliente}</strong></td>
-                      <td>{pago.articulo}</td>
-                      <td>${pago.monto}</td>
-                      <td>
-                        <span className={`tipo-badge tipo-${pago.tipo.toLowerCase()}`}>
-                          {pago.tipo}
-                        </span>
-                      </td>
-                      <td>{pago.fecha}</td>
-                      <td>
-                        <button 
-                          className="btn-accion ver"
-                          onClick={() => abrirDetalle(pago)}
-                        >
-                          Ver
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="sin-resultados">
-                      No hay resultados con esos filtros
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* PAGINACIÓN - SOLO SE MUESTRA SI HAY MÁS DE UNA PÁGINA */}
+    <tbody>
+      {pagosActuales.length > 0 ? (
+        pagosActuales.map((pago) => (
+          <tr key={pago.id}>
+            <td><strong>{pago.cliente}</strong></td>
+            <td>{pago.articulo}</td>
+            <td>${pago.monto}</td>
+            <td>
+              <span className={`tipo-badge tipo-${pago.tipo.toLowerCase()}`}>
+                {pago.tipo}
+              </span>
+            </td>
+            <td>{pago.fecha}</td>
+            <td>
+              <div className="acciones-container">
+                <button 
+                  className="btn-accion ver"
+                  onClick={() => abrirDetalle(pago)}
+                  title="Ver detalles"
+                >
+                  <VisibilityIcon fontSize="small" />
+                </button>
+                
+              </div>
+            </td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td colSpan="6" className="sin-resultados">
+            No hay resultados con esos filtros
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
+       {/* PAGINACIÓN - SOLO SE MUESTRA SI HAY MÁS DE UNA PÁGINA */}
           {totalPaginas > 1 && (
             <div className="paginacion-wrapper">
               <div className="paginacion-container">
@@ -291,7 +303,7 @@ const PagosLista = ({ pagos }) => {
             
             <div className="modal-header-pago">
               <h2>Detalle del Pago</h2>
-              <span className="pago-id">ID: #{pagoSeleccionado.id}</span>
+              
             </div>
 
             <div className="modal-body-pago">

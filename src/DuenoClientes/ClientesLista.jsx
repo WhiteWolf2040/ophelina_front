@@ -217,87 +217,57 @@ const ClientesLista = () => {
           {/* Vista desktop: tabla */}
           <div className="vista-desktop">
             <table>
-              <thead>
-                <tr>
-
-                  <th>Nombre </th>
-                  <th>Teléfono</th>
-                  <th> Email</th>
-                  <th>Dirección</th>
-                  <th>Identificación</th>
-                  <th> Registro</th>
-                  <th>Acciones</th>
-
-                  <th><PersonIcon className="title-icon" />Nombre </th>
-                  <th><PhoneIcon fontSize="small" className="table-icon" />Teléfono</th>
-                  <th><EmailIcon fontSize="small" className="table-icon" /> Email</th>
-                  <th><LocationOnIcon fontSize="small" className="table-icon" /> Dirección</th>
-                  
-                  <th><CalendarTodayIcon fontSize="small" className="table-icon" /> Registro</th>
-                  <th></th>
-
-                </tr>
-              </thead>
-              <tbody>
-                {clientesActuales.length > 0 ? (
-                  clientesActuales.map((cliente) => (
-                    <tr key={cliente.id}>
-                      <td><strong>{cliente.nombre}</strong></td>
-                      <td>
-                        
-                        {cliente.telefono}
-                      </td>
-                      <td>
-                        
-                        {cliente.email}
-                      </td>
-                      <td>
-                        
-                        {cliente.direccion || "No especificada"}
-                      </td>
-                      
-                      <td>
-                      
-                        {cliente.fecha}
-                      </td>
-                      <td>
-                        <div className="acciones-container">
-                          <button 
-                            className="btn-accion ver"
-                            onClick={() => abrirDetalle(cliente)}
-                            title="Ver detalles"
-                          >
-                            <VisibilityIcon fontSize="small" />
-                          </button>
-                          <button 
-                            className="btn-accion editar"
-                            onClick={() => abrirModalEditar(cliente)}
-                            title="Editar"
-                          >
-                            <EditIcon fontSize="small" />
-                          </button>
-                          {/* 
-<button 
-  className="btn-accion eliminar"
-  onClick={() => confirmarEliminar(cliente)}
-  title="Eliminar"
->
-  <DeleteIcon fontSize="small" />
-</button>
-*/}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
+                <thead>
                   <tr>
-                    <td colSpan="7" className="sin-resultados">
-                      <SearchIcon className="empty-icon" />
-                      No se encontraron clientes
-                    </td>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Dirección</th>
+                    <th>Identificación</th>
+                    <th>Registro</th>
+                  
                   </tr>
-                )}
-              </tbody>
+                </thead>
+   <tbody>
+  {clientesActuales.length > 0 ? (
+    clientesActuales.map((cliente) => (
+      <tr key={cliente.id}>
+        <td><strong>{cliente.nombre}</strong></td>
+        <td>{cliente.telefono}</td>
+        <td>{cliente.email}</td>
+        <td>{cliente.direccion || "No especificada"}</td>
+        <td>{cliente.tipoIdentificacion || "INE"}</td>  {/* ← Esta columna faltaba */}
+        <td>{cliente.fecha}</td>
+        <td>
+          <div className="acciones-container">
+            <button 
+              className="btn-accion ver"
+              onClick={() => abrirDetalle(cliente)}
+              title="Ver detalles"
+            >
+              <VisibilityIcon fontSize="small" />
+            </button>
+            <button 
+              className="btn-accion editar"
+              onClick={() => abrirModalEditar(cliente)}
+              title="Editar"
+            >
+              <EditIcon fontSize="small" />
+            </button>
+            {/* Botón de eliminar comentado */}
+          </div>
+        </td>
+      </tr>
+    ))
+  ) : (
+    <tr>
+      <td colSpan="7" className="sin-resultados">
+        <SearchIcon className="empty-icon" />
+        No se encontraron clientes
+      </td>
+    </tr>
+  )}
+</tbody>
             </table>
           </div>
 
@@ -351,7 +321,7 @@ const ClientesLista = () => {
             
             <div className="modal-header">
               <h2>{clienteSeleccionado.nombre}</h2>
-              <span className="cliente-id">ID: #{clienteSeleccionado.id}</span>
+              
             </div>
 
             <div className="modal-body">
