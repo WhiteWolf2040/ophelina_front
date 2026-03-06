@@ -151,7 +151,7 @@ const ClientesLista = () => {
     <div className="dashboard">
       
       
-      <div className="content owner-header">
+      <div className="content2 owner-header">
         {/* HEADER */}
         <div className="header-container ">
           <div className="tienda-header">
@@ -223,9 +223,9 @@ const ClientesLista = () => {
                   <th><PhoneIcon fontSize="small" className="table-icon" />Teléfono</th>
                   <th><EmailIcon fontSize="small" className="table-icon" /> Email</th>
                   <th><LocationOnIcon fontSize="small" className="table-icon" /> Dirección</th>
-                  <th><BadgeIcon fontSize="small" className="table-icon" /> Identificación</th>
+                  
                   <th><CalendarTodayIcon fontSize="small" className="table-icon" /> Registro</th>
-                  <th>Acciones</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -245,10 +245,7 @@ const ClientesLista = () => {
                         
                         {cliente.direccion || "No especificada"}
                       </td>
-                      <td>
-                        
-                        {cliente.tipoIdentificacion || "INE"} {cliente.numeroIdentificacion ? `- ${cliente.numeroIdentificacion}` : ''}
-                      </td>
+                      
                       <td>
                       
                         {cliente.fecha}
@@ -269,13 +266,15 @@ const ClientesLista = () => {
                           >
                             <EditIcon fontSize="small" />
                           </button>
-                          <button 
-                            className="btn-accion eliminar"
-                            onClick={() => confirmarEliminar(cliente)}
-                            title="Eliminar"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </button>
+                          {/* 
+<button 
+  className="btn-accion eliminar"
+  onClick={() => confirmarEliminar(cliente)}
+  title="Eliminar"
+>
+  <DeleteIcon fontSize="small" />
+</button>
+*/}
                         </div>
                       </td>
                     </tr>
@@ -532,9 +531,13 @@ const ClientesLista = () => {
               </div>
 
               <div className="modal-acciones-editar">
-                <button type="button" className="btn-cancelar-modal" onClick={cerrarModalEditar}>
-                  Cancelar
-                </button>
+                <button 
+                className="btn-eliminar"
+                onClick={() => confirmarEliminar(clienteSeleccionado)}
+              >
+                <DeleteIcon fontSize="small" />
+                Eliminar
+              </button>
                 <button type="submit" className="btn-guardar-modal">
                   <EditIcon fontSize="small" />
                   Guardar Cambios

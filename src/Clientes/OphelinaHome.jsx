@@ -47,7 +47,7 @@ export default function OphelinaHome() {
 
           {/* Cards resumen - SOLO ICONOS */}
           <section className="cards-section">
-            <div className="cards-grid">
+            <div className="cards-gridd">
               <Tooltip 
                 title={
                   <div style={{ textAlign: 'center' }}>
@@ -58,7 +58,7 @@ export default function OphelinaHome() {
                 placement="top" 
                 arrow
               >
-                <div className="stat-card">
+                <div className="stat-cardd">
                   <InventoryIcon sx={{ fontSize: 48, color: '#0d1b3e' }} />
                 </div>
               </Tooltip>

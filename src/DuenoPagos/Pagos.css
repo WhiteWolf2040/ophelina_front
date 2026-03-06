@@ -81,7 +81,7 @@
   border-radius: 25px;
   border: none;
   outline: none;
-  background-color: #e9e9e9;
+  background-color: white;
   font-size: 14px;
   color: #2c2c2c;
 }
@@ -110,7 +110,7 @@
   padding: 12px;
   border-radius: 8px;
   border: none;
-  background-color: #e9e9e9;
+  background-color: white;
   font-size: 14px;
   color: #2c2c2c;
   outline: none;
@@ -134,7 +134,7 @@
 
 /* ===== TARJETA DE TABLA ===== */
 .tabla-card {
-  background-color: #e9e9e9;
+  background-color: white;
   border-radius: 8px;
   padding: 30px;
   color: #2c2c2c;
@@ -397,7 +397,7 @@ tbody tr:first-child {
 /* ===== MODAL DETALLE PAGO ===== */
 .modal-detalle-pago {
   background: white;
-  border-radius: 28px;
+  border-radius: 15px;
   width: 750px;
   max-width: 95%;
   max-height: 90vh;
@@ -586,7 +586,7 @@ tbody tr:first-child {
 /* Responsive del modal */
 @media (max-width: 768px) {
   .modal-detalle-pago {
-    border-radius: 20px;
+    border-radius: 15px;
   }
 
   .modal-header-pago {
@@ -864,7 +864,7 @@ tbody tr:first-child {
 }
 
 .btn-cancelar {
-  background-color: #e9e9e9;
+  background-color: white;
   color: #333;
 }
 
@@ -884,7 +884,7 @@ tbody tr:first-child {
 /* Responsive de modales */
 @media (max-width: 768px) {
   .modal-detalle {
-    border-radius: 20px;
+    border-radius: 15px;
   }
 
   .modal-header {
