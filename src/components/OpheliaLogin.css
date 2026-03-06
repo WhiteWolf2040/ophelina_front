@@ -1,209 +1,130 @@
-/* CONTENEDOR PRINCIPAL (se mantiene tu fondo beige) */
+/* CONTENEDOR PRINCIPAL */
 .login-container {
-  height: 100vh;
-  width: 100vw;
+  min-height: 100vh;
+  width: 100%;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #f4f1ea;
+  justify-content: space-evenly; /* Centra horizontalmente */
+  align-items: center; /* Centra verticalmente */
+  align-content: center;
   position: relative;
-  overflow: hidden;
-  font-family: "Georgia", serif;
+  background-image: url('../assets/login-background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 200px;
+  /* padding: 200px;*/
 }
-body {
-  overflow-x: hidden;
-  overflow-y: hidden;
-}
-.overlay-pattern {
+
+/* Overlay oscuro 
+.login-container::before {
+  content: '';
   position: absolute;
-  inset: 0;
-  background-image: radial-gradient(#1e3a8a 1px, transparent 1px);
-  background-size: 40px 40px;
-  opacity: 0.06;
-  pointer-events: none; 
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 0;
+}
+  */
+
+/* CONTENEDOR INTERNO para centrar ambos elementos */
+.login-container > * {
+  position: relative;
+  z-index: 1;
 }
 
-/* LOGO */
-.logo-image {
-  width: 380px;
-  max-width: 100%;
-}
-
+/* LEFT SECTION - Logo */
 .left-section {
   width: 50%;
-  text-align: center;
-  z-index: 1;
-}
-
-.right-section {
-  width: 50%;
   display: flex;
-  justify-content: center;
-  z-index: 1;
+  justify-content: center; /* Empuja el logo hacia la derecha dentro de su sección */
+  align-items: center;
+  padding-right: 30px; /* Espacio entre logo y formulario */
 }
 
-/* FORMULARIO ORIGINAL PERO CON COLORES OPHELIA */
+.logo-image {
+  width: 400px;
+  max-width: 100%;
+  height: auto;
+
+}
+
+/* RIGHT SECTION - Formulario */
 .form-container {
   width: 350px;
-  height: 500px;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: rgba(0, 0, 0, 0.15) 0px 10px 30px;
-  border-radius: 20px;
-  box-sizing: border-box;
-  padding: 20px 30px;
-  margin-right: 400px;
-}
-.title {
-  text-align: center;
-  margin: 10px 0 30px 0;
-  font-size: 28px;
-  font-weight: 800;
-  color: #1e3a8a;
-}
+  min-height: 10%;
+  background-color: var(--white-transparent);
+  box-shadow: var(--shadow-md);
+  border-radius: 15px;
+  padding: 30px;
+  margin-bottom: -50px;
+  
+  align-items: center; /* Centra verticalmente */
+  align-content: center;
 
-/* FORM */
-.form {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  margin-bottom: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: fadeIn 0.5s ease-out;
+  margin-left: 50px; /* Espacio entre formulario y logo */
 }
 
-.input {
-  border-radius: 20px;
-  border: 1px solid #cbd5e1;
-  padding: 12px 15px;
-  background-color: #f8fafc;
-  color: #1e3a8a;
+.r{
+  width: 350px;
+  min-height: 10%;
+  background-color: var(--white-transparent);
+  box-shadow: var(--shadow-md);
+  border-radius: 15px;
+  padding: 30px;
+  margin-bottom: 50px;
+  
+  align-items: center; /* Centra verticalmente */
+  align-content: center;
+
+  backdrop-filter: blur(3px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  animation: fadeIn 0.5s ease-out;
+  margin-left: none; /* Espacio entre formulario y logo */
 }
 
-.input:focus {
-  border-color: #6b84b4;
-  outline: none;
+/* RESPONSIVE */
+@media (max-width: 968px) {
+  .left-section {
+    padding-right: 20px;
+  }
+  
+  .form-container {
+    width: 350px;
+    margin-left: 20px;
+     padding: 200px;
+  }
+  
+  .logo-image {
+    width: 300px;
+  }
 }
 
-/* LINK */
-.page-link {
-  text-decoration: underline;
-  text-align: end;
-  color: #6b84b4;
-}
-
-.page-link-label {
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.page-link-label:hover {
-  color: #1e3a8a;
-}
-
-/* BOTÓN PRINCIPAL */
-.form-btn {
-  padding: 10px 15px;
-  border-radius: 20px;
-  border: 0;
-  background: #6b84b4;
-  color: white;
-  cursor: pointer;
-  box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px;
-  font-weight: 600;
-  transition: 0.3s;
-}
-
-.form-btn:hover {
-  background: #5a73a0;
-}
-
-.form-btn:active {
-  box-shadow: none;
-}
-
-/* SIGN UP */
-.sign-up-label {
-  font-size: 12px;
-  color: #64748b;
-  text-align: center;
-}
-
-.sign-up-link {
-  margin-left: 4px;
-  text-decoration: underline;
-  text-decoration-color: #6b84b4;
-  color: #6b84b4;
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.sign-up-link:hover {
-  color: #1e3a8a;
-}
-
-/* BOTONES SOCIALES */
-.buttons-container {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  margin-top: 20px;
-  gap: 15px;
-}
-
-.apple-login-button,
-.google-login-button {
-  border-radius: 20px;
-  padding: 10px 15px;
-  box-shadow: rgba(0, 0, 0, 0.12) 0px 6px 20px;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 12px;
-  gap: 5px;
-  transition: 0.3s;
-}
-
-/* Apple adaptado */
-.apple-login-button {
-  background-color: #1e3a8a;
-  color: #fff;
-  border: 2px solid #1e3a8a;
-}
-
-.apple-login-button:hover {
-  background-color: #162c6b;
-}
-
-/* Google adaptado */
-.google-login-button {
-  border: 2px solid #6b84b4;
-  color: #1e3a8a;
-  background-color: white;
-}
-
-.google-login-button:hover {
-  background-color: #f1f5f9;
-}
-
-
-/* RESET GLOBAL */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body, #root {
-
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-}
-
-
-body {
-  margin: 0;
-  background-color: #f4f1ea;
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+    justify-content: center;
+    gap: 30px;
+    padding: 40px 20px;
+  }
+  
+  .left-section {
+    width: 100%;
+    justify-content: center; /* Centra el logo en móvil */
+    padding-right: 0;
+  }
+  
+  .form-container {
+    width: 100%;
+    max-width: 400px;
+    margin-left: 0;
+  }
+  
+  .logo-image {
+    width: 250px;
+  }
 }
