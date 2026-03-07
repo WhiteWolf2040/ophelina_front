@@ -210,7 +210,7 @@ const ClientesLista = () => {
                   <th><LocationOnIcon fontSize="small" className="table-icon" /> Dirección</th>
                   
                   <th><CalendarTodayIcon fontSize="small" className="table-icon" /> Registro</th>
-                  <th></th>
+                 
                 </tr>
               </thead>
               <tbody>
@@ -251,13 +251,7 @@ const ClientesLista = () => {
                           >
                             <EditIcon fontSize="small" />
                           </button>
-                          <button 
-                            className="btn-accion eliminar"
-                            onClick={() => confirmarEliminar(cliente)}
-                            title="Eliminar"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </button>
+                         
                         </div>
                       </td>
                     </tr>

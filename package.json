@@ -20,6 +20,8 @@
     "bootstrap": "^5.3.8",
     "file-saver": "^2.0.5",
     "google-icon-react": "^3.0.71",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
     "react": "^19.2.0",
     "react-apexcharts": "^2.0.1",
     "react-dom": "^19.2.0",

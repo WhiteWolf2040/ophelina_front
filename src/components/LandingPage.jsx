@@ -573,21 +573,21 @@ const Landing = () => {
             <div className="contact-info-column">
               <div className="info-card dark">
                 <h4>Otras formas de contacto</h4>
-                <div className="info-item">
+                <div className="info-item2">
                  
                   <div >
                     <strong> <span className="icon" aria-hidden="true">📧</span> Email</strong>
                     <p>contacto@ophelina.mx</p>
                   </div>
                 </div>
-                <div className="info-item">
+                <div className="info-item2">
                   
                   <div>
                     <strong><span className="icon" aria-hidden="true">📞</span> Teléfono</strong>
                     <p>+52 999 999 99 99</p>
                   </div>
                 </div>
-                <div className="info-item">
+                <div className="info-item2">
                   
                   <div>
                     <strong><span className="icon" aria-hidden="true">📍</span> Oficinas</strong>

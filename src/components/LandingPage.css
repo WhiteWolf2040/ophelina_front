@@ -779,14 +779,14 @@
   font-size: 18px;
 }
 
-.info-item {
+.info-item2 {
   display: flex;
   gap: 15px;
   margin-bottom: 20px;
 }
 
-.info-item strong { display: block; font-size: 14px; }
-.info-item p { font-size: 13px; opacity: 0.8; }
+.info-item2 strong { display: block; font-size: 14px; }
+.info-item2 p { font-size: 13px; opacity: 0.8; }
 
 .info-card hr {
   border: 0;

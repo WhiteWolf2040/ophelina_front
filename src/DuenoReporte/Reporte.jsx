@@ -1,4 +1,4 @@
-// Reportes.jsx - Versión con iconos MUI
+// Reportes.jsx - Versión COMPLETA y CORREGIDA
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import "./Reporte.css";
@@ -19,8 +19,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 
-// Importar ApexCharts
+// Importar ApexCharts y jsPDF (CORREGIDO)
 import ApexCharts from "apexcharts";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const Reportes = () => {
   const chartRef = useRef(null);
@@ -67,35 +69,31 @@ const Reportes = () => {
   const [ingresosDetalle, setIngresosDetalle] = useState(datosCompletos.ingresos);
 
   const seccionesDetalle = [
-    { nombre: "Sección 1", datos: 13, tipo: "Empeños activos" },
-    { nombre: "Sección 2", datos: 20, tipo: "Empeños vencidos" },
-    { nombre: "Sección 3", datos: 27, tipo: "Próximos a vencer" },
-    { nombre: "Sección 4", datos: 4, tipo: "Ingresos mensuales" },
+    { nombre: "Empeños activos", datos: 13, tipo: "Empeños activos" },
+    { nombre: "Empeños vencidos ", datos: 20, tipo: "Empeños vencidos" },
+    { nombre: "Próximos a vencer", datos: 27, tipo: "Próximos a vencer" },
+    { nombre: "Ingresos mensuales", datos: 4, tipo: "Ingresos mensuales" },
   ];
 
   // Función para filtrar datos por rango de fechas
   const filtrarPorFechas = (inicio, fin) => {
-    const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    const [inicioYear, inicioMes] = inicio.split('-').map(Number);
-    const [finYear, finMes] = fin.split('-').map(Number);
+    const [inicioMes] = inicio.split('-').map(Number);
+    const [finMes] = fin.split('-').map(Number);
     
-    // Convertir a índice para comparar (asumiendo mismo año por simplicidad)
-    const inicioIdx = inicioMes - 1; // 0 = Ene
+    const inicioIdx = inicioMes - 1;
     const finIdx = finMes - 1;
 
-    const tendenciasFiltradas = datosCompletos.tendencias.filter((item, index) => {
+    const tendenciasFiltradas = datosCompletos.tendencias.filter((_, index) => {
       return index >= inicioIdx && index <= finIdx;
     });
 
-    const ingresosFiltrados = datosCompletos.ingresos.filter((item, index) => {
+    const ingresosFiltrados = datosCompletos.ingresos.filter((_, index) => {
       return index >= inicioIdx && index <= finIdx;
     });
 
     setTendenciasDetalle(tendenciasFiltradas);
     setIngresosDetalle(ingresosFiltrados);
     setFiltroAplicado(true);
-
-    // Actualizar la gráfica
     actualizarGrafica(tendenciasFiltradas);
   };
 
@@ -127,23 +125,18 @@ const Reportes = () => {
       }
 
       const options = {
+        chart: {
+          id: 'grafica-principal',
+          height: 350,
+          type: 'line',
+          zoom: { enabled: false },
+          toolbar: { show: true }
+        },
         series: [{
           name: "Empeños",
           data: tendenciasDetalle.map(d => d.valor)
         }],
-        chart: {
-          height: 350,
-          type: 'line',
-          zoom: {
-            enabled: false
-          },
-          toolbar: {
-            show: true
-          }
-        },
-        dataLabels: {
-          enabled: false
-        },
+        dataLabels: { enabled: false },
         stroke: {
           curve: 'straight',
           width: 3,
@@ -168,9 +161,7 @@ const Reportes = () => {
           categories: tendenciasDetalle.map(d => d.mes),
         },
         yaxis: {
-          title: {
-            text: 'Cantidad'
-          }
+          title: { text: 'Cantidad' }
         },
         colors: ['#1e3a8a'],
         markers: {
@@ -192,16 +183,161 @@ const Reportes = () => {
     };
   }, [tendenciasDetalle, filtroAplicado]);
 
+  // Función para exportar a PDF (CORREGIDA)
+  const exportarAPDF = async () => {
+    try {
+      // Crear nuevo PDF (horizontal para más espacio)
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // ===== PÁGINA 1: RESUMEN GENERAL =====
+      
+      // Título principal
+      pdf.setFontSize(24);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('REPORTE COMPLETO DE EMPEÑOS', 15, 20);
+      
+      // Fecha y período
+      pdf.setFontSize(11);
+      pdf.setTextColor(80, 80, 80);
+      pdf.text(`Generado: ${new Date().toLocaleString()}`, 15, 30);
+      pdf.text(`Período: ${fechaInicio} a ${fechaFin}`, 15, 36);
+      pdf.text(`Filtros aplicados: ${filtroAplicado ? 'SÍ' : 'NO'}`, 15, 42);
+
+      // Tarjetas de resumen
+      pdf.setFontSize(14);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('RESUMEN DE MÉTRICAS', 15, 55);
+
+      // Crear tabla de resumen
+      autoTable(pdf, {
+        startY: 60,
+        head: [['Métrica', 'Cantidad', 'Valor Total', 'Detalle']],
+        body: [
+          ['Empeños Activos', '3', '$11,300', '3 artículos'],
+          ['Empeños Vencidos', '2', '$12,200', '25 días promedio'],
+          ['Próximos a Vencer', '2', '$3,500', '6.5 días promedio'],
+          ['Ingresos Totales', '8', '$8,950', 'Últimos 30 días'],
+          ['Productos en Tienda', '4', '$15,700', '3 visibles, 1 oculto'],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+        styles: { fontSize: 10 },
+        columnStyles: {
+          0: { cellWidth: 50 },
+          1: { cellWidth: 30, halign: 'center' },
+          2: { cellWidth: 40, halign: 'right' },
+          3: { cellWidth: 70 }
+        }
+      });
+
+      // ===== GRÁFICA PRINCIPAL =====
+      pdf.setFontSize(14);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('GRÁFICA DE TENDENCIAS', 15, pdf.lastAutoTable.finalY + 15);
+
+      // Capturar la gráfica como imagen
+      try {
+        // Esperar un momento para asegurar que la gráfica esté renderizada
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { imgURI } = await ApexCharts.exec('grafica-principal', 'dataURI', {
+          scale: 2,
+          width: 800
+        });
+        
+        if (imgURI) {
+          // Calcular posición para la gráfica
+          const yPos = pdf.lastAutoTable.finalY + 20;
+          pdf.addImage(imgURI, 'PNG', 15, yPos, 250, 100);
+        }
+      } catch (error) {
+        console.error("Error capturando gráfica:", error);
+      }
+
+      // ===== PÁGINA 2: TENDENCIAS DETALLADAS =====
+      pdf.addPage();
+
+      pdf.setFontSize(18);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('TENDENCIAS DE EMPEÑOS', 15, 20);
+
+      // Tabla detallada de tendencias - Usar autoTable directamente
+      autoTable(pdf, {
+        startY: 30,
+        head: [['Mes', 'Valor', 'Cantidad', 'Variación %']],
+        body: tendenciasDetalle.map((item, i) => [
+          item.mes,
+          item.valor.toString(),
+          `${item.cantidad} empeños`,
+          i > 0 ? `${((item.valor - tendenciasDetalle[i-1].valor) / tendenciasDetalle[i-1].valor * 100).toFixed(1)}%` : '-'
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+        styles: { fontSize: 9 }
+      });
+
+      // ===== PÁGINA 3: INGRESOS DETALLADOS =====
+      pdf.addPage();
+
+      pdf.setFontSize(18);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('COMPARATIVA DE INGRESOS', 15, 20);
+
+      autoTable(pdf, {
+        startY: 30,
+        head: [['Mes', 'Ingresos', 'Transacciones', 'Promedio']],
+        body: ingresosDetalle.map(item => [
+          item.mes,
+          `$${item.valor.toLocaleString()}`,
+          item.transacciones.toString(),
+          `$${(item.valor / item.transacciones).toFixed(0)}`
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+        styles: { fontSize: 9 }
+      });
+
+      // ===== PÁGINA 4: SECCIONES PDF =====
+      pdf.addPage();
+
+      pdf.setFontSize(18);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('SECCIONES PARA EXPORTAR', 15, 20);
+
+      autoTable(pdf, {
+        startY: 30,
+        head: [['Sección', 'Tipo', 'Cantidad de Datos']],
+        body: seccionesDetalle.map(item => [
+          item.nombre,
+          item.tipo,
+          `${item.datos} datos`
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+        styles: { fontSize: 9 }
+      });
+
+      // ===== GUARDAR PDF =====
+      pdf.save(`reporte_completo_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      alert("✅ Reporte generado exitosamente");
+
+    } catch (error) {
+      console.error("Error detallado:", error);
+      alert(`❌ Error al generar el PDF: ${error.message}`);
+    }
+  };
+
   const handleAplicarFiltros = () => {
     if (fechaInicio && fechaFin) {
       filtrarPorFechas(fechaInicio, fechaFin);
     } else {
       alert("Selecciona ambas fechas");
     }
-  };
-
-  const handleExportarPDF = () => {
-    alert("Exportando PDF...");
   };
 
   return (
@@ -218,7 +354,7 @@ const Reportes = () => {
             <p className="header-sub">Visualiza y exporta tu información</p>
           </h1>
            
-          <button className="btn-exportar" onClick={handleExportarPDF}>
+          <button className="btn-exportar" onClick={exportarAPDF}>
             <PictureAsPdfIcon />
             Exportar PDF
           </button>
@@ -500,7 +636,7 @@ const Reportes = () => {
             </div>
 
             <div className="modal-acciones">
-              <button className="btn-exportar-modal" onClick={handleExportarPDF}>
+              <button className="btn-exportar-modal" onClick={exportarAPDF}>
                 <DownloadIcon />
                 Exportar PDF
               </button>
