@@ -1,18 +1,15 @@
-import React, { useState, memo } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import "./OphelinaTienda.css";
 import Navbar from "../ClientesNav/Navbar";
-
-import logo from "../assets/O_blue.png";
-import LogoInicial from "../assets/Ophelina_White.png";
 
 import anillo_oro from "../assets/anillo_oro.jpg";
 import collar_plata from "../assets/collar_plata.jpg";
 import arete_diamante from "../assets/arete_diamante.jpg";
-import xbox from "../assets/xbox.jpg"; // <-- nueva imagen
+import xbox from "../assets/xbox.jpg";
 
-/* ================= MODAL (IGUAL AL DE MISEMPEÑOS) ================= */
-const Modal = ({ isOpen, onClose, producto, tipo }) => {
+/* ================= MODAL ================= */
+const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo }) => {
   if (!isOpen) return null;
 
   return (
@@ -54,13 +51,13 @@ const Modal = ({ isOpen, onClose, producto, tipo }) => {
               </div>
             </div>
 
-            {tipo === 'comprar' && (
+            {tipo === 'apartar' && (
               <button 
                 className="pago-confirmar-btn" 
-                onClick={onClose}
+                onClick={onConfirmarApartado}
                 style={{ marginTop: '20px' }}
               >
-                Comprar ahora
+                Apartar ahora
               </button>
             )}
           </div>
@@ -76,6 +73,10 @@ export default function OphelinaTienda() {
   const [categoriaActiva, setCategoriaActiva] = useState("todas");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  const [mensajeApartado, setMensajeApartado] = useState({ mostrar: false, producto: '' });
+  
+  // Estado para productos apartados
+  const [productosApartados, setProductosApartados] = useState([]);
 
   const productos = [
     {
@@ -118,7 +119,6 @@ export default function OphelinaTienda() {
       material: "Oro 14k con diamantes",
       exclusivo: true
     },
-    // Electrónicos (solo Xbox)
     {
       id: 5,
       nombre: "Xbox Series X",
@@ -136,18 +136,38 @@ export default function OphelinaTienda() {
     { id: "oro", nombre: "Oro" },
     { id: "plata", nombre: "Plata" },
     { id: "electronicos", nombre: "Electrónicos" },
-    { id: "exclusivo", nombre: "Edición Limitada" }
+    { id: "exclusivo", nombre: "Edición Limitada" },
+    { id: "apartados", nombre: "Mis apartados" }
   ];
 
-  const handleComprar = (producto) => {
+  const handleApartar = (producto) => {
     setProductoSeleccionado(producto);
     setModalAbierto(true);
+  };
+
+  const handleConfirmarApartado = () => {
+    // Agregar el producto a la lista de apartados
+    setProductosApartados([...productosApartados, productoSeleccionado.id]);
+    
+    // Mostrar mensaje de confirmación
+    setMensajeApartado({ mostrar: true, producto: productoSeleccionado.nombre });
+    setModalAbierto(false);
+    
+    // Ocultar mensaje después de 3 segundos
+    setTimeout(() => {
+      setMensajeApartado({ mostrar: false, producto: '' });
+    }, 3000);
   };
 
   const productosFiltrados = productos.filter((producto) => {
     const matchesBusqueda = producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
                            producto.descripcion.toLowerCase().includes(busqueda.toLowerCase()) ||
                            (producto.material && producto.material.toLowerCase().includes(busqueda.toLowerCase()));
+    
+    if (categoriaActiva === "apartados") {
+      // Mostrar solo productos apartados
+      return productosApartados.includes(producto.id) && matchesBusqueda;
+    }
     
     if (categoriaActiva === "todas") return matchesBusqueda;
     if (categoriaActiva === "exclusivo") return producto.exclusivo && matchesBusqueda;
@@ -201,63 +221,97 @@ export default function OphelinaTienda() {
         <section className="products-section">
           <div className="products-header">
             <h2 className="products-title">
-              {categoriaActiva === "todas" ? "Todas las piezas disponibles" : 
-               categorias.find(c => c.id === categoriaActiva)?.nombre}
+              {categoriaActiva === "apartados" 
+                ? "Mis artículos apartados" 
+                : categoriaActiva === "todas" 
+                  ? "Todas las piezas disponibles" 
+                  : categorias.find(c => c.id === categoriaActiva)?.nombre}
             </h2>
-            <span className="products-count">{productosFiltrados.length} artículos</span>
+            <span className="products-count">
+              {categoriaActiva === "apartados" 
+                ? `${productosApartados.length} artículos apartados` 
+                : `${productosFiltrados.length} artículos`}
+            </span>
           </div>
 
           <div className="products-grid-luxury">
-            {productosFiltrados.map((producto) => (
-              <article key={producto.id} className="product-card-luxury">
-                <div className="card-media">
-                  <div className="image-wrapper">
-                    <img
-                      src={producto.imagen}
-                      alt={producto.nombre}
-                      className="product-image"
-                    />
-                    {producto.exclusivo && (
-                      <span className="exclusive-badge">Artículo exclusivo</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="card-content">
-                  <div className="card-header">
-                    <h3 className="product-name">{producto.nombre}</h3>
-                    <p className="product-description">{producto.descripcion}</p>
-                  </div>
-
-                  <div className="card-footer">
-                    <span className="product-price">{producto.precio} MX</span>
-                    
-                    <div className="product-actions">
-                      <button 
-                        className="btn-comprar"
-                        onClick={() => handleComprar(producto)}
-                      >
-                        <span>Comprar</span>
-                      </button>
+            {productosFiltrados.map((producto) => {
+              const estaApartado = productosApartados.includes(producto.id);
+              
+              return (
+                <article key={producto.id} className={`product-card-luxury ${estaApartado ? 'producto-apartado' : ''}`}>
+                  <div className="card-media">
+                    <div className="image-wrapper">
+                      <img
+                        src={producto.imagen}
+                        alt={producto.nombre}
+                        className="product-image"
+                      />
+                      {producto.exclusivo && (
+                        <span className="exclusive-badge">Artículo exclusivo</span>
+                      )}
+                      {estaApartado && (
+                        <span className="apartado-badge">APARTADO</span>
+                      )}
                     </div>
                   </div>
-                </div>
-              </article>
-            ))}
+
+                  <div className="card-content">
+                    <div className="card-header">
+                      <h3 className="product-name">{producto.nombre}</h3>
+                      <p className="product-description">{producto.descripcion}</p>
+                    </div>
+
+                    <div className="card-footer">
+                      <span className="product-price">{producto.precio} MX</span>
+                      
+                      <div className="product-actions">
+                        {estaApartado ? (
+                          <span className="btn-apartado-disable">
+                            <span>Apartado ✓</span>
+                          </span>
+                        ) : (
+                          <button 
+                            className="btn-apartar"
+                            onClick={() => handleApartar(producto)}
+                          >
+                            <span>Apartar</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
 
           {productosFiltrados.length === 0 && (
             <div className="no-results">
-              <p>No encontramos artículos que coincidan con tu búsqueda</p>
-              <button 
-                className="btn-limpiar"
-                onClick={() => {
-                  setBusqueda("");
-                  setCategoriaActiva("todas");
-                }}
-              >
-                Ver todos los artículos
-              </button>
+              {categoriaActiva === "apartados" ? (
+                <>
+                  <p>No tienes artículos apartados</p>
+                  <button 
+                    className="btn-limpiar"
+                    onClick={() => setCategoriaActiva("todas")}
+                  >
+                    Ver artículos disponibles
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p>No encontramos artículos que coincidan con tu búsqueda</p>
+                  <button 
+                    className="btn-limpiar"
+                    onClick={() => {
+                      setBusqueda("");
+                      setCategoriaActiva("todas");
+                    }}
+                  >
+                    Ver todos los artículos
+                  </button>
+                </>
+              )}
             </div>
           )}
         </section>
@@ -265,9 +319,20 @@ export default function OphelinaTienda() {
         <Modal 
           isOpen={modalAbierto}
           onClose={() => setModalAbierto(false)}
+          onConfirmarApartado={handleConfirmarApartado}
           producto={productoSeleccionado}
-          tipo="comprar"
+          tipo="apartar"
         />
+
+        {/* Mensaje de confirmación de apartado */}
+        {mensajeApartado.mostrar && (
+          <div className="mensaje-apartado">
+            <div className="mensaje-contenido">
+              <span className="mensaje-icono">📌</span>
+              <p>¡Apartado! Has apartado: <strong>{mensajeApartado.producto}</strong></p>
+            </div>
+          </div>
+        )}
       </main>
     </>
   );
