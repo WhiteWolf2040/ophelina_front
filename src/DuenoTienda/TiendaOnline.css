@@ -47,8 +47,9 @@
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 15px;
+  gap: 30px;
   margin-bottom: 25px;
+  margin-right: 25px;
 }
 
 .stat-card {

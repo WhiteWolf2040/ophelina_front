@@ -4,6 +4,10 @@ import Sidebar from "../components/Sidebar";
 import "./Empenos.css";
 import DiamondIcon from '@mui/icons-material/Diamond';
 
+// Importar iconos de MUI
+import VisibilityIcon from '@mui/icons-material/Visibility';
+
+
 const EmpenosLista = ({ empenos }) => {
   const navigate = useNavigate();
   const [filtroEstado, setFiltroEstado] = useState("todos"); // 'todos', 'activos', 'vencidos'
@@ -249,12 +253,13 @@ const EmpenosLista = ({ empenos }) => {
                         </td>
 
                         <td>
-                          <button 
-                            className="btn-accion ver"
-                            onClick={() => abrirDetalle(e)}
-                          >
-                            Ver
-                          </button>
+                           <button 
+                              className="btn-accion ver"
+                              onClick={() => abrirDetalle(e)}
+                              title="Ver detalles"
+                            >
+                              <VisibilityIcon fontSize="small" />
+                            </button>
                         </td>
                       </tr>
                     );

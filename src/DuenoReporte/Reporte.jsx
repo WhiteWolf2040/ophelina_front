@@ -1,8 +1,23 @@
-// Reportes.jsx
+// Reportes.jsx - Versión con iconos MUI
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import "./Reporte.css";
+
+// Importar iconos de MUI
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import ClearIcon from '@mui/icons-material/Clear';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import PieChartIcon from '@mui/icons-material/PieChart';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import CloseIcon from '@mui/icons-material/Close';
+import DownloadIcon from '@mui/icons-material/Download';
+import DateRangeIcon from '@mui/icons-material/DateRange';
 
 // Importar ApexCharts
 import ApexCharts from "apexcharts";
@@ -197,23 +212,23 @@ const Reportes = () => {
     
         {/* HEADER */}
         <div className="tienda-header">
-          
-            <h1>
-              <LeaderboardIcon className="title-icon" />
-              Reportes <p className="header-sub">Visualiza y exporta tu información</p>
-            </h1>
+          <h1>
+            <AssessmentIcon className="title-icon" />
+            Reportes 
+            <p className="header-sub">Visualiza y exporta tu información</p>
+          </h1>
            
-         <button className="btn-exportar" onClick={handleExportarPDF}>
-            <span>📄</span> Exportar PDF
+          <button className="btn-exportar" onClick={handleExportarPDF}>
+            <PictureAsPdfIcon />
+            Exportar PDF
           </button>
-          
         </div>
         
 
         {/* FILTROS DE FECHA */}
         <div className="filtros-reportes">
           <div className="filtro-grupo">
-            <label>Fecha Inicio</label>
+            <label><DateRangeIcon fontSize="small" /> Fecha Inicio</label>
             <div className="filtro-input-group">
               <input 
                 type="month" 
@@ -223,12 +238,12 @@ const Reportes = () => {
                 min="2024-01"
                 max="2024-12"
               />
-              <span className="filtro-icon">📅</span>
+              <CalendarTodayIcon className="filtro-icon" />
             </div>
           </div>
 
           <div className="filtro-grupo">
-            <label>Fecha Fin</label>
+            <label><DateRangeIcon fontSize="small" /> Fecha Fin</label>
             <div className="filtro-input-group">
               <input 
                 type="month" 
@@ -238,17 +253,19 @@ const Reportes = () => {
                 min="2024-01"
                 max="2024-12"
               />
-              <span className="filtro-icon">📅</span>
+              <CalendarTodayIcon className="filtro-icon" />
             </div>
           </div>
 
           <button className="btn-aplicar" onClick={handleAplicarFiltros}>
+            <FilterAltIcon />
             Aplicar Filtros
           </button>
 
           {filtroAplicado && (
             <button className="btn-limpiar" onClick={limpiarFiltros}>
-              ✕ Limpiar
+              <ClearIcon />
+              Limpiar
             </button>
           )}
         </div>
@@ -256,7 +273,7 @@ const Reportes = () => {
         {/* CARDS DE REPORTES */}
         <div className="reportes-cards">
           <div className="reporte-card" onClick={() => setShowTendencias(true)}>
-            <div className="card-icon">📈</div>
+            <ShowChartIcon className="card-icon" />
             <h3>Tendencias de Empeños</h3>
             <p className="card-value">
               {tendenciasDetalle.length} meses • 
@@ -277,7 +294,7 @@ const Reportes = () => {
           </div>
 
           <div className="reporte-card" onClick={() => setShowIngresos(true)}>
-            <div className="card-icon">💰</div>
+            <AttachMoneyIcon className="card-icon" />
             <h3>Comparativa de Ingresos</h3>
             <p className="card-value">
               ${ingresosDetalle.reduce((sum, item) => sum + item.valor, 0).toLocaleString()} total
@@ -299,7 +316,7 @@ const Reportes = () => {
           </div>
 
           <div className="reporte-card full-width" onClick={() => setShowSecciones(true)}>
-            <div className="card-icon">📊</div>
+            <PieChartIcon className="card-icon" />
             <h3>Exportar PDF - Secciones</h3>
             <div className="secciones-mini">
               {seccionesDetalle.map((item, i) => (
@@ -320,9 +337,11 @@ const Reportes = () => {
 
         {/* GRÁFICA PRINCIPAL */}
         <div className="grafica-card">
+          <h2><BarChartIcon /> Análisis de Empeños</h2>
           <div ref={chartRef}></div>
           {filtroAplicado && (
             <p className="filtro-info">
+              <FilterAltIcon fontSize="small" />
               Mostrando datos de {tendenciasDetalle[0]?.mes} a {tendenciasDetalle[tendenciasDetalle.length-1]?.mes}
             </p>
           )}
@@ -333,10 +352,15 @@ const Reportes = () => {
       {showTendencias && (
         <div className="modal-overlay" onClick={() => setShowTendencias(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowTendencias(false)}>×</button>
+            <button className="modal-cerrar" onClick={() => setShowTendencias(false)}>
+              <CloseIcon />
+            </button>
             
             <div className="modal-header">
-              <h2>Tendencias de Empeños</h2>
+              <h2>
+                <ShowChartIcon />
+                Tendencias de Empeños
+              </h2>
               <span className="cliente-id">
                 {tendenciasDetalle.length} meses • Total: {tendenciasDetalle.reduce((sum, item) => sum + item.cantidad, 0)} empeños
               </span>
@@ -362,6 +386,7 @@ const Reportes = () => {
                         <td>
                           {i > 0 ? (
                             <span className={item.valor < tendenciasDetalle[i-1].valor ? "badge-danger" : "badge-success"}>
+                              <TrendingUpIcon fontSize="small" />
                               {((item.valor - tendenciasDetalle[i-1].valor) / tendenciasDetalle[i-1].valor * 100).toFixed(1)}%
                             </span>
                           ) : "-"}
@@ -375,6 +400,7 @@ const Reportes = () => {
 
             <div className="modal-acciones">
               <button className="btn-cancelar" onClick={() => setShowTendencias(false)}>
+                <CloseIcon />
                 Cerrar
               </button>
             </div>
@@ -386,10 +412,15 @@ const Reportes = () => {
       {showIngresos && (
         <div className="modal-overlay" onClick={() => setShowIngresos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowIngresos(false)}>×</button>
+            <button className="modal-cerrar" onClick={() => setShowIngresos(false)}>
+              <CloseIcon />
+            </button>
             
             <div className="modal-header">
-              <h2>Comparativa de Ingresos</h2>
+              <h2>
+                <AttachMoneyIcon />
+                Comparativa de Ingresos
+              </h2>
               <span className="cliente-id">
                 Total: ${ingresosDetalle.reduce((sum, item) => sum + item.valor, 0).toLocaleString()}
               </span>
@@ -422,6 +453,7 @@ const Reportes = () => {
 
             <div className="modal-acciones">
               <button className="btn-cancelar" onClick={() => setShowIngresos(false)}>
+                <CloseIcon />
                 Cerrar
               </button>
             </div>
@@ -433,10 +465,15 @@ const Reportes = () => {
       {showSecciones && (
         <div className="modal-overlay" onClick={() => setShowSecciones(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowSecciones(false)}>×</button>
+            <button className="modal-cerrar" onClick={() => setShowSecciones(false)}>
+              <CloseIcon />
+            </button>
             
             <div className="modal-header">
-              <h2>Exportar PDF - Secciones</h2>
+              <h2>
+                <PictureAsPdfIcon />
+                Exportar PDF - Secciones
+              </h2>
               <span className="cliente-id">Total: {seccionesDetalle.reduce((sum, item) => sum + item.datos, 0)} datos</span>
             </div>
 
@@ -464,9 +501,11 @@ const Reportes = () => {
 
             <div className="modal-acciones">
               <button className="btn-exportar-modal" onClick={handleExportarPDF}>
-                📄 Exportar PDF
+                <DownloadIcon />
+                Exportar PDF
               </button>
               <button className="btn-cancelar" onClick={() => setShowSecciones(false)}>
+                <CloseIcon />
                 Cerrar
               </button>
             </div>

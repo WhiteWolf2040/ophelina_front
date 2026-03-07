@@ -1,4 +1,9 @@
+
+
+/* Sidebar.css */
+
 /* Sidebar.css - Versión Mejorada */
+
 
 /* ===== VARIABLES ===== */
 :root {
@@ -50,12 +55,28 @@
   animation: fadeIn 0.3s ease;
 }
 
+
+/* Sidebar base */
+
+
+/* Contenedor principal - usa flex para sidebar + contenido */
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* SIDEBAR - estructura corregida */
+
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 /* ===== SIDEBAR BASE ===== */
+
+
 .sidebar {
   width: var(--sidebar-width);
   background: linear-gradient(180deg, #0a1a3a 0%, #1a2a4a 100%);
@@ -366,10 +387,13 @@
     font-size: 15px;
   }
 
+}
+
   .sidebar-footer {
     display: block !important; /* Siempre mostrar footer en móvil */
   }
-}
+
+
 
 /* Móviles pequeños */
 @media (max-width: 480px) {
@@ -413,3 +437,4 @@
 .sidebar.open {
   animation: slideIn 0.3s ease;
 }
+

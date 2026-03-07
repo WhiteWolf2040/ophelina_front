@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import "./Inventario.css";
 import InventoryIcon from '@mui/icons-material/Inventory';
+// Importar iconos de MUI
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const InventarioLista = () => {
   const navigate = useNavigate();
@@ -169,12 +173,13 @@ const InventarioLista = () => {
               <div key={item.id} className="inventario-tarjeta">
                 <div className="tarjeta-header">
                   <strong>{item.nombre}</strong>
-                  <span 
-                    className="detalle-link"
-                    onClick={() => abrirDetalle(item)}
+                <button 
+                    className="btn-accion ver"
+                    onClick={() => abrirDetalle(e)}
+                    title="Ver detalles"
                   >
-                    Ver detalles →
-                  </span>
+                    <VisibilityIcon fontSize="small" />
+                  </button>
                 </div>
                 <div className="tarjeta-cuerpo">
                   <div className="tarjeta-fila">
@@ -234,11 +239,12 @@ const InventarioLista = () => {
                     </td>
                     <td>
                       <button 
-                        className="btn-accion ver"
-                        onClick={() => abrirDetalle(item)}
-                      >
-                        Ver detalles
-                      </button>
+                    className="btn-accion ver"
+                    onClick={() => abrirDetalle(item)}
+                    title="Ver detalles"
+                  >
+                    <VisibilityIcon fontSize="small" />
+                  </button>
                     </td>
                   </tr>
                 ))

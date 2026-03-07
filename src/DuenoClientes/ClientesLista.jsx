@@ -201,6 +201,7 @@ const ClientesLista = () => {
           {/* Vista desktop: tabla */}
           <div className="vista-desktop">
             <table>
+
               <thead>
                 <tr>
                   <th><PersonIcon className="title-icon" />Nombre </th>
@@ -261,16 +262,16 @@ const ClientesLista = () => {
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="sin-resultados">
-                      <SearchIcon className="empty-icon" />
-                      No se encontraron clientes
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+    ) : (
+      <tr>
+        <td colSpan="6" className="sin-resultados">
+          <SearchIcon className="empty-icon" />
+          No se encontraron clientes
+        </td>
+      </tr>
+    )}
+  </tbody>
+</table>
           </div>
 
           {/* PAGINACIÓN */}
@@ -323,7 +324,7 @@ const ClientesLista = () => {
             
             <div className="modal-header">
               <h2>{clienteSeleccionado.nombre}</h2>
-              <span className="cliente-id">ID: #{clienteSeleccionado.id}</span>
+              
             </div>
 
             <div className="modal-body">
