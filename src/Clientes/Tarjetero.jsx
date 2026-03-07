@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import "./Tarjetero.css";
 import Navbar from "../ClientesNav/Navbar";
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import DeleteIcon from '@mui/icons-material/Delete'; // Importar icono de eliminar
+import AddIcon from '@mui/icons-material/Add'; // Importar icono de agregar
 
 const Tarjetero = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [showSensitiveData, setShowSensitiveData] = useState({});
   const [cards, setCards] = useState([
     {
       id: 1,
@@ -32,6 +37,35 @@ const Tarjetero = () => {
     brand: 'visa'
   });
 
+  // Cerrar modales con ESC
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        setShowEditModal(false);
+        setShowAddModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
+
+  // Inicializar estado de visibilidad para todas las tarjetas
+  useEffect(() => {
+    const initialVisibility = {};
+    cards.forEach(card => {
+      initialVisibility[card.id] = false;
+    });
+    setShowSensitiveData(initialVisibility);
+  }, [cards.length]);
+
+  // Función para alternar visibilidad de datos sensibles
+  const toggleVisibility = (cardId) => {
+    setShowSensitiveData(prev => ({
+      ...prev,
+      [cardId]: !prev[cardId]
+    }));
+  };
+
   // Función para dividir el número de tarjeta en dos líneas
   const splitCardNumber = (number) => {
     const parts = number.split(' ');
@@ -42,13 +76,15 @@ const Tarjetero = () => {
   };
 
   // Mascarar número de tarjeta
-  const maskCardNumber = (number) => {
+  const maskCardNumber = (number, show) => {
+    if (show) return number;
     const lastFour = number.replace(/\s/g, '').slice(-4);
     return `•••• •••• •••• ${lastFour}`;
   };
 
   // Mascarar CVV
-  const maskCVV = (cvv) => {
+  const maskCVV = (cvv, show) => {
+    if (show) return cvv;
     return '•'.repeat(cvv.length);
   };
 
@@ -112,23 +148,10 @@ const Tarjetero = () => {
           <h1>Administra y consulta tus tarjetas</h1>
         </div>
 
-        {/* Botones principales */}
-        <div className="tar-main-actions">
-          <button className="tar-btn-add" onClick={handleAddClick}>
-            + Agregar tarjeta
-          </button>
-          <button 
-            className="tar-btn-edit-main" 
-            onClick={() => cards.length > 0 && handleEditClick(cards[0])}
-            disabled={cards.length === 0}
-          >
-            ✎ Editar tarjeta
-          </button>
-        </div>
-
-        {/* Tarjeta Principal */}
+        {/* Tarjetas */}
         {cards.map(card => {
           const cardLines = splitCardNumber(card.cardNumber);
+          const isVisible = showSensitiveData[card.id] || false;
           
           return (
             <div key={card.id} className="tar-card-container">
@@ -149,11 +172,65 @@ const Tarjetero = () => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Botones de acción debajo de la tarjeta */}
+                <div className="tar-card-actions">
+                  <button 
+                    className="tar-btn-edit"
+                    onClick={() => handleEditClick(card)}
+                  >
+                    ✎ Editar
+                  </button>
+                  <button 
+                    className="tar-btn-delete"
+                    onClick={() => handleDeleteCard(card.id)}
+                  >
+                    <DeleteIcon fontSize="small" /> Eliminar
+                  </button>
+                </div>
               </div>
 
-              {/* Lado Derecho - Información (Efecto Cristal) - SIN BOTONES */}
+              {/* Lado Derecho - Información con ojito */}
               <div className="tar-card-right">
                 <div className="tar-info-panel">
+                  <div className="tar-info-header" style={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end',
+                    marginBottom: '1rem',
+                    borderBottom: '1px solid rgba(0,0,0,0.1)',
+                    paddingBottom: '0.5rem'
+                  }}>
+                    <button 
+                      onClick={() => toggleVisibility(card.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#2c3e70',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      {isVisible ? (
+                        <>
+                          <VisibilityOffIcon fontSize="small" /> Ocultar detalles
+                        </>
+                      ) : (
+                        <>
+                          <VisibilityIcon fontSize="small" /> Mostrar detalles
+                        </>
+                      )}
+                    </button>
+                  </div>
+
                   <div className="tar-info-row">
                     <span className="tar-info-label">NOMBRE COMPLETO</span>
                     <span className="tar-info-value">{card.holderName}</span>
@@ -161,12 +238,12 @@ const Tarjetero = () => {
                   
                   <div className="tar-info-row">
                     <span className="tar-info-label">NÚMERO DE TARJETA</span>
-                    <span className="tar-info-value">{maskCardNumber(card.cardNumber)}</span>
+                    <span className="tar-info-value">{maskCardNumber(card.cardNumber, isVisible)}</span>
                   </div>
                   
                   <div className="tar-info-row">
                     <span className="tar-info-label">CVV</span>
-                    <span className="tar-info-value tar-cvv-masked">{maskCVV(card.cvv)}</span>
+                    <span className="tar-info-value tar-cvv-masked">{maskCVV(card.cvv, isVisible)}</span>
                   </div>
                   
                   <div className="tar-info-row">
@@ -185,10 +262,10 @@ const Tarjetero = () => {
         })}
       </div>
 
-      {/* Modal de Edición con botón de eliminar */}
+      {/* Modal de Edición */}
       {showEditModal && selectedCard && (
-        <div className="tar-modal-overlay">
-          <div className="tar-modal-content">
+        <div className="tar-modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="tar-modal-content" onClick={e => e.stopPropagation()}>
             <h3>Editar Tarjeta</h3>
             <form onSubmit={handleEditSubmit}>
               <div className="tar-form-group">
@@ -236,26 +313,23 @@ const Tarjetero = () => {
                 />
               </div>
 
-              <div className="tar-modal-actions" style={{ gap: '1rem' }}>
-                <button type="submit" className="tar-btn-save" style={{ flex: 2 }}>
-                  Guardar cambios
-                </button>
-                <button 
-                  type="button" 
-                  className="tar-btn-delete" 
-                  onClick={() => handleDeleteCard(selectedCard.id)}
-                  style={{ flex: 1 }}
-                >
-                  Eliminar
-                </button>
-              </div>
-              
-              <div style={{ marginTop: '0.5rem', textAlign: 'center' }}>
+              <div className="tar-modal-actions">
+                <div className="tar-modal-actions-row">
+                  <button type="submit" className="tar-btn-save">
+                    Guardar cambios
+                  </button>
+                  <button 
+                    type="button" 
+                    className="tar-btn-delete-modal"
+                    onClick={() => handleDeleteCard(selectedCard.id)}
+                  >
+                    <DeleteIcon fontSize="small" /> Eliminar
+                  </button>
+                </div>
                 <button 
                   type="button" 
                   className="tar-btn-cancel" 
                   onClick={() => setShowEditModal(false)}
-                  style={{ width: '100%' }}
                 >
                   Cancelar
                 </button>
@@ -267,8 +341,8 @@ const Tarjetero = () => {
 
       {/* Modal de Agregar Tarjeta */}
       {showAddModal && (
-        <div className="tar-modal-overlay">
-          <div className="tar-modal-content">
+        <div className="tar-modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="tar-modal-content" onClick={e => e.stopPropagation()}>
             <h3>Agregar Nueva Tarjeta</h3>
             <form onSubmit={handleAddSubmit}>
               <div className="tar-form-group">
@@ -328,7 +402,9 @@ const Tarjetero = () => {
               </div>
 
               <div className="tar-modal-actions">
-                <button type="submit" className="tar-btn-save">Agregar tarjeta</button>
+                <button type="submit" className="tar-btn-save">
+                  <AddIcon fontSize="small" /> Agregar tarjeta
+                </button>
                 <button type="button" className="tar-btn-cancel" onClick={() => setShowAddModal(false)}>Cancelar</button>
               </div>
             </form>

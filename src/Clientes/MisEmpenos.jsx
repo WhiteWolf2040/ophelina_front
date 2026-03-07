@@ -10,6 +10,8 @@ export default function MisEmpenos() {
   const [busqueda, setBusqueda] = useState("");
   const [popupAbierto, setPopupAbierto] = useState(null); // 'pagar', 'detalles', o null
   const [empeñoSeleccionado, setEmpeñoSeleccionado] = useState(null);
+  const [empeñosPagados, setEmpeñosPagados] = useState({}); // Estado para tracking de pagos completos
+  const [montoPago, setMontoPago] = useState(""); // Estado para el monto a pagar
 
   // Tipos de prendas
   const tiposPrenda = [
@@ -56,7 +58,9 @@ export default function MisEmpenos() {
         nombre: tiposPrenda[tipoIndex].nombre,
         descripcion: descripciones[i % descripciones.length],
         prestado: `$${precioBase.toLocaleString("en-US")}`,
+        prestadoNumerico: precioBase,
         totalPagar: `$${(precioBase + interes).toLocaleString("en-US")}`,
+        totalPagarNumerico: precioBase + interes,
         vencimiento: `${Math.floor(Math.random() * 28) + 1}/${
           Math.floor(Math.random() * 12) + 1
         }/2026`,
@@ -92,12 +96,47 @@ export default function MisEmpenos() {
   const abrirPopup = (tipo, empeño) => {
     setEmpeñoSeleccionado(empeño);
     setPopupAbierto(tipo);
+    setMontoPago(""); // Resetear el monto al abrir el popup
   };
 
   // Función para cerrar popup
   const cerrarPopup = () => {
     setPopupAbierto(null);
     setEmpeñoSeleccionado(null);
+    setMontoPago("");
+  };
+
+  // Función para procesar el pago (abono)
+  const procesarPago = () => {
+    if (empeñoSeleccionado) {
+      // Convertir el monto ingresado a número
+      const montoIngresado = parseFloat(montoPago.replace(/[^0-9.-]+/g, ""));
+      
+      // Verificar si el monto es válido
+      if (isNaN(montoIngresado) || montoIngresado <= 0) {
+        alert("Por favor ingresa un monto válido");
+        return;
+      }
+
+      // Aquí puedes agregar la lógica para registrar el abono
+      // Por ahora, solo simulamos que el pago se procesó
+      
+      alert(`¡Abono de $${montoIngresado.toLocaleString("en-US")} realizado con éxito!`);
+      cerrarPopup();
+      
+      // NOTA: El estado "PAGADO" solo debería activarse cuando el usuario
+      // haya completado todos los pagos. Como es una simulación, 
+      // no activamos automáticamente el estado pagado.
+    }
+  };
+
+  // Función para formatear el monto mientras el usuario escribe
+  const handleMontoChange = (e) => {
+    const valor = e.target.value;
+    // Permitir solo números y un punto decimal
+    if (valor === "" || /^\d*\.?\d*$/.test(valor)) {
+      setMontoPago(valor);
+    }
   };
 
   return (
@@ -135,6 +174,9 @@ export default function MisEmpenos() {
                       alt={empeño.nombre}
                       className="me-empeno-imagen"
                     />
+                    {empeñosPagados[empeño.id] && (
+                      <div className="me-empeno-pagado-badge">✓ PAGADO</div>
+                    )}
                   </div>
 
                   <div className="me-empeno-info">
@@ -158,8 +200,8 @@ export default function MisEmpenos() {
                         <span className="me-detalle-label">
                           Total a pagar:
                         </span>
-                        <span className="me-detalle-valor me-total">
-                          {empeño.totalPagar}
+                        <span className={`me-detalle-valor me-total ${empeñosPagados[empeño.id] ? 'pagado' : ''}`}>
+                          {empeñosPagados[empeño.id] ? "Pagado" : empeño.totalPagar}
                         </span>
                       </div>
 
@@ -175,20 +217,36 @@ export default function MisEmpenos() {
                   </div>
                 </div>
 
-                {/* ACCIONES CON 2 BOTONES: PAGAR + DETALLES */}
+                {/* ACCIONES CON BOTONES CONDICIONALES */}
                 <div className="me-empeno-acciones">
-                  <button 
-                    className="me-btn-pagar"
-                    onClick={() => abrirPopup('pagar', empeño)}
-                  >
-                    Pagar
-                  </button>
-                  <button 
-                    className="me-btn-ver-detalles"
-                    onClick={() => abrirPopup('detalles', empeño)}
-                  >
-                    Ver detalles
-                  </button>
+                  {!empeñosPagados[empeño.id] ? (
+                    <>
+                      <button 
+                        className="me-btn-pagar"
+                        onClick={() => abrirPopup('pagar', empeño)}
+                      >
+                        Abonar
+                      </button>
+                      <button 
+                        className="me-btn-ver-detalles"
+                        onClick={() => abrirPopup('detalles', empeño)}
+                      >
+                        Ver detalles
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="me-btn-pagado">
+                        ✓ Pagado
+                      </div>
+                      <button 
+                        className="me-btn-ver-detalles"
+                        onClick={() => abrirPopup('detalles', empeño)}
+                      >
+                        Ver detalles
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))
@@ -200,14 +258,14 @@ export default function MisEmpenos() {
         </section>
       </div>
 
-      {/* POPUP DE PAGO */}
+      {/* POPUP DE PAGO (ABONO) */}
       {popupAbierto === 'pagar' && empeñoSeleccionado && (
         <div className="popup-overlay" onClick={cerrarPopup}>
           <div className="popup-content" onClick={(e) => e.stopPropagation()}>
             <button className="popup-close" onClick={cerrarPopup}>×</button>
             
             <div className="popup-header">
-              <h2>Realizar Pago</h2>
+              <h2>Realizar Abono</h2>
               <h3>{empeñoSeleccionado.nombre}</h3>
             </div>
 
@@ -224,18 +282,23 @@ export default function MisEmpenos() {
               </div>
 
               <div className="pago-input-group">
-                <label>Monto a pagar:</label>
+                <label>Monto a abonar:</label>
                 <input 
-                  type="number" 
+                  type="text" 
                   className="pago-input"
-                  placeholder="Ingresa el monto"
+                  placeholder="Ingresa el monto del abono"
+                  value={montoPago}
+                  onChange={handleMontoChange}
                 />
+                <small className="pago-ayuda">
+                  Puedes abonar cualquier monto. El préstamo se marcará como pagado cuando completes el total.
+                </small>
               </div>
 
               <div className="pago-metodos">
                 <h4>Método de pago</h4>
                 <div className="metodo-opcion">
-                  <input type="radio" name="metodo" id="tarjeta" />
+                  <input type="radio" name="metodo" id="tarjeta" defaultChecked />
                   <label htmlFor="tarjeta">Tarjeta de crédito/débito</label>
                 </div>
                 <div className="metodo-opcion">
@@ -250,32 +313,36 @@ export default function MisEmpenos() {
             </div>
 
             <div className="popup-footer">
-              <button className="pago-confirmar-btn">Confirmar Pago</button>
+              <button className="pago-confirmar-btn" onClick={procesarPago}>
+                Confirmar Abono
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* POPUP DE DETALLES CON IMAGEN A LA IZQUIERDA - CORREGIDO */}
+      {/* POPUP DE DETALLES */}
       {popupAbierto === 'detalles' && empeñoSeleccionado && (
         <div className="popup-overlay" onClick={cerrarPopup}>
           <div className="popup-content" onClick={(e) => e.stopPropagation()}>
             <button className="popup-close" onClick={cerrarPopup}>×</button>
             
-            {/* CONTENEDOR FLEX CON IMAGEN A LA IZQUIERDA */}
             <div className="popup-detalles-flex">
-              {/* IMAGEN A LA IZQUIERDA */}
               <div className="popup-imagen-container-left">
                 <img 
                   src={empeñoSeleccionado.imagen} 
                   alt={empeñoSeleccionado.nombre}
                   className="popup-imagen-left"
                 />
+                {empeñosPagados[empeñoSeleccionado.id] && (
+                  <div className="popup-pagado-badge">✓ PAGADO</div>
+                )}
               </div>
-              {/* INFORMACIÓN A LA DERECHA */}                    
+                  
               <div className="popup-info-right">
-              <h3 className="detalle-titulo">{empeñoSeleccionado.nombre}</h3>              
+                <h3 className="detalle-titulo">{empeñoSeleccionado.nombre}</h3>              
                 <p className="detalle-descripcion">{empeñoSeleccionado.descripcion}</p>                
+                
                 <div className="detalle-caracteristicas-vertical">
                   <p><strong>{empeñoSeleccionado.gramos}</strong></p>
                   <p><strong>Casa de empeño: {empeñoSeleccionado.casaEmpeño}</strong></p>
@@ -292,9 +359,9 @@ export default function MisEmpenos() {
                       <span>Intereses:</span>
                       <span>{empeñoSeleccionado.intereses}</span>
                     </div>
-                    <div className="financiero-item total">
+                    <div className={`financiero-item total ${empeñosPagados[empeñoSeleccionado.id] ? 'pagado' : ''}`}>
                       <span>Total a pagar:</span>
-                      <span>{empeñoSeleccionado.totalPagar}</span>
+                      <span>{empeñosPagados[empeñoSeleccionado.id] ? "Pagado" : empeñoSeleccionado.totalPagar}</span>
                     </div>
                   </div>
                 </div>
@@ -307,6 +374,12 @@ export default function MisEmpenos() {
                       <span className="historial-intereses">Intereses: $2,000.00</span>
                     </div>
                   ))}
+                  {empeñosPagados[empeñoSeleccionado.id] && (
+                    <div className="historial-item pagado-final">
+                      <span>Pago total realizado</span>
+                      <span className="historial-fecha">{new Date().toLocaleDateString()}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

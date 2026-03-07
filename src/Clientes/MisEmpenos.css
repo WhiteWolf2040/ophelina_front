@@ -125,6 +125,7 @@ body {
   flex-shrink: 0;
   border-radius: 12px;
   background-color: #F5F0E9;
+  overflow: hidden;
 }
 
 .me-empeno-imagen {
@@ -207,11 +208,14 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
+  color: white;
 }
+
 .me-btn-ver-detalles:hover {
   background-color: #112250;
   transform: translateY(-2px);
 }
+
 .me-btn-pagar {
   background-color: #E0C58F;
   color: #ffffff;
@@ -242,111 +246,13 @@ body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .me-dashboard {
-    padding: 30px 20px;
-  }
-}
-
-@media (max-width: 900px) {
-  .me-empenos-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .me-dashboard {
-    padding: 20px 15px;
-  }
-  
-  .me-page-title {
-    font-size: 24px;
-  }
-  
-  .me-empeno-contenido-superior {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  
-  .me-empeno-imagen-container {
-    width: 150px;
-    height: 150px;
-    margin-bottom: 10px;
-  }
-  
-  .me-detalle-item {
-    justify-content: center;
-    gap: 10px;
-  }
-  
-  .me-empeno-accion {
-    justify-content: center;
-  }
-}
-
-@media (max-width: 600px) {
-  .me-page-title {
-    font-size: 22px;
-  }
-  
-  .me-search-input {
-    padding: 12px 16px 12px 44px;
-    font-size: 14px;
-  }
-  
-  .me-empenos-list {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .me-dashboard {
-    padding: 15px 10px;
-  }
-  
-  .me-logo-image-home {
-    height: 32px;
-  }
-  
-  .me-page-title {
-    font-size: 20px;
-  }
-  
-  .me-empeno-imagen-container {
-    width: 120px;
-    height: 120px;
-  }
-  
-  .me-empeno-card {
-    padding: 15px;
-  }
-  
-  .me-empeno-nombre {
-    font-size: 18px;
-  }
-}
-
 /* ===== POPUPS ===== */
-.popup-contenedor {
-  background: white;
-  border-radius: 20px;
-  max-width: 800px;
-  width: 90%;
-  max-height: 90vh; /* Cambia esto */
-  /* Por esto: */
-  max-height: calc(100vh - 60px); /* Resta el padding del overlay */
-  overflow-y: auto;
-  margin: auto;
-}
-
 .popup-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(8px); /* soporte safari */
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -354,7 +260,17 @@ body {
   padding: 40px;
 }
 
-/* ===== CONTENEDOR PRINCIPAL ===== */
+.popup-content {
+  background: white;
+  border-radius: 20px;
+  max-width: 800px;
+  width: 90%;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  margin: auto;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
 
 .popup-close {
   position: absolute;
@@ -367,31 +283,55 @@ body {
   color: #999;
   line-height: 1;
   z-index: 20;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
 }
 
 .popup-close:hover {
   color: #333;
+  background-color: #f0f0f0;
 }
 
-/* ===== IMAGEN IZQUIERDA ===== */
+/* Popup de detalles - Flex layout */
+.popup-detalles-flex {
+  display: flex;
+  gap: 30px;
+  padding: 30px;
+}
+
+/* IMAGEN IZQUIERDA */
 .popup-imagen-container-left {
   flex-shrink: 0;
+  width: 250px;
+  height: 250px;
   border-radius: 14px;
-  overflow: hidden; /* importante */
+  overflow: hidden;
   background-color: #F5F0E9;
   box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
 .popup-imagen-left {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
-/* ===== INFO DERECHA ===== */
+.popup-imagen-left:hover {
+  transform: scale(1.05);
+}
+
+/* INFO DERECHA */
 .popup-info-right {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 15px;
 }
 
 .detalle-titulo {
@@ -410,7 +350,7 @@ body {
   font-size: 13px;
 }
 
-/* Ajustes para las características en vertical */
+/* Características en vertical */
 .detalle-caracteristicas-vertical {
   font-family: 'Inter', sans-serif;
   padding: 10px 0;
@@ -459,6 +399,7 @@ body {
   border-top: 1px solid #ddd;
   margin-top: 4px;
   padding-top: 6px;
+  font-weight: 600;
 }
 
 .historial-item {
@@ -479,7 +420,32 @@ body {
   font-size: 11px;
 }
 
-/* ===== POPUP DE PAGO ===== */
+/* POPUP DE PAGO */
+.popup-header {
+  padding: 30px 30px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.popup-header h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+  font-family: 'Bodoni Moda', serif;
+}
+
+.popup-header h3 {
+  font-size: 18px;
+  font-weight: 500;
+  color: #666;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.popup-body {
+  padding: 30px;
+}
+
 .pago-detalles {
   background: #f8f8f8;
   padding: 15px;
@@ -494,15 +460,21 @@ body {
   font-size: 15px;
 }
 
+.pago-item:not(:last-child) {
+  border-bottom: 1px solid #e0e0e0;
+}
+
 .pago-label {
   color: #666;
   font-weight: 500;
+  font-family: 'Inter', sans-serif;
 }
 
 .pago-valor {
   color: #112250;
   font-weight: 600;
   font-size: 16px;
+  font-family: 'Inter', sans-serif;
 }
 
 .pago-input-group {
@@ -515,6 +487,7 @@ body {
   color: #333;
   font-weight: 500;
   font-size: 15px;
+  font-family: 'Inter', sans-serif;
 }
 
 .pago-input {
@@ -524,6 +497,7 @@ body {
   border-radius: 8px;
   font-size: 15px;
   transition: border-color 0.3s;
+  font-family: 'Inter', sans-serif;
 }
 
 .pago-input:focus {
@@ -540,6 +514,7 @@ body {
   margin-bottom: 10px;
   font-size: 16px;
   font-weight: 600;
+  font-family: 'Inter', sans-serif;
 }
 
 .metodo-opcion {
@@ -559,6 +534,12 @@ body {
   color: #555;
   cursor: pointer;
   font-size: 15px;
+  font-family: 'Inter', sans-serif;
+}
+
+.popup-footer {
+  padding: 20px 30px 30px;
+  border-top: 1px solid #eee;
 }
 
 .pago-confirmar-btn {
@@ -573,6 +554,7 @@ body {
   cursor: pointer;
   transition: all 0.3s;
   margin-top: 10px;
+  font-family: 'Inter', sans-serif;
 }
 
 .pago-confirmar-btn:hover {
@@ -580,34 +562,132 @@ body {
   transform: translateY(-2px);
 }
 
-/* ===== RESPONSIVE PARA POPUPS ===== */
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .me-dashboard {
+    padding: 30px 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .me-empenos-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
+  .me-dashboard {
+    padding: 20px 15px;
+  }
+  
+  .me-page-title {
+    font-size: 24px;
+  }
+  
+  .me-empeno-contenido-superior {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .me-empeno-imagen-container {
+    width: 150px;
+    height: 150px;
+    margin-bottom: 10px;
+  }
+  
+  .me-detalle-item {
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .me-empeno-accion {
+    justify-content: center;
+  }
+  
+  /* Popups responsive */
   .popup-detalles-flex {
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 20px;
+    padding: 20px;
   }
   
   .popup-imagen-container-left {
-    width: 180px;
-    height: 180px;
+    width: 200px;
+    height: 200px;
   }
   
   .popup-info-right {
     width: 100%;
   }
   
+  .popup-header {
+    padding: 20px;
+  }
+  
+  .popup-body {
+    padding: 20px;
+  }
+  
+  .popup-footer {
+    padding: 20px;
+  }
+}
 
+@media (max-width: 600px) {
+  .me-page-title {
+    font-size: 22px;
+  }
+  
+  .me-search-input {
+    padding: 12px 16px 12px 44px;
+    font-size: 14px;
+  }
+  
+  .me-empenos-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {
+  .me-dashboard {
+    padding: 15px 10px;
+  }
+  
+  .me-logo-image-home {
+    height: 32px;
+  }
+  
+  .me-page-title {
+    font-size: 20px;
+  }
+  
+  .me-empeno-imagen-container {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .me-empeno-card {
+    padding: 15px;
+  }
+  
+  .me-empeno-nombre {
+    font-size: 18px;
+  }
+  
+  /* Popups responsive para móvil pequeño */
+  .popup-overlay {
+    padding: 20px;
+  }
+  
   .popup-imagen-container-left {
     width: 160px;
     height: 160px;
   }
   
   .detalle-titulo {
-    font-size: 19px;
+    font-size: 22px;
     text-align: center;
   }
   
@@ -627,4 +707,207 @@ body {
     text-align: center;
     font-size: 11px;
   }
+  
+  .pago-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .pago-valor {
+    font-size: 14px;
+  }
+  
+  .metodo-opcion {
+    flex-wrap: wrap;
+  }
+}
+
+/* Ajustes para pantallas muy pequeñas */
+@media (max-width: 360px) {
+  .popup-content {
+    width: 95%;
+  }
+  
+  .popup-imagen-container-left {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .detalle-titulo {
+    font-size: 20px;
+  }
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .me-empeno-card,
+  .me-btn-ver-detalles,
+  .me-btn-pagar,
+  .popup-close,
+  .pago-confirmar-btn,
+  .popup-imagen-left {
+    transition: none;
+  }
+}
+
+/* Estilos para scroll en popups */
+.popup-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.popup-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.popup-content::-webkit-scrollbar-thumb {
+  background: #c5a059;
+  border-radius: 10px;
+}
+
+.popup-content::-webkit-scrollbar-thumb:hover {
+  background: #b08d4a;
+}
+
+/* Agregar estos estilos a tu archivo MisEmpenos.css */
+
+/* Badge de pagado en la imagen */
+.me-empeno-imagen-container {
+  position: relative;
+}
+
+.me-empeno-pagado-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #28a745;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Badge de pagado en popup */
+.popup-imagen-container-left {
+  position: relative;
+}
+
+.popup-pagado-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: #28a745;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 600;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Estado pagado en el total */
+.me-detalle-valor.me-total.pagado {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.financiero-item.total.pagado {
+  color: #28a745;
+}
+
+.financiero-item.total.pagado span:last-child {
+  color: #28a745;
+  font-weight: 600;
+}
+
+/* Botón de pagado */
+.me-btn-pagado {
+  flex: 1;
+  padding: 8px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: default;
+}
+
+/* Historial con pago final */
+.historial-item.pagado-final {
+  background-color: #d4edda;
+  border-radius: 6px;
+  padding: 10px;
+  margin-top: 8px;
+  font-weight: 600;
+  color: #155724;
+}
+
+.historial-fecha {
+  color: #155724;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* Responsive para badges */
+@media (max-width: 768px) {
+  .me-empeno-pagado-badge {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+  
+  .popup-pagado-badge {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .popup-pagado-badge {
+    font-size: 12px;
+    padding: 4px 8px;
+    top: 10px;
+    right: 10px;
+  }
+
+  /* Estilos para el mensaje de error en el popup de pago */
+.pago-error-mensaje {
+  color: #dc3545;
+  font-size: 13px;
+  margin-top: 5px;
+  padding: 8px 12px;
+  background-color: #f8d7da;
+  border-radius: 6px;
+  border: 1px solid #f5c6cb;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Mejora visual para el input cuando hay error */
+.pago-input.error {
+  border-color: #dc3545;
+}
+
+.pago-input.error:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+}
+
+/* Estilo para el texto de ayuda en el popup de pago */
+.pago-ayuda {
+  display: block;
+  color: #666;
+  font-size: 12px;
+  margin-top: 5px;
+  font-family: 'Inter', sans-serif;
+  font-style: italic;
+}
 }

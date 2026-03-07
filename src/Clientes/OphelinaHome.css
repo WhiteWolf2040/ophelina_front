@@ -82,7 +82,7 @@ body {
   margin-top: 5px;
 }
 
-/* CARDS SECTION */
+/* CARDS SECTION - CORREGIDO */
 .cards-section {
   margin-bottom: 30px;
   display: flex;
@@ -90,29 +90,29 @@ body {
   width: 100%;
 }
 
-.cards-gridd {
+.cards-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 25px;
   justify-content: center;
   align-items: center;
   width: 100%;
-  max-width: 100px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-.stat-cardd {
+.stat-card {
   background: var(--white);
-  border-radius: 12px;
-  padding: 25px 25px;
+  border-radius: 16px; /* Un poco más redondeado */
+  padding: 30px 25px; /* Más padding vertical para hacerlos más anchos visualmente */
   text-align: center;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 240px;
-  min-width: 220px;
+  width: 260px; /* Aumentado de 240px a 260px */
+  min-width: 240px; /* Aumentado de 220px a 240px */
   transition: var(--transition);
   cursor: pointer;
 }
@@ -142,15 +142,15 @@ body {
   ) !important;
 }
 
-.gold-card .stat-number {
-  color: white;
+.gold-card svg {
+  color: white !important;
 }
 
-/* CONTENT SECTIONS */
-.content-section {
+/* CONTENIDO SECTIONS - RENOMBRADO */
+.contenido-section {
   background: var(--white);
-  border-radius: 12px;
-  padding: 25px;
+  border-radius: 16px; /* Un poco más redondeado */
+  padding: 28px; /* Aumentado ligeramente */
   margin-bottom: 30px;
   box-shadow: var(--shadow-sm);
   width: 100%;
@@ -225,7 +225,7 @@ body {
   margin-top: 10px;
 }
 
-.bottom-sections .content-section {
+.bottom-sections .contenido-section {
   margin-bottom: 0;
   height: 100%;
 }
@@ -332,6 +332,8 @@ body {
   .stat-card {
     width: 220px;
     min-width: 200px;
+    padding: 25px 20px;
+    
   }
   
   .bottom-sections {
@@ -351,11 +353,7 @@ body {
   
   .stat-card {
     width: 200px;
-    padding: 18px 20px;
-  }
-  
-  .stat-number {
-    font-size: 22px;
+    padding: 22px 18px;
   }
 }
 
@@ -367,7 +365,7 @@ body {
   
   .stat-card {
     width: 100%;
-    max-width: 280px;
+    max-width: 300px; /* Aumentado de 280px a 300px */
   }
   
   .welcome-title {
@@ -401,7 +399,7 @@ body {
     gap: 15px;
   }
   
-  .content-section {
+  .contenido-section {
     padding: 20px;
   }
 }

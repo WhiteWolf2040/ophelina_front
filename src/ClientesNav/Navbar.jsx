@@ -5,6 +5,10 @@ import logo from "../assets/O_blue.png";
 import PersonIcon from '@mui/icons-material/Person';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import LogoutIcon from '@mui/icons-material/Logout';
+import HomeIcon from '@mui/icons-material/Home';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 
 export default function Navbar() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -42,7 +46,7 @@ export default function Navbar() {
           <img src={logo} alt="Ophelina Logo" />
         </div>
 
-        {/* 🔥 TUS CATEGORÍAS COMPLETAS */}
+        {/* 🔥 LINKS VERSIÓN ESCRITORIO (TEXTO) */}
         <ul className="Ophe-navbar-links">
           <li>
             <NavLink
@@ -93,6 +97,65 @@ export default function Navbar() {
               }
             >
               Tienda
+            </NavLink>
+          </li>
+        </ul>
+
+        {/* 🔥 LINKS VERSIÓN MÓVIL (ICONOS) */}
+        <ul className="Ophe-navbar-icons">
+          <li>
+            <NavLink
+              to="/homecliente"
+              className={({ isActive }) =>
+                isActive
+                  ? "Ophe-icon-item Ophe-icon-active"
+                  : "Ophe-icon-item"
+              }
+            >
+              <HomeIcon />
+              <span>Inicio</span>
+            </NavLink>
+          </li>
+
+          <li>
+            <NavLink
+              to="/misempenos"
+              className={({ isActive }) =>
+                isActive
+                  ? "Ophe-icon-item Ophe-icon-active"
+                  : "Ophe-icon-item"
+              }
+            >
+              <ShoppingBagIcon />
+              <span>Empeños</span>
+            </NavLink>
+          </li>
+
+          <li>
+            <NavLink
+              to="/tarjetas"
+              className={({ isActive }) =>
+                isActive
+                  ? "Ophe-icon-item Ophe-icon-active"
+                  : "Ophe-icon-item"
+              }
+            >
+              <CreditCardIcon />
+              <span>Tarjetas</span>
+            </NavLink>
+          </li>
+
+          <li>
+            <NavLink
+              to="/ophelina"
+              className={({ isActive }) =>
+                isActive
+                  ? "Ophe-icon-item Ophe-icon-active"
+                  : "Ophe-icon-item"
+              }
+            >
+              <StorefrontIcon />
+              <span>Tienda</span>
             </NavLink>
           </li>
         </ul>

@@ -698,4 +698,204 @@ body {
     padding: 12px 20px;
     font-size: 14px;
   }
+  /* Mensaje de pagado */
+.mensaje-pagado {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1100;
+  animation: slideIn 0.3s ease;
+}
+
+.mensaje-contenido {
+  background: #4CAF50;
+  color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.mensaje-icono {
+  font-size: 24px;
+  font-weight: bold;
+  background: white;
+  color: #4CAF50;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive para el mensaje */
+@media (max-width: 768px) {
+  .mensaje-pagado {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+  }
+  
+  .mensaje-contenido {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .mensaje-icono {
+    width: 24px;
+    height: 24px;
+    font-size: 18px;
+  }
+}
+/* Botón de apartar */
+.btn-apartar {
+  background: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  color: var(--text-primary);
+  font-weight: 500;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.btn-apartar:hover {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--accent-primary);
+}
+
+/* Botón de apartado deshabilitado */
+.btn-apartado-disable {
+  background: var(--border-color);
+  border: 1px solid var(--border-color);
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-family: 'Montserrat', sans-serif;
+  opacity: 0.7;
+  cursor: not-allowed;
+  display: inline-block;
+}
+
+/* Badge de apartado */
+.apartado-badge {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: var(--text-primary);
+  color: var(--accent-primary);
+  padding: 8px 15px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  z-index: 2;
+  font-weight: 500;
+  border-radius: 20px;
+  border: 1px solid var(--accent-primary);
+}
+
+/* Tarjeta de producto apartado */
+.producto-apartado {
+  opacity: 0.9;
+  border: 2px solid var(--accent-primary);
+  position: relative;
+}
+
+.producto-apartado::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(224, 197, 143, 0.1) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Mensaje de apartado */
+.mensaje-apartado {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1100;
+  animation: slideIn 0.3s ease;
+}
+
+.mensaje-apartado .mensaje-contenido {
+  background: var(--accent-primary);
+  color: var(--text-primary);
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Montserrat', sans-serif;
+  border: 2px solid var(--text-primary);
+}
+
+.mensaje-apartado .mensaje-icono {
+  font-size: 20px;
+  background: var(--text-primary);
+  color: var(--accent-primary);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mensaje-apartado {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+  }
+  
+  .mensaje-apartado .mensaje-contenido {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .btn-apartar, .btn-apartado-disable {
+    padding: 6px 15px;
+    font-size: 12px;
+  }
+}
 }

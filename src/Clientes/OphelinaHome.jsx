@@ -45,9 +45,17 @@ export default function OphelinaHome() {
             <h3 className="welcome-subtitle">Conoce el estado de tus empeños</h3>
           </section>
 
-          {/* Cards resumen - SOLO ICONOS */}
+          {/* Cards resumen - FORZADO A CENTRAR */}
           <section className="cards-section">
-            <div className="cards-gridd">
+            <div className="cards-grid" style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '25px',
+              width: '100%',
+              margin: '0 auto'
+            }}>
               <Tooltip 
                 title={
                   <div style={{ textAlign: 'center' }}>
@@ -58,7 +66,9 @@ export default function OphelinaHome() {
                 placement="top" 
                 arrow
               >
-                <div className="stat-cardd">
+                <div className="stat-card" style={{
+                  margin: '0 auto'
+                }}>
                   <InventoryIcon sx={{ fontSize: 48, color: '#0d1b3e' }} />
                 </div>
               </Tooltip>
@@ -73,7 +83,9 @@ export default function OphelinaHome() {
                 placement="top" 
                 arrow
               >
-                <div className="stat-card">
+                <div className="stat-card" style={{
+                  margin: '0 auto'
+                }}>
                   <AttachMoneyIcon sx={{ fontSize: 48, color: '#0d1b3e' }} />
                 </div>
               </Tooltip>
@@ -88,7 +100,9 @@ export default function OphelinaHome() {
                 placement="top" 
                 arrow
               >
-                <div className="stat-card">
+                <div className="stat-card" style={{
+                  margin: '0 auto'
+                }}>
                   <AccessTimeIcon sx={{ fontSize: 48, color: '#0d1b3e' }} />
                 </div>
               </Tooltip>
@@ -103,7 +117,9 @@ export default function OphelinaHome() {
                 placement="top" 
                 arrow
               >
-                <div className="stat-card gold-card">
+                <div className="stat-card gold-card" style={{
+                  margin: '0 auto'
+                }}>
                   <DiamondIcon sx={{ fontSize: 48, color: '#ffffff' }} />
                 </div>
               </Tooltip>
@@ -111,7 +127,7 @@ export default function OphelinaHome() {
           </section>
 
           {/* Próximos a vencer */}
-          <section className="content-section">
+          <section className="contenido-section">
             <h3 className="section-title">
               <span className="section-icon">
                 <BoxIcon sx={{ fontSize: 24, verticalAlign: 'middle' }} />
@@ -135,7 +151,7 @@ export default function OphelinaHome() {
           {/* Bottom sections - Grid de 2 columnas */}
           <div className="bottom-sections">
             {/* Desglose de deuda */}
-            <section className="content-section debt-section">
+            <section className="contenido-section debt-section">
               <h3 className="section-title">
                 <span className="section-icon">
                   <InventoryIcon sx={{ fontSize: 24, verticalAlign: 'middle' }} />
@@ -161,7 +177,7 @@ export default function OphelinaHome() {
             </section>
 
             {/* Actividad reciente */}
-            <section className="content-section activity-section">
+            <section className="contenido-section activity-section">
               <h3 className="section-title">
                 <span className="section-icon">
                   <InventoryIcon sx={{ fontSize: 24, verticalAlign: 'middle' }} />
