@@ -1,0 +1,387 @@
+body {
+  background-color: #f5f0e9;
+  margin: 0;
+}
+
+.Ophe-navbar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 1000;
+  width: 100%;
+}
+
+.Ophe-navbar-container {
+  width: 92%;
+  margin: 20px 0;
+  background: #ffffff;
+  border-radius: 15px;
+  padding: 18px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== LOGO ===== */
+
+.Ophe-navbar-logo img {
+  height: 50px;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.Ophe-navbar-logo img:hover {
+  transform: scale(1.05);
+}
+
+/* ===== LINKS - VERSIÓN ESCRITORIO ===== */
+
+.Ophe-navbar-links {
+  list-style: none;
+  display: flex;
+  gap: 55px;
+  margin: 0;
+  padding: 0;
+}
+
+.Ophe-nav-item {
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  color: #2c3e70;
+  transition: all 0.3s ease;
+  position: relative;
+  padding-bottom: 6px;
+}
+
+/* Hover elegante con micro animación */
+.Ophe-nav-item:hover {
+  color: #e8c572;
+  transform: translateY(-2px);
+}
+
+/* Línea animada elegante */
+.Ophe-nav-item::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, #c6a75e, #e0c58f);
+  transition: width 0.3s ease;
+  border-radius: 2px;
+}
+
+.Ophe-nav-item:hover::after {
+  width: 100%;
+}
+
+/* Activo */
+.Ophe-active {
+  color: #c6a75e;
+}
+
+.Ophe-active::after {
+  width: 100%;
+}
+
+/* ===== LINKS - VERSIÓN MÓVIL (ICONOS) ===== */
+
+.Ophe-navbar-icons {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.Ophe-icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #2c3e70;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.Ophe-icon-item:hover {
+  color: #e8c572;
+  transform: translateY(-2px);
+}
+
+/* OCULTAMOS EL TEXTO POR DEFECTO */
+.Ophe-icon-item span {
+  display: none;
+}
+
+/* Tamaño de iconos */
+.Ophe-icon-item svg {
+  font-size: 28px !important;
+}
+
+.Ophe-icon-active {
+  color: #c6a75e;
+}
+
+.Ophe-icon-active .MuiSvgIcon-root {
+  color: #c6a75e;
+}
+
+/* ===== USUARIO ===== */
+
+.Ophe-navbar-user {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Icono usuario con emoji centrado */
+.Ophe-user-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(44, 62, 112, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.Ophe-user-icon:hover {
+  background: linear-gradient(135deg, #dfbb66, #e0c58f);
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(198, 167, 94, 0.35);
+}
+
+/* Dropdown */
+.notification-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 260px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  padding: 15px;
+  animation: fadeIn 0.2s ease-in-out;
+  z-index: 2000;
+}
+
+/* Header centrado */
+.notification-header {
+  text-align: center;
+}
+
+.notification-header h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c3e70;
+}
+
+.divider {
+  height: 1px;
+  background: #eee;
+  margin: 10px 0;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.bell-icon {
+  font-size: 18px;
+}
+
+.notification-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.sub-text {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+/* Logout */
+.logout-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  justify-content: flex-end;
+  font-size: 13px;
+  color: #c6a75e;
+  transition: 0.2s ease;
+}
+
+.logout-section:hover {
+  opacity: 0.7;
+}
+
+/* Animación */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== MEDIA QUERIES PARA RESPONSIVIDAD ===== */
+
+/* Tablets y móviles grandes - Cambiamos a iconos */
+@media screen and (max-width: 991px) {
+  .Ophe-navbar-container {
+    padding: 15px 30px;
+  }
+
+  /* Ocultamos los links de texto */
+  .Ophe-navbar-links {
+    display: none;
+  }
+
+  /* Mostramos los iconos (sin texto) */
+  .Ophe-navbar-icons {
+    display: flex;
+    gap: 40px;
+  }
+  
+  /* Aseguramos que el texto siga oculto */
+  .Ophe-navbar-icons span {
+    display: none;
+  }
+
+  .Ophe-navbar-logo img {
+    height: 45px;
+  }
+
+  .Ophe-user-icon {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* Móviles grandes (576px - 991px) */
+@media screen and (max-width: 767px) {
+  .Ophe-navbar-container {
+    padding: 12px 20px;
+  }
+
+  .Ophe-navbar-icons {
+    gap: 25px;
+  }
+
+  .Ophe-icon-item svg {
+    font-size: 24px !important;
+  }
+  
+  /* Texto oculto */
+  .Ophe-icon-item span {
+    display: none;
+  }
+
+  .notification-dropdown {
+    width: 240px;
+    right: -10px;
+  }
+}
+
+/* Móviles pequeños (hasta 575px) */
+@media screen and (max-width: 575px) {
+  .Ophe-navbar-container {
+    padding: 10px 15px;
+    width: 96%;
+    margin: 10px 0;
+  }
+
+  .Ophe-navbar-icons {
+    gap: 18px;
+  }
+
+  .Ophe-icon-item svg {
+    font-size: 22px !important;
+  }
+  
+  /* Texto oculto */
+  .Ophe-icon-item span {
+    display: none;
+  }
+
+  .Ophe-navbar-logo img {
+    height: 35px;
+  }
+
+  .Ophe-user-icon {
+    width: 35px;
+    height: 35px;
+  }
+
+  .notification-dropdown {
+    width: 220px;
+    padding: 12px;
+  }
+}
+
+/* Para dispositivos muy pequeños (hasta 400px) */
+@media screen and (max-width: 400px) {
+  .Ophe-navbar-icons {
+    gap: 12px;
+  }
+
+  .Ophe-navbar-container {
+    padding: 8px 12px;
+  }
+
+  .Ophe-navbar-logo img {
+    height: 32px;
+  }
+
+  .Ophe-user-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .Ophe-icon-item svg {
+    font-size: 20px !important;
+  }
+  
+  /* Texto oculto */
+  .Ophe-icon-item span {
+    display: none;
+  }
+
+  .notification-dropdown {
+    width: 200px;
+    padding: 10px;
+  }
+}
+
+/* Ajustes para landscape en móviles */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .Ophe-navbar-container {
+    margin: 5px 0;
+    padding: 8px 20px;
+  }
+}

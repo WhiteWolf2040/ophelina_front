@@ -1,0 +1,842 @@
+/* TiendaOnline.css */
+
+.tienda-content {
+  background-color: #F5F0E9;
+}
+
+/* Header */
+.tienda-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+ 
+  padding: 0px 30px;
+  border-radius: 15px;
+
+}
+
+.tienda-header h1 {
+  margin: 0;
+  color: #1e3a8a;
+  font-size: 25px;
+}
+
+.btn-nuevo-producto {
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.3s;
+}
+
+.btn-nuevo-producto:hover {
+  background: #2d4a9e;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(30, 58, 138, 0.3);
+}
+
+/* Estadísticas */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 30px;
+  margin-bottom: 25px;
+  margin-right: 25px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0px 3px 10px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.12);
+}
+
+.stat-icon {
+  font-size: 32px;
+  background: #f0f4ff;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  color: #1e3a8a;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* Filtros */
+.filtros-tienda {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0px 3px 10px rgba(0,0,0,0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+}
+
+.buscador {
+  position: relative;
+  flex: 2;
+  min-width: 250px;
+}
+
+.buscador-input {
+  width: 100%;
+  padding: 12px 40px 12px 15px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+.buscador-input:focus {
+  border-color: #1e3a8a;
+  outline: none;
+}
+
+.buscador-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+}
+
+.filtros-selectores {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 3;
+}
+
+.filtro-select {
+  padding: 10px 15px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1e3a8a;
+  background: white;
+  min-width: 140px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #1e3a8a;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+.btn-limpiar-filtros {
+  background: #e2e8f0;
+  color: #1e3a8a;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s;
+  white-space: nowrap;
+}
+
+.btn-limpiar-filtros:hover {
+  background: #cbd5e1;
+}
+
+/* Productos Grid */
+.productos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.producto-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.08);
+  transition: 0.3s;
+  position: relative;
+  border: 1px solid #eef2f6;
+}
+
+.producto-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 12px 25px rgba(30, 58, 138, 0.15);
+}
+
+.producto-card.producto-oculto {
+  opacity: 0.7;
+  background: #f5f5f5;
+}
+
+.producto-imagen {
+  height: 200px;
+  background: #f8f9fa;
+  position: relative;
+  overflow: hidden;
+}
+
+.producto-imagen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.producto-descuento {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #dc2626;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 2;
+}
+
+.producto-destacado {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #facc15;
+  color: #1e3a8a;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 16px;
+  z-index: 2;
+}
+
+.producto-oculto-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.producto-info {
+  padding: 18px;
+}
+
+.producto-info h3 {
+  margin: 0 0 5px 0;
+  font-size: 18px;
+  color: #1e3a8a;
+}
+
+.producto-categoria {
+  display: inline-block;
+  background: #e2e8f0;
+  color: #1e3a8a;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.producto-precios {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.precio-original {
+  color: #999;
+  text-decoration: line-through;
+  font-size: 14px;
+}
+
+.precio-descuento {
+  color: #dc2626;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.precio-normal {
+  color: #1e3a8a;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.producto-detalles {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.estado-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.estado-nuevo {
+  background: #10b981;
+  color: white;
+}
+
+.estado-como-nuevo {
+  background: #3b82f6;
+  color: white;
+}
+
+.estado-buen-estado {
+  background: #f59e0b;
+  color: white;
+}
+
+.estado-aceptable {
+  background: #6b7280;
+  color: white;
+}
+
+.producto-stock {
+  font-size: 13px;
+  color: #666;
+}
+
+.producto-acciones {
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid #eef2f6;
+  padding-top: 15px;
+}
+
+.btn-accion {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-accion.ver {
+  background: #e2e8f0;
+  color: #1e3a8a;
+}
+
+.btn-accion.editar {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.btn-accion.toggle-visible {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+
+.btn-accion.destacar {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.btn-accion.eliminar {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.btn-accion:hover {
+  transform: scale(1.1);
+}
+
+/* Modal Producto */
+.modal-producto {
+  background: white;
+  border-radius: 28px;
+  width: 700px;
+  max-width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group.full-width {
+  grid-column: span 2;
+}
+
+.form-group label {
+  color: #1e3a8a;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: 0.3s;
+  background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #1e3a8a;
+  outline: none;
+}
+
+.checkbox-group {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Detalle producto */
+.detalle-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 25px;
+}
+
+.detalle-imagen {
+  border-radius: 15px;
+  overflow: hidden;
+  background: #f8f9fa;
+  height: 250px;
+}
+
+.detalle-imagen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detalle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  border-bottom: 1px solid #eef2f6;
+  padding-bottom: 8px;
+}
+
+.info-item.full-width {
+  flex-direction: column;
+  gap: 5px;
+}
+
+.info-label {
+  width: 120px;
+  color: #666;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.info-value {
+  flex: 1;
+  color: #1e3a8a;
+  font-weight: 500;
+}
+
+.descuento-badge {
+  background: #dc2626;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  margin-left: 10px;
+}
+
+/* Modal confirmar */
+.modal-confirmar {
+  background: white;
+  border-radius: 28px;
+  width: 400px;
+  max-width: 95%;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+.modal-icono {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.modal-confirmar h3 {
+  color: #1e3a8a;
+  margin: 0 0 10px 0;
+}
+
+.modal-confirmar p {
+  color: #666;
+  margin: 5px 0;
+}
+
+.modal-confirmar .advertencia {
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 10px 0 20px;
+}
+
+.modal-botones {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-confirmar-eliminar {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+  background: #dc2626;
+  color: white;
+}
+
+.btn-confirmar-eliminar:hover {
+  background: #b91c1c;
+}
+
+/* Sin resultados */
+.sin-resultados {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px;
+  background: white;
+  border-radius: 15px;
+  color: #666;
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tienda-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .btn-nuevo-producto {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .filtros-tienda {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .buscador {
+    width: 100%;
+  }
+  
+  .filtros-selectores {
+    flex-direction: column;
+  }
+  
+  .filtro-select {
+    width: 100%;
+  }
+  
+  .productos-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-group.full-width {
+    grid-column: span 1;
+  }
+  
+  .detalle-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-botones {
+    flex-direction: column;
+  }
+  
+  .producto-acciones {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+/* Añadir al final de TiendaOnline.css */
+
+/* Iconos en títulos */
+.title-icon {
+  font-size: 32px !important;
+  color: #1e3a8a;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+/* Buscador con icono */
+.buscador {
+  position: relative;
+}
+
+.buscador-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 20px !important;
+}
+
+.buscador-input {
+  padding-left: 45px !important;
+}
+
+/* Checkbox con icono */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-label svg {
+  color: #1e3a8a;
+}
+
+/* Badge de oculto con icono */
+.producto-oculto-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.producto-oculto-badge svg {
+  font-size: 14px !important;
+}
+
+/* Categoría con icono */
+.producto-categoria {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+}
+
+.producto-categoria svg {
+  font-size: 14px !important;
+}
+
+/* Stock con icono */
+.producto-stock {
+  display: flex !important;
+  align-items: center;
+  gap: 4px;
+}
+
+.producto-stock svg {
+  font-size: 14px !important;
+  color: #1e3a8a;
+}
+
+/* Botones de acción con iconos */
+.btn-accion svg {
+  font-size: 18px !important;
+}
+
+.btn-accion.ver svg {
+  color: #1e3a8a;
+}
+
+.btn-accion.editar svg {
+  color: #1e3a8a;
+}
+
+.btn-accion.toggle-visible svg {
+  color: #9333ea;
+}
+
+.btn-accion.destacar svg {
+  color: #854d0e;
+}
+
+.btn-accion.eliminar svg {
+  color: #dc2626;
+}
+
+/* Iconos en formularios */
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-group label svg {
+  color: #1e3a8a;
+  font-size: 18px !important;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 5px;
+}
+
+/* Iconos en modal de detalle */
+.visible-icon {
+  color: #10b981;
+  margin-right: 5px;
+}
+
+.oculto-icon {
+  color: #dc2626;
+  margin-right: 5px;
+}
+
+.info-value {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.info-value svg {
+  font-size: 18px !important;
+}
+
+/* Modal icon */
+.modal-icon {
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+/* Icono vacío */
+.empty-icon {
+  font-size: 48px !important;
+  color: #ccc;
+  margin-bottom: 15px;
+}
+
+/* Botones con iconos */
+.btn-nuevo-producto,
+.btn-guardar,
+.btn-cancelar,
+.btn-editar,
+.btn-eliminar,
+.btn-confirmar-eliminar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-limpiar-filtros {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Modal icono de advertencia */
+.modal-icono svg {
+  font-size: 48px !important;
+  color: #f59e0b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .checkbox-label {
+    justify-content: center;
+  }
+  
+  .producto-categoria {
+    justify-content: center;
+  }
+  
+  .producto-detalles {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

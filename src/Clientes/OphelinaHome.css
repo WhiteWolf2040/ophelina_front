@@ -1,0 +1,405 @@
+/* OphelinaHome.css - Actualizado */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700&display=swap');
+
+/* Variables */
+:root {
+  --primary-blue: #0d1b3e;
+  --secondary-blue: #435b83;
+  --gold: #c5a059;
+  --gold-light: #e9c46a;
+  --gold-dark: #be981d;
+  --white: #ffffff;
+  --gray-light: #f0f2f5;
+  --gray-medium: #e0e0e0;
+  --gray-dark: #333;
+  --gray-text: #777;
+  --shadow-sm: 0 4px 20px rgba(0,0,0,0.1);
+  --shadow-md: 0 10px 30px rgba(0,0,0,0.05);
+  --transition: all 0.3s ease;
+}
+
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #F5F0E9;
+  font-family: 'Inter', sans-serif;
+}
+
+/* MAIN CONTENT */
+.main-content {
+  min-height: 100vh;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 20px;
+  background-color: #F5F0E9;
+}
+
+/* HOME MAIN */
+.home-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* WELCOME SECTION */
+.welcome-section {
+  text-align: center;
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.welcome-title {
+  font-size: 32px;
+  color: var(--primary-blue);
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-family: 'Bodoni Moda', serif;
+  text-align: center;
+  width: 100%;
+}
+
+.welcome-name {
+  color: var(--gold-dark);
+  font-size: 32px;
+  display: inline-block;
+}
+
+.welcome-subtitle {
+  color: var(--gray-text);
+  font-size: 18px;
+  text-align: center;
+  width: 100%;
+  margin-top: 5px;
+}
+
+/* CARDS SECTION - CORREGIDO */
+.cards-section {
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 25px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.stat-card {
+  background: var(--white);
+  border-radius: 16px; /* Un poco más redondeado */
+  padding: 30px 25px; /* Más padding vertical para hacerlos más anchos visualmente */
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 260px; /* Aumentado de 240px a 260px */
+  min-width: 240px; /* Aumentado de 220px a 240px */
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold-dark);
+  margin-bottom: 0;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.gold-card {
+  background: linear-gradient(
+    135deg,
+    #f1dcb0 0%,
+    #d4af37 100%
+  ) !important;
+}
+
+.gold-card svg {
+  color: white !important;
+}
+
+/* CONTENIDO SECTIONS - RENOMBRADO */
+.contenido-section {
+  background: var(--white);
+  border-radius: 16px; /* Un poco más redondeado */
+  padding: 28px; /* Aumentado ligeramente */
+  margin-bottom: 30px;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+}
+
+.section-title {
+  font-size: 18px;
+  color: var(--primary-blue);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.section-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+}
+
+/* PAWN ITEMS */
+.pawn-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--gray-light);
+}
+
+.pawn-item:last-child {
+  border-bottom: none;
+}
+
+.pawn-info {
+  flex: 1;
+}
+
+.pawn-title {
+  font-size: 16px;
+  color: var(--primary-blue);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.pawn-date {
+  color: var(--gray-text);
+  font-size: 13px;
+}
+
+.pawn-days {
+  display: flex;
+  align-items: center;
+}
+
+.days-badge {
+  background-color: var(--gold-light);
+  color: var(--primary-blue);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* BOTTOM SECTIONS */
+.bottom-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.bottom-sections .contenido-section {
+  margin-bottom: 0;
+  height: 100%;
+}
+
+/* DEBT BREAKDOWN */
+.debt-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.debt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--gray-dark);
+  font-size: 15px;
+  padding: 4px 0;
+}
+
+.debt-amount {
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+.debt-divider {
+  height: 1px;
+  background: var(--gray-medium);
+  margin: 10px 0;
+}
+
+.total-row {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.total-amount {
+  color: var(--gold-dark);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* ACTIVITY LIST */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  color: var(--primary-blue);
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  color: var(--primary-blue);
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.activity-detail {
+  color: var(--gray-text);
+  font-size: 13px;
+}
+
+/* Tooltip */
+.MuiTooltip-tooltip {
+  background-color: var(--primary-blue) !important;
+  color: white !important;
+  font-size: 12px !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+}
+
+.MuiTooltip-arrow {
+  color: var(--primary-blue) !important;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .cards-grid {
+    gap: 20px;
+  }
+  
+  .stat-card {
+    width: 220px;
+    min-width: 200px;
+    padding: 25px 20px;
+    
+  }
+  
+  .bottom-sections {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .welcome-title {
+    font-size: 28px;
+  }
+  
+  .welcome-name {
+    font-size: 28px;
+  }
+  
+  .stat-card {
+    width: 200px;
+    padding: 22px 18px;
+  }
+}
+
+@media (max-width: 550px) {
+  .cards-grid {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .stat-card {
+    width: 100%;
+    max-width: 300px; /* Aumentado de 280px a 300px */
+  }
+  
+  .welcome-title {
+    font-size: 24px;
+  }
+  
+  .welcome-name {
+    font-size: 24px;
+  }
+  
+  .welcome-subtitle {
+    font-size: 16px;
+  }
+  
+  .pawn-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .pawn-days {
+    width: 100%;
+  }
+  
+  .days-badge {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .bottom-sections {
+    gap: 15px;
+  }
+  
+  .contenido-section {
+    padding: 20px;
+  }
+}
