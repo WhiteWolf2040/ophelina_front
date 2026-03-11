@@ -17,6 +17,7 @@
     "@mui/material": "^7.3.8",
     "@popperjs/core": "^2.11.8",
     "apexcharts": "^5.6.0",
+    "axios": "^1.13.6",
     "bootstrap": "^5.3.8",
     "file-saver": "^2.0.5",
     "google-icon-react": "^3.0.71",

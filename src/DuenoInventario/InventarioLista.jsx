@@ -268,7 +268,7 @@ const InventarioLista = () => {
             
             <div className="modal-header">
               <h2>Detalle de Prenda</h2>
-              <span className="cliente-id">ID: #{prendaSeleccionada.id}</span>
+         
             </div>
 
             <div className="modal-body">

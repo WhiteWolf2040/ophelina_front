@@ -16,6 +16,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
+import SecurityIcon from '@mui/icons-material/Security';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -97,6 +99,16 @@ const Sidebar = () => {
             <BarChartIcon className="sidebar-icon" />
             {!isCollapsed && <span className="link-text">Reportes</span>}
           </NavLink>
+          
+           <NavLink to="/roles" className="sidebar-link" onClick={closeSidebar}>
+          <SecurityIcon className="sidebar-icon" />
+          {!isCollapsed && <span className="link-text">Roles</span>}
+        </NavLink>
+
+        <NavLink to="/permisos" className="sidebar-link" onClick={closeSidebar}>
+          <VpnKeyIcon className="sidebar-icon" />
+          {!isCollapsed && <span className="link-text">Permisos</span>}
+        </NavLink>
 
           <NavLink to="/configuracion" className="sidebar-link" onClick={closeSidebar}>
             <SettingsIcon className="sidebar-icon" />

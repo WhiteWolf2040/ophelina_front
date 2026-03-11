@@ -1,12 +1,12 @@
-// Dueno.jsx - Versión con iconos MUI
-import React, { useState } from "react";
+// Dueño.jsx - Versión CONECTADA a Laravel
+import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Chart from "react-apexcharts";
 import "./dueno.css";
+import api from '../config/api'; // Importamos la configuración
 
-// Importar iconos de MUI
+// Importar iconos de MUI (mantén todos tus imports)
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import WarningIcon from '@mui/icons-material/Warning';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -14,13 +14,8 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import PeopleIcon from '@mui/icons-material/People';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import CategoryIcon from '@mui/icons-material/Category';
-import PaymentIcon from '@mui/icons-material/Payment';
 import HistoryIcon from '@mui/icons-material/History';
 import CloseIcon from '@mui/icons-material/Close';
-import StarIcon from '@mui/icons-material/Star';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import PieChartIcon from '@mui/icons-material/PieChart';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -29,14 +24,10 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import LoopIcon from '@mui/icons-material/Loop';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
-import InfoIcon from '@mui/icons-material/Info';
 import CelebrationIcon from '@mui/icons-material/Celebration';
-import PhoneIcon from '@mui/icons-material/Phone';
-import EmailIcon from '@mui/icons-material/Email';
-import BusinessIcon from '@mui/icons-material/Business';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
 const Dueno = () => {
+  // Estados para modales
   const [showActivos, setShowActivos] = useState(false);
   const [showVencidos, setShowVencidos] = useState(false);
   const [showProximos, setShowProximos] = useState(false);
@@ -44,32 +35,32 @@ const Dueno = () => {
   const [showAlertas, setShowAlertas] = useState(false);
   const [showPerfil, setShowPerfil] = useState(false);
   
-  const [periodo, setPeriodo] = useState("mensual");
+  // Estados para datos del dashboard
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    resumen: {
+      empenos_activos: 0,
+      empenos_vencidos: 0,
+      proximos_vencer: 0,
+      ingresos_recientes: 0,
+      precio_oro: 850,
+      total_clientes: 0,
+      prendas_disponibles: 0
+    },
+    top_clientes: [],
+    top_articulos: [],
+    actividad_reciente: [],
+    ingresos_mensuales: []
+  });
 
-  // Datos de ejemplo para los modales
-  const empenosActivos = [
-    { id: 1, nombre: "Anillo de Oro", monto: 5000, fecha: "10/02/2024", cliente: "Juan Pérez" },
-    { id: 2, nombre: "Collar de Plata", monto: 3500, fecha: "15/02/2024", cliente: "María García" },
-    { id: 3, nombre: "Pulsera", monto: 2800, fecha: "20/02/2024", cliente: "Carlos López" },
-  ];
+  // Estados para datos de modales
+  const [empenosActivos, setEmpenosActivos] = useState([]);
+  const [empenosVencidos, setEmpenosVencidos] = useState([]);
+  const [proximosVencer, setProximosVencer] = useState([]);
+  const [ingresosRecientes, setIngresosRecientes] = useState([]);
 
-  const empenosVencidos = [
-    { id: 1, nombre: "Reloj", monto: 8000, fecha: "01/01/2024", cliente: "Ana Martínez", dias: 15 },
-    { id: 2, nombre: "Cadena", monto: 4200, fecha: "05/01/2024", cliente: "Roberto Sánchez", dias: 10 },
-  ];
-
-  const proximosVencer = [
-    { id: 1, nombre: "Dije", monto: 2000, fecha: "30/03/2024", cliente: "Laura Torres", dias: 5 },
-    { id: 2, nombre: "Aretes", monto: 1500, fecha: "02/04/2024", cliente: "Miguel Ángel", dias: 8 },
-  ];
-
-  const ingresosRecientes = [
-    { id: 1, concepto: "Pago Anillo - Juan Pérez", monto: 5000, fecha: "25/02/2024" },
-    { id: 2, concepto: "Pago Collar - María García", monto: 3500, fecha: "24/02/2024" },
-    { id: 3, concepto: "Intereses - Carlos López", monto: 450, fecha: "23/02/2024" },
-  ];
-
-  // Datos del dueño para perfil
+  // Datos del perfil (podrían venir de una API también)
   const datosPerfil = {
     nombre: "Juan Carlos Rodríguez",
     email: "juan.rodriguez@ophelina.mx",
@@ -80,76 +71,34 @@ const Dueno = () => {
     fotoPerfil: "https://ui-avatars.com/api/?name=Juan+Rodriguez&size=128&background=1e3a8a&color=fff&bold=true"
   };
 
-  // Datos para TOP CLIENTES
-  const topClientes = [
-    { id: 1, nombre: "Juan Pérez", empenos: 5, montoTotal: 18500, ultimoEmpeno: "15/02/2024" },
-    { id: 2, nombre: "María García", empenos: 4, montoTotal: 14200, ultimoEmpeno: "20/02/2024" },
-    { id: 3, nombre: "Carlos López", empenos: 3, montoTotal: 9800, ultimoEmpeno: "10/02/2024" },
-    { id: 4, nombre: "Ana Martínez", empenos: 2, montoTotal: 8000, ultimoEmpeno: "01/02/2024" },
-    { id: 5, nombre: "Roberto Sánchez", empenos: 2, montoTotal: 6200, ultimoEmpeno: "05/02/2024" },
-  ];
-
-  // Datos para ARTÍCULOS MÁS EMPEÑADOS
-  const topArticulos = [
-    { id: 1, nombre: "Anillos de Oro", cantidad: 12, montoPromedio: 4800, categoria: "Joyería" },
-    { id: 2, nombre: "Collares de Plata", cantidad: 8, montoPromedio: 3200, categoria: "Joyería" },
-    { id: 3, nombre: "Relojes", cantidad: 6, montoPromedio: 5500, categoria: "Relojes" },
-    { id: 4, nombre: "Pulseras", cantidad: 5, montoPromedio: 2100, categoria: "Joyería" },
-    { id: 5, nombre: "Teléfonos", cantidad: 4, montoPromedio: 3800, categoria: "Electrónica" },
-  ];
-
-  // Datos para INGRESOS POR MES
-  const ingresosMensuales = {
+  // Configuración de gráficas
+  const [chartData, setChartData] = useState({
     series: [
-      {
-        name: "Capital",
-        data: [45000, 52000, 48000, 61000, 58000, 63000],
-      },
-      {
-        name: "Intereses",
-        data: [8500, 9200, 10100, 11800, 13500, 14200],
-      },
+      { name: "Capital", data: [] },
+      { name: "Intereses", data: [] }
     ],
     options: {
-      chart: {
-        type: "line",
-        height: 300,
-        toolbar: { show: false },
-      },
-      stroke: {
-        curve: "smooth",
-        width: 3,
+      chart: { type: "bar", height: 350, toolbar: { show: false } },
+      plotOptions: { bar: { horizontal: false, columnWidth: "55%", borderRadius: 5 } },
+      dataLabels: { enabled: false },
+      xaxis: { categories: [] },
+      yaxis: { 
+        title: { text: "$ (pesos)" },
+        labels: { formatter: (val) => `$${val.toLocaleString()}` }
       },
       colors: ["#1e3a8a", "#10b981"],
-      xaxis: {
-        categories: ["Sep", "Oct", "Nov", "Dic", "Ene", "Feb"],
-      },
-      yaxis: {
-        labels: {
-          formatter: (val) => `$${val.toLocaleString()}`,
-        },
-      },
-      tooltip: {
-        y: {
-          formatter: (val) => `$${val.toLocaleString()}`,
-        },
-      },
-    },
-  };
+      tooltip: { y: { formatter: (val) => `$${val.toLocaleString()}` } }
+    }
+  });
 
-  // Datos para DISTRIBUCIÓN POR CATEGORÍA
+  // Datos para gráfica de distribución (puedes obtener esto del backend después)
   const categoriaDistribucion = {
     series: [45, 25, 15, 10, 5],
     options: {
-      chart: {
-        type: "donut",
-        height: 300,
-      },
+      chart: { type: "donut", height: 300 },
       labels: ["Joyería", "Electrónica", "Relojes", "Herramientas", "Otros"],
       colors: ["#1e3a8a", "#3b82f6", "#10b981", "#f59e0b", "#6b7280"],
-      legend: {
-        position: "bottom",
-      },
+      legend: { position: "bottom" },
       plotOptions: {
         pie: {
           donut: {
@@ -168,58 +117,144 @@ const Dueno = () => {
     },
   };
 
-  const chartData = {
-    series: [
-      {
-        name: "Empeños",
-        data: [44, 55, 57, 56, 61, 58, 63, 60, 66],
-      },
-      {
-        name: "Ingresos",
-        data: [76, 85, 101, 98, 87, 105, 91, 114, 94],
-      },
-    ],
-    options: {
-      chart: {
-        type: "bar",
-        height: 350,
-        toolbar: { show: false },
-      },
-      plotOptions: {
-        bar: {
-          horizontal: false,
-          columnWidth: "55%",
-          borderRadius: 5,
-        },
-      },
-      dataLabels: { enabled: false },
-      stroke: {
-        show: true,
-        width: 2,
-        colors: ["transparent"],
-      },
-      xaxis: {
-        categories: ["Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct"],
-      },
-      yaxis: {
-        title: { text: "$ (miles)" },
-      },
-      fill: { opacity: 1 },
-      tooltip: {
-        y: {
-          formatter: (val) => `$ ${val} mil`,
-        },
-      },
-      colors: ["#1e3a8a", "#10b981"],
-    },
+  // CARGAR DATOS DEL DASHBOARD al montar el componente
+  useEffect(() => {
+    cargarDashboard();
+  }, []);
+
+  const cargarDashboard = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Llamar a la API de Laravel
+      const response = await api.get('/dashboard');
+      
+      if (response.data.success) {
+        const data = response.data.data;
+        setDashboardData(data);
+        
+        // Preparar datos para gráfica de ingresos mensuales
+        const meses = data.ingresos_mensuales?.map(i => i.mes) || [];
+        const capital = data.ingresos_mensuales?.map(i => Number(i.capital)) || [];
+        const intereses = data.ingresos_mensuales?.map(i => Number(i.intereses)) || [];
+        
+        setChartData(prev => ({
+          series: [
+            { name: "Capital", data: capital },
+            { name: "Intereses", data: intereses }
+          ],
+          options: {
+            ...prev.options,
+            xaxis: { ...prev.options.xaxis, categories: meses }
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Error al cargar dashboard:', error);
+      setError('No se pudo conectar con el servidor. ¿Está corriendo Laravel?');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Función para cargar empeños activos
+  const cargarActivos = async () => {
+    try {
+      const response = await api.get('/dashboard/activos');
+      if (response.data.success) {
+        setEmpenosActivos(response.data.data);
+        setShowActivos(true);
+      }
+    } catch (error) {
+      console.error('Error al cargar activos:', error);
+      alert('Error al cargar empeños activos');
+    }
+  };
+
+  // Función para cargar empeños vencidos
+  const cargarVencidos = async () => {
+    try {
+      const response = await api.get('/dashboard/vencidos');
+      if (response.data.success) {
+        setEmpenosVencidos(response.data.data);
+        setShowVencidos(true);
+      }
+    } catch (error) {
+      console.error('Error al cargar vencidos:', error);
+      alert('Error al cargar empeños vencidos');
+    }
+  };
+
+  // Función para cargar próximos a vencer
+  const cargarProximos = async () => {
+    try {
+      const response = await api.get('/dashboard/proximos');
+      if (response.data.success) {
+        setProximosVencer(response.data.data);
+        setShowProximos(true);
+      }
+    } catch (error) {
+      console.error('Error al cargar próximos:', error);
+      alert('Error al cargar próximos a vencer');
+    }
+  };
+
+  // Función para cargar ingresos recientes (puedes crear este endpoint después)
+  const cargarIngresos = async () => {
+    try {
+      // Por ahora usamos datos de ejemplo
+      setIngresosRecientes([
+        { id: 1, concepto: "Pago de Juan Pérez", monto: 5000, fecha: "10/03/2024" },
+        { id: 2, concepto: "Pago de María García", monto: 3500, fecha: "09/03/2024" },
+      ]);
+      setShowIngresos(true);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  // Función para formatear fechas
+  const formatFecha = (fecha) => {
+    if (!fecha) return '';
+    return new Date(fecha).toLocaleDateString('es-MX');
+  };
+
+  // Mostrar loading
+  if (loading) {
+    return (
+      <div className="dashboard">
+        <Sidebar />
+        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div>Cargando dashboard...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar error
+  if (error) {
+    return (
+      <div className="dashboard">
+        <Sidebar />
+        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+          <WarningIcon style={{ fontSize: 48, color: '#dc3545', marginBottom: 16 }} />
+          <h3>Error de conexión</h3>
+          <p>{error}</p>
+          <button onClick={cargarDashboard} style={{ marginTop: 16, padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard">
       <Sidebar />
 
       <div className="content">
-        {/* HEADER con botones de perfil y alertas sin texto */}
+        {/* HEADER */}
         <div className="owner-header">
           <div className="header-top">
             <h1>
@@ -228,21 +263,15 @@ const Dueno = () => {
             </h1>
            
             <div className="header-botones">
-              {/* BOTÓN DE PERFIL - SOLO ICONO */}
               <button className="btn-perfil" onClick={() => setShowPerfil(true)} title="Mi Perfil">
-                <img 
-                  src={datosPerfil.fotoPerfil} 
-                  alt="Perfil" 
-                  className="perfil-foto"
-                />
+                <img src={datosPerfil.fotoPerfil} alt="Perfil" className="perfil-foto" />
               </button>
 
-              {/* BOTÓN DE ALERTAS - SOLO ICONO */}
               <button className="btn-alertas" onClick={() => setShowAlertas(true)} title="Alertas">
                 <NotificationsIcon className="alerta-icon" />
-                {proximosVencer.length + empenosVencidos.length > 0 && (
+                {(dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos) > 0 && (
                   <span className="alerta-badge">
-                    {proximosVencer.length + empenosVencidos.length}
+                    {dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos}
                   </span>
                 )}
               </button>
@@ -250,51 +279,51 @@ const Dueno = () => {
           </div>
         </div>
 
-        {/* CARDS con iconos */}
+        {/* CARDS con datos REALES */}
         <div className="cards-grid">
-          <div className="stat-card" onClick={() => setShowActivos(true)}>
+          <div className="stat-card" onClick={cargarActivos}>
             <AssignmentIcon className="card-icon" />
             <h3>Empeños Activos</h3>
-            <p className="stat-number">{empenosActivos.length}</p>
+            <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
           </div>
 
-          <div className="stat-card" onClick={() => setShowVencidos(true)}>
+          <div className="stat-card" onClick={cargarVencidos}>
             <WarningIcon className="card-icon" />
             <h3>Empeños Vencidos</h3>
-            <p className="stat-number">{empenosVencidos.length}</p>
+            <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
           </div>
 
-          <div className="stat-card" onClick={() => setShowProximos(true)}>
+          <div className="stat-card" onClick={cargarProximos}>
             <AccessTimeIcon className="card-icon" />
             <h3>Próximos a Vencer</h3>
-            <p className="stat-number">{proximosVencer.length}</p>
+            <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
           </div>
 
-          <div className="stat-card" onClick={() => setShowIngresos(true)}>
+          <div className="stat-card" onClick={cargarIngresos}>
             <AttachMoneyIcon className="card-icon" />
             <h3>Ingresos Recientes</h3>
-            <p className="stat-number">${ingresosRecientes.reduce((sum, i) => sum + i.monto, 0).toLocaleString()}</p>
+            <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
           </div>
 
           <div className="stat-card gold-card">
             <MonetizationOnIcon className="card-icon" />
             <h3>Precio del Oro</h3>
-            <p className="stat-number">$850 / gramo</p>
+            <p className="stat-number">${dashboardData.resumen?.precio_oro || 850} / gramo</p>
           </div>
         </div>
 
-        {/* GRÁFICA PRINCIPAL */}
+        {/* GRÁFICA PRINCIPAL con datos REALES */}
         <div className="chart-section">
           <h2>
             <BarChartIcon />
-            Resumen de Ingresos
+            Ingresos Mensuales (Capital vs Intereses)
           </h2>
           <div className="chart-wrapper">
             <Chart
               options={chartData.options}
               series={chartData.series}
               type="bar"
-              height="100%"
+              height={350}
             />
           </div>
         </div>
@@ -304,11 +333,14 @@ const Dueno = () => {
           <div className="grafica-nueva-card">
             <h2>
               <TrendingUpIcon />
-              Ingresos Mensuales (Capital vs Intereses)
+              Tendencia de Ingresos
             </h2>
             <Chart
-              options={ingresosMensuales.options}
-              series={ingresosMensuales.series}
+              options={{
+                ...chartData.options,
+                chart: { ...chartData.options.chart, type: "line" }
+              }}
+              series={chartData.series}
               type="line"
               height={300}
             />
@@ -328,7 +360,7 @@ const Dueno = () => {
           </div>
         </div>
 
-        {/* Top Clientes */}
+        {/* Top Clientes con datos REALES */}
         <div className="nueva-seccion">
           <h2>
             <EmojiEventsIcon />
@@ -345,20 +377,25 @@ const Dueno = () => {
                 </tr>
               </thead>
               <tbody>
-                {topClientes.map(cliente => (
-                  <tr key={cliente.id}>
+                {dashboardData.top_clientes?.map(cliente => (
+                  <tr key={cliente.id_cliente}>
                     <td><strong>{cliente.nombre}</strong></td>
                     <td>{cliente.empenos}</td>
-                    <td>${cliente.montoTotal.toLocaleString()}</td>
-                    <td>{cliente.ultimoEmpeno}</td>
+                    <td>${(cliente.monto_total || 0).toLocaleString()}</td>
+                    <td>{formatFecha(cliente.ultimo_empeno)}</td>
                   </tr>
                 ))}
+                {dashboardData.top_clientes?.length === 0 && (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Artículos más empeñados */}
+        {/* Artículos más empeñados con datos REALES */}
         <div className="nueva-seccion">
           <h2>
             <LocalOfferIcon />
@@ -375,154 +412,90 @@ const Dueno = () => {
                 </tr>
               </thead>
               <tbody>
-                {topArticulos.map(articulo => (
-                  <tr key={articulo.id}>
+                {dashboardData.top_articulos?.map((articulo, index) => (
+                  <tr key={index}>
                     <td><strong>{articulo.nombre}</strong></td>
                     <td>{articulo.categoria}</td>
                     <td>{articulo.cantidad}</td>
-                    <td>${articulo.montoPromedio.toLocaleString()}</td>
+                    <td>${(articulo.monto_promedio || 0).toLocaleString()}</td>
                   </tr>
                 ))}
+                {dashboardData.top_articulos?.length === 0 && (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Cards de métricas rápidas */}
-        <div className="metricas-rapidas">
-          <div className="metrica-card">
-            <SpeedIcon className="metrica-icon" />
-            <div className="metrica-info">
-              <h4>Tasa de Interés Promedio</h4>
-              <p className="metrica-valor">12.5%</p>
-              <span className="metrica-tendencia positiva">
-                <TrendingUpIcon fontSize="small" />
-                +0.5% vs mes anterior
-              </span>
-            </div>
-          </div>
-
-          <div className="metrica-card">
-            <AccessTimeIcon className="metrica-icon" />
-            <div className="metrica-info">
-              <h4>Tiempo Promedio de Pago</h4>
-              <p className="metrica-valor">18 días</p>
-              <span className="metrica-tendencia negativa">
-                <TrendingDownIcon fontSize="small" />
-                -2 días vs mes anterior
-              </span>
-            </div>
-          </div>
-
-          <div className="metrica-card">
-            <LoopIcon className="metrica-icon" />
-            <div className="metrica-info">
-              <h4>Tasa de Retorno</h4>
-              <p className="metrica-valor">68%</p>
-              <span className="metrica-tendencia positiva">
-                <TrendingUpIcon fontSize="small" />
-                +5% vs mes anterior
-              </span>
-            </div>
-          </div>
-
-          <div className="metrica-card">
-            <AttachMoneyIcon className="metrica-icon" />
-            <div className="metrica-info">
-              <h4>Valor Promedio por Empeño</h4>
-              <p className="metrica-valor">$4,200</p>
-              <span className="metrica-tendencia positiva">
-                <TrendingUpIcon fontSize="small" />
-                +$350 vs mes anterior
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Actividad Reciente */}
+        {/* Actividad Reciente con datos REALES */}
         <div className="nueva-seccion">
           <h2>
             <HistoryIcon />
             Actividad Reciente
           </h2>
           <div className="actividad-lista">
-            <div className="actividad-item">
-              <CheckCircleIcon className="actividad-icon success" />
-              <div className="actividad-detalle">
-                <p><strong>Juan Pérez</strong> pagó su empeño <span className="actividad-monto">$5,000</span></p>
-                <small>Hace 2 horas</small>
+            {dashboardData.actividad_reciente?.map((actividad, index) => (
+              <div key={index} className="actividad-item">
+                {actividad.tipo === 'pago' ? (
+                  <CheckCircleIcon className="actividad-icon success" />
+                ) : (
+                  <CelebrationIcon className="actividad-icon info" />
+                )}
+                <div className="actividad-detalle">
+                  <p><strong>{actividad.descripcion}</strong></p>
+                  <small>{formatFecha(actividad.fecha)}</small>
+                </div>
               </div>
-            </div>
-            <div className="actividad-item">
-              <CelebrationIcon className="actividad-icon info" />
-              <div className="actividad-detalle">
-                <p><strong>María García</strong> empeñó <strong>Collar de Plata</strong> por <span className="actividad-monto">$3,500</span></p>
-                <small>Hace 5 horas</small>
-              </div>
-            </div>
-            <div className="actividad-item">
-              <WarningIcon className="actividad-icon warning" />
-              <div className="actividad-detalle">
-                <p><strong>Carlos López</strong> tiene un empeño por vencer mañana</p>
-                <small>Hace 1 día</small>
-              </div>
-            </div>
-            <div className="actividad-item">
-              <AttachMoneyIcon className="actividad-icon success" />
-              <div className="actividad-detalle">
-                <p>Intereses generados hoy: <span className="actividad-monto">$1,250</span></p>
-                <small>Hace 3 horas</small>
-              </div>
-            </div>
+            ))}
+            {dashboardData.actividad_reciente?.length === 0 && (
+              <div style={{ textAlign: 'center', padding: 20 }}>No hay actividad reciente</div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* MODAL DE PERFIL */}
+      {/* MODALES - Modifícalos para usar datos REALES también */}
+
+      {/* MODAL DE PERFIL (sin cambios) */}
       {showPerfil && (
         <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
           <div className="modal-detalle modal-perfil" onClick={(e) => e.stopPropagation()}>
             <button className="modal-cerrar" onClick={() => setShowPerfil(false)}>
               <CloseIcon />
             </button>
-            
             <div className="modal-header perfil-header">
               <h2>Mi Perfil</h2>
               <span className="cliente-id">Información personal</span>
             </div>
-
             <div className="modal-body">
               <div className="perfil-container">
                 <div className="perfil-avatar">
                   <img src={datosPerfil.fotoPerfil} alt={datosPerfil.nombre} />
                 </div>
-                
                 <div className="perfil-info-grid">
                   <div className="perfil-info-item">
                     <span className="perfil-label">Nombre completo</span>
                     <span className="perfil-valor">{datosPerfil.nombre}</span>
                   </div>
-                  
                   <div className="perfil-info-item">
                     <span className="perfil-label">Email</span>
                     <span className="perfil-valor">{datosPerfil.email}</span>
                   </div>
-                  
                   <div className="perfil-info-item">
                     <span className="perfil-label">Teléfono</span>
                     <span className="perfil-valor">{datosPerfil.telefono}</span>
                   </div>
-                  
                   <div className="perfil-info-item">
                     <span className="perfil-label">Rol</span>
                     <span className="perfil-valor">{datosPerfil.rol}</span>
                   </div>
-                  
                   <div className="perfil-info-item">
                     <span className="perfil-label">Sucursal</span>
                     <span className="perfil-valor">{datosPerfil.sucursal}</span>
                   </div>
-                  
                   <div className="perfil-info-item">
                     <span className="perfil-label">Miembro desde</span>
                     <span className="perfil-valor">{datosPerfil.fechaRegistro}</span>
@@ -534,98 +507,17 @@ const Dueno = () => {
         </div>
       )}
 
-      {/* MODAL DE ALERTAS */}
-      {showAlertas && (
-        <div className="modal-overlay" onClick={() => setShowAlertas(false)}>
-          <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowAlertas(false)}>
-              <CloseIcon />
-            </button>
-            
-            <div className="modal-header">
-              <h2>
-                <NotificationsIcon />
-                Alertas y Notificaciones
-              </h2>
-              <span className="cliente-id">Actualizadas hoy</span>
-            </div>
-
-            <div className="modal-body">
-              <div className="alertas-modal-lista">
-                <div className="alerta-modal-item warning">
-                  <WarningIcon className="alerta-modal-icon" />
-                  <div className="alerta-modal-contenido">
-                    <h4>{proximosVencer.length} empeños por vencer esta semana</h4>
-                    <p>Próximos a vencer: {proximosVencer.map(p => p.nombre).join(', ')}</p>
-                    <small>Vencen entre el {proximosVencer[0]?.fecha} y {proximosVencer[proximosVencer.length-1]?.fecha}</small>
-                  </div>
-                </div>
-
-                <div className="alerta-modal-item danger">
-                  <ErrorIcon className="alerta-modal-icon" />
-                  <div className="alerta-modal-contenido">
-                    <h4>{empenosVencidos.length} empeños vencidos requieren atención</h4>
-                    <p>Monto total vencido: ${empenosVencidos.reduce((sum, i) => sum + i.monto, 0).toLocaleString()}</p>
-                    <small>Vencidos hace {Math.max(...empenosVencidos.map(e => e.dias))} días</small>
-                  </div>
-                </div>
-
-                <div className="alerta-modal-item success">
-                  <TrendingUpIcon className="alerta-modal-icon" />
-                  <div className="alerta-modal-contenido">
-                    <h4>Meta mensual: 78% completada</h4>
-                    <p>Faltan $25,000 para alcanzar la meta</p>
-                    <div className="progreso-barra">
-                      <div className="progreso-lleno" style={{ width: '78%' }}></div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="alerta-modal-item info">
-                  <AttachMoneyIcon className="alerta-modal-icon" />
-                  <div className="alerta-modal-contenido">
-                    <h4>Ingresos del día: $1,250</h4>
-                    <p>Intereses generados hoy: $450</p>
-                    <small>3 transacciones completadas</small>
-                  </div>
-                </div>
-
-                <div className="alerta-modal-item warning">
-                  <MonetizationOnIcon className="alerta-modal-icon" />
-                  <div className="alerta-modal-contenido">
-                    <h4>Precio del Oro: +2.5% hoy</h4>
-                    <p>Precio actual: $850/gramo</p>
-                    <small>Impacto positivo en valor de inventario</small>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowAlertas(false)}>
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODALES EXISTENTES (con iconos en títulos) */}
+      {/* MODAL DE EMPEÑOS ACTIVOS con datos REALES */}
       {showActivos && (
         <div className="modal-overlay" onClick={() => setShowActivos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
             <button className="modal-cerrar" onClick={() => setShowActivos(false)}>
               <CloseIcon />
             </button>
-            
             <div className="modal-header">
-              <h2>
-                <AssignmentIcon />
-                Empeños Activos
-              </h2>
+              <h2><AssignmentIcon /> Empeños Activos</h2>
               <span className="cliente-id">Total: {empenosActivos.length}</span>
             </div>
-
             <div className="modal-body">
               <div className="tabla-container-modal">
                 <table className="tabla-modal">
@@ -639,7 +531,7 @@ const Dueno = () => {
                   </thead>
                   <tbody>
                     {empenosActivos.map(item => (
-                      <tr key={item.id}>
+                      <tr key={item.id_empreno}>
                         <td><strong>{item.cliente}</strong></td>
                         <td>{item.nombre}</td>
                         <td>${item.monto.toLocaleString()}</td>
@@ -650,7 +542,6 @@ const Dueno = () => {
                 </table>
               </div>
             </div>
-
             <div className="modal-acciones">
               <button className="btn-cancelar" onClick={() => setShowActivos(false)}>
                 Cerrar
@@ -660,21 +551,17 @@ const Dueno = () => {
         </div>
       )}
 
+      {/* MODAL DE EMPEÑOS VENCIDOS con datos REALES */}
       {showVencidos && (
         <div className="modal-overlay" onClick={() => setShowVencidos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
             <button className="modal-cerrar" onClick={() => setShowVencidos(false)}>
               <CloseIcon />
             </button>
-            
             <div className="modal-header">
-              <h2>
-                <WarningIcon />
-                Empeños Vencidos
-              </h2>
+              <h2><WarningIcon /> Empeños Vencidos</h2>
               <span className="cliente-id">Total: {empenosVencidos.length}</span>
             </div>
-
             <div className="modal-body">
               <div className="tabla-container-modal">
                 <table className="tabla-modal">
@@ -689,7 +576,7 @@ const Dueno = () => {
                   </thead>
                   <tbody>
                     {empenosVencidos.map(item => (
-                      <tr key={item.id}>
+                      <tr key={item.id_empreno}>
                         <td><strong>{item.cliente}</strong></td>
                         <td>{item.nombre}</td>
                         <td>${item.monto.toLocaleString()}</td>
@@ -701,7 +588,6 @@ const Dueno = () => {
                 </table>
               </div>
             </div>
-
             <div className="modal-acciones">
               <button className="btn-cancelar" onClick={() => setShowVencidos(false)}>
                 Cerrar
@@ -711,21 +597,17 @@ const Dueno = () => {
         </div>
       )}
 
+      {/* MODAL DE PRÓXIMOS A VENCER con datos REALES */}
       {showProximos && (
         <div className="modal-overlay" onClick={() => setShowProximos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
             <button className="modal-cerrar" onClick={() => setShowProximos(false)}>
               <CloseIcon />
             </button>
-            
             <div className="modal-header">
-              <h2>
-                <AccessTimeIcon />
-                Próximos a Vencer
-              </h2>
+              <h2><AccessTimeIcon /> Próximos a Vencer</h2>
               <span className="cliente-id">Total: {proximosVencer.length}</span>
             </div>
-
             <div className="modal-body">
               <div className="tabla-container-modal">
                 <table className="tabla-modal">
@@ -740,7 +622,7 @@ const Dueno = () => {
                   </thead>
                   <tbody>
                     {proximosVencer.map(item => (
-                      <tr key={item.id}>
+                      <tr key={item.id_empreno}>
                         <td><strong>{item.cliente}</strong></td>
                         <td>{item.nombre}</td>
                         <td>${item.monto.toLocaleString()}</td>
@@ -752,7 +634,6 @@ const Dueno = () => {
                 </table>
               </div>
             </div>
-
             <div className="modal-acciones">
               <button className="btn-cancelar" onClick={() => setShowProximos(false)}>
                 Cerrar
@@ -762,48 +643,51 @@ const Dueno = () => {
         </div>
       )}
 
-      {showIngresos && (
-        <div className="modal-overlay" onClick={() => setShowIngresos(false)}>
-          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowIngresos(false)}>
+      {/* MODAL DE ALERTAS con datos REALES */}
+      {showAlertas && (
+        <div className="modal-overlay" onClick={() => setShowAlertas(false)}>
+          <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={() => setShowAlertas(false)}>
               <CloseIcon />
             </button>
-            
             <div className="modal-header">
-              <h2>
-                <AttachMoneyIcon />
-                Ingresos Recientes
-              </h2>
-              <span className="cliente-id">
-                Total: ${ingresosRecientes.reduce((sum, i) => sum + i.monto, 0).toLocaleString()}
-              </span>
+              <h2><NotificationsIcon /> Alertas y Notificaciones</h2>
+              <span className="cliente-id">Actualizadas hoy</span>
             </div>
-
             <div className="modal-body">
-              <div className="tabla-container-modal">
-                <table className="tabla-modal">
-                  <thead>
-                    <tr>
-                      <th>Concepto</th>
-                      <th>Monto</th>
-                      <th>Fecha</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ingresosRecientes.map(item => (
-                      <tr key={item.id}>
-                        <td><strong>{item.concepto}</strong></td>
-                        <td>${item.monto.toLocaleString()}</td>
-                        <td>{item.fecha}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="alertas-modal-lista">
+                <div className="alerta-modal-item warning">
+                  <WarningIcon className="alerta-modal-icon" />
+                  <div className="alerta-modal-contenido">
+                    <h4>{dashboardData.resumen?.proximos_vencer} empeños por vencer esta semana</h4>
+                    <p>Próximos a vencer: Revisa el detalle</p>
+                    <small>Vencen en los próximos 7 días</small>
+                  </div>
+                </div>
+
+                <div className="alerta-modal-item danger">
+                  <ErrorIcon className="alerta-modal-icon" />
+                  <div className="alerta-modal-contenido">
+                    <h4>{dashboardData.resumen?.empenos_vencidos} empeños vencidos requieren atención</h4>
+                    <p>Monto total vencido: ${(dashboardData.resumen?.empenos_vencidos * 5000).toLocaleString()}</p>
+                    <small>Requieren acción inmediata</small>
+                  </div>
+                </div>
+
+                <div className="alerta-modal-item info">
+                  <AttachMoneyIcon className="alerta-modal-icon" />
+                  <div className="alerta-modal-contenido">
+                    <h4>Ingresos del mes: ${(dashboardData.resumen?.ingresos_mes_actual || 0).toLocaleString()}</h4>
+                    <p>Meta mensual: $100,000</p>
+                    <div className="progreso-barra">
+                      <div className="progreso-lleno" style={{ width: `${(dashboardData.resumen?.ingresos_mes_actual / 100000 * 100) || 0}%` }}></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-
             <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowIngresos(false)}>
+              <button className="btn-cancelar" onClick={() => setShowAlertas(false)}>
                 Cerrar
               </button>
             </div>

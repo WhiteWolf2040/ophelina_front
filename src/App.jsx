@@ -8,6 +8,11 @@ import OphelinaHome from "./Clientes/OphelinaHome";
 import MisEmpenos from "./Clientes/MisEmpenos";
 import OphelinaTienda from "./Clientes/OphelinaTienda"; 
 import Tarjetero from "./Clientes/Tarjetero"; 
+import Roles from "./Roles/Roles";
+import RolNuevo from "./Roles/RolNuevo";
+
+import Permisos from './Permisos/Permisos';
+import PermisoNuevo from './Permisos/PermisoNuevo';
 
 
 import Dueno from "./Home/Dueno";
@@ -88,6 +93,13 @@ function App() {
         
         {/* Reportes - CORREGIDO: eliminé el Route vacío y cambié a /reportes */}
         <Route path="/reportes" element={<Reporte />} />
+
+           {/* roles */}
+        <Route path="/roles" element={<Roles />} />
+        <Route path="/roles/nuevo" element={<RolNuevo />} />
+
+        <Route path="/permisos" element={<Permisos />} />
+        <Route path="/permisos/nuevo" element={<PermisoNuevo />} />
 
         {/* Configuración */}
         <Route path="/configuracion" element={<ConfiguracionesLayout />}>

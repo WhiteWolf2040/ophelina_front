@@ -323,7 +323,7 @@ const EmpenosLista = ({ empenos }) => {
             
             <div className="modal-header">
               <h2>Detalle del Empeño</h2>
-              <span className="cliente-id">ID: #{empenoSeleccionado.id}</span>
+             
             </div>
 
             <div className="modal-body">
