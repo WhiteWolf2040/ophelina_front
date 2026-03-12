@@ -1,4 +1,3 @@
-// src/Permisos/Permisos.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Close as CloseIcon,
@@ -503,50 +502,50 @@ const Permisos = () => {
             </div>
             <div className="header-actions">
               <button className="btn-bulk-permisos" onClick={openBulkModal}>
-                <AddIcon /> Crear Múltiples
+                <AddIcon /> Crear múltiples
               </button>
               <button className="btn-nuevo-permiso" onClick={() => openModal('new')}>
-                <AddIcon /> Nuevo Permiso
+                <AddIcon /> Nuevo permiso
               </button>
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Stats - MODIFICADO */}
           <div className="permisos-stats">
             <div className="stat-card">
               <div className="stat-icon dueño-bg">
                 <KeyIcon />
               </div>
-              <div>
-                <h3>Total Permisos</h3>
-                <p>{stats.totalPermisos}</p>
+              <div className="stat-content">
+                <span className="stat-label">Total Permisos</span>
+                <p className="stat-number">{stats.totalPermisos}</p>
               </div>
             </div>
             <div className="stat-card">
               <div className="stat-icon admin-bg">
                 <CheckCircleIcon />
               </div>
-              <div>
-                <h3>Activos</h3>
-                <p>{stats.activos}</p>
+              <div className="stat-content">
+                <span className="stat-label">Activos</span>
+                <p className="stat-number">{stats.activos}</p>
               </div>
             </div>
             <div className="stat-card">
               <div className="stat-icon permiso-bg">
                 <CancelIcon />
               </div>
-              <div>
-                <h3>Inactivos</h3>
-                <p>{stats.inactivos}</p>
+              <div className="stat-content">
+                <span className="stat-label">Inactivos</span>
+                <p className="stat-number">{stats.inactivos}</p>
               </div>
             </div>
             <div className="stat-card">
               <div className="stat-icon ejecutivo-bg">
                 <CategoryIcon />
               </div>
-              <div>
-                <h3>Categorías</h3>
-                <p>{stats.categorias}</p>
+              <div className="stat-content">
+                <span className="stat-label">Categorías</span>
+                <p className="stat-number">{stats.categorias}</p>
               </div>
             </div>
           </div>
@@ -743,7 +742,7 @@ const Permisos = () => {
                 {modalType === 'edit' && 'Editar Permiso'}
                 {modalType === 'view' && 'Detalles del Permiso'}
                 {modalType === 'delete' && 'Eliminar Permiso'}
-                {modalType === 'bulk' && 'Crear Múltiples Permisos'}
+                {modalType === 'bulk' && 'Crear múltiples permisos'}
               </h2>
               <button className="modal-close" onClick={closeModal}>
                     <CloseIcon />

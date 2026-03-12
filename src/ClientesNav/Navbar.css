@@ -1,8 +1,11 @@
 body {
   background-color: #f5f0e9;
   margin: 0;
+  overflow-x: hidden;
+  min-height: 100vh;
 }
 
+/* ===== NAVBAR PRINCIPAL ===== */
 .Ophe-navbar {
   position: sticky;
   top: 0;
@@ -10,6 +13,8 @@ body {
   justify-content: center;
   z-index: 1000;
   width: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 .Ophe-navbar-container {
@@ -26,7 +31,6 @@ body {
 }
 
 /* ===== LOGO ===== */
-
 .Ophe-navbar-logo img {
   height: 50px;
   transition: transform 0.3s ease;
@@ -38,7 +42,6 @@ body {
 }
 
 /* ===== LINKS - VERSIÓN ESCRITORIO ===== */
-
 .Ophe-navbar-links {
   list-style: none;
   display: flex;
@@ -58,13 +61,11 @@ body {
   padding-bottom: 6px;
 }
 
-/* Hover elegante con micro animación */
 .Ophe-nav-item:hover {
   color: #e8c572;
   transform: translateY(-2px);
 }
 
-/* Línea animada elegante */
 .Ophe-nav-item::after {
   content: "";
   position: absolute;
@@ -81,7 +82,6 @@ body {
   width: 100%;
 }
 
-/* Activo */
 .Ophe-active {
   color: #c6a75e;
 }
@@ -91,7 +91,6 @@ body {
 }
 
 /* ===== LINKS - VERSIÓN MÓVIL (ICONOS) ===== */
-
 .Ophe-navbar-icons {
   display: none;
   list-style: none;
@@ -114,12 +113,10 @@ body {
   transform: translateY(-2px);
 }
 
-/* OCULTAMOS EL TEXTO POR DEFECTO */
 .Ophe-icon-item span {
   display: none;
 }
 
-/* Tamaño de iconos */
 .Ophe-icon-item svg {
   font-size: 28px !important;
 }
@@ -132,15 +129,13 @@ body {
   color: #c6a75e;
 }
 
-/* ===== USUARIO ===== */
-
+/* ===== USUARIO Y DROPDOWN ===== */
 .Ophe-navbar-user {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-/* Icono usuario con emoji centrado */
 .Ophe-user-icon {
   width: 42px;
   height: 42px;
@@ -160,7 +155,6 @@ body {
   box-shadow: 0 4px 14px rgba(198, 167, 94, 0.35);
 }
 
-/* Dropdown */
 .notification-dropdown {
   position: absolute;
   top: 55px;
@@ -174,8 +168,15 @@ body {
   z-index: 2000;
 }
 
-/* Header centrado */
+.gold-border {
+  border: 2px solid #c6a75e;
+  box-shadow: 0 8px 25px rgba(198, 167, 94, 0.15);
+}
+
 .notification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   text-align: center;
 }
 
@@ -184,6 +185,25 @@ body {
   font-size: 15px;
   font-weight: 600;
   color: #2c3e70;
+  flex: 1;
+}
+
+.edit-profile-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #c6a75e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.edit-profile-btn:hover {
+  background-color: rgba(198, 167, 94, 0.1);
+  transform: scale(1.1);
 }
 
 .divider {
@@ -197,6 +217,13 @@ body {
   align-items: flex-start;
   gap: 10px;
   cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+  background-color: #f9f5eb;
 }
 
 .bell-icon {
@@ -221,23 +248,227 @@ body {
   color: #999;
 }
 
-/* Logout */
 .logout-section {
   display: flex;
-  align-items: center;
-  gap: 8px;
   cursor: pointer;
   justify-content: flex-end;
   font-size: 13px;
   color: #c6a75e;
   transition: 0.2s ease;
+  padding: 8px;
+  border-radius: 8px;
 }
 
 .logout-section:hover {
   opacity: 0.7;
+  background-color: #f9f5eb;
 }
 
-/* Animación */
+/* ===== MODAL DE EDICIÓN MEJORADO (VERSIÓN ÚNICA) ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(13, 27, 62, 0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeInModal 0.3s ease-out;
+  padding: 16px;
+}
+
+.edit-modal {
+  background: rgb(255, 255, 255);
+  border-radius: 15px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.4);
+  animation: slideUpModal 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  border: 1px solid rgb(120, 90, 20);
+}
+
+.ophe-modal-header {
+  background: linear-gradient(135deg, #0d1b3e 0%, #1f2f57 100%);
+  padding: 2px;
+  max-width: 900px;
+  border-bottom: 3px solid #c6a75e;
+  position: relative;
+}
+
+.ophe-modal-header h3 {
+  margin: 1;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 60;
+  letter-spacing: ºpx;
+  font-family: 'Bodoni Moda', serif;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  padding-left: 10px;
+  padding-top: 10px;
+}
+
+
+.close-modal-btn {
+  background: rgba(43, 6, 255, 0);
+}
+
+.close-modal-btn:hover {
+  background: rgba(12, 6, 63, 0.34);
+}
+
+.modal-body {
+  background: #fcf9f5;
+}
+.form-group {
+  padding: 1px 7px; /* espacio arriba/abajo y lados */
+  margin-bottom: 24px;
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 1px;
+  padding-top: 10px;
+  padding-left: 10px;
+  color: #0d1b3e;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 15px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  background: white;
+  color: #2c3e70;
+  font-weight: 500;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.02);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #c6a75e;
+  box-shadow: 0 0 0 5px rgba(198, 167, 94, 0.2);
+  background: white;
+}
+
+/* Iconos decorativos para campos */
+.form-group::after {
+  content: '';
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  width: 22px;
+  height: 22px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.form-group:nth-child(1)::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%230d1b3e' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E");
+}
+
+.form-group:nth-child(2)::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%230d1b3e' viewBox='0 0 24 24'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E");
+}
+
+.form-group:nth-child(3)::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%230d1b3e' viewBox='0 0 24 24'%3E%3Cpath d='M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z'/%3E%3C/svg%3E");
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: centrado;
+  gap: 30px;
+  padding: 16px 24px;
+  border-top: 1px solid #eee;
+}
+
+.cancel-btn {
+  padding: 7px;
+  border-radius: 15px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #e8c572;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+  min-width: 130px;
+}
+
+.cancel-btn:hover {
+  background-color: #c6a75e;
+  color: #ffffff;
+  border-color: #c6a75e;
+  transform: translateY(-2px);
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #0d1b3e, #253662);
+  padding: 7px;
+  border-radius: 15px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
+  min-width: 160px;
+  box-shadow: 0 8px 18px -6px rgba(13, 27, 62, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.save-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.save-btn:hover {
+  background: linear-gradient(135deg, #1a2b4e, #2f4070);
+  transform: translateY(-3px);
+  box-shadow: 0 15px 25px -8px rgba(13, 27, 62, 0.5);
+}
+
+.save-btn:hover::before {
+  left: 100%;
+}
+
+.save-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 15px -4px rgba(13, 27, 62, 0.4);
+}
+
+/* ===== ANIMACIONES ===== */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -249,32 +480,61 @@ body {
   }
 }
 
-/* ===== MEDIA QUERIES PARA RESPONSIVIDAD ===== */
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
-/* Tablets y móviles grandes - Cambiamos a iconos */
+@keyframes slideUpModal {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Efecto de entrada para campos del formulario */
+.form-group {
+  animation: slideField 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateX(-12px);
+}
+
+.form-group:nth-child(1) { animation-delay: 0.1s; }
+.form-group:nth-child(2) { animation-delay: 0.2s; }
+.form-group:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes slideField {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===== MEDIA QUERIES ===== */
 @media screen and (max-width: 991px) {
   .Ophe-navbar-container {
-    padding: 15px 30px;
+    padding: 15px 25px;
   }
 
-  /* Ocultamos los links de texto */
   .Ophe-navbar-links {
     display: none;
   }
 
-  /* Mostramos los iconos (sin texto) */
   .Ophe-navbar-icons {
     display: flex;
-    gap: 40px;
+    gap: 35px;
   }
   
-  /* Aseguramos que el texto siga oculto */
   .Ophe-navbar-icons span {
     display: none;
   }
 
   .Ophe-navbar-logo img {
-    height: 45px;
+    height: 42px;
   }
 
   .Ophe-user-icon {
@@ -283,32 +543,54 @@ body {
   }
 }
 
-/* Móviles grandes (576px - 991px) */
 @media screen and (max-width: 767px) {
   .Ophe-navbar-container {
-    padding: 12px 20px;
+    padding: 12px 18px;
   }
 
   .Ophe-navbar-icons {
-    gap: 25px;
+    gap: 22px;
   }
 
   .Ophe-icon-item svg {
     font-size: 24px !important;
   }
   
-  /* Texto oculto */
   .Ophe-icon-item span {
     display: none;
   }
 
   .notification-dropdown {
     width: 240px;
-    right: -10px;
+    right: -5px;
+  }
+  
+  .edit-modal {
+    max-width: 420px;
+  }
+  
+  .modal-header {
+    padding: 20px 24px;
+  }
+  
+  .modal-header h3 {
+    font-size: 22px;
+  }
+  
+  .modal-body {
+    padding: 24px 20px;
+  }
+  
+  .modal-footer {
+    padding: 18px 24px;
+  }
+  
+  .form-group input {
+    padding: 14px 16px;
+    font-size: 15px;
   }
 }
 
-/* Móviles pequeños (hasta 575px) */
 @media screen and (max-width: 575px) {
   .Ophe-navbar-container {
     padding: 10px 15px;
@@ -317,14 +599,13 @@ body {
   }
 
   .Ophe-navbar-icons {
-    gap: 18px;
+    gap: 16px;
   }
 
   .Ophe-icon-item svg {
     font-size: 22px !important;
   }
   
-  /* Texto oculto */
   .Ophe-icon-item span {
     display: none;
   }
@@ -342,12 +623,60 @@ body {
     width: 220px;
     padding: 12px;
   }
+  
+  .edit-modal {
+    border-radius: 24px;
+  }
+  
+  .modal-header {
+    padding: 18px 20px;
+  }
+  
+  .modal-header h3 {
+    font-size: 20px;
+  }
+  
+  .modal-body {
+    padding: 20px 16px;
+  }
+  
+  .modal-footer {
+    padding: 16px 20px;
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+  
+  .cancel-btn, .save-btn {
+    width: 100%;
+    padding: 14px;
+    min-width: auto;
+    justify-content: center;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    font-size: 12px;
+  }
+  
+  .form-group input {
+    padding: 14px;
+    font-size: 14px;
+  }
+  
+  .form-group::after {
+    bottom: 14px;
+    right: 14px;
+    width: 18px;
+    height: 18px;
+  }
 }
 
-/* Para dispositivos muy pequeños (hasta 400px) */
 @media screen and (max-width: 400px) {
   .Ophe-navbar-icons {
-    gap: 12px;
+    gap: 10px;
   }
 
   .Ophe-navbar-container {
@@ -355,7 +684,7 @@ body {
   }
 
   .Ophe-navbar-logo img {
-    height: 32px;
+    height: 30px;
   }
 
   .Ophe-user-icon {
@@ -367,7 +696,6 @@ body {
     font-size: 20px !important;
   }
   
-  /* Texto oculto */
   .Ophe-icon-item span {
     display: none;
   }
@@ -375,13 +703,54 @@ body {
   .notification-dropdown {
     width: 200px;
     padding: 10px;
+    right: -5px;
+  }
+  
+  .edit-modal {
+    border-radius: 20px;
+  }
+  
+  .modal-header {
+    padding: 16px 18px;
+  }
+  
+  .modal-header h3 {
+    font-size: 18px;
+  }
+  
+  .close-modal-btn {
+    top: 14px;
+    right: 14px;
+    padding: 6px;
+  }
+  
+  .modal-body {
+    padding: 18px 14px;
+  }
+  
+  .form-group input {
+    padding: 12px;
+    border-radius: 14px;
   }
 }
 
-/* Ajustes para landscape en móviles */
-@media screen and (max-height: 500px) and (orientation: landscape) {
+@media screen and (max-height: 600px) and (orientation: landscape) {
   .Ophe-navbar-container {
-    margin: 5px 0;
-    padding: 8px 20px;
+    margin: 8px 0;
+    padding: 8px 18px;
   }
+  
+  .edit-modal {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .modal-body {
+    padding: 16px 20px;
+  }
+  
+  .form-group {
+    margin-bottom: 12px;
+ }
+
 }
