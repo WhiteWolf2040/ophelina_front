@@ -1,5 +1,4 @@
 /* src/Permisos/Permisos.css */
-/* src/Permisos/Permisos.css - Reemplaza todo con esto */
 
 .app-container {
   display: flex;
@@ -10,7 +9,6 @@
 
 .main-content {
   flex: 1;
- 
   background-color: #F5F0EA;
   height: 100vh;
   overflow-y: auto; /* HABILITA el scroll vertical */
@@ -19,11 +17,6 @@
 .permisos-content {
   padding: 2rem;
   min-height: 100%; /* Asegura que ocupe todo el alto */
-}
-
-/* El resto de tu CSS existente continúa aquí... */
-.permisos-content {
-  padding: 2rem;
 }
 
 .permisos-header {
@@ -74,7 +67,7 @@
 }
 
 .btn-bulk-permisos {
-  background: #10b981;
+  background: #1e2e95;
   color: white;
   border: none;
   padding: 0.7rem 1.5rem;
@@ -88,7 +81,7 @@
 }
 
 .btn-bulk-permisos:hover {
-  background: #059669;
+  background: #1e2e95;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
@@ -108,7 +101,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(255, 0, 0, 0.05);
 }
 
 .stat-icon {
@@ -122,22 +115,22 @@
 }
 
 .stat-icon.dueño-bg {
-  background: #0d1b3e;
+  background: #1e2e95;
   color: #e9c46a;
 }
 
 .stat-icon.admin-bg {
-  background: #1e3a8a;
+  background: #daba62;
   color: white;
 }
 
 .stat-icon.permiso-bg {
-  background: #10b981;
+  background: #1e2e95;
   color: white;
 }
 
 .stat-icon.ejecutivo-bg {
-  background: #6c757d;
+  background: #daba62;
   color: white;
 }
 
@@ -162,15 +155,16 @@
   top: 50%;
   transform: translateY(-50%);
   color: #adb5bd;
+  padding-left: 1px;
 }
 
 .search-input {
   width: 100%;
   height: 48px;
-  padding: 0 50px 0 22px;
-  border-radius: 30px;
+  padding: 0 60px 0 60px;
+  border-radius: 15px;
   border: none;
-  background-color: #e9e9e9;
+  background-color: #ffffff;
   font-size: 14px;
   outline: none;
   color: #2c2c2c;
@@ -191,10 +185,10 @@
 
 .filter-select {
   height: 48px;
-  padding: 0 1rem;
-  border-radius: 30px;
+  padding: 1px;
+  border-radius: 15px;
   border: none;
-  background-color: #e9e9e9;
+  background-color: #ffffff;
   font-size: 14px;
   outline: none;
   color: #2c2c2c;
@@ -390,45 +384,31 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
 
-.modal-container {
+.modal-container.modal-bulk {
   background: white;
-  border-radius: 16px;
+  border-radius: 15px;
   width: 90%;
-  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-}
-
-.modal-container.modal-bulk {
-  max-width: 700px;
-}
+  max-width: 600px;
+}  
 
 .modal-container.modal-delete {
   max-width: 450px;
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e9ecef;
-}
-
 .modal-header h2 {
-  color: #0d1b3e;
-  font-size: 1.3rem;
-  margin: 0;
+  padding-top: 10px;
+  color: #ffffff;
+  font-family: 'Bodoni Moda', serif;
 }
-
 
 .modal-close {
   background: none;
@@ -659,72 +639,7 @@ textarea.form-control {
   opacity: 0.5;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .permisos-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .permisos-content {
-    padding: 1rem;
-  }
-
-  .permisos-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-
-  .header-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .btn-nuevo-permiso,
-  .btn-bulk-permisos {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .permisos-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .permisos-filters {
-    flex-direction: column;
-  }
-
-  .search-wrapper {
-    width: 100%;
-  }
-
-  .filters-wrapper {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .filter-select {
-    width: 100%;
-  }
-
-  .btn-delete-selected {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .detalle-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* PAGINACIÓN - Agrega al final de Permisos.css */
-
+/* Paginación */
 .pagination-container {
   display: flex;
   justify-content: space-between;
@@ -805,4 +720,150 @@ textarea.form-control {
 .pagination-ellipsis {
   color: #6c757d;
   padding: 0 0.3rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .permisos-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .permisos-content {
+    padding: 1rem;
+  }
+
+  .permisos-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-nuevo-permiso,
+  .btn-bulk-permisos {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .permisos-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .permisos-filters {
+    flex-direction: column;
+  }
+
+  .search-wrapper {
+    width: 100%;
+  }
+
+  .filters-wrapper {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  .btn-delete-selected {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .detalle-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========== ESTILOS PARA TARJETAS CON TEXTO EN HOVER ========== */
+
+/* Reorganizar el contenido de las tarjetas */
+.permisos-stats .stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Contenedor para el texto y número */
+.permisos-stats .stat-card .stat-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Agrandar los iconos */
+.permisos-stats .stat-card .stat-icon {
+  width: 70px;
+  height: 70px;
+  font-size: 2.5rem;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+/* El número siempre visible y más grande */
+.permisos-stats .stat-card .stat-number {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #0d1b3e;
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* El texto (label) oculto por defecto */
+.permisos-stats .stat-card .stat-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  margin-bottom: 0.2rem;
+}
+
+/* En hover: */
+.permisos-stats .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(13, 27, 62, 0.12);
+}
+
+.permisos-stats .stat-card:hover .stat-icon {
+  transform: scale(1.15);
+}
+
+.permisos-stats .stat-card:hover .stat-label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Ajuste responsivo para mantener proporciones */
+@media (max-width: 768px) {
+  .permisos-stats .stat-card .stat-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+  
+  .permisos-stats .stat-card .stat-number {
+    font-size: 1.8rem;
+  }
+  
+  .permisos-stats .stat-card {
+    gap: 1rem;
+  }
 }

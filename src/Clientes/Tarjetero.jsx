@@ -3,8 +3,8 @@ import "./Tarjetero.css";
 import Navbar from "../ClientesNav/Navbar";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import DeleteIcon from '@mui/icons-material/Delete'; // Importar icono de eliminar
-import AddIcon from '@mui/icons-material/Add'; // Importar icono de agregar
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 
 const Tarjetero = () => {
   const [showEditModal, setShowEditModal] = useState(false);
@@ -56,7 +56,7 @@ const Tarjetero = () => {
       initialVisibility[card.id] = false;
     });
     setShowSensitiveData(initialVisibility);
-  }, [cards.length]);
+  }, [cards]);
 
   // Función para alternar visibilidad de datos sensibles
   const toggleVisibility = (cardId) => {
@@ -123,7 +123,7 @@ const Tarjetero = () => {
   const handleAddSubmit = (e) => {
     e.preventDefault();
     const newCard = {
-      id: cards.length + 1,
+      id: cards.length > 0 ? Math.max(...cards.map(c => c.id)) + 1 : 1,
       ...newCardForm
     };
     setCards([...cards, newCard]);
@@ -146,7 +146,54 @@ const Tarjetero = () => {
         {/* Header */}
         <div className="tar-header">
           <h1>Administra y consulta tus tarjetas</h1>
+          
+          {/* Botón de agregar que aparece solo cuando no hay tarjetas */}
+          {cards.length === 0 && (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              marginTop: '1rem',
+              marginBottom: '2rem'
+            }}>
+              <button 
+                className="tar-btn-add"
+                onClick={handleAddClick}
+                style={{
+                  padding: '1rem 2.5rem',
+                  fontSize: '1.1rem',
+                  background: 'var(--tar-primary)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--tar-primary-hover)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'var(--tar-primary)'}
+              >
+                <AddIcon /> Agregar Nueva Tarjeta
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Mensaje cuando no hay tarjetas */}
+        {cards.length === 0 && (
+          <div style={{
+            textAlign: 'center',
+            padding: '3rem',
+            background: 'var(--tar-glass-bg)',
+            backdropFilter: 'blur(8px)',
+            borderRadius: '16px',
+            color: 'var(--tar-text-gray)',
+            fontSize: '1.1rem'
+          }}>
+            No tienes tarjetas guardadas. ¡Agrega una para comenzar!
+          </div>
+        )}
 
         {/* Tarjetas */}
         {cards.map(card => {

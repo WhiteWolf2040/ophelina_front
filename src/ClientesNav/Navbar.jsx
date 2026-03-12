@@ -9,14 +9,26 @@ import HomeIcon from '@mui/icons-material/Home';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import EditIcon from '@mui/icons-material/Edit';
+import CloseIcon from '@mui/icons-material/Close';
+import SaveIcon from '@mui/icons-material/Save';
 
 export default function Navbar() {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const dropdownRef = useRef(null);
+  const modalRef = useRef(null);
   const navigate = useNavigate();
 
   // 🔹 Usuario dinámico (luego backend)
-  const userName = "Suemy Gamboa";
+  const [userName, setUserName] = useState("Suemy Gamboa");
+  const [userEmail, setUserEmail] = useState("suemy.gamboa@email.com");
+  const [userPhone, setUserPhone] = useState("+52 555 123 4567");
+  
+  // Estados para edición
+  const [editName, setEditName] = useState(userName);
+  const [editEmail, setEditEmail] = useState(userEmail);
+  const [editPhone, setEditPhone] = useState(userPhone);
 
   const handleToggle = () => {
     setShowDropdown(!showDropdown);
@@ -26,11 +38,33 @@ export default function Navbar() {
     navigate("/login");
   };
 
+  const openEditModal = () => {
+    setEditName(userName);
+    setEditEmail(userEmail);
+    setEditPhone(userPhone);
+    setShowEditModal(true);
+    setShowDropdown(false);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+  };
+
+  const saveUserInfo = () => {
+    setUserName(editName);
+    setUserEmail(editEmail);
+    setUserPhone(editPhone);
+    setShowEditModal(false);
+  };
+
   // 🔹 Cerrar si haces click fuera
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
+      }
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setShowEditModal(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -170,10 +204,13 @@ export default function Navbar() {
           </div>
           
           {showDropdown && (
-            <div className="notification-dropdown">
+            <div className="notification-dropdown gold-border">
 
               <div className="notification-header">
                 <h4>{userName}</h4>
+                <button className="edit-profile-btn" onClick={openEditModal}>
+                  <EditIcon sx={{ fontSize: 16 }} />
+                </button>
               </div>
 
               <div className="divider"></div>
@@ -220,6 +257,59 @@ export default function Navbar() {
         </div>
 
       </div>
+
+      {/* Modal de edición de perfil */}
+      {showEditModal && (
+        <div className="modal-overlay">
+          <div className="edit-modal gold-border" ref={modalRef}>
+            <div className="ophe-modal-header">
+              <h3>Editar perfil</h3>
+
+            </div>
+            
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Nombre completo</label>
+                <input 
+                  type="text" 
+                  value={editName} 
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Tu nombre"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Correo electrónico</label>
+                <input 
+                  type="email" 
+                  value={editEmail} 
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Teléfono</label>
+                <input
+                  type="tel" 
+                  value={editPhone} 
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  placeholder="+52 555 123 4567"
+                />
+              </div>
+            </div>
+              <label></label> 
+            <div className="modal-footer">
+              <button className="cancel-btn" onClick={closeEditModal}>Cancelar</button> 
+              <button className="save-btn" onClick={saveUserInfo}>
+                <SaveIcon sx={{ fontSize: 18}} />
+                Guardar cambios
+              </button> <label></label>
+            </div>
+            <label></label> 
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
