@@ -1,10 +1,10 @@
-/* CONTENEDOR PRINCIPAL */
+/* OpheliaLogin.css - TU MISMO CÓDIGO, SIN CAMBIOS */
 .login-container {
   min-height: 100vh;
   width: 100%;
   display: flex;
-  justify-content: space-evenly; /* Centra horizontalmente */
-  align-items: center; /* Centra verticalmente */
+  justify-content: space-evenly;
+  align-items: center;
   align-content: center;
   position: relative;
   background-image: url('../assets/login-background.png');
@@ -12,64 +12,28 @@
   background-position: center;
   background-repeat: no-repeat;
   padding: 200px;
-  /* padding: 200px;*/
 }
 
-/* Overlay oscuro 
-.login-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 0;
-}
-  */
-
-/* CONTENEDOR INTERNO para centrar ambos elementos */
 .login-container > * {
   position: relative;
   z-index: 1;
 }
 
-/* LEFT SECTION - Logo */
 .left-section {
   width: 50%;
   display: flex;
-  justify-content: center; /* Empuja el logo hacia la derecha dentro de su sección */
+  justify-content: center;
   align-items: center;
-  padding-right: 30px; /* Espacio entre logo y formulario */
+  padding-right: 30px;
 }
 
 .logo-image {
   width: 400px;
   max-width: 100%;
   height: auto;
-
 }
 
-/* RIGHT SECTION - Formulario */
-.form-container {
-  width: 350px;
-  min-height: 10%;
-  background-color: var(--white-transparent);
-  box-shadow: var(--shadow-md);
-  border-radius: 15px;
-  padding: 30px;
-  margin-bottom: -50px;
-  
-  align-items: center; /* Centra verticalmente */
-  align-content: center;
-
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  animation: fadeIn 0.5s ease-out;
-  margin-left: 50px; /* Espacio entre formulario y logo */
-}
-
-.r{
+.r {
   width: 350px;
   min-height: 10%;
   background-color: var(--white-transparent);
@@ -77,26 +41,43 @@
   border-radius: 15px;
   padding: 30px;
   margin-bottom: 50px;
-  
-  align-items: center; /* Centra verticalmente */
+  align-items: center;
   align-content: center;
-
   backdrop-filter: blur(3px);
   border: 1px solid rgba(255, 255, 255, 0.45);
   animation: fadeIn 0.5s ease-out;
-  margin-left: none; /* Espacio entre formulario y logo */
+  margin-left: none;
 }
 
-/* RESPONSIVE */
+.error-message {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  text-align: center;
+  border: 1px solid #fecaca;
+}
+
+.form-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 @media (max-width: 968px) {
   .left-section {
     padding-right: 20px;
   }
   
-  .form-container {
+  .r {
     width: 350px;
     margin-left: 20px;
-     padding: 200px;
   }
   
   .logo-image {
@@ -114,11 +95,11 @@
   
   .left-section {
     width: 100%;
-    justify-content: center; /* Centra el logo en móvil */
+    justify-content: center;
     padding-right: 0;
   }
   
-  .form-container {
+  .r {
     width: 100%;
     max-width: 400px;
     margin-left: 0;

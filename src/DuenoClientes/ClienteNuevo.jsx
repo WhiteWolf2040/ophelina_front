@@ -89,7 +89,7 @@ const ClienteNuevo = ({ agregarCliente }) => {
                 <input
                   id="direccion"
                   type="text"
-                  placeholder="Ej: Calle Principal #123"
+                  placeholder="Ej: Calle 23 #456, Centro, Centro, Mérida, 97000 #123"
                   value={form.direccion}
                   required
                   onChange={(e) =>
