@@ -1146,3 +1146,54 @@ tbody tr:first-child {
   border-radius: 4px;
   display: block !important;
 }
+
+/* Estilos adicionales para el historial de empeños */
+.lista-empenos {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.lista-empenos::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lista-empenos::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.lista-empenos::-webkit-scrollbar-thumb {
+  background: #d3b372;
+  border-radius: 10px;
+}
+
+.lista-empenos::-webkit-scrollbar-thumb:hover {
+  background: #c5a45f;
+}
+
+.item-empeno {
+  transition: all 0.2s ease;
+}
+
+.item-empeno:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.empeno-pagos ul {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.empeno-pagos ul::-webkit-scrollbar {
+  width: 4px;
+}
+
+.empeno-pagos ul::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.empeno-pagos ul::-webkit-scrollbar-thumb {
+  background: #d3b372;
+}

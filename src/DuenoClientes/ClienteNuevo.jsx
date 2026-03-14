@@ -1,95 +1,123 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Clientes.css";
+import clientesService from "../services/clientesService";
 
 const ClienteNuevo = ({ agregarCliente }) => {
   const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
-  const [imagen, setImagen] = useState(null);
-  const [previewImagen, setPreviewImagen] = useState("");
+
+  const [fotoCliente, setFotoCliente] = useState(null);
+  const [previewCliente, setPreviewCliente] = useState("");
+
+  const [fotoIne, setFotoIne] = useState(null);
+  const [previewIne, setPreviewIne] = useState("");
 
   const [form, setForm] = useState({
     nombre: "",
+     apellido: "", 
     telefono: "",
     email: "",
     direccion: "",
-    fecha: new Date().toLocaleDateString(),
+  
+  codigo_postal: "",
+  ciudad: "",
+  estado: "",
+
+  tipo_identificacion: "",
+  numero_identificacion: "",
+  fecha: new Date().toLocaleDateString(),
   });
 
-  // ✅ FUNCIÓN PARA MANEJAR LA SELECCIÓN DE IMAGEN
-  const handleFileChange = (e) => {
+
+
+  const handleFileChange = (e, tipo) => {
     const file = e.target.files[0];
-    if (file) {
-      // Validar tipo de archivo
-      const tiposPermitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!tiposPermitidos.includes(file.type)) {
-        alert('Solo se permiten imágenes (JPEG, PNG, GIF, WEBP)');
-        e.target.value = ''; // Limpiar el input
-        return;
+    if (!file) return;
+
+    const tiposPermitidos = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+
+    if (!tiposPermitidos.includes(file.type)) {
+      alert("Solo se permiten imágenes");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Máximo 5MB");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      if (tipo === "cliente") {
+        setFotoCliente(file);
+        setPreviewCliente(reader.result);
       }
 
-      // Validar tamaño (máximo 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('La imagen no debe superar los 5MB');
-        e.target.value = '';
-        return;
+      if (tipo === "ine") {
+        setFotoIne(file);
+        setPreviewIne(reader.result);
       }
+    };
 
-      setImagen(file);
-      
-      // Crear preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImagen(reader.result);
-      };
-      reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = (tipo) => {
+    if (tipo === "cliente") {
+      setFotoCliente(null);
+      setPreviewCliente("");
+    }
+
+    if (tipo === "ine") {
+      setFotoIne(null);
+      setPreviewIne("");
     }
   };
 
-  // ✅ FUNCIÓN PARA ELIMINAR LA IMAGEN SELECCIONADA
-  const handleRemoveImage = () => {
-    setImagen(null);
-    setPreviewImagen("");
-    // Limpiar el input file
-    const fileInput = document.querySelector('input[type="file"]');
-    if (fileInput) fileInput.value = '';
-  };
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setUploading(true);
 
-  // ✅ HANDLE SUBMIT ACTUALIZADO PARA INCLUIR LA IMAGEN
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setUploading(true);
+  try {
+    const formData = new FormData();
 
-    try {
-      // Crear FormData para enviar archivos
-      const formData = new FormData();
-      formData.append('nombre', form.nombre);
-      formData.append('telefono', form.telefono);
-      formData.append('email', form.email);
-      formData.append('direccion', form.direccion);
-      formData.append('fecha', form.fecha);
-      
-      if (imagen) {
-        formData.append('imagen', imagen);
-      }
+    formData.append("nombre", form.nombre);
+    formData.append("telefono", form.telefono);
+    formData.append("correo", form.email);
+    formData.append("direccion", form.direccion);
+    
+    formData.append("codigo_postal", form.codigo_postal);
+    formData.append("ciudad", form.ciudad);
+    formData.append("estado", form.estado);
+      formData.append("tipo_identificacion", form.tipo_identificacion);
+    formData.append("numero_identificacion", form.numero_identificacion);
 
-      // Simular envío (reemplaza con tu llamada real a la API)
-      console.log('Datos del cliente a guardar:', Object.fromEntries(formData));
-      
-      // Llamar a la función del contexto con la imagen incluida
-      agregarCliente({ 
-        ...form, 
-        imagen: previewImagen // Guardar la preview o la URL de la imagen
-      });
-      
-      navigate("/clientes");
-    } catch (error) {
-      console.error('Error al guardar:', error);
-      alert('Error al guardar el cliente');
-    } finally {
-      setUploading(false);
+    if (fotoCliente) {
+      formData.append("foto_perfil", fotoCliente);
     }
-  };
+
+    if (fotoIne) {
+      formData.append("foto_ine", fotoIne);
+    }
+
+    await clientesService.crearCliente(formData);
+
+    navigate("/clientes");
+
+  } catch (error) {
+    console.error("Error guardando cliente", error);
+    alert("Error al guardar cliente");
+  } finally {
+    setUploading(false);
+  }
+};
 
   return (
     <div className="dashboard">
@@ -101,12 +129,12 @@ const ClienteNuevo = ({ agregarCliente }) => {
         <div className="form-card">
           <form onSubmit={handleSubmit}>
             <div className="form-grid">
+
+              {/* NOMBRE */}
               <div className="form-group">
-                <label htmlFor="nombre">Nombre completo *</label>
+                <label>Nombre completo *</label>
                 <input
-                  id="nombre"
                   type="text"
-                  placeholder="Ej: Juan Pérez"
                   value={form.nombre}
                   required
                   onChange={(e) =>
@@ -114,13 +142,22 @@ const ClienteNuevo = ({ agregarCliente }) => {
                   }
                 />
               </div>
-
+              {/* Apellido */}
               <div className="form-group">
-                <label htmlFor="telefono">Teléfono *</label>
+                <label>Apellido</label>
                 <input
-                  id="telefono"
+                  type="text"
+                  value={form.apellido}
+                  onChange={(e) => setForm({...form, apellido: e.target.value})}
+                  placeholder="Apellido"
+                />
+              </div>
+
+              {/* TELEFONO */}
+              <div className="form-group">
+                <label>Teléfono *</label>
+                <input
                   type="tel"
-                  placeholder="Ej: 9992345674"
                   value={form.telefono}
                   required
                   onChange={(e) =>
@@ -129,12 +166,11 @@ const ClienteNuevo = ({ agregarCliente }) => {
                 />
               </div>
 
+              {/* EMAIL */}
               <div className="form-group">
-                <label htmlFor="email">Email *</label>
+                <label>Email *</label>
                 <input
-                  id="email"
                   type="email"
-                  placeholder="Ej: cliente@email.com"
                   value={form.email}
                   required
                   onChange={(e) =>
@@ -143,95 +179,178 @@ const ClienteNuevo = ({ agregarCliente }) => {
                 />
               </div>
 
+              {/* FECHA */}
               <div className="form-group">
-                <label htmlFor="fecha">Fecha de registro</label>
-                <input
-                  id="fecha"
-                  type="text"
-                  value={form.fecha}
-                  readOnly
-                  className="fecha-input"
-                />
+                <label>Fecha</label>
+                <input value={form.fecha} readOnly />
               </div>
 
-              <div className="form-group full-width">
-                <label htmlFor="direccion">Dirección *</label>
-                <input
-                  id="direccion"
-                  type="text"
-                  placeholder="Ej: Calle 23 #456, Centro, Centro, Mérida, 97000 #123"
-                  value={form.direccion}
-                  required
+              {/* IDENTIFICACION */}
+              <div className="form-group">
+                <label>Tipo de identificación</label>
+                <select
+                  value={form.tipo_identificacion}
                   onChange={(e) =>
-                    setForm({ ...form, direccion: e.target.value })
+                    setForm({
+                      ...form,
+                      tipo_identificacion: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Seleccione</option>
+                  <option value="INE">INE</option>
+                  <option value="Pasaporte">Pasaporte</option>
+                  <option value="Licencia">Licencia</option>
+                </select>
+              </div>
+
+              {/* NUMERO */}
+              <div className="form-group">
+                <label>Número de identificación</label>
+                <input
+                  value={form.numero_identificacion}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      numero_identificacion: e.target.value,
+                    })
                   }
                 />
               </div>
 
-              {/* ✅ SECCIÓN PARA SUBIR IMAGEN CON BOTÓN DENTRO */}
-              <div className="form-group full-width">
-                <label htmlFor="imagen">Foto del cliente</label>
-                
-                <div className="file-input-wrapper">
+              {/* DIRECCION */}
+                <div className="form-group full-width">
+                  <label>Dirección *</label>
                   <input
-                    id="imagen"
-                    type="file"
-                    accept="image/jpeg,image/png,image/gif,image/webp"
-                    onChange={handleFileChange}
-                    className="file-input"
+                    type="text"
+                    value={form.direccion}
+                    required
+                    onChange={(e) => setForm({...form, direccion: e.target.value})}
+                    placeholder="Calle, número, colonia"
                   />
-                  
-                  {previewImagen && (
+                </div>
+           {/* colonia */}
+    
+                {/* codigo postal */}
+          <div className="form-group">
+            <label>Código Postal</label>
+            <input
+              type="text"
+              value={form.codigo_postal}
+              onChange={(e) => {
+                const cp = e.target.value;
+                setForm({...form, codigo_postal: cp});
+                buscarCodigoPostal(cp); // autocompletar
+              }}
+              placeholder="Código Postal"
+            />
+          </div>
+
+                  {/* Ciudad */}
+
+              <div className="form-group">
+                <label>Ciudad</label>
+                <input
+                  type="text"
+                  value={form.ciudad}
+                  onChange={(e) => setForm({...form, ciudad: e.target.value})}
+                  placeholder="Ciudad"
+                />
+              </div>
+
+
+                    {/* estado */}
+
+                 <div className="form-group">
+                  <label>Estado</label>
+                  <input
+                    type="text"
+                    value={form.estado}
+                    onChange={(e) => setForm({...form, estado: e.target.value})}
+                    placeholder="Estado"
+                  />
+                </div>
+
+              {/* FOTO CLIENTE */}
+              <div className="form-group full-width">
+                <label>Foto del cliente</label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, "cliente")}
+                />
+
+                {previewCliente && (
+                  <div className="image-preview-container">
+                    <img
+                      src={previewCliente}
+                      className="image-preview"
+                      alt=""
+                    />
                     <button
                       type="button"
-                      onClick={handleRemoveImage}
-                      className="btn-remove-image-inside"
-                      title="Eliminar imagen"
+                      onClick={() => handleRemoveImage("cliente")}
                     >
                       ×
                     </button>
-                  )}
-                </div>
-                
-                <small className="file-hint">
-                  Formatos: JPG, PNG, GIF, WEBP (Máx. 5MB)
-                </small>
-                
-                {previewImagen && (
-                  <div className="image-preview-container">
-                    <img 
-                      src={previewImagen} 
-                      alt="Vista previa" 
-                      className="image-preview"
-                    />
                   </div>
                 )}
               </div>
+
+              {/* FOTO INE */}
+              <div className="form-group full-width">
+                <label>Foto de la INE</label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, "ine")}
+                />
+
+                {previewIne && (
+                  <div className="image-preview-container">
+                    <img
+                      src={previewIne}
+                      className="image-preview"
+                      alt=""
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage("ine")}
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
+
             </div>
 
             <div className="form-buttons">
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="btn-gold"
                 disabled={uploading}
               >
-                {uploading ? 'Guardando...' : 'Guardar Cliente'}
+                {uploading ? "Guardando..." : "Guardar Cliente"}
               </button>
 
               <button
                 type="button"
                 className="btn-cancel"
                 onClick={() => navigate("/clientes")}
-                disabled={uploading}
               >
                 Cancelar
               </button>
             </div>
+
           </form>
         </div>
       </div>
     </div>
   );
 };
+
 
 export default ClienteNuevo;
