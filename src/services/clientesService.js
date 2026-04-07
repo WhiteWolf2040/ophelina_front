@@ -35,6 +35,12 @@ const clientesService = {
     const response = await api.get(`/clientes/${id}`);
     return response; // Cambiado de response.data a response
   },
+
+  
+
+ 
 };
+
+
 
 export default clientesService;

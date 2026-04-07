@@ -1,10 +1,12 @@
-// Sidebar.jsx - Versión Mejorada
-import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+// Sidebar.jsx - Versión corregida
+import React, { useState, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/LogoWhite.png";
 import "./Sidebar.css";
+import { logout } from "../config/auth";
+import permissionService from "../services/permisoService";
 
-// Importar iconos de MUI
+// Iconos
 import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
 import PaymentsIcon from '@mui/icons-material/Payments';
@@ -22,106 +24,132 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [visibleMenus, setVisibleMenus] = useState([]);
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
-  };
+  const navigate = useNavigate();
 
-  const closeSidebar = () => {
-    setIsOpen(false);
-  };
+  useEffect(() => {
+    const calcularMenusVisibles = () => {
+      const menus = [];
+      
+      // Obtener permisos
+      const permisos = permissionService.getPermissions();
+      console.log('Permisos disponibles:', permisos);
+      
+      // Dashboard - requiere permiso ver_dashboard
+      if (permisos.includes('ver_dashboard')) {
+        menus.push({ path: "/home", icon: <HomeIcon />, text: "Home" });
+      }
+      
+      // Clientes - requiere permiso ver_clientes
+      if (permisos.includes('ver_clientes')) {
+        menus.push({ path: "/clientes", icon: <PeopleIcon />, text: "Clientes" });
+      }
+      
+      // Pagos - requiere permiso ver_pagos
+      if (permisos.includes('ver_pagos')) {
+        menus.push({ path: "/pagos", icon: <PaymentsIcon />, text: "Pagos" });
+      }
+      
+      // Empeños - requiere permiso ver_empenos
+      if (permisos.includes('ver_empenos')) {
+        menus.push({ path: "/empenos", icon: <DiamondIcon />, text: "Empeños" });
+      }
+      
+      // Inventario - requiere permiso ver_inventario
+      if (permisos.includes('ver_inventario')) {
+        menus.push({ path: "/inventario", icon: <InventoryIcon />, text: "Inventario" });
+      }
+      
+      // Tienda - requiere permiso ver_tienda
+      if (permisos.includes('ver_tienda')) {
+        menus.push({ path: "/tienda", icon: <StorefrontIcon />, text: "Tienda en línea" });
+      }
+      
+      // Reportes - requiere permiso ver_reportes
+      if (permisos.includes('ver_reportes')) {
+        menus.push({ path: "/reportes", icon: <BarChartIcon />, text: "Reportes" });
+      }
+      
+      // Roles - verifica si tiene permisos de roles (cualquiera de estos)
+      const tienePermisoRoles = permisos.includes('gestionar_roles') || 
+                                  permisos.includes('Rol') || 
+                                  permisos.includes('ver_roles');
+      if (tienePermisoRoles) {
+        menus.push({ path: "/roles", icon: <SecurityIcon />, text: "Roles" });
+      }
+      
+      // Permisos - verifica si tiene permisos de permisos
+      const tienePermisoPermisos = permisos.includes('gestionar_roles') || 
+                                    permisos.includes('Permiso') || 
+                                    permisos.includes('ver_permisos');
+      if (tienePermisoPermisos) {
+        menus.push({ path: "/permisos", icon: <VpnKeyIcon />, text: "Permisos" });
+      }
+      
+      // Configuración - requiere permiso ver_configuracion
+      if (permisos.includes('ver_configuracion')) {
+        menus.push({ path: "/configuracion", icon: <SettingsIcon />, text: "Configuración" });
+      }
+      
+      setVisibleMenus(menus);
+    };
+    
+    calcularMenusVisibles();
+  }, []);
 
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
+  const toggleSidebar = () => setIsOpen(!isOpen);
+  const closeSidebar = () => setIsOpen(false);
+  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
   };
 
   return (
     <>
-      {/* Botón de menú móvil con icono MUI */}
       <button className="mobile-menu-btn" onClick={toggleSidebar}>
         <MenuIcon className="menu-icon" />
       </button>
 
-      {/* Overlay oscuro */}
       {isOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
 
-      {/* Sidebar */}
       <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-log">
             <img src={logo} alt="Ophelia Logo" className="log-image" />
-            
           </div>
-          
-          {/* Botón de colapsar (solo desktop) */}
+
           <button className="collapse-btn" onClick={toggleCollapse}>
             <MenuIcon className="collapse-icon" />
           </button>
-          
-          {/* Botón cerrar móvil */}
+
           <button className="close-btn" onClick={closeSidebar}>
             <CloseIcon />
           </button>
         </div>
 
         <nav className="sidebar-menu">
-          <NavLink to="/home" className="sidebar-link" onClick={closeSidebar}>
-            <HomeIcon className="sidebar-icon" />
-            {!isCollapsed && <span className="link-text">Home</span>}
-          </NavLink>
+          {visibleMenus.map((item) => (
+            <NavLink 
+              key={item.path}
+              to={item.path} 
+              className="sidebar-link" 
+              onClick={closeSidebar}
+            >
+              {item.icon}
+              {!isCollapsed && <span>{item.text}</span>}
+            </NavLink>
+          ))}
 
-          <NavLink to="/clientes" className="sidebar-link" onClick={closeSidebar}>
-            <PeopleIcon className="sidebar-icon" />
-            {!isCollapsed && <span className="link-text">Clientes</span>}
-          </NavLink>
-
-          <NavLink to="/pagos" className="sidebar-link" onClick={closeSidebar}>
-            <PaymentsIcon className="sidebar-icon" />
-            {!isCollapsed && <span className="link-text">Pagos</span>}
-          </NavLink>
-
-          <NavLink to="/empenos" className="sidebar-link" onClick={closeSidebar}>
-            <DiamondIcon className="sidebar-icon" />
-            {!isCollapsed && <span className="link-text">Empeños</span>}
-          </NavLink>
-
-          <NavLink to="/inventario" className="sidebar-link" onClick={closeSidebar}>
-            <InventoryIcon className="sidebar-icon" />
-            {!isCollapsed && <span className="link-text">Inventario</span>}
-          </NavLink>
-
-          <NavLink to="/tienda" className="sidebar-link" onClick={closeSidebar}>
-            <StorefrontIcon className="sidebar-icon" />
-            {!isCollapsed && <span className="link-text">Tienda en línea</span>}
-          </NavLink>
-
-          <NavLink to="/reportes" className="sidebar-link" onClick={closeSidebar}>
-            <BarChartIcon className="sidebar-icon" />
-            {!isCollapsed && <span className="link-text">Reportes</span>}
-          </NavLink>
-          
-           <NavLink to="/roles" className="sidebar-link" onClick={closeSidebar}>
-          <SecurityIcon className="sidebar-icon" />
-          {!isCollapsed && <span className="link-text">Roles</span>}
-        </NavLink>
-
-        <NavLink to="/permisos" className="sidebar-link" onClick={closeSidebar}>
-          <VpnKeyIcon className="sidebar-icon" />
-          {!isCollapsed && <span className="link-text">Permisos</span>}
-        </NavLink>
-
-          <NavLink to="/configuracion" className="sidebar-link" onClick={closeSidebar}>
-            <SettingsIcon className="sidebar-icon" />
-            {!isCollapsed && <span className="link-text">Configuración</span>}
-          </NavLink>
-
-          <NavLink to="/" className="sidebar-link cerrar-sesion" onClick={closeSidebar}>
-            <LogoutIcon className="sidebar-icon" />
-            {!isCollapsed && <span className="link-text">Cerrar sesión</span>}
+          {/* Botón de cerrar sesión siempre visible */}
+          <NavLink to="#" className="sidebar-link cerrar-sesion" onClick={handleLogout}>
+            <LogoutIcon />
+            {!isCollapsed && <span>Cerrar sesión</span>}
           </NavLink>
         </nav>
 
-        {/* Footer del sidebar con versión */}
         {!isCollapsed && (
           <div className="sidebar-footer">
             <p>Versión 2.0.0</p>

@@ -1,37 +1,96 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "./Empenos.css";
 import DiamondIcon from '@mui/icons-material/Diamond';
-
-// Importar iconos de MUI
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import api from '../config/api';
 
-
-const EmpenosLista = ({ empenos }) => {
+const EmpenosLista = () => {
   const navigate = useNavigate();
-  const [filtroEstado, setFiltroEstado] = useState("todos"); // 'todos', 'activos', 'vencidos'
+  const [empenos, setEmpenos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filtroEstado, setFiltroEstado] = useState("todos");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [empenoSeleccionado, setEmpenoSeleccionado] = useState(null);
   const [modalEliminar, setModalEliminar] = useState(false);
   
   // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1);
-  const empenosPorPagina = 8; // Puedes ajustar este número
+  const empenosPorPagina = 8;
 
-  const hoy = new Date();
-
-  const calcularEstado = (fecha) => {
-    const fechaVencimiento = new Date(fecha);
-    return fechaVencimiento < hoy ? "Vencido" : "Activo";
+  // Cargar empeños desde la API
+  const cargarEmpenos = async () => {
+    try {
+      setLoading(true);
+      // Usar el endpoint que ya tienes: activosConSaldo
+      const response = await api.get('/empenos/activos-con-saldo');
+      if (response.data.success) {
+        // Transformar los datos para que coincidan con el formato que espera tu componente
+        const empenosFormateados = response.data.data.map(emp => ({
+          id: emp.id_empeno,
+          cliente: emp.cliente,
+          objeto: emp.articulo,
+          monto: emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          interes: 12, // Puedes calcularlo desde tu BD si lo tienes
+          fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
+          vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
+          estado: 'activo', // Ya que solo trae activos
+          saldo_pendiente: emp.saldo_total_pendiente,
+          saldo_cuota: emp.saldo_pendiente_cuota,
+          total_pagado: emp.total_pagado
+        }));
+        setEmpenos(empenosFormateados);
+      }
+    } catch (error) {
+      console.error('Error al cargar empeños:', error);
+      setError('No se pudieron cargar los empeños');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Cargar todos los empeños (activos y vencidos) - si tienes otro endpoint
+  const cargarTodosEmpenos = async () => {
+    try {
+      setLoading(true);
+      // Si tienes un endpoint para todos los empeños, úsalo
+      // Si no, por ahora usamos el mismo y filtramos
+      const response = await api.get('/empenos/activos-con-saldo');
+      if (response.data.success) {
+        const empenosFormateados = response.data.data.map(emp => ({
+          id: emp.id_empeno,
+          cliente: emp.cliente,
+          objeto: emp.articulo,
+          monto: emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          interes: 12,
+          fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
+          vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
+          estado: 'activo',
+          saldo_pendiente: emp.saldo_total_pendiente,
+          saldo_cuota: emp.saldo_pendiente_cuota,
+          total_pagado: emp.total_pagado
+        }));
+        setEmpenos(empenosFormateados);
+      }
+    } catch (error) {
+      console.error('Error al cargar empeños:', error);
+      setError('No se pudieron cargar los empeños');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarTodosEmpenos();
+  }, []);
 
   // Filtrar empeños por estado
   const empenosFiltrados = empenos.filter((e) => {
-    const estado = calcularEstado(e.vencimiento);
     if (filtroEstado === "todos") return true;
-    if (filtroEstado === "activos") return estado === "Activo";
-    if (filtroEstado === "vencidos") return estado === "Vencido";
+    if (filtroEstado === "activos") return e.estado === "activo";
+    if (filtroEstado === "vencidos") return e.estado === "vencido";
     return true;
   });
 
@@ -57,11 +116,18 @@ const EmpenosLista = ({ empenos }) => {
     setModalAbierto(false);
   };
 
-  const handleEliminar = () => {
-    // Aquí iría la función para eliminar el empeño
-    console.log("Eliminar empeño:", empenoSeleccionado.id);
-    setModalEliminar(false);
-    setEmpenoSeleccionado(null);
+  const handleEliminar = async () => {
+    try {
+      // Si tienes un endpoint para eliminar
+      // await api.delete(`/empenos/${empenoSeleccionado.id}`);
+      console.log("Eliminar empeño:", empenoSeleccionado.id);
+      setModalEliminar(false);
+      setEmpenoSeleccionado(null);
+      cargarTodosEmpenos(); // Recargar la lista
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+      alert('Error al eliminar el empeño');
+    }
   };
 
   // Funciones de paginación
@@ -77,7 +143,6 @@ const EmpenosLista = ({ empenos }) => {
     setPaginaActual(prev => Math.max(prev - 1, 1));
   };
 
-  // Generar números de página
   const obtenerNumerosPagina = () => {
     const numeros = [];
     const maxPaginasVisibles = 5;
@@ -94,14 +159,47 @@ const EmpenosLista = ({ empenos }) => {
     return numeros;
   };
 
+  // Estado de carga
+  if (loading) {
+    return (
+      <div className="dashboard">
+     
+        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div>Cargando empeños...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Estado de error
+  if (error) {
+    return (
+      <div className="dashboard">
+     
+        <div className="content">
+          <div className="tienda-header">
+            <h1>Listado de empeños</h1>
+            <p className="header-sub">Error al cargar los datos</p>
+          </div>
+          <div className="tabla-card">
+            <p style={{ color: 'red', textAlign: 'center', padding: '40px' }}>{error}</p>
+            <button onClick={cargarTodosEmpenos} style={{ margin: '0 auto', display: 'block', padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard">
-      <Sidebar />
+   
 
       <div className="content">
         {/* HEADER */}
         <div className="tienda-header">
-           <div>
+          <div>
             <h1>
               <DiamondIcon className="title-icon" />
               Listado de empeños
@@ -123,28 +221,28 @@ const EmpenosLista = ({ empenos }) => {
               className={`filtro-btn ${filtroEstado === "todos" ? "activo" : ""}`}
               onClick={() => {
                 setFiltroEstado("todos");
-                setPaginaActual(1); // Resetear a primera página al filtrar
+                setPaginaActual(1);
               }}
             >
-              Todos
+              Todos ({empenos.length})
             </button>
             <button
               className={`filtro-btn ${filtroEstado === "activos" ? "activo" : ""}`}
               onClick={() => {
                 setFiltroEstado("activos");
-                setPaginaActual(1); // Resetear a primera página al filtrar
+                setPaginaActual(1);
               }}
             >
-              Activos
+              Activos ({empenos.filter(e => e.estado === "activo").length})
             </button>
             <button
               className={`filtro-btn ${filtroEstado === "vencidos" ? "activo" : ""}`}
               onClick={() => {
                 setFiltroEstado("vencidos");
-                setPaginaActual(1); // Resetear a primera página al filtrar
+                setPaginaActual(1);
               }}
             >
-              Vencidos
+              Vencidos ({empenos.filter(e => e.estado === "vencido").length})
             </button>
           </div>
           <span className="filtro-resultados">
@@ -159,52 +257,55 @@ const EmpenosLista = ({ empenos }) => {
           {/* Vista móvil: tarjetas */}
           <div className="vista-movil">
             {empenosActuales.length > 0 ? (
-              empenosActuales.map((e) => {
-                const estado = calcularEstado(e.vencimiento);
-                return (
-                  <div key={e.id} className="empeno-tarjeta">
-                    <div className="tarjeta-header">
-                      <strong>{e.cliente}</strong>
-                      <span 
-                        className="detalle-link"
-                        onClick={() => abrirDetalle(e)}
+              empenosActuales.map((e) => (
+                <div key={e.id} className="empeno-tarjeta">
+                  <div className="tarjeta-header">
+                    <strong>{e.cliente}</strong>
+                    <span 
+                      className="detalle-link"
+                      onClick={() => abrirDetalle(e)}
+                    >
+                      Ver detalles →
+                    </span>
+                  </div>
+                  <div className="tarjeta-cuerpo">
+                    <div className="tarjeta-fila">
+                      <span className="tarjeta-label">Objeto:</span>
+                      <span>{e.objeto}</span>
+                    </div>
+                    <div className="tarjeta-fila">
+                      <span className="tarjeta-label">Monto:</span>
+                      <span className="monto">${e.monto}</span>
+                    </div>
+                    <div className="tarjeta-fila">
+                      <span className="tarjeta-label">Interés:</span>
+                      <span>{e.interes}%</span>
+                    </div>
+                    <div className="tarjeta-fila">
+                      <span className="tarjeta-label">Vence:</span>
+                      <span>{e.vencimiento}</span>
+                    </div>
+                    <div className="tarjeta-fila">
+                      <span className="tarjeta-label">Estado:</span>
+                      <span
+                        className={
+                          e.estado === "activo"
+                            ? "badge-activo"
+                            : "badge-vencido"
+                        }
                       >
-                        Ver detalles →
+                        {e.estado === "activo" ? "Activo" : "Vencido"}
                       </span>
                     </div>
-                    <div className="tarjeta-cuerpo">
+                    {e.saldo_pendiente > 0 && (
                       <div className="tarjeta-fila">
-                        <span className="tarjeta-label">Objeto:</span>
-                        <span>{e.objeto}</span>
+                        <span className="tarjeta-label">Saldo pendiente:</span>
+                        <span className="saldo">${e.saldo_pendiente.toLocaleString()}</span>
                       </div>
-                      <div className="tarjeta-fila">
-                        <span className="tarjeta-label">Monto:</span>
-                        <span className="monto">${e.monto}</span>
-                      </div>
-                      <div className="tarjeta-fila">
-                        <span className="tarjeta-label">Interés:</span>
-                        <span>{e.interes}%</span>
-                      </div>
-                      <div className="tarjeta-fila">
-                        <span className="tarjeta-label">Vence:</span>
-                        <span>{e.vencimiento}</span>
-                      </div>
-                      <div className="tarjeta-fila">
-                        <span className="tarjeta-label">Estado:</span>
-                        <span
-                          className={
-                            estado === "Activo"
-                              ? "badge-activo"
-                              : "badge-vencido"
-                          }
-                        >
-                          {estado}
-                        </span>
-                      </div>
-                    </div>
+                    )}
                   </div>
-                );
-              })
+                </div>
+              ))
             ) : (
               <div className="sin-resultados">
                 No se encontraron empeños {filtroEstado !== "todos" ? filtroEstado : ""}
@@ -214,7 +315,7 @@ const EmpenosLista = ({ empenos }) => {
 
           {/* Vista desktop: tabla */}
           <div className="vista-desktop">
-            <table>
+            <table className="tabla-empenos">
               <thead>
                 <tr>
                   <th>Cliente</th>
@@ -223,50 +324,51 @@ const EmpenosLista = ({ empenos }) => {
                   <th>Interés</th>
                   <th>Vencimiento</th>
                   <th>Estado</th>
+                  <th>Saldo</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
-
               <tbody>
                 {empenosActuales.length > 0 ? (
-                  empenosActuales.map((e) => {
-                    const estado = calcularEstado(e.vencimiento);
-
-                    return (
-                      <tr key={e.id}>
-                        <td><strong>{e.cliente}</strong></td>
-                        <td>{e.objeto}</td>
-                        <td>${e.monto}</td>
-                        <td>{e.interes}%</td>
-                        <td>{e.vencimiento}</td>
-
-                        <td>
-                          <span
-                            className={
-                              estado === "Activo"
-                                ? "badge-activo"
-                                : "badge-vencido"
-                            }
-                          >
-                            {estado}
-                          </span>
-                        </td>
-
-                        <td>
-                           <button 
-                              className="btn-accion ver"
-                              onClick={() => abrirDetalle(e)}
-                              title="Ver detalles"
-                            >
-                              <VisibilityIcon fontSize="small" />
-                            </button>
-                        </td>
-                      </tr>
-                    );
-                  })
+                  empenosActuales.map((e) => (
+                    <tr key={e.id}>
+                      <td><strong>{e.cliente}</strong></td>
+                      <td>{e.objeto}</td>
+                      <td>${e.monto}</td>
+                      <td>{e.interes}%</td>
+                      <td>{e.vencimiento}</td>
+                      <td>
+                        <span
+                          className={
+                            e.estado === "activo"
+                              ? "badge-activo"
+                              : "badge-vencido"
+                          }
+                        >
+                          {e.estado === "activo" ? "Activo" : "Vencido"}
+                        </span>
+                       </td>
+                      <td>
+                        {e.saldo_pendiente > 0 ? (
+                          <span className="saldo-pendiente">${e.saldo_pendiente.toLocaleString()}</span>
+                        ) : (
+                          <span className="saldo-pagado">Pagado</span>
+                        )}
+                       </td>
+                      <td>
+                        <button 
+                          className="btn-accion ver"
+                          onClick={() => abrirDetalle(e)}
+                          title="Ver detalles"
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </button>
+                       </td>
+                    </tr>
+                  ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="sin-resultados">
+                    <td colSpan="8" className="sin-resultados">
                       No se encontraron empeños {filtroEstado !== "todos" ? filtroEstado : ""}
                     </td>
                   </tr>
@@ -275,7 +377,7 @@ const EmpenosLista = ({ empenos }) => {
             </table>
           </div>
 
-          {/* PAGINACIÓN - SOLO SE MUESTRA SI HAY MÁS DE UNA PÁGINA */}
+          {/* PAGINACIÓN */}
           {totalPaginas > 1 && (
             <div className="paginacion-wrapper">
               <div className="paginacion-container">
@@ -323,7 +425,6 @@ const EmpenosLista = ({ empenos }) => {
             
             <div className="modal-header">
               <h2>Detalle del Empeño</h2>
-             
             </div>
 
             <div className="modal-body">
@@ -346,34 +447,19 @@ const EmpenosLista = ({ empenos }) => {
                 </div>
                 <div className="info-item">
                   <span className="info-label">📅 Fecha de inicio</span>
-                  <span className="info-value">{empenoSeleccionado.fechaInicio || "10/02/2024"}</span>
+                  <span className="info-value">{empenoSeleccionado.fecha_inicio}</span>
                 </div>
                 <div className="info-item">
                   <span className="info-label">⏰ Vencimiento</span>
                   <span className="info-value">{empenoSeleccionado.vencimiento}</span>
                 </div>
-              </div>
-
-              <div className="modal-secciones">
-                <div className="seccion">
-                  <h4>📝 Estado Actual</h4>
-                  <p className="sin-datos">
-                    <span
-                      className={
-                        calcularEstado(empenoSeleccionado.vencimiento) === "Activo"
-                          ? "badge-activo"
-                          : "badge-vencido"
-                      }
-                      style={{ display: "inline-block", padding: "8px 20px" }}
-                    >
-                      {calcularEstado(empenoSeleccionado.vencimiento)}
-                    </span>
-                  </p>
+                <div className="info-item">
+                  <span className="info-label">💰 Saldo pendiente</span>
+                  <span className="info-value saldo">${empenoSeleccionado.saldo_pendiente?.toLocaleString()}</span>
                 </div>
-
-                <div className="seccion">
-                  <h4>💰 Pagos Realizados</h4>
-                  <p className="sin-datos">Sin pagos registrados</p>
+                <div className="info-item">
+                  <span className="info-label">💵 Total pagado</span>
+                  <span className="info-value">${empenoSeleccionado.total_pagado?.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -383,7 +469,10 @@ const EmpenosLista = ({ empenos }) => {
                 className="btn-eliminar"
                 onClick={() => confirmarEliminar(empenoSeleccionado)}
               >
-                🗑️ Eliminar 
+                🗑️ Eliminar
+              </button>
+              <button className="btn-cerrar" onClick={cerrarModal}>
+                Cerrar
               </button>
             </div>
           </div>

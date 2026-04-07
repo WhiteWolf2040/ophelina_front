@@ -1015,3 +1015,65 @@ tbody tr:first-child {
     font-size: 13px;
   }
 } 
+
+/* Estilos para la tabla de empeños */
+.tabla-empenos {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-empenos th,
+.tabla-empenos td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tabla-empenos th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.tabla-empenos tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Saldos */
+.saldo-pendiente {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.saldo-pagado {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.saldo {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+/* Botones en modal */
+.btn-cerrar {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.btn-cerrar:hover {
+  background: #4b5563;
+}
+
+.modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+}

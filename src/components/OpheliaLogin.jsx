@@ -34,12 +34,21 @@ export default function OpheliaLogin() {
       return;
     }
 
-    // 👇 USA LA FUNCIÓN login DE auth.js
+    // login DE auth.js
     const result = await login(formData.email, formData.password);
     
     if (result.success) {
-      // Redirigir según el rol
-      if (result.data.rol === 'Dueño' || result.data.rol === 'Administrador') {
+      // Guardar permisos y módulos en localStorage
+      if (result.data.permisos) {
+        localStorage.setItem('permisos', JSON.stringify(result.data.permisos));
+      }
+      if (result.data.modulos) {
+        localStorage.setItem('modulos', JSON.stringify(result.data.modulos));
+      }
+      
+      // Redirigir según los permisos
+      // Si tiene permiso para ver dashboard, va al panel de admin
+      if (result.data.permisos?.includes('ver_dashboard')) {
         navigate("/home");
       } else {
         navigate("/homecliente");

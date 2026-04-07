@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Clientes.css";
 import clientesService from "../services/clientesService";
 
+
 const ClienteNuevo = ({ agregarCliente }) => {
   const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
@@ -81,6 +82,8 @@ const ClienteNuevo = ({ agregarCliente }) => {
     }
   };
 
+ 
+
  const handleSubmit = async (e) => {
   e.preventDefault();
   setUploading(true);
@@ -89,6 +92,7 @@ const ClienteNuevo = ({ agregarCliente }) => {
     const formData = new FormData();
 
     formData.append("nombre", form.nombre);
+    formData.append("apellido", form.apellido); 
     formData.append("telefono", form.telefono);
     formData.append("correo", form.email);
     formData.append("direccion", form.direccion);
@@ -232,19 +236,17 @@ const ClienteNuevo = ({ agregarCliente }) => {
            {/* colonia */}
     
                 {/* codigo postal */}
-          <div className="form-group">
-            <label>Código Postal</label>
-            <input
-              type="text"
-              value={form.codigo_postal}
-              onChange={(e) => {
-                const cp = e.target.value;
-                setForm({...form, codigo_postal: cp});
-                buscarCodigoPostal(cp); // autocompletar
-              }}
-              placeholder="Código Postal"
-            />
-          </div>
+       {/* código postal */}
+           <div className="form-group">
+                <label>Código Postal</label>
+                <input
+                  type="text"
+                  value={form.codigo_postal}
+                  onChange={(e) => setForm({...form, codigo_postal: e.target.value})}
+                  maxLength="5"
+                  placeholder="Código Postal"
+                />
+              </div>
 
                   {/* Ciudad */}
 

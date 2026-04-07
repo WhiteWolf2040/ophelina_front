@@ -1003,3 +1003,326 @@
     justify-content: center;
   }
 }
+
+/* Estilos para badges de ganancias y pérdidas */
+.profit-text {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.loss-text {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.profit-badge {
+  display: inline-block;
+  background: #10b981;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.loss-badge {
+  display: inline-block;
+  background: #ef4444;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-danger {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-warning {
+  background: #fef3c7;
+  color: #d97706;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Estilos para el gráfico */
+.chart-section {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.chart-section h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+
+/* Asegurar que el gráfico de ApexCharts no se desborde */
+.apexcharts-canvas {
+  width: 100% !important;
+}
+
+.apexcharts-canvas svg {
+  width: 100% !important;
+}
+
+.chart-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: -8px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+
+
+/* Estilos para gráficos - SIN DESBORDAMIENTO */
+.chart-section {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.chart-section h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chart-subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.chart-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: visible;
+}
+
+.chart-wrapper > div {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.apexcharts-canvas {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.apexcharts-canvas svg {
+  width: 100% !important;
+  overflow: visible !important;
+}
+
+/* Grid de 2 columnas */
+.nuevas-graficas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.grafica-nueva-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.grafica-nueva-card h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .nuevas-graficas-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-section {
+    padding: 16px;
+  }
+  
+  .grafica-nueva-card {
+    padding: 16px;
+  }
+  
+  .apexcharts-xaxis-label {
+    font-size: 8px !important;
+  }
+}
+
+/* Modal de precios del oro */
+.modal-oro {
+  max-width: 650px;
+  width: 90%;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.oro-header {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-bottom: none;
+}
+
+.quilates-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.quilate-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.quilate-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.quilate-24k {
+  background: linear-gradient(135deg, #ffd700 0%, #f0b90b 100%);
+  color: #1f2937;
+}
+
+.quilate-22k {
+  background: linear-gradient(135deg, #f5cb5c 0%, #e6b422 100%);
+  color: #1f2937;
+}
+
+.quilate-21k {
+  background: linear-gradient(135deg, #e8c86b 0%, #d4a017 100%);
+  color: #1f2937;
+}
+
+.quilate-18k {
+  background: linear-gradient(135deg, #d9b48b 0%, #c89d6e 100%);
+  color: #1f2937;
+}
+
+.quilate-14k {
+  background: linear-gradient(135deg, #c0a080 0%, #b08d5e 100%);
+  color: #1f2937;
+}
+
+.quilate-10k {
+  background: linear-gradient(135deg, #b8a07c 0%, #a88d60 100%);
+  color: #1f2937;
+}
+
+.quilate-info h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.quilate-info p {
+  font-size: 11px;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.quilate-precio {
+  text-align: right;
+}
+
+.quilate-precio .precio {
+  font-size: 20px;
+  font-weight: 800;
+  display: block;
+  line-height: 1.2;
+}
+
+.quilate-precio .unidad {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.oro-nota {
+  padding: 16px 20px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.btn-cerrar {
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cerrar:hover {
+  background: #1e40af;
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .quilates-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .quilate-card {
+    padding: 12px 16px;
+  }
+  
+  .quilate-precio .precio {
+    font-size: 18px;
+  }
+}

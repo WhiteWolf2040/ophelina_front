@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { Routes, Route } from "react-router-dom";
-import EmpenosLista from "./EmpenosLista.jsx";
-import NuevoEmpeno from "./NuevoEmpeno.jsx";
-import DetalleEmpeno from "./DetalleEmpeno.jsx";
+import { Outlet } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
 
 const EmpenosLayout = () => {
 
@@ -26,31 +24,21 @@ const EmpenosLayout = () => {
   ]);
 
   const agregarEmpeno = (nuevoEmpeno) => {
-    const empeñoConId = {
+    const empenoConId = {
       ...nuevoEmpeno,
       id: Date.now(),
     };
 
-    setEmpenos([...empenos, empeñoConId]);
+    setEmpenos([...empenos, empenoConId]);
   };
 
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={<EmpenosLista empenos={empenos} />}
-      />
-
-      <Route
-        path="nuevo"
-        element={<NuevoEmpeno agregarEmpeno={agregarEmpeno} />}
-      />
-
-      <Route
-        path=":id"
-        element={<DetalleEmpeno empenos={empenos} />}
-      />
-    </Routes>
+    <div className="dashboard">
+      <Sidebar />
+      <div className="content">
+        <Outlet context={{ empenos, agregarEmpeno }} />
+      </div>
+    </div>
   );
 };
 
