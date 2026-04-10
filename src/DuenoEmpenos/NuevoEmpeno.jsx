@@ -17,7 +17,7 @@ const NuevoEmpeno = () => {
   const [prendas, setPrendas] = useState([]);
   
   // Estados para modales de creación
-  const [isCreatingCliente, setIsCreatingCliente] = useState(false);
+  
   const [isCreatingPrenda, setIsCreatingPrenda] = useState(false);
   
   // Estado para la prenda seleccionada (para mostrar valor)
@@ -31,8 +31,8 @@ const NuevoEmpeno = () => {
   
   // Tasa fija de interés (5%)
   const TASA_FIJA = 5;
-  const TASA_NOMBRE = "Básico";
-  const TASA_PLAZO_DIAS = 15;
+
+
   
   // Estado para el cálculo de pagos
   const [simulacionPago, setSimulacionPago] = useState({
@@ -45,7 +45,7 @@ const NuevoEmpeno = () => {
     monto_prestado: 0,
     plazo_meses: 1,
     tasa_porcentaje: TASA_FIJA,
-    tasa_nombre: TASA_NOMBRE,
+  
     fecha_vencimiento: ""
   });
   
@@ -170,7 +170,7 @@ const NuevoEmpeno = () => {
         monto_prestado: monto,
         plazo_meses: plazoMeses,
         tasa_porcentaje: TASA_FIJA,
-        tasa_nombre: TASA_NOMBRE,
+    
         fecha_vencimiento: fechaVencimientoStr
       });
       
@@ -187,7 +187,7 @@ const NuevoEmpeno = () => {
         monto_prestado: 0,
         plazo_meses: 1,
         tasa_porcentaje: TASA_FIJA,
-        tasa_nombre: TASA_NOMBRE,
+      
         fecha_vencimiento: ""
       });
     }
@@ -263,41 +263,7 @@ const NuevoEmpeno = () => {
   };
 
   // Crear nuevo cliente
-  const crearNuevoCliente = async () => {
-    if (!nuevoCliente.nombre) {
-      alert("Por favor ingrese el nombre del cliente");
-      return;
-    }
 
-    try {
-      const response = await api.post('/clientes', nuevoCliente);
-      if (response.data.success) {
-        const nuevoClienteData = {
-          id_cliente: response.data.data.id_cliente,
-          nombre: nuevoCliente.nombre,
-          apellido: nuevoCliente.apellido || "",
-          telefono: nuevoCliente.telefono,
-          correo: nuevoCliente.correo
-        };
-        setClientes([...clientes, nuevoClienteData]);
-        
-        const newOption = {
-          value: nuevoClienteData.id_cliente,
-          label: `${nuevoClienteData.nombre} ${nuevoClienteData.apellido}`,
-          telefono: nuevoClienteData.telefono
-        };
-        setSelectedCliente(newOption);
-        setForm(prev => ({ ...prev, cliente_id: nuevoClienteData.id_cliente }));
-        
-        setIsCreatingCliente(false);
-        setNuevoCliente({ nombre: "", apellido: "", telefono: "", correo: "" });
-        alert("Cliente creado correctamente");
-      }
-    } catch (error) {
-      console.error('Error al crear cliente:', error);
-      alert("Error al crear el cliente: " + (error.response?.data?.message || error.message));
-    }
-  };
 
   // Crear nueva prenda
   const crearNuevaPrenda = async () => {
@@ -458,24 +424,7 @@ const NuevoEmpeno = () => {
                   </div>
                 )}
               />
-              <button
-                type="button"
-                className="btn-crear-select"
-                onClick={() => setIsCreatingCliente(true)}
-                style={{
-                  marginTop: '8px',
-                  background: 'none',
-                  border: 'none',
-                  color: '#f59e0b',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                <AddIcon fontSize="small" /> Crear nuevo cliente
-              </button>
+                        
             </div>
 
             {/* PRENDA */}
@@ -570,8 +519,8 @@ const NuevoEmpeno = () => {
             <div className="form-group">
               <label>Tasa de Interés</label>
               <div className="tasa-fija-info">
-                <span className="tasa-valor">{TASA_FIJA}% - {TASA_NOMBRE}</span>
-                <span className="tasa-plazo">({TASA_PLAZO_DIAS} días)</span>
+                <span className="tasa-valor">{TASA_FIJA}% </span>
+                
               </div>
               <small>Tasa fija aplicable a todos los empeños</small>
             </div>
@@ -591,68 +540,113 @@ const NuevoEmpeno = () => {
               </select>
               <small>Selecciona el plazo de pago</small>
             </div>
+{/* TARJETA DE SIMULACIÓN - ESTILO TICKET */}
+{simulacionPago.monto_prestado > 0 && (
+  <div className="ticket-preview full-width">
+    <div className="ticket-preview-header">
+      <h2>OPHELINA</h2>
+      <p className="ticket-lema">La que brinda apoyo</p>
+      <p className="ticket-rfc">RFC: OPH123456789</p>
+      <p className="ticket-direccion">Calle 60 #123, Centro, Mérida, Yucatán</p>
+      <p className="ticket-tel">Tel: 999 123 4567</p>
+    </div>
 
-            {/* TARJETA DE SIMULACIÓN DE PAGO */}
-            {simulacionPago.monto_prestado > 0 && (
-              <div className="recibo-simulacion full-width">
-                <div className="recibo-simulacion-header">
-                  <h3>Simulación de Pago</h3>
-                  <CalculateIcon className="simulacion-icon" />
-                </div>
-                
-                <div className="recibo-simulacion-body">
-                  <div className="simulacion-seccion">
-                    <div className="simulacion-fila">
-                      <span className="simulacion-label">Monto a Prestar:</span>
-                      <span className="simulacion-valor">{formatMoney(simulacionPago.monto_prestado)}</span>
-                    </div>
-                    <div className="simulacion-fila">
-                      <span className="simulacion-label">Tasa de Interés:</span>
-                      <span className="simulacion-valor">{simulacionPago.tasa_porcentaje}%</span>
-                    </div>
-                    <div className="simulacion-fila">
-                      <span className="simulacion-label">Plazo:</span>
-                      <span className="simulacion-valor">{simulacionPago.plazo_meses} mes(es)</span>
-                    </div>
-                  </div>
+    <div className="ticket-preview-body">
+      {/* Folio y fechas */}
+      <div className="ticket-folio-section">
+        <div className="folio-group">
+          <span className="folio-label">FOLIO:</span>
+          <span className="folio-valor">PREVIEW-{Date.now().toString(36).toUpperCase()}</span>
+        </div>
+        <div className="fechas-group">
+          <p><span className="label">Emisión</span> {new Date().toLocaleDateString('es-MX')}</p>
+          <p><span className="label">Vencimiento</span> {simulacionPago.fecha_vencimiento ? new Date(simulacionPago.fecha_vencimiento).toLocaleDateString('es-MX') : '--/--/----'}</p>
+        </div>
+      </div>
 
-                  <div className="simulacion-divider"></div>
+      {/* Cliente */}
+      <div className="ticket-cliente-section">
+        <h3>CLIENTE</h3>
+        <div className="cliente-grid">
+          <p><span>Nombre</span> {selectedCliente?.label || 'Por seleccionar'}</p>
+          <p><span>RFC</span> XXXX010101000</p>
+          <p><span>Teléfono</span> {selectedCliente?.telefono || '--- --- ----'}</p>
+          <p><span>Email</span> {selectedCliente?.correo || 'cliente@email.com'}</p>
+        </div>
+      </div>
 
-                  <div className="simulacion-seccion">
-                    <div className="simulacion-fila">
-                      <span className="simulacion-label">Interés Generado:</span>
-                      <span className="simulacion-valor interes">{formatMoney(simulacionPago.interes)}</span>
-                    </div>
-                    <div className="simulacion-fila">
-                      <span className="simulacion-label">IVA (16%):</span>
-                      <span className="simulacion-valor iva">{formatMoney(simulacionPago.iva)}</span>
-                    </div>
-                    <div className="simulacion-fila">
-                      <span className="simulacion-label">Total Intereses + IVA:</span>
-                      <span className="simulacion-valor">{formatMoney(simulacionPago.total_intereses)}</span>
-                    </div>
-                  </div>
+      {/* Detalle del empeño */}
+      <div className="ticket-articulo-section">
+        <h3>DETALLE DEL EMPEÑO</h3>
+        <table className="ticket-tabla">
+          <thead>
+            <tr>
+              <th>Descripción</th>
+              <th className="text-center">Cant.</th>
+              <th className="text-right">P.Unitario</th>
+              <th className="text-right">Importe</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{selectedPrenda?.label || 'Artículo pendiente'}</td>
+              <td className="text-center">1</td>
+              <td className="text-right">{formatMoney(simulacionPago.monto_prestado)}</td>
+              <td className="text-right">{formatMoney(simulacionPago.monto_prestado)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-                  <div className="simulacion-divider"></div>
+      {/* Desglose */}
+      <div className="ticket-desglose">
+        <div className="desglose-fila">
+          <span>Capital:</span>
+          <span>{formatMoney(simulacionPago.monto_prestado)}</span>
+        </div>
+        <div className="desglose-fila">
+          <span>Intereses:</span>
+          <span>{formatMoney(simulacionPago.interes)}</span>
+        </div>
+        <div className="desglose-fila">
+          <span>IVA (16% sobre intereses):</span>
+          <span>{formatMoney(simulacionPago.iva)}</span>
+        </div>
+        <div className="desglose-fila total">
+          <span>TOTAL A PAGAR:</span>
+          <span>{formatMoney(simulacionPago.total)}</span>
+        </div>
+      </div>
 
-                  <div className="simulacion-seccion">
-                    <div className="simulacion-fila total">
-                      <span className="simulacion-label">TOTAL A PAGAR:</span>
-                      <span className="simulacion-valor total">{formatMoney(simulacionPago.total)}</span>
-                    </div>
-                    <div className="simulacion-fila pago-mensual">
-                      <span className="simulacion-label">REFRENDO MENSUAL:</span>
-                      <span className="simulacion-valor pago-mensual">{formatMoney(simulacionPago.refrendo)}</span>
-                    </div>
-                  </div>
+      {/* Información de pago */}
+      <div className="ticket-pago-info">
+        <div className="pago-info-item">
+          <span className="label">Método de pago sugerido:</span>
+          <span className="valor">Efectivo / Transferencia</span>
+        </div>
+        <div className="pago-info-item">
+          <span className="label">Refrendo mensual:</span>
+          <span className="valor">{formatMoney(simulacionPago.refrendo)}</span>
+        </div>
+      </div>
 
-                  <div className="simulacion-footer">
-                    <small>* El refrendo cubre únicamente intereses + IVA. El capital se paga al recuperar la prenda.</small>
-                  </div>
-                </div>
-              </div>
-            )}
+      {/* Footer */}
+      <div className="ticket-footer-preview">
+        <div className="ticket-notas">
+          <p><strong>Nota:</strong> Este es un preview del ticket que se generará al registrar el empeño.</p>
+          <p className="ticket-garantia">* Artículo en garantía hasta 30 días después del vencimiento</p>
+          <p className="ticket-refrendo">* El refrendo mensual cubre únicamente intereses + IVA. El capital se paga al recuperar la prenda.</p>
+        </div>
+      </div>
 
+      {/* Sello */}
+      <div className="ticket-sello">
+        <p>Sello digital: PREVIEW-{Date.now().toString(36).toUpperCase()}</p>
+        <p>www.ophelina.mx/verificar</p>
+      </div>
+    </div>
+  </div>
+)}
             {/* Fecha de Vencimiento */}
             <div className="form-group">
               <label>
@@ -700,64 +694,6 @@ const NuevoEmpeno = () => {
           </form>
         </div>
       </div>
-
-      {/* MODAL CLIENTE */}
-      {isCreatingCliente && (
-        <div className="modal-overlay" onClick={() => setIsCreatingCliente(false)}>
-          <div className="modal-crear-cliente" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Nuevo Cliente</h3>
-              <button className="modal-close-btn" onClick={() => setIsCreatingCliente(false)}>
-                <CloseIcon />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Nombre *</label>
-                <input
-                  type="text"
-                  value={nuevoCliente.nombre}
-                  onChange={(e) => setNuevoCliente({...nuevoCliente, nombre: e.target.value})}
-                  placeholder="Ej: Juan"
-                  autoFocus
-                />
-              </div>
-              <div className="form-group">
-                <label>Apellido</label>
-                <input
-                  type="text"
-                  value={nuevoCliente.apellido}
-                  onChange={(e) => setNuevoCliente({...nuevoCliente, apellido: e.target.value})}
-                  placeholder="Ej: Pérez"
-                />
-              </div>
-              <div className="form-group">
-                <label>Teléfono</label>
-                <input
-                  type="tel"
-                  value={nuevoCliente.telefono}
-                  onChange={(e) => setNuevoCliente({...nuevoCliente, telefono: e.target.value})}
-                  placeholder="Ej: 5551234567"
-                />
-              </div>
-              <div className="form-group">
-                <label>Correo</label>
-                <input
-                  type="email"
-                  value={nuevoCliente.correo}
-                  onChange={(e) => setNuevoCliente({...nuevoCliente, correo: e.target.value})}
-                  placeholder="Ej: cliente@email.com"
-                />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-cancel" onClick={() => setIsCreatingCliente(false)}>Cancelar</button>
-              <button className="btn-gold" onClick={crearNuevoCliente}>Crear Cliente</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* MODAL PRENDA */}
       {isCreatingPrenda && (
         <div className="modal-overlay" onClick={() => setIsCreatingPrenda(false)}>

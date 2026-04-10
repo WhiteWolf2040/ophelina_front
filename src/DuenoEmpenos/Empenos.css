@@ -404,6 +404,8 @@
   border-radius: 0 0 16px 16px;
 }
 
+
+
 /* ===== TABLA DE EMPEÑOS ===== */
 .tabla-card {
   background-color: #ffffff;
@@ -988,4 +990,319 @@
 .form-card .form-group::after {
   content: none !important;
   display: none !important;
+}
+
+/* ===== TICKET PREVIEW - ESTILO PROFESIONAL ===== */
+.ticket-preview {
+  background: white;
+  border-radius: 16px;
+  margin-top: 25px;
+  margin-bottom: 25px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Encabezado del ticket */
+.ticket-preview-header {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2a4a9e 100%);
+  padding: 25px 20px;
+  text-align: center;
+  color: white;
+}
+
+.ticket-preview-header h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+
+.ticket-lema {
+  font-size: 11px;
+  margin: 5px 0;
+  opacity: 0.85;
+  font-style: italic;
+}
+
+.ticket-rfc, .ticket-direccion, .ticket-tel {
+  font-size: 10px;
+  margin: 3px 0;
+  opacity: 0.75;
+}
+
+/* Cuerpo del ticket */
+.ticket-preview-body {
+  padding: 25px;
+}
+
+/* Sección de folio */
+.ticket-folio-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.folio-group {
+  background: #fef3c7;
+  padding: 8px 18px;
+  border-radius: 25px;
+}
+
+.folio-label {
+  font-size: 11px;
+  color: #92400e;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.folio-valor {
+  font-size: 14px;
+  font-weight: 800;
+  color: #b45309;
+  margin-left: 8px;
+  font-family: monospace;
+}
+
+.fechas-group {
+  text-align: right;
+}
+
+.fechas-group p {
+  margin: 3px 0;
+  font-size: 11px;
+}
+
+.fechas-group .label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.fechas-group .label::after {
+  content: ": ";
+}
+
+/* Sección cliente */
+.ticket-cliente-section {
+  margin-bottom: 25px;
+  padding: 18px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.ticket-cliente-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e3a8a;
+  border-left: 3px solid #f59e0b;
+  padding-left: 12px;
+}
+
+.cliente-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.cliente-grid p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.cliente-grid span {
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.cliente-grid span::after {
+  content: ": ";
+}
+
+/* Sección artículo */
+.ticket-articulo-section {
+  margin-bottom: 25px;
+}
+
+.ticket-articulo-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e3a8a;
+  border-left: 3px solid #f59e0b;
+  padding-left: 12px;
+}
+
+.ticket-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.ticket-tabla th {
+  background: #f9fafb;
+  padding: 10px 8px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ticket-tabla td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Desglose */
+.ticket-desglose {
+  margin: 20px 0;
+  padding: 18px;
+  background: #fef3c7;
+  border-radius: 12px;
+}
+
+.desglose-fila {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.desglose-fila.total {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 2px solid #fde68a;
+  font-weight: 800;
+  font-size: 16px;
+  color: #1e3a8a;
+}
+
+/* Información de pago */
+.ticket-pago-info {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f0fdf4;
+  border-radius: 12px;
+}
+
+.pago-info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 12px;
+}
+
+.pago-info-item .label {
+  font-weight: 600;
+  color: #166534;
+}
+
+.pago-info-item .valor {
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+/* Footer del ticket */
+.ticket-footer-preview {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.ticket-notas {
+  font-size: 10px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.ticket-notas p {
+  margin: 6px 0;
+}
+
+.ticket-garantia, .ticket-refrendo {
+  font-size: 9px;
+}
+
+/* Sello */
+.ticket-sello {
+  margin-top: 15px;
+  padding-top: 10px;
+  text-align: center;
+  border-top: 1px dashed #e5e7eb;
+  font-size: 8px;
+  color: #9ca3af;
+}
+
+.ticket-sello p {
+  margin: 2px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ticket-preview {
+    margin-top: 15px;
+  }
+  
+  .ticket-preview-header h2 {
+    font-size: 22px;
+  }
+  
+  .ticket-preview-body {
+    padding: 15px;
+  }
+  
+  .cliente-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .ticket-folio-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .fechas-group {
+    text-align: left;
+  }
+  
+  .ticket-tabla {
+    font-size: 10px;
+  }
+  
+  .ticket-tabla th,
+  .ticket-tabla td {
+    padding: 6px 4px;
+  }
+  
+  .desglose-fila.total {
+    font-size: 14px;
+  }
+  
+  .pago-info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ticket-preview-body {
+    padding: 20px;
+  }
+  
+  .cliente-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
