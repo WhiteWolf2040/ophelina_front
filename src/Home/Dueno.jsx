@@ -1,701 +1,1051 @@
-// Dueño.jsx - Versión CONECTADA a Laravel
-import React, { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar";
-import Chart from "react-apexcharts";
-import "./dueno.css";
-import api from '../config/api'; // Importamos la configuración
+  // Dueño.jsx - Versión con GRÁFICA DE ÁREA APILADA (Stacked Area) - SOLO CAMBIA LA PRINCIPAL
+  import React, { useState, useEffect } from "react";
+  import Sidebar from "../components/Sidebar";
+  import Chart from "react-apexcharts";
+  import "./dueno.css";
+  import api from '../config/api';
 
-// Importar iconos de MUI (mantén todos tus imports)
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import WarningIcon from '@mui/icons-material/Warning';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import HistoryIcon from '@mui/icons-material/History';
-import CloseIcon from '@mui/icons-material/Close';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import PieChartIcon from '@mui/icons-material/PieChart';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import SpeedIcon from '@mui/icons-material/Speed';
-import LoopIcon from '@mui/icons-material/Loop';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
-import CelebrationIcon from '@mui/icons-material/Celebration';
+  // Importar iconos de MUI
+  import NotificationsIcon from '@mui/icons-material/Notifications';
+  import AssignmentIcon from '@mui/icons-material/Assignment';
+  import WarningIcon from '@mui/icons-material/Warning';
+  import AccessTimeIcon from '@mui/icons-material/AccessTime';
+  import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+  import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+  import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+  import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+  import HistoryIcon from '@mui/icons-material/History';
+  import CloseIcon from '@mui/icons-material/Close';
+  import BarChartIcon from '@mui/icons-material/BarChart';
+  import PieChartIcon from '@mui/icons-material/PieChart';
+  import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+  import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+  import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+  import ErrorIcon from '@mui/icons-material/Error';
+  import CelebrationIcon from '@mui/icons-material/Celebration';
+  import AreaChartIcon from '@mui/icons-material/AreaChart';
 
-const Dueno = () => {
-  // Estados para modales
-  const [showActivos, setShowActivos] = useState(false);
-  const [showVencidos, setShowVencidos] = useState(false);
-  const [showProximos, setShowProximos] = useState(false);
-  const [showIngresos, setShowIngresos] = useState(false);
-  const [showAlertas, setShowAlertas] = useState(false);
-  const [showPerfil, setShowPerfil] = useState(false);
-  
-  // Estados para datos del dashboard
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [dashboardData, setDashboardData] = useState({
-    resumen: {
-      empenos_activos: 0,
-      empenos_vencidos: 0,
-      proximos_vencer: 0,
-      ingresos_recientes: 0,
-      precio_oro: 850,
-      total_clientes: 0,
-      prendas_disponibles: 0
-    },
-    top_clientes: [],
-    top_articulos: [],
-    actividad_reciente: [],
-    ingresos_mensuales: []
-  });
+  const Dueno = () => {
+    // Estados para modales
+    const [showActivos, setShowActivos] = useState(false);
+    const [showVencidos, setShowVencidos] = useState(false);
+    const [showProximos, setShowProximos] = useState(false);
+    const [showIngresos, setShowIngresos] = useState(false);
+    const [showAlertas, setShowAlertas] = useState(false);
+    const [showPerfil, setShowPerfil] = useState(false);
+    const [morosidad, setMorosidad] = useState([]);
+    const [distribucionCategorias, setDistribucionCategorias] = useState({
+      series: [],
+      labels: []
+    });
 
-  // Estados para datos de modales
-  const [empenosActivos, setEmpenosActivos] = useState([]);
-  const [empenosVencidos, setEmpenosVencidos] = useState([]);
-  const [proximosVencer, setProximosVencer] = useState([]);
-  const [ingresosRecientes, setIngresosRecientes] = useState([]);
-
-  // Datos del perfil (podrían venir de una API también)
-  const datosPerfil = {
-    nombre: "Juan Carlos Rodríguez",
-    email: "juan.rodriguez@ophelina.mx",
-    telefono: "+52 999 123 4567",
-    rol: "Dueño / Administrador",
-    fechaRegistro: "15/01/2020",
-    sucursal: "Casa Matriz - Mérida",
-    fotoPerfil: "https://ui-avatars.com/api/?name=Juan+Rodriguez&size=128&background=1e3a8a&color=fff&bold=true"
+    const cargarPreciosQuilates = async () => {
+    try {
+      const response = await api.get('/precio-oro/quilates');
+       console.log('Respuesta de la API:', response.data);
+      if (response.data.success) {
+        setPreciosQuilates(response.data.data);
+              console.log('Precios cargados:', response.data.data); 
+      }
+    } catch (error) {
+      console.error('Error al cargar precios por quilate:', error);
+    }
   };
 
-  // Configuración de gráficas
-  const [chartData, setChartData] = useState({
-    series: [
-      { name: "Capital", data: [] },
-      { name: "Intereses", data: [] }
-    ],
-    options: {
-      chart: { type: "bar", height: 350, toolbar: { show: false } },
-      plotOptions: { bar: { horizontal: false, columnWidth: "55%", borderRadius: 5 } },
-      dataLabels: { enabled: false },
-      xaxis: { categories: [] },
-      yaxis: { 
-        title: { text: "$ (pesos)" },
-        labels: { formatter: (val) => `$${val.toLocaleString()}` }
-      },
-      colors: ["#1e3a8a", "#10b981"],
-      tooltip: { y: { formatter: (val) => `$${val.toLocaleString()}` } }
-    }
+    const [showPrecioOroModal, setShowPrecioOroModal] = useState(false);
+  const [preciosQuilates, setPreciosQuilates] = useState({
+    precio_24k: 0,
+    precio_22k: 0,
+    precio_21k: 0,
+    precio_18k: 0,
+    precio_14k: 0,
+    precio_10k: 0,
+    ultima_actualizacion: null
   });
+    
+    // Estados para datos del dashboard
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [dashboardData, setDashboardData] = useState({
+      resumen: {
+        empenos_activos: 0,
+        empenos_vencidos: 0,
+        proximos_vencer: 0,
+        ingresos_recientes: 0,
+        precio_oro: 850,
+        total_clientes: 0,
+        prendas_disponibles: 0
+      },
+      top_clientes: [],
+      top_articulos: [],
+      actividad_reciente: [],
+      ingresos_mensuales: []
+    });
 
-  // Datos para gráfica de distribución (puedes obtener esto del backend después)
-  const categoriaDistribucion = {
-    series: [45, 25, 15, 10, 5],
-    options: {
-      chart: { type: "donut", height: 300 },
-      labels: ["Joyería", "Electrónica", "Relojes", "Herramientas", "Otros"],
-      colors: ["#1e3a8a", "#3b82f6", "#10b981", "#f59e0b", "#6b7280"],
-      legend: { position: "bottom" },
-      plotOptions: {
-        pie: {
-          donut: {
-            size: "65%",
-            labels: {
-              show: true,
-              total: {
-                show: true,
-                label: "Total",
-                formatter: () => "145 artículos",
-              },
-            },
+    // ============================================
+    // DATOS DEL PERFIL - DESDE BD
+    // ============================================
+    const [datosPerfil, setDatosPerfil] = useState({
+      nombre: "Cargando...",
+      email: "cargando...",
+      telefono: "cargando...",
+      rol: "cargando...",
+      fechaRegistro: "cargando...",
+      sucursal: "Casa Matriz - Mérida",
+      fotoPerfil: "https://ui-avatars.com/api/?name=Usuario&size=128&background=1e3a8a&color=fff&bold=true"
+    });
+
+    // Estados para datos de modales
+    const [empenosActivos, setEmpenosActivos] = useState([]);
+    const [empenosVencidos, setEmpenosVencidos] = useState([]);
+    const [proximosVencer, setProximosVencer] = useState([]);
+    const [ingresosRecientes, setIngresosRecientes] = useState([]);
+
+    // Configuración de GRÁFICA DE ÁREA APILADA (STACKED AREA) - NUEVA GRÁFICA PRINCIPAL
+    const [areaChartData, setAreaChartData] = useState({
+      series: [
+        { name: "Capital Prestado (Acumulado)", data: [] },
+        { name: "Retorno (Pagos Acumulados)", data: [] },
+        { name: "Ganancia (Acumulada)", data: [] }
+      ],
+      options: {
+        chart: {
+          type: 'area',
+          height: 380,
+          stacked: true,
+          toolbar: {
+            show: true,
+            tools: {
+              download: true,
+              selection: false,
+              zoom: false,
+              zoomin: false,
+              zoomout: false,
+              pan: false,
+              reset: false
+            }
           },
+          zoom: { enabled: false }
         },
-      },
-    },
-  };
-
-  // CARGAR DATOS DEL DASHBOARD al montar el componente
-  useEffect(() => {
-    cargarDashboard();
-  }, []);
-
-  const cargarDashboard = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Llamar a la API de Laravel
-      const response = await api.get('/dashboard');
-      
-      if (response.data.success) {
-        const data = response.data.data;
-        setDashboardData(data);
-        
-        // Preparar datos para gráfica de ingresos mensuales
-        const meses = data.ingresos_mensuales?.map(i => i.mes) || [];
-        const capital = data.ingresos_mensuales?.map(i => Number(i.capital)) || [];
-        const intereses = data.ingresos_mensuales?.map(i => Number(i.intereses)) || [];
-        
-        setChartData(prev => ({
-          series: [
-            { name: "Capital", data: capital },
-            { name: "Intereses", data: intereses }
-          ],
-          options: {
-            ...prev.options,
-            xaxis: { ...prev.options.xaxis, categories: meses }
+        dataLabels: { enabled: false },
+        stroke: {
+          curve: 'smooth',
+          width: 2
+        },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.7,
+            opacityTo: 0.3,
+            stops: [0, 90, 100]
           }
-        }));
+        },
+        xaxis: {
+          categories: [],
+          title: {
+            text: 'Mes',
+            style: { fontSize: '11px', fontWeight: 500 }
+          },
+          labels: {
+            rotate: -45,
+            style: { fontSize: '10px' },
+            hideOverlappingLabels: true
+          },
+          tickAmount: 5
+        },
+        yaxis: {
+          title: {
+            text: '$ (pesos acumulados)',
+            style: { fontSize: '11px', fontWeight: 500 }
+          },
+          labels: {
+            formatter: (val) => `$${(val / 1000).toFixed(0)}k`,
+            style: { fontSize: '10px' }
+          }
+        },
+        colors: ["#1e3a8a", "#10b981", "#f59e0b"],
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              return new Intl.NumberFormat('es-MX', {
+                style: 'currency',
+                currency: 'MXN',
+                minimumFractionDigits: 0
+              }).format(val);
+            }
+          },
+          shared: true,
+          intersect: false
+        },
+        legend: {
+          position: 'top',
+          horizontalAlign: 'center',
+          offsetY: 0,
+          fontSize: '11px',
+          itemMargin: { horizontal: 8, vertical: 4 }
+        },
+        grid: {
+          borderColor: '#e5e7eb',
+          strokeDashArray: 5,
+          padding: { left: 5, right: 5 }
+        }
       }
-    } catch (error) {
-      console.error('Error al cargar dashboard:', error);
-      setError('No se pudo conectar con el servidor. ¿Está corriendo Laravel?');
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
 
-  // Función para cargar empeños activos
-  const cargarActivos = async () => {
-    try {
-      const response = await api.get('/dashboard/activos');
-      if (response.data.success) {
-        setEmpenosActivos(response.data.data);
-        setShowActivos(true);
+    // Configuración de gráfica de TENDENCIA (se mantiene igual)
+    const [trendChartData, setTrendChartData] = useState({
+      series: [{ name: "Retorno Total", data: [] }],
+      options: {
+        chart: { 
+          type: "line", 
+          height: 300,
+          toolbar: { show: false }
+        },
+        xaxis: { categories: [], title: { text: 'Mes' } },
+        yaxis: { 
+          title: { text: '$ (pesos)' },
+          labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k` }
+        },
+        colors: ["#10b981"],
+        stroke: { width: 3, curve: 'smooth' },
+        tooltip: { y: { formatter: (val) => `$${val.toLocaleString()}` } }
       }
-    } catch (error) {
-      console.error('Error al cargar activos:', error);
-      alert('Error al cargar empeños activos');
-    }
-  };
+    });
 
-  // Función para cargar empeños vencidos
-  const cargarVencidos = async () => {
-    try {
-      const response = await api.get('/dashboard/vencidos');
-      if (response.data.success) {
-        setEmpenosVencidos(response.data.data);
-        setShowVencidos(true);
+    const [categoriaDistribucion, setCategoriaDistribucion] = useState({
+      series: [],
+      options: {
+        chart: { type: "donut", height: 300 },
+        labels: [],
+        colors: ["#1e3a8a", "#3b82f6", "#10b981", "#f59e0b", "#6b7280", "#6366f1"],
+        legend: { position: "bottom" },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: "65%",
+              labels: {
+                show: true,
+                total: {
+                  show: true,
+                  label: "Total",
+                  formatter: function(w) {
+                    return w.globals.seriesTotals.reduce((a,b) => a+b, 0) + " artículos";
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-    } catch (error) {
-      console.error('Error al cargar vencidos:', error);
-      alert('Error al cargar empeños vencidos');
-    }
-  };
+    });
 
-  // Función para cargar próximos a vencer
-  const cargarProximos = async () => {
-    try {
-      const response = await api.get('/dashboard/proximos');
-      if (response.data.success) {
-        setProximosVencer(response.data.data);
-        setShowProximos(true);
+    // Función para formatear fecha
+    const formatearFecha = (fecha) => {
+      if (!fecha) return "Fecha no disponible";
+      try {
+        const date = new Date(fecha);
+        return date.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      } catch (e) {
+        return fecha;
       }
-    } catch (error) {
-      console.error('Error al cargar próximos:', error);
-      alert('Error al cargar próximos a vencer');
+    };
+
+    // Formatear moneda
+    const formatearMoneda = (monto) => {
+      return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 }).format(monto || 0);
+    };
+
+    // Formatear porcentaje
+    const formatearPorcentaje = (valor) => {
+      return new Intl.NumberFormat('es-MX', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((valor || 0) / 100);
+    };
+
+    const formatFecha = (fecha) => {
+      if (!fecha) return '';
+      return new Date(fecha).toLocaleDateString('es-MX');
+    };
+
+    // Cargar datos del usuario actual
+    const cargarUsuarioActual = async () => {
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          setDatosPerfil(prev => ({
+            ...prev,
+            nombre: user.nombre || "Usuario",
+            email: user.correo || "",
+            telefono: user.telefono || "Sin teléfono",
+            rol: user.rol || "Usuario",
+            fechaRegistro: formatearFecha(user.fecha_registro) || "Fecha no disponible",
+            fotoPerfil: user.foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&size=128&background=1e3a8a&color=fff&bold=true`
+          }));
+        }
+
+        const response = await api.get('/user');
+        if (response.data.success) {
+          const user = response.data.data.usuario;
+          setDatosPerfil(prev => ({
+            ...prev,
+            nombre: user.nombre || "Usuario",
+            email: user.correo || "",
+            telefono: user.telefono || "Sin teléfono",
+            rol: user.rol?.nombre || "Usuario",
+            fechaRegistro: formatearFecha(user.fecha_registro),
+            fotoPerfil: user.foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&size=128&background=1e3a8a&color=fff&bold=true`
+          }));
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+      } catch (error) {
+        console.error('Error cargando usuario:', error);
+      }
+    };
+
+    const cargarMorosidad = async () => {
+      try {
+        const response = await api.get('/dashboard/morosidad');
+        if (response.data.success) {
+          const morosidadConCalculos = response.data.data.map(item => ({
+            ...item,
+            porcentaje_perdida: ((item.deuda || 0) / (item.total_prestado || 1)) * 100,
+            perdida_proyectada: item.deuda || 0
+          }));
+          setMorosidad(morosidadConCalculos);
+        }
+      } catch (error) {
+        console.error('Error al cargar morosidad:', error);
+        setMorosidad([]);
+      }
+    };
+
+    const cargarDistribucionCategorias = async () => {
+      try {
+        const response = await api.get('/dashboard/distribucion-categorias');
+        if (response.data.success) {
+          const data = response.data.data;
+          const series = data.map(item => item.total);
+          const labels = data.map(item => item.categoria);
+          setCategoriaDistribucion(prev => ({ ...prev, series, options: { ...prev.options, labels } }));
+        }
+      } catch (error) {
+        console.error('Error al cargar distribución de categorías:', error);
+      }
+    };
+
+    const cargarDashboard = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await api.get('/dashboard');
+        
+        if (response.data.success) {
+          const data = response.data.data;
+          setDashboardData(data);
+          
+          // Obtener datos de capital_retorno (YA VIENEN ACUMULADOS DEL BACKEND)
+          const capitalRetorno = data.capital_retorno || [];
+          
+          // Datos acumulados
+          const capitalAcumulado = capitalRetorno.map(i => Number(i.capital)) || [];
+          const retornoAcumulado = capitalRetorno.map(i => Number(i.retorno)) || [];
+          const gananciaAcumulada = capitalRetorno.map(i => Number(i.ganancia)) || [];
+          const meses = capitalRetorno.map(i => i.mes) || [];
+
+          // Configurar gráfica de ÁREA APILADA (NUEVA PRINCIPAL)
+          setAreaChartData({
+            series: [
+              { name: "Capital Prestado (Acumulado)", data: capitalAcumulado },
+              { name: "Retorno (Pagos Acumulados)", data: retornoAcumulado },
+              { name: "Ganancia (Acumulada)", data: gananciaAcumulada }
+            ],
+            options: {
+              ...areaChartData.options,
+              xaxis: { ...areaChartData.options.xaxis, categories: meses }
+            }
+          });
+
+          // Configurar gráfica de TENDENCIA (se mantiene igual)
+          setTrendChartData({
+            series: [{ name: "Retorno Total", data: retornoAcumulado }],
+            options: {
+              ...trendChartData.options,
+              xaxis: { ...trendChartData.options.xaxis, categories: meses }
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error al cargar dashboard:', error);
+        setError('No se pudo conectar con el servidor.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Funciones para cargar datos específicos
+    const cargarActivos = async () => {
+      try {
+        const response = await api.get('/dashboard/activos');
+        if (response.data.success) {
+          setEmpenosActivos(response.data.data);
+          setShowActivos(true);
+        }
+      } catch (error) {
+        console.error('Error al cargar activos:', error);
+        alert('Error al cargar empeños activos');
+      }
+    };
+
+    const cargarVencidos = async () => {
+      try {
+        const response = await api.get('/dashboard/vencidos');
+        if (response.data.success) {
+          setEmpenosVencidos(response.data.data);
+          setShowVencidos(true);
+        }
+      } catch (error) {
+        console.error('Error al cargar vencidos:', error);
+        alert('Error al cargar empeños vencidos');
+      }
+    };
+
+    const cargarProximos = async () => {
+      try {
+        const response = await api.get('/dashboard/proximos');
+        if (response.data.success) {
+          setProximosVencer(response.data.data);
+          setShowProximos(true);
+        }
+      } catch (error) {
+        console.error('Error al cargar próximos:', error);
+        alert('Error al cargar próximos a vencer');
+      }
+    };
+
+    const cargarIngresos = async () => {
+      try {
+        setIngresosRecientes([
+          { id: 1, concepto: "Pago de Juan Pérez", monto: 5000, fecha: "10/03/2024" },
+          { id: 2, concepto: "Pago de María García", monto: 3500, fecha: "09/03/2024" },
+        ]);
+        setShowIngresos(true);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+
+    useEffect(() => {
+      cargarDashboard();
+      cargarMorosidad();
+      cargarDistribucionCategorias();
+      cargarUsuarioActual();
+      cargarPreciosQuilates();
+    }, []);
+
+    // Loading state
+    if (loading) {
+      return (
+        <div className="dashboard">
+          <Sidebar />
+          <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <div>Cargando dashboard...</div>
+          </div>
+        </div>
+      );
     }
-  };
 
-  // Función para cargar ingresos recientes (puedes crear este endpoint después)
-  const cargarIngresos = async () => {
-    try {
-      // Por ahora usamos datos de ejemplo
-      setIngresosRecientes([
-        { id: 1, concepto: "Pago de Juan Pérez", monto: 5000, fecha: "10/03/2024" },
-        { id: 2, concepto: "Pago de María García", monto: 3500, fecha: "09/03/2024" },
-      ]);
-      setShowIngresos(true);
-    } catch (error) {
-      console.error('Error:', error);
+    // Error state
+    if (error) {
+      return (
+        <div className="dashboard">
+          <Sidebar />
+          <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+            <WarningIcon style={{ fontSize: 48, color: '#dc3545', marginBottom: 16 }} />
+            <h3>Error de conexión</h3>
+            <p>{error}</p>
+            <button onClick={cargarDashboard} style={{ marginTop: 16, padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+              Reintentar
+            </button>
+          </div>
+        </div>
+      );
     }
-  };
 
-  // Función para formatear fechas
-  const formatFecha = (fecha) => {
-    if (!fecha) return '';
-    return new Date(fecha).toLocaleDateString('es-MX');
-  };
-
-  // Mostrar loading
-  if (loading) {
     return (
       <div className="dashboard">
         <Sidebar />
-        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <div>Cargando dashboard...</div>
-        </div>
-      </div>
-    );
-  }
 
-  // Mostrar error
-  if (error) {
-    return (
-      <div className="dashboard">
-        <Sidebar />
-        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
-          <WarningIcon style={{ fontSize: 48, color: '#dc3545', marginBottom: 16 }} />
-          <h3>Error de conexión</h3>
-          <p>{error}</p>
-          <button onClick={cargarDashboard} style={{ marginTop: 16, padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            Reintentar
-          </button>
-        </div>
-      </div>
-    );
-  }
+        <div className="content">
+          {/* HEADER */}
+          <div className="owner-header">
+            <div className="header-top">
+              <h1>
+                Hola, {datosPerfil.nombre.split(' ')[0] || 'Dueño'}
+                <p className="header-sub">Conoce el estado de tu casa de empeño</p>
+              </h1>
+            
+              <div className="header-botones">
+                <button className="btn-perfil" onClick={() => setShowPerfil(true)} title="Mi Perfil">
+                  <img src={datosPerfil.fotoPerfil} alt="Perfil" className="perfil-foto" />
+                </button>
 
-  return (
-    <div className="dashboard">
-      <Sidebar />
-
-      <div className="content">
-        {/* HEADER */}
-        <div className="owner-header">
-          <div className="header-top">
-            <h1>
-              Hola, Dueño
-              <p className="header-sub">Conoce el estado de tu casa de empeño</p>
-            </h1>
-           
-            <div className="header-botones">
-              <button className="btn-perfil" onClick={() => setShowPerfil(true)} title="Mi Perfil">
-                <img src={datosPerfil.fotoPerfil} alt="Perfil" className="perfil-foto" />
-              </button>
-
-              <button className="btn-alertas" onClick={() => setShowAlertas(true)} title="Alertas">
-                <NotificationsIcon className="alerta-icon" />
-                {(dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos) > 0 && (
-                  <span className="alerta-badge">
-                    {dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos}
-                  </span>
-                )}
-              </button>
+                <button className="btn-alertas" onClick={() => setShowAlertas(true)} title="Alertas">
+                  <NotificationsIcon className="alerta-icon" />
+                  {(dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos) > 0 && (
+                    <span className="alerta-badge">
+                      {dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* CARDS con datos REALES */}
-        <div className="cards-grid">
-          <div className="stat-card" onClick={cargarActivos}>
-            <AssignmentIcon className="card-icon" />
-            <h3>Empeños Activos</h3>
-            <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
+          {/* CARDS */}
+          <div className="cards-grid">
+            <div className="stat-card" onClick={cargarActivos}>
+              <AssignmentIcon className="card-icon" />
+              <h3>Empeños Activos</h3>
+              <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
+            </div>
+
+            <div className="stat-card" onClick={cargarVencidos}>
+              <WarningIcon className="card-icon" />
+              <h3>Empeños Vencidos</h3>
+              <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
+            </div>
+
+            <div className="stat-card" onClick={cargarProximos}>
+              <AccessTimeIcon className="card-icon" />
+              <h3>Próximos a Vencer</h3>
+              <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
+            </div>
+
+            <div className="stat-card" onClick={cargarIngresos}>
+              <AttachMoneyIcon className="card-icon" />
+              <h3>Ingresos Recientes</h3>
+              <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
+            </div>
+
+            <div className="stat-card gold-card"  onClick={() => setShowPrecioOroModal(true)} style={{ cursor: 'pointer' }}>
+              <MonetizationOnIcon className="card-icon" />
+              <h3>Precio del Oro</h3>
+              <p className="stat-number">${dashboardData.resumen?.precio_oro || 850} / gramo</p>
+              {dashboardData.resumen?.ultima_actualizacion_oro && (
+                <small style={{ fontSize: '10px', color: '#666', display: 'block', marginTop: '5px' }}>
+                  Actualizado: {new Date(dashboardData.resumen.ultima_actualizacion_oro).toLocaleDateString('es-MX')}
+                </small>
+                )}
+                  <small style={{ fontSize: '9px', color: '#000000', display: 'block', marginTop: '3px' }}>
+                    Haz clic para ver precios por quilate
+                  </small>
+            </div>
           </div>
 
-          <div className="stat-card" onClick={cargarVencidos}>
-            <WarningIcon className="card-icon" />
-            <h3>Empeños Vencidos</h3>
-            <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
-          </div>
-
-          <div className="stat-card" onClick={cargarProximos}>
-            <AccessTimeIcon className="card-icon" />
-            <h3>Próximos a Vencer</h3>
-            <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
-          </div>
-
-          <div className="stat-card" onClick={cargarIngresos}>
-            <AttachMoneyIcon className="card-icon" />
-            <h3>Ingresos Recientes</h3>
-            <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
-          </div>
-
-          <div className="stat-card gold-card">
-            <MonetizationOnIcon className="card-icon" />
-            <h3>Precio del Oro</h3>
-            <p className="stat-number">${dashboardData.resumen?.precio_oro || 850} / gramo</p>
-          </div>
-        </div>
-
-        {/* GRÁFICA PRINCIPAL con datos REALES */}
-        <div className="chart-section">
-          <h2>
-            <BarChartIcon />
-            Ingresos Mensuales (Capital vs Intereses)
-          </h2>
-          <div className="chart-wrapper">
-            <Chart
-              options={chartData.options}
-              series={chartData.series}
-              type="bar"
-              height={350}
-            />
-          </div>
-        </div>
-
-        {/* GRÁFICAS ADICIONALES */}
-        <div className="nuevas-graficas-grid">
-          <div className="grafica-nueva-card">
+          {/* GRÁFICA PRINCIPAL - ÁREA APILADA (NUEVA) */}
+          <div className="chart-section">
             <h2>
-              <TrendingUpIcon />
-              Tendencia de Ingresos
+              <AreaChartIcon />
+              Evolución Acumulada (Capital vs Retorno vs Ganancia)
             </h2>
-            <Chart
-              options={{
-                ...chartData.options,
-                chart: { ...chartData.options.chart, type: "line" }
-              }}
-              series={chartData.series}
-              type="line"
-              height={300}
-            />
+            <p className="chart-subtitle">
+              El área muestra el crecimiento total del negocio - La diferencia entre Capital y Retorno es la ganancia acumulada
+            </p>
+            <div className="chart-wrapper">
+              <Chart
+                options={areaChartData.options}
+                series={areaChartData.series}
+                type="area"
+                height={380}
+              />
+            </div>
           </div>
 
-          <div className="grafica-nueva-card">
+          {/* GRÁFICAS ADICIONALES - SE MANTIENEN IGUAL */}
+          <div className="nuevas-graficas-grid">
+            <div className="grafica-nueva-card">
+              <h2>
+                <TrendingUpIcon />
+                Tendencia de Ingresos
+              </h2>
+              <Chart
+                options={trendChartData.options}
+                series={trendChartData.series}
+                type="line"
+                height={300}
+              />
+            </div>
+
+            <div className="grafica-nueva-card">
+              <h2>
+                <PieChartIcon />
+                Distribución por Categoría
+              </h2>
+              <Chart
+                options={categoriaDistribucion.options}
+                series={categoriaDistribucion.series}
+                type="donut"
+                height={300}
+              />
+            </div>
+          </div>
+
+          {/* Top Clientes */}
+          <div className="nueva-seccion">
             <h2>
-              <PieChartIcon />
-              Distribución por Categoría
+              <EmojiEventsIcon />
+              Top 5 Clientes (Mayores Ganancias)
             </h2>
-            <Chart
-              options={categoriaDistribucion.options}
-              series={categoriaDistribucion.series}
-              type="donut"
-              height={300}
-            />
-          </div>
-        </div>
-
-        {/* Top Clientes con datos REALES */}
-        <div className="nueva-seccion">
-          <h2>
-            <EmojiEventsIcon />
-            Top 5 Clientes
-          </h2>
-          <div className="tabla-container">
-            <table className="tabla-moderna">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Empeños</th>
-                  <th>Monto Total</th>
-                  <th>Último Empeño</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboardData.top_clientes?.map(cliente => (
-                  <tr key={cliente.id_cliente}>
-                    <td><strong>{cliente.nombre}</strong></td>
-                    <td>{cliente.empenos}</td>
-                    <td>${(cliente.monto_total || 0).toLocaleString()}</td>
-                    <td>{formatFecha(cliente.ultimo_empeno)}</td>
-                  </tr>
-                ))}
-                {dashboardData.top_clientes?.length === 0 && (
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
                   <tr>
-                    <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
+                    <th>Cliente</th>
+                    <th>Empeños</th>
+                    <th>Monto Prestado</th>
+                    <th>Ganancia Generada</th>
+                    <th>% Ganancia</th>
+                    <th>Último Empeño</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {dashboardData.top_clientes?.map(cliente => (
+                    <tr key={cliente.id_cliente}>
+                      <td><strong>{cliente.nombre}</strong></td>
+                      <td>{cliente.empenos}</td>
+                      <td>{formatearMoneda(cliente.monto_total)}</td>
+                      <td className="profit-text">{formatearMoneda(cliente.ganancia_generada || (cliente.monto_total * 0.15))}</td>
+                      <td>
+                        <span className="profit-badge">
+                          +{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}
+                        </span>
+                      </td>
+                      <td>{formatFecha(cliente.ultimo_empeno)}</td>
+                    </tr>
+                  ))}
+                  {dashboardData.top_clientes?.length === 0 && (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
-        {/* Artículos más empeñados con datos REALES */}
-        <div className="nueva-seccion">
-          <h2>
-            <LocalOfferIcon />
-            Artículos Más Empeñados
-          </h2>
-          <div className="tabla-container">
-            <table className="tabla-moderna">
-              <thead>
-                <tr>
-                  <th>Artículo</th>
-                  <th>Categoría</th>
-                  <th>Cantidad</th>
-                  <th>Monto Promedio</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboardData.top_articulos?.map((articulo, index) => (
-                  <tr key={index}>
-                    <td><strong>{articulo.nombre}</strong></td>
-                    <td>{articulo.categoria}</td>
-                    <td>{articulo.cantidad}</td>
-                    <td>${(articulo.monto_promedio || 0).toLocaleString()}</td>
-                  </tr>
-                ))}
-                {dashboardData.top_articulos?.length === 0 && (
+          {/* SECCIÓN DE MOROSIDAD */}
+          <div className="nueva-seccion">
+            <h2>
+              <WarningIcon />
+              Morosidad - Clientes con Mayor Pérdida
+            </h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
                   <tr>
-                    <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
+                    <th>Cliente</th>
+                    <th>Total Prestado</th>
+                    <th>Deuda Vencida</th>
+                    <th>Pérdida Proyectada</th>
+                    <th>% Pérdida</th>
+                    <th>Días en Mora</th>
+                    <th>Último Pago</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Actividad Reciente con datos REALES */}
-        <div className="nueva-seccion">
-          <h2>
-            <HistoryIcon />
-            Actividad Reciente
-          </h2>
-          <div className="actividad-lista">
-            {dashboardData.actividad_reciente?.map((actividad, index) => (
-              <div key={index} className="actividad-item">
-                {actividad.tipo === 'pago' ? (
-                  <CheckCircleIcon className="actividad-icon success" />
-                ) : (
-                  <CelebrationIcon className="actividad-icon info" />
-                )}
-                <div className="actividad-detalle">
-                  <p><strong>{actividad.descripcion}</strong></p>
-                  <small>{formatFecha(actividad.fecha)}</small>
-                </div>
-              </div>
-            ))}
-            {dashboardData.actividad_reciente?.length === 0 && (
-              <div style={{ textAlign: 'center', padding: 20 }}>No hay actividad reciente</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* MODALES - Modifícalos para usar datos REALES también */}
-
-      {/* MODAL DE PERFIL (sin cambios) */}
-      {showPerfil && (
-        <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
-          <div className="modal-detalle modal-perfil" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowPerfil(false)}>
-              <CloseIcon />
-            </button>
-            <div className="modal-header perfil-header">
-              <h2>Mi Perfil</h2>
-              <span className="cliente-id">Información personal</span>
-            </div>
-            <div className="modal-body">
-              <div className="perfil-container">
-                <div className="perfil-avatar">
-                  <img src={datosPerfil.fotoPerfil} alt={datosPerfil.nombre} />
-                </div>
-                <div className="perfil-info-grid">
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Nombre completo</span>
-                    <span className="perfil-valor">{datosPerfil.nombre}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Email</span>
-                    <span className="perfil-valor">{datosPerfil.email}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Teléfono</span>
-                    <span className="perfil-valor">{datosPerfil.telefono}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Rol</span>
-                    <span className="perfil-valor">{datosPerfil.rol}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Sucursal</span>
-                    <span className="perfil-valor">{datosPerfil.sucursal}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Miembro desde</span>
-                    <span className="perfil-valor">{datosPerfil.fechaRegistro}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DE EMPEÑOS ACTIVOS con datos REALES */}
-      {showActivos && (
-        <div className="modal-overlay" onClick={() => setShowActivos(false)}>
-          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowActivos(false)}>
-              <CloseIcon />
-            </button>
-            <div className="modal-header">
-              <h2><AssignmentIcon /> Empeños Activos</h2>
-              <span className="cliente-id">Total: {empenosActivos.length}</span>
-            </div>
-            <div className="modal-body">
-              <div className="tabla-container-modal">
-                <table className="tabla-modal">
-                  <thead>
-                    <tr>
-                      <th>Cliente</th>
-                      <th>Artículo</th>
-                      <th>Monto</th>
-                      <th>Fecha</th>
+                </thead>
+                <tbody>
+                  {morosidad.map((item, index) => (
+                    <tr key={index}>
+                      <td><strong>{item.cliente}</strong></td>
+                      <td>{formatearMoneda(item.total_prestado)}</td>
+                      <td className="loss-text">{formatearMoneda(item.deuda)}</td>
+                      <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
+                      <td>
+                        <span className="loss-badge">
+                          -{formatearPorcentaje(item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100))}
+                        </span>
+                      </td>
+                      <td><span className="badge-danger">{item.pagos_atrasados} días</span></td>
+                      <td>{formatFecha(item.ultimo_pago)}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {empenosActivos.map(item => (
-                      <tr key={item.id_empreno}>
-                        <td><strong>{item.cliente}</strong></td>
-                        <td>{item.nombre}</td>
-                        <td>${item.monto.toLocaleString()}</td>
-                        <td>{item.fecha}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowActivos(false)}>
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DE EMPEÑOS VENCIDOS con datos REALES */}
-      {showVencidos && (
-        <div className="modal-overlay" onClick={() => setShowVencidos(false)}>
-          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowVencidos(false)}>
-              <CloseIcon />
-            </button>
-            <div className="modal-header">
-              <h2><WarningIcon /> Empeños Vencidos</h2>
-              <span className="cliente-id">Total: {empenosVencidos.length}</span>
-            </div>
-            <div className="modal-body">
-              <div className="tabla-container-modal">
-                <table className="tabla-modal">
-                  <thead>
+                  ))}
+                  {morosidad.length === 0 && (
                     <tr>
-                      <th>Cliente</th>
-                      <th>Artículo</th>
-                      <th>Monto</th>
-                      <th>Vencido</th>
-                      <th>Días</th>
+                      <td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {empenosVencidos.map(item => (
-                      <tr key={item.id_empreno}>
-                        <td><strong>{item.cliente}</strong></td>
-                        <td>{item.nombre}</td>
-                        <td>${item.monto.toLocaleString()}</td>
-                        <td>{item.fecha}</td>
-                        <td><span className="badge-danger">{item.dias} días</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowVencidos(false)}>
-                Cerrar
-              </button>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* MODAL DE PRÓXIMOS A VENCER con datos REALES */}
-      {showProximos && (
-        <div className="modal-overlay" onClick={() => setShowProximos(false)}>
-          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowProximos(false)}>
-              <CloseIcon />
-            </button>
-            <div className="modal-header">
-              <h2><AccessTimeIcon /> Próximos a Vencer</h2>
-              <span className="cliente-id">Total: {proximosVencer.length}</span>
-            </div>
-            <div className="modal-body">
-              <div className="tabla-container-modal">
-                <table className="tabla-modal">
-                  <thead>
+          {/* Artículos más empeñados */}
+          <div className="nueva-seccion">
+            <h2>
+              <LocalOfferIcon />
+              Artículos Más Empeñados
+            </h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
+                  <tr>
+                    <th>Artículo</th>
+                    <th>Categoría</th>
+                    <th>Cantidad</th>
+                    <th>Monto Promedio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dashboardData.top_articulos?.map((articulo, index) => (
+                    <tr key={index}>
+                      <td><strong>{articulo.nombre}</strong></td>
+                      <td>{articulo.categoria}</td>
+                      <td>{articulo.cantidad}</td>
+                      <td>{formatearMoneda(articulo.monto_promedio)}</td>
+                    </tr>
+                  ))}
+                  {dashboardData.top_articulos?.length === 0 && (
                     <tr>
-                      <th>Cliente</th>
-                      <th>Artículo</th>
-                      <th>Monto</th>
-                      <th>Vence</th>
-                      <th>Días</th>
+                      <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {proximosVencer.map(item => (
-                      <tr key={item.id_empreno}>
-                        <td><strong>{item.cliente}</strong></td>
-                        <td>{item.nombre}</td>
-                        <td>${item.monto.toLocaleString()}</td>
-                        <td>{item.fecha}</td>
-                        <td><span className="badge-warning">{item.dias} días</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  )}
+                </tbody>
+              </table>
             </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowProximos(false)}>
-                Cerrar
-              </button>
+          </div>
+
+          {/* Actividad Reciente */}
+          <div className="nueva-seccion">
+            <h2>
+              <HistoryIcon />
+              Actividad Reciente
+            </h2>
+            <div className="actividad-lista">
+              {dashboardData.actividad_reciente?.map((actividad, index) => (
+                <div key={index} className="actividad-item">
+                  {actividad.tipo === 'pago' ? (
+                    <CheckCircleIcon className="actividad-icon success" />
+                  ) : (
+                    <CelebrationIcon className="actividad-icon info" />
+                  )}
+                  <div className="actividad-detalle">
+                    <p><strong>{actividad.descripcion}</strong></p>
+                    <small>{formatFecha(actividad.fecha)}</small>
+                  </div>
+                  {actividad.monto && (
+                    <div className="actividad-monto">
+                      {formatearMoneda(actividad.monto)}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {dashboardData.actividad_reciente?.length === 0 && (
+                <div style={{ textAlign: 'center', padding: 20 }}>No hay actividad reciente</div>
+              )}
             </div>
           </div>
         </div>
-      )}
 
-      {/* MODAL DE ALERTAS con datos REALES */}
-      {showAlertas && (
-        <div className="modal-overlay" onClick={() => setShowAlertas(false)}>
-          <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowAlertas(false)}>
-              <CloseIcon />
-            </button>
-            <div className="modal-header">
-              <h2><NotificationsIcon /> Alertas y Notificaciones</h2>
-              <span className="cliente-id">Actualizadas hoy</span>
-            </div>
-            <div className="modal-body">
-              <div className="alertas-modal-lista">
-                <div className="alerta-modal-item warning">
-                  <WarningIcon className="alerta-modal-icon" />
-                  <div className="alerta-modal-contenido">
-                    <h4>{dashboardData.resumen?.proximos_vencer} empeños por vencer esta semana</h4>
-                    <p>Próximos a vencer: Revisa el detalle</p>
-                    <small>Vencen en los próximos 7 días</small>
+        {/* MODALES (se mantienen igual) */}
+        {showPerfil && (
+          <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
+            <div className="modal-detalle modal-perfil" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowPerfil(false)}><CloseIcon /></button>
+              <div className="modal-header perfil-header">
+                <h2>Mi Perfil</h2>
+                <span className="cliente-id">Información personal</span>
+              </div>
+              <div className="modal-body">
+                <div className="perfil-container">
+                  <div className="perfil-avatar">
+                    <img src={datosPerfil.fotoPerfil} alt={datosPerfil.nombre} />
                   </div>
-                </div>
-
-                <div className="alerta-modal-item danger">
-                  <ErrorIcon className="alerta-modal-icon" />
-                  <div className="alerta-modal-contenido">
-                    <h4>{dashboardData.resumen?.empenos_vencidos} empeños vencidos requieren atención</h4>
-                    <p>Monto total vencido: ${(dashboardData.resumen?.empenos_vencidos * 5000).toLocaleString()}</p>
-                    <small>Requieren acción inmediata</small>
-                  </div>
-                </div>
-
-                <div className="alerta-modal-item info">
-                  <AttachMoneyIcon className="alerta-modal-icon" />
-                  <div className="alerta-modal-contenido">
-                    <h4>Ingresos del mes: ${(dashboardData.resumen?.ingresos_mes_actual || 0).toLocaleString()}</h4>
-                    <p>Meta mensual: $100,000</p>
-                    <div className="progreso-barra">
-                      <div className="progreso-lleno" style={{ width: `${(dashboardData.resumen?.ingresos_mes_actual / 100000 * 100) || 0}%` }}></div>
+                  <div className="perfil-info-grid">
+                    <div className="perfil-info-item">
+                      <span className="perfil-label">Nombre completo</span>
+                      <span className="perfil-valor">{datosPerfil.nombre}</span>
+                    </div>
+                    <div className="perfil-info-item">
+                      <span className="perfil-label">Email</span>
+                      <span className="perfil-valor">{datosPerfil.email}</span>
+                    </div>
+                    <div className="perfil-info-item">
+                      <span className="perfil-label">Teléfono</span>
+                      <span className="perfil-valor">{datosPerfil.telefono}</span>
+                    </div>
+                    <div className="perfil-info-item">
+                      <span className="perfil-label">Rol</span>
+                      <span className="perfil-valor">{datosPerfil.rol}</span>
+                    </div>
+                    <div className="perfil-info-item">
+                      <span className="perfil-label">Sucursal</span>
+                      <span className="perfil-valor">{datosPerfil.sucursal}</span>
+                    </div>
+                    <div className="perfil-info-item">
+                      <span className="perfil-label">Miembro desde</span>
+                      <span className="perfil-valor">{datosPerfil.fechaRegistro}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowAlertas(false)}>
-                Cerrar
-              </button>
+          </div>
+        )}
+
+        {/* MODAL DE EMPEÑOS ACTIVOS */}
+        {showActivos && (
+          <div className="modal-overlay" onClick={() => setShowActivos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowActivos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><AssignmentIcon /> Empeños Activos</h2>
+                <span className="cliente-id">Total: {empenosActivos.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Fecha</th></tr></thead>
+                    <tbody>
+                      {empenosActivos.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowActivos(false)}>Cerrar</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
+        )}
 
-export default Dueno;
+        {/* MODAL DE EMPEÑOS VENCIDOS */}
+        {showVencidos && (
+          <div className="modal-overlay" onClick={() => setShowVencidos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowVencidos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><WarningIcon /> Empeños Vencidos</h2>
+                <span className="cliente-id">Total: {empenosVencidos.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vencido</th><th>Días</th></tr></thead>
+                    <tbody>
+                      {empenosVencidos.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                          <td><span className="badge-danger">{item.dias} días</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowVencidos(false)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL DE PRÓXIMOS A VENCER */}
+        {showProximos && (
+          <div className="modal-overlay" onClick={() => setShowProximos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowProximos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><AccessTimeIcon /> Próximos a Vencer</h2>
+                <span className="cliente-id">Total: {proximosVencer.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vence</th><th>Días</th></tr></thead>
+                    <tbody>
+                      {proximosVencer.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                          <td><span className="badge-warning">{item.dias} días</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowProximos(false)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL DE PRECIOS DEL ORO POR QUILATE */}
+  {showPrecioOroModal && (
+    <div className="modal-overlay" onClick={() => setShowPrecioOroModal(false)}>
+      <div className="modal-detalle modal-oro" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-cerrar" onClick={() => setShowPrecioOroModal(false)}>
+          <CloseIcon />
+        </button>
+        
+        <div className="modal-header oro-header">
+          <h2>
+            <MonetizationOnIcon /> 
+            Precios del Oro por Quilate
+          </h2>
+          {preciosQuilates.ultima_actualizacion && (
+            <span className="cliente-id">
+              Actualizado: {new Date(preciosQuilates.ultima_actualizacion).toLocaleString('es-MX')}
+            </span>
+          )}
+        </div>
+
+        <div className="modal-body">
+          <div className="quilates-grid">
+            <div className="quilate-card quilate-24k">
+              <div className="quilate-info">
+                <h3>Oro 24k</h3>
+                <p>99.9% pureza</p>
+              </div>
+              <div className="quilate-precio">
+                <span className="precio">${preciosQuilates.precio_24k?.toLocaleString()}</span>
+                <span className="unidad">/ gramo</span>
+              </div>
+            </div>
+
+            <div className="quilate-card quilate-22k">
+              <div className="quilate-info">
+                <h3>Oro 22k</h3>
+                <p>91.7% pureza</p>
+              </div>
+              <div className="quilate-precio">
+                <span className="precio">${preciosQuilates.precio_22k?.toLocaleString()}</span>
+                <span className="unidad">/ gramo</span>
+              </div>
+            </div>
+
+            <div className="quilate-card quilate-21k">
+              <div className="quilate-info">
+                <h3>Oro 21k</h3>
+                <p>87.5% pureza</p>
+              </div>
+              <div className="quilate-precio">
+                <span className="precio">${preciosQuilates.precio_21k?.toLocaleString()}</span>
+                <span className="unidad">/ gramo</span>
+              </div>
+            </div>
+
+            <div className="quilate-card quilate-18k">
+              <div className="quilate-info">
+                <h3>Oro 18k</h3>
+                <p>75.0% pureza</p>
+              </div>
+              <div className="quilate-precio">
+                <span className="precio">${preciosQuilates.precio_18k?.toLocaleString()}</span>
+                <span className="unidad">/ gramo</span>
+              </div>
+            </div>
+
+            <div className="quilate-card quilate-14k">
+              <div className="quilate-info">
+                <h3>Oro 14k</h3>
+                <p>58.5% pureza</p>
+              </div>
+              <div className="quilate-precio">
+                <span className="precio">${preciosQuilates.precio_14k?.toLocaleString()}</span>
+                <span className="unidad">/ gramo</span>
+              </div>
+            </div>
+
+            <div className="quilate-card quilate-10k">
+              <div className="quilate-info">
+                <h3>Oro 10k</h3>
+                <p>41.7% pureza</p>
+              </div>
+              <div className="quilate-precio">
+                <span className="precio">${preciosQuilates.precio_10k?.toLocaleString()}</span>
+                <span className="unidad">/ gramo</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="oro-nota">
+            <small>
+              ℹ️ Los precios son referenciales basados en el precio del oro de 24k.
+              El precio final puede variar según la joyería y el mercado.
+            </small>
+          </div>
+        </div>
+
+        <div className="modal-acciones">
+          <button className="btn-cerrar" onClick={() => setShowPrecioOroModal(false)}>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
+        {/* MODAL DE ALERTAS */}
+        {showAlertas && (
+          <div className="modal-overlay" onClick={() => setShowAlertas(false)}>
+            <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowAlertas(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><NotificationsIcon /> Alertas y Notificaciones</h2>
+                <span className="cliente-id">Actualizadas hoy</span>
+              </div>
+              <div className="modal-body">
+                <div className="alertas-modal-lista">
+                  <div className="alerta-modal-item warning">
+                    <WarningIcon className="alerta-modal-icon" />
+                    <div className="alerta-modal-contenido">
+                      <h4>{dashboardData.resumen?.proximos_vencer} empeños por vencer esta semana</h4>
+                      <p>Próximos a vencer: Revisa el detalle</p>
+                      <small>Vencen en los próximos 7 días</small>
+                    </div>
+                  </div>
+                  <div className="alerta-modal-item danger">
+                    <ErrorIcon className="alerta-modal-icon" />
+                    <div className="alerta-modal-contenido">
+                      <h4>{dashboardData.resumen?.empenos_vencidos} empeños vencidos requieren atención</h4>
+                      <p>Monto total vencido: {formatearMoneda(dashboardData.resumen?.perdida_total)}</p>
+                      <small>Requieren acción inmediata</small>
+                    </div>
+                  </div>
+                  <div className="alerta-modal-item info">
+                    <AttachMoneyIcon className="alerta-modal-icon" />
+                    <div className="alerta-modal-contenido">
+                      <h4>Ingresos del mes: {formatearMoneda(dashboardData.resumen?.ingresos_mes_actual || 0)}</h4>
+                      <p>Meta mensual: $100,000</p>
+                      <div className="progreso-barra">
+                        <div className="progreso-lleno" style={{ width: `${(dashboardData.resumen?.ingresos_mes_actual / 100000 * 100) || 0}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowAlertas(false)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  export default Dueno;

@@ -14,7 +14,6 @@ import {
   LocalShipping as LocalShippingIcon,
   BarChart as BarChartIcon,
   Settings as SettingsIcon,
-  Business as BusinessIcon,
   Assignment as AssignmentIcon,
   AdminPanelSettings as AdminPanelSettingsIcon,
   CheckCircle as CheckCircleIcon,
@@ -23,173 +22,22 @@ import {
   Category as CategoryIcon,
   AccountBalance as AccountBalanceIcon,
   ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import Sidebar from "../components/Sidebar";
+import permisoService from "../services/permisoService";
 import './Permisos.css';
 
 const Permisos = () => {
-  // Estado para los permisos
-  const [permisos, setPermisos] = useState([
-    {
-      id: 1,
-      nombre: 'Ver Usuarios',
-      codigo: 'view_users',
-      descripcion: 'Permite visualizar la lista de usuarios',
-      categoria: 'Usuarios',
-      estado: 'activo'
-    },
-    {
-      id: 2,
-      nombre: 'Crear Usuarios',
-      codigo: 'create_users',
-      descripcion: 'Permite crear nuevos usuarios en el sistema',
-      categoria: 'Usuarios',
-      estado: 'activo'
-    },
-    {
-      id: 3,
-      nombre: 'Editar Usuarios',
-      codigo: 'edit_users',
-      descripcion: 'Permite modificar información de usuarios',
-      categoria: 'Usuarios',
-      estado: 'activo'
-    },
-    {
-      id: 4,
-      nombre: 'Eliminar Usuarios',
-      codigo: 'delete_users',
-      descripcion: 'Permite eliminar usuarios del sistema',
-      categoria: 'Usuarios',
-      estado: 'inactivo'
-    },
-    {
-      id: 5,
-      nombre: 'Ver Roles',
-      codigo: 'view_roles',
-      descripcion: 'Permite visualizar la lista de roles',
-      categoria: 'Roles',
-      estado: 'activo'
-    },
-    {
-      id: 6,
-      nombre: 'Gestionar Roles',
-      codigo: 'manage_roles',
-      descripcion: 'Permite crear, editar y eliminar roles',
-      categoria: 'Roles',
-      estado: 'activo'
-    },
-    {
-      id: 7,
-      nombre: 'Ver Ventas',
-      codigo: 'view_sales',
-      descripcion: 'Permite visualizar las ventas realizadas',
-      categoria: 'Ventas',
-      estado: 'activo'
-    },
-    {
-      id: 8,
-      nombre: 'Crear Ventas',
-      codigo: 'create_sales',
-      descripcion: 'Permite realizar nuevas ventas',
-      categoria: 'Ventas',
-      estado: 'activo'
-    },
-    {
-      id: 9,
-      nombre: 'Anular Ventas',
-      codigo: 'cancel_sales',
-      descripcion: 'Permite anular ventas existentes',
-      categoria: 'Ventas',
-      estado: 'inactivo'
-    },
-    {
-      id: 10,
-      nombre: 'Ver Productos',
-      codigo: 'view_products',
-      descripcion: 'Permite visualizar el catálogo de productos',
-      categoria: 'Productos',
-      estado: 'activo'
-    },
-    {
-      id: 11,
-      nombre: 'Gestionar Productos',
-      codigo: 'manage_products',
-      descripcion: 'Permite crear, editar y eliminar productos',
-      categoria: 'Productos',
-      estado: 'activo'
-    },
-    {
-      id: 12,
-      nombre: 'Ver Reportes',
-      codigo: 'view_reports',
-      descripcion: 'Permite visualizar los reportes del sistema',
-      categoria: 'Reportes',
-      estado: 'activo'
-    },
-    {
-      id: 13,
-      nombre: 'Exportar Reportes',
-      codigo: 'export_reports',
-      descripcion: 'Permite exportar reportes a diferentes formatos',
-      categoria: 'Reportes',
-      estado: 'activo'
-    },
-    {
-      id: 14,
-      nombre: 'Configuración',
-      codigo: 'settings',
-      descripcion: 'Acceso a la configuración del sistema',
-      categoria: 'Sistema',
-      estado: 'activo'
-    },
-    {
-      id: 15,
-      nombre: 'Auditoría',
-      codigo: 'audit',
-      descripcion: 'Permite ver los logs de auditoría',
-      categoria: 'Sistema',
-      estado: 'activo'
-    },
-    {
-      id: 16,
-      nombre: 'Gestión de Caja',
-      codigo: 'cash_management',
-      descripcion: 'Permite gestionar operaciones de caja',
-      categoria: 'Finanzas',
-      estado: 'activo'
-    },
-    {
-      id: 17,
-      nombre: 'Proveedores',
-      codigo: 'suppliers',
-      descripcion: 'Gestión de proveedores',
-      categoria: 'Compras',
-      estado: 'activo'
-    },
-    {
-      id: 18,
-      nombre: 'Empresa',
-      codigo: 'company',
-      descripcion: 'Configuración de la empresa',
-      categoria: 'Sistema',
-      estado: 'activo'
-    }
-  ]);
-
+  // Estado para los permisos desde la BD
+  const [permisos, setPermisos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   // Estado para categorías
-  const [categorias] = useState([
-    'Usuarios',
-    'Roles',
-    'Ventas',
-    'Productos',
-    'Inventario',
-    'Reportes',
-    'Sistema',
-    'Finanzas',
-    'Compras'
-  ]);
-
+  const [categorias, setCategorias] = useState([]);
+  
   // Estados para modales
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('');
@@ -197,23 +45,53 @@ const Permisos = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('todas');
   const [filtroEstado, setFiltroEstado] = useState('todos');
-
+  
   // Estados para paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-
+  
   // Estado para formulario de permiso
   const [formPermiso, setFormPermiso] = useState({
     nombre: '',
     codigo: '',
     descripcion: '',
-    categoria: 'Sistema',
+    modulo: 'general',
     estado: 'activo'
   });
-
+  
   // Estado para selección múltiple
   const [selectedPermisos, setSelectedPermisos] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
+  
+  // Estado para formulario masivo
+  const [formBulk, setFormBulk] = useState({
+    nombres: '',
+    modulo: 'general',
+    descripcionBase: '',
+    estado: 'activo'
+  });
+
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    cargarPermisos();
+  }, []);
+
+  const cargarPermisos = async () => {
+    try {
+      setLoading(true);
+      const response = await permisoService.obtenerPermisos();
+      setPermisos(response.data.data);
+      
+      // Extraer categorías únicas
+      const categoriasUnicas = [...new Set(response.data.data.map(p => p.modulo))];
+      setCategorias(categoriasUnicas);
+    } catch (error) {
+      console.error('Error cargando permisos:', error);
+      setError('No se pudieron cargar los permisos');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Reiniciar a página 1 cuando cambian los filtros
   useEffect(() => {
@@ -225,16 +103,16 @@ const Permisos = () => {
     totalPermisos: permisos.length,
     activos: permisos.filter(p => p.estado === 'activo').length,
     inactivos: permisos.filter(p => p.estado === 'inactivo').length,
-    categorias: new Set(permisos.map(p => p.categoria)).size
+    categorias: categorias.length
   };
 
   // Filtrar permisos
   const filteredPermisos = permisos.filter(permiso => {
-    const matchesSearch = permiso.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         permiso.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         permiso.descripcion.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = permiso.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         permiso.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         permiso.descripcion?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategoria = filtroCategoria === 'todas' || permiso.categoria === filtroCategoria;
+    const matchesCategoria = filtroCategoria === 'todas' || permiso.modulo === filtroCategoria;
     const matchesEstado = filtroEstado === 'todos' || permiso.estado === filtroEstado;
     
     return matchesSearch && matchesCategoria && matchesEstado;
@@ -293,15 +171,15 @@ const Permisos = () => {
         nombre: permiso.nombre,
         codigo: permiso.codigo,
         descripcion: permiso.descripcion,
-        categoria: permiso.categoria,
-        estado: permiso.estado
+        modulo: permiso.modulo,
+        estado: permiso.estado || 'activo'
       });
     } else {
       setFormPermiso({
         nombre: '',
         codigo: '',
         descripcion: '',
-        categoria: 'Sistema',
+        modulo: 'general',
         estado: 'activo'
       });
     }
@@ -311,9 +189,9 @@ const Permisos = () => {
   // Abrir modal de creación masiva
   const openBulkModal = () => {
     setModalType('bulk');
-    setFormPermiso({
+    setFormBulk({
       nombres: '',
-      categoria: 'Sistema',
+      modulo: 'general',
       descripcionBase: '',
       estado: 'activo'
     });
@@ -350,97 +228,132 @@ const Permisos = () => {
     }
   };
 
+  // Manejar cambio en formulario masivo
+  const handleBulkInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormBulk(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   // Guardar permiso
-  const handleSavePermiso = () => {
+  const handleSavePermiso = async () => {
     if (!formPermiso.nombre || !formPermiso.codigo || !formPermiso.descripcion) {
       alert('Por favor completa todos los campos requeridos');
       return;
     }
 
-    const codigoExists = permisos.some(p => 
-      p.codigo === formPermiso.codigo && 
-      (!selectedPermiso || p.id !== selectedPermiso.id)
-    );
-
-    if (codigoExists) {
-      alert('Ya existe un permiso con este código');
-      return;
+    try {
+      if (modalType === 'new') {
+        await permisoService.crearPermiso({
+          nombre: formPermiso.nombre,
+          codigo: formPermiso.codigo,
+          descripcion: formPermiso.descripcion,
+          modulo: formPermiso.modulo
+        });
+      } else if (modalType === 'edit' && selectedPermiso) {
+        await permisoService.actualizarPermiso(selectedPermiso.id, {
+          nombre: formPermiso.nombre,
+          codigo: formPermiso.codigo,
+          descripcion: formPermiso.descripcion,
+          modulo: formPermiso.modulo
+        });
+      }
+      await cargarPermisos(); // Recargar la lista
+      closeModal();
+    } catch (error) {
+      console.error('Error guardando permiso:', error);
+      alert(error.response?.data?.message || 'Error al guardar el permiso');
     }
-
-    if (modalType === 'new') {
-      const nuevoPermiso = {
-        id: permisos.length + 1,
-        ...formPermiso
-      };
-      setPermisos([...permisos, nuevoPermiso]);
-    } else if (modalType === 'edit' && selectedPermiso) {
-      const updatedPermisos = permisos.map(permiso =>
-        permiso.id === selectedPermiso.id
-          ? { ...permiso, ...formPermiso }
-          : permiso
-      );
-      setPermisos(updatedPermisos);
-    }
-    closeModal();
   };
 
   // Guardar permisos masivos
-  const handleSaveBulkPermisos = () => {
-    if (!formPermiso.nombres) {
+  const handleSaveBulkPermisos = async () => {
+    if (!formBulk.nombres) {
       alert('Por favor ingresa los nombres de los permisos');
       return;
     }
 
-    const nombresList = formPermiso.nombres.split('\n').filter(n => n.trim());
-    const nuevosPermisos = nombresList.map((nombre, index) => {
+    const nombresList = formBulk.nombres.split('\n').filter(n => n.trim());
+    let errores = 0;
+    
+    for (const nombre of nombresList) {
       const codigo = nombre
         .toLowerCase()
         .replace(/[^a-z0-9]/g, '_')
         .replace(/_+/g, '_')
         .replace(/^_|_$/g, '');
-
-      return {
-        id: permisos.length + index + 1,
-        nombre: nombre.trim(),
-        codigo: codigo,
-        descripcion: formPermiso.descripcionBase || `Permiso para ${nombre.trim()}`,
-        categoria: formPermiso.categoria,
-        estado: formPermiso.estado
-      };
-    });
-
-    setPermisos([...permisos, ...nuevosPermisos]);
+      
+      try {
+        await permisoService.crearPermiso({
+          nombre: nombre.trim(),
+          codigo: codigo,
+          descripcion: formBulk.descripcionBase || `Permiso para ${nombre.trim()}`,
+          modulo: formBulk.modulo
+        });
+      } catch (error) {
+        errores++;
+        console.error(`Error creando permiso ${nombre}:`, error);
+      }
+    }
+    
+    await cargarPermisos();
     closeModal();
+    
+    if (errores > 0) {
+      alert(`Se crearon ${nombresList.length - errores} permisos. ${errores} errores.`);
+    } else {
+      alert(`Se crearon ${nombresList.length} permisos exitosamente.`);
+    }
   };
 
   // Eliminar permiso
-  const handleDeletePermiso = () => {
-    const updatedPermisos = permisos.filter(p => p.id !== selectedPermiso.id);
-    setPermisos(updatedPermisos);
-    closeModal();
+  const handleDeletePermiso = async () => {
+    try {
+      await permisoService.eliminarPermiso(selectedPermiso.id);
+      await cargarPermisos();
+      closeModal();
+    } catch (error) {
+      console.error('Error eliminando permiso:', error);
+      alert(error.response?.data?.message || 'Error al eliminar el permiso');
+    }
   };
 
   // Eliminar múltiples permisos
-  const handleDeleteSelected = () => {
+  const handleDeleteSelected = async () => {
     if (selectedPermisos.length === 0) return;
     
     const confirmDelete = window.confirm(`¿Estás seguro de eliminar ${selectedPermisos.length} permiso(s)?`);
     if (confirmDelete) {
-      const updatedPermisos = permisos.filter(p => !selectedPermisos.includes(p.id));
-      setPermisos(updatedPermisos);
+      let errores = 0;
+      for (const id of selectedPermisos) {
+        try {
+          await permisoService.eliminarPermiso(id);
+        } catch (error) {
+          errores++;
+        }
+      }
+      await cargarPermisos();
       setSelectedPermisos([]);
       setSelectAll(false);
+      
+      if (errores > 0) {
+        alert(`Se eliminaron ${selectedPermisos.length - errores} permisos. ${errores} errores.`);
+      }
     }
   };
 
   // Cambiar estado
-  const toggleEstado = (permisoId) => {
-    const updatedPermisos = permisos.map(p =>
-      p.id === permisoId
-        ? { ...p, estado: p.estado === 'activo' ? 'inactivo' : 'activo' }
-        : p
-    );
-    setPermisos(updatedPermisos);
+  const toggleEstado = async (permisoId, currentEstado) => {
+    try {
+      const nuevoEstado = currentEstado === 'activo' ? 'inactivo' : 'activo';
+      await permisoService.actualizarPermiso(permisoId, { estado: nuevoEstado });
+      await cargarPermisos();
+    } catch (error) {
+      console.error('Error cambiando estado:', error);
+      alert('Error al cambiar el estado del permiso');
+    }
   };
 
   // Seleccionar todos
@@ -463,18 +376,19 @@ const Permisos = () => {
     }
   };
 
-  // Obtener icono por categoría
-  const getIconByCategoria = (categoria) => {
-    switch(categoria) {
-      case 'Usuarios': return <PeopleIcon />;
-      case 'Roles': return <AdminPanelSettingsIcon />;
-      case 'Ventas': return <AttachMoneyIcon />;
-      case 'Productos': return <InventoryIcon />;
-      case 'Inventario': return <AssignmentIcon />;
-      case 'Reportes': return <BarChartIcon />;
-      case 'Finanzas': return <AccountBalanceIcon />;
-      case 'Sistema': return <SettingsIcon />;
-      case 'Compras': return <LocalShippingIcon />;
+  // Obtener icono por módulo
+  const getIconByModulo = (modulo) => {
+    const moduloLower = modulo?.toLowerCase() || '';
+    switch(moduloLower) {
+      case 'usuarios': return <PeopleIcon />;
+      case 'roles': return <AdminPanelSettingsIcon />;
+      case 'ventas': return <AttachMoneyIcon />;
+      case 'productos': return <InventoryIcon />;
+      case 'inventario': return <AssignmentIcon />;
+      case 'reportes': return <BarChartIcon />;
+      case 'finanzas': return <AccountBalanceIcon />;
+      case 'sistema': return <SettingsIcon />;
+      case 'compras': return <LocalShippingIcon />;
       default: return <KeyIcon />;
     }
   };
@@ -484,6 +398,37 @@ const Permisos = () => {
       ? <span className="badge-estado activo"><CheckCircleIcon fontSize="small" /> Activo</span>
       : <span className="badge-estado inactivo"><CancelIcon fontSize="small" /> Inactivo</span>;
   };
+
+  if (loading) {
+    return (
+      <div className="app-container">
+        <Sidebar />
+        <div className="main-content">
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Cargando permisos...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="app-container">
+        <Sidebar />
+        <div className="main-content">
+          <div className="error-container">
+            <h3>Error</h3>
+            <p>{error}</p>
+            <button onClick={cargarPermisos} className="btn-reintentar">
+              <RefreshIcon /> Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
@@ -510,7 +455,7 @@ const Permisos = () => {
             </div>
           </div>
 
-          {/* Stats - MODIFICADO */}
+          {/* Stats */}
           <div className="permisos-stats">
             <div className="stat-card">
               <div className="stat-icon dueño-bg">
@@ -610,7 +555,7 @@ const Permisos = () => {
                   <th>Categoría</th>
                   <th>Estado</th>
                   <th className="text-center">Acciones</th>
-                </tr>
+                 </tr>
               </thead>
               <tbody>
                 {currentItems.length > 0 ? (
@@ -626,7 +571,7 @@ const Permisos = () => {
                       <td>
                         <div className="permiso-nombre-cell">
                           <span className="permiso-icon">
-                            {getIconByCategoria(permiso.categoria)}
+                            {getIconByModulo(permiso.modulo)}
                           </span>
                           <div>
                             <strong>{permiso.nombre}</strong>
@@ -638,12 +583,12 @@ const Permisos = () => {
                         <code className="permiso-codigo">{permiso.codigo}</code>
                       </td>
                       <td>
-                        <span className="badge-categoria">{permiso.categoria}</span>
+                        <span className="badge-categoria">{permiso.modulo}</span>
                       </td>
                       <td>
                         <button 
                           className={`estado-toggle ${permiso.estado}`}
-                          onClick={() => toggleEstado(permiso.id)}
+                          onClick={() => toggleEstado(permiso.id, permiso.estado)}
                           title="Click para cambiar estado"
                         >
                           {getEstadoBadge(permiso.estado)}
@@ -731,211 +676,404 @@ const Permisos = () => {
           </div>
         </div>
       </div>
-
-      {/* Modales */}
-      {showModal && (
-        <div className="modal-overlay">
-          <div className={`modal-container modal-permiso ${modalType === 'delete' ? 'modal-delete' : ''} ${modalType === 'bulk' ? 'modal-bulk' : ''}`}>
+      {/* MODAL NUEVO PERMISO */}
+      {modalType === 'new' && showModal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={closeModal}>
+              <CloseIcon />
+            </button>
+            
             <div className="modal-header">
               <h2>
-                {modalType === 'new' && 'Nuevo Permiso'}
-                {modalType === 'edit' && 'Editar Permiso'}
-                {modalType === 'view' && 'Detalles del Permiso'}
-                {modalType === 'delete' && 'Eliminar Permiso'}
-                {modalType === 'bulk' && 'Crear múltiples permisos'}
+                <AddIcon />
+                Nuevo Permiso
               </h2>
-              <button className="modal-close" onClick={closeModal}>
-                    <CloseIcon />
-                </button>
             </div>
 
             <div className="modal-body">
-              {modalType === 'delete' ? (
-                <div className="delete-confirm">
-                  <WarningIcon className="delete-icon" />
-                  <h3>¿Estás seguro de eliminar este permiso?</h3>
-                  <p>
-                    Estás a punto de eliminar el permiso <strong>"{selectedPermiso?.nombre}"</strong>
-                  </p>
-                  <p className="delete-warning">
-                    <WarningIcon fontSize="small" />
-                    Esta acción podría afectar a los roles que utilizan este permiso
-                  </p>
+              <div className="form-grid">
+                <div className="form-group full-width">
+                  <label>Nombre del Permiso *</label>
+                  <input
+                    type="text"
+                    name="nombre"
+                    value={formPermiso.nombre}
+                    onChange={handleInputChange}
+                    placeholder="Ej: Ver Usuarios"
+                    required
+                  />
                 </div>
-              ) : modalType === 'bulk' ? (
-                <div className="bulk-form">
-                  <div className="form-group">
-                    <label>Nombres de Permisos *</label>
-                    <textarea
-                      name="nombres"
-                      value={formPermiso.nombres || ''}
-                      onChange={handleInputChange}
-                      placeholder="Ingresa un nombre por línea&#10;Ej:&#10;Ver Informes&#10;Crear Informes&#10;Exportar Informes"
-                      className="form-control"
-                      rows="6"
-                    />
-                    <small className="form-help">Cada línea será un permiso diferente</small>
-                  </div>
 
-                  <div className="form-group">
-                    <label>Categoría</label>
-                    <select
-                      name="categoria"
-                      value={formPermiso.categoria}
-                      onChange={handleInputChange}
-                      className="form-control"
-                    >
-                      {categorias.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Descripción Base (opcional)</label>
-                    <input
-                      type="text"
-                      name="descripcionBase"
-                      value={formPermiso.descripcionBase || ''}
-                      onChange={handleInputChange}
-                      placeholder="Descripción que se aplicará a todos"
-                      className="form-control"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Estado por defecto</label>
-                    <select
-                      name="estado"
-                      value={formPermiso.estado}
-                      onChange={handleInputChange}
-                      className="form-control"
-                    >
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
-                  </div>
+                <div className="form-group full-width">
+                  <label>Código del Permiso *</label>
+                  <input
+                    type="text"
+                    name="codigo"
+                    value={formPermiso.codigo}
+                    onChange={handleInputChange}
+                    placeholder="Ej: view_users"
+                    required
+                  />
+                  <small className="form-help">Identificador único para el permiso</small>
                 </div>
-              ) : modalType === 'view' ? (
-                <div className="permiso-detalle">
-                  <div className="detalle-grid">
-                    <div className="detalle-item">
-                      <span className="detalle-label">Nombre</span>
-                      <span className="detalle-valor">{selectedPermiso?.nombre}</span>
-                    </div>
-                    <div className="detalle-item">
-                      <span className="detalle-label">Código</span>
-                      <span className="detalle-valor">
-                        <code>{selectedPermiso?.codigo}</code>
-                      </span>
-                    </div>
-                    <div className="detalle-item">
-                      <span className="detalle-label">Categoría</span>
-                      <span className="detalle-valor">
-                        <span className="badge-categoria">{selectedPermiso?.categoria}</span>
-                      </span>
-                    </div>
-                    <div className="detalle-item">
-                      <span className="detalle-label">Estado</span>
-                      <span className="detalle-valor">
-                        {getEstadoBadge(selectedPermiso?.estado)}
-                      </span>
-                    </div>
-                    <div className="detalle-item full-width">
-                      <span className="detalle-label">Descripción</span>
-                      <span className="detalle-valor">{selectedPermiso?.descripcion}</span>
-                    </div>
-                  </div>
+
+                <div className="form-group">
+                  <label>Módulo / Categoría</label>
+                  <select
+                    name="modulo"
+                    value={formPermiso.modulo}
+                    onChange={handleInputChange}
+                  >
+                    {categorias.length > 0 ? categorias.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    )) : (
+                      <>
+                        <option value="general">General</option>
+                        <option value="usuarios">Usuarios</option>
+                        <option value="roles">Roles</option>
+                      </>
+                    )}
+                  </select>
                 </div>
-              ) : (
-                <div className="permiso-form">
-                  <div className="form-group">
-                    <label>Nombre del Permiso *</label>
-                    <input
-                      type="text"
-                      name="nombre"
-                      value={formPermiso.nombre}
-                      onChange={handleInputChange}
-                      placeholder="Ej: Ver Usuarios"
-                      className="form-control"
-                      autoFocus
-                    />
-                  </div>
 
-                  <div className="form-group">
-                    <label>Código del Permiso *</label>
-                    <input
-                      type="text"
-                      name="codigo"
-                      value={formPermiso.codigo}
-                      onChange={handleInputChange}
-                      placeholder="Ej: view_users"
-                      className="form-control"
-                    />
-                    <small className="form-help">Identificador único para el permiso</small>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Categoría</label>
-                      <select
-                        name="categoria"
-                        value={formPermiso.categoria}
-                        onChange={handleInputChange}
-                        className="form-control"
-                      >
-                        {categorias.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Estado</label>
-                      <select
-                        name="estado"
-                        value={formPermiso.estado}
-                        onChange={handleInputChange}
-                        className="form-control"
-                      >
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Descripción *</label>
-                    <textarea
-                      name="descripcion"
-                      value={formPermiso.descripcion}
-                      onChange={handleInputChange}
-                      placeholder="Describe la funcionalidad que otorga este permiso"
-                      className="form-control"
-                      rows="3"
-                    />
-                  </div>
+                <div className="form-group">
+                  <label>Estado</label>
+                  <select
+                    name="estado"
+                    value={formPermiso.estado}
+                    onChange={handleInputChange}
+                  >
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                  </select>
                 </div>
-              )}
+
+                <div className="form-group full-width">
+                  <label>Descripción *</label>
+                  <textarea
+                    name="descripcion"
+                    value={formPermiso.descripcion}
+                    onChange={handleInputChange}
+                    placeholder="Describe la funcionalidad que otorga este permiso"
+                    rows="3"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={closeModal}>
+            <div className="modal-acciones">
+              <button className="btn-editar" onClick={handleSavePermiso}>
+                <SaveIcon />
+                Guardar
+              </button>
+              <button className="btn-cancelar" onClick={closeModal}>
+                <CloseIcon />
                 Cancelar
               </button>
-              {modalType === 'delete' ? (
-                <button className="btn-danger" onClick={handleDeletePermiso}>
-                  <DeleteIcon /> Eliminar
-                </button>
-              ) : modalType === 'bulk' ? (
-                <button className="btn-primary" onClick={handleSaveBulkPermisos}>
-                  <SaveIcon /> Crear Permisos
-                </button>
-              ) : modalType !== 'view' && (
-                <button className="btn-primary" onClick={handleSavePermiso}>
-                  <SaveIcon /> Guardar
-                </button>
-              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================ */}
+      {/* MODAL EDITAR PERMISO */}
+      {/* ============================================ */}
+      {modalType === 'edit' && showModal && selectedPermiso && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={closeModal}>
+              <CloseIcon />
+            </button>
+            
+            <div className="modal-header">
+              <h2>
+                <EditIcon />
+                Editar Permiso: {selectedPermiso.nombre}
+              </h2>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-grid">
+                <div className="form-group full-width">
+                  <label>Nombre del Permiso *</label>
+                  <input
+                    type="text"
+                    name="nombre"
+                    value={formPermiso.nombre}
+                    onChange={handleInputChange}
+                    placeholder="Ej: Ver Usuarios"
+                    required
+                  />
+                </div>
+
+                <div className="form-group full-width">
+                  <label>Código del Permiso *</label>
+                  <input
+                    type="text"
+                    name="codigo"
+                    value={formPermiso.codigo}
+                    onChange={handleInputChange}
+                    placeholder="Ej: view_users"
+                    required
+                  />
+                  <small className="form-help">Identificador único para el permiso</small>
+                </div>
+
+                <div className="form-group">
+                  <label>Módulo / Categoría</label>
+                  <select
+                    name="modulo"
+                    value={formPermiso.modulo}
+                    onChange={handleInputChange}
+                  >
+                    {categorias.length > 0 ? categorias.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    )) : (
+                      <>
+                        <option value="general">General</option>
+                        <option value="usuarios">Usuarios</option>
+                        <option value="roles">Roles</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Estado</label>
+                  <select
+                    name="estado"
+                    value={formPermiso.estado}
+                    onChange={handleInputChange}
+                  >
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                  </select>
+                </div>
+
+                <div className="form-group full-width">
+                  <label>Descripción *</label>
+                  <textarea
+                    name="descripcion"
+                    value={formPermiso.descripcion}
+                    onChange={handleInputChange}
+                    placeholder="Describe la funcionalidad que otorga este permiso"
+                    rows="3"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-acciones">
+              <button className="btn-editar" onClick={handleSavePermiso}>
+                <SaveIcon />
+                Guardar Cambios
+              </button>
+              <button className="btn-cancelar" onClick={closeModal}>
+                <CloseIcon />
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DETALLE DE PERMISO */}
+      {modalType === 'view' && showModal && selectedPermiso && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={closeModal}>
+              <CloseIcon />
+            </button>
+            
+            <div className="modal-header">
+              <h2>
+                {getIconByModulo(selectedPermiso.modulo)}
+                {selectedPermiso.nombre}
+              </h2>
+              <span className={`badge-nivel ${selectedPermiso.estado === 'activo' ? 'activo' : 'inactivo'}`}>
+                {selectedPermiso.estado === 'activo' ? 'Activo' : 'Inactivo'}
+              </span>
+            </div>
+
+            <div className="modal-body">
+              <div className="rol-detalle-grid">
+                <div className="rol-info-section">
+                  <h3>Información del Permiso</h3>
+                  <div className="rol-info-item">
+                    <span className="rol-info-label">Nombre</span>
+                    <span className="rol-info-valor">{selectedPermiso.nombre}</span>
+                  </div>
+                  <div className="rol-info-item">
+                    <span className="rol-info-label">Código</span>
+                    <span className="rol-info-valor">
+                      <code>{selectedPermiso.codigo}</code>
+                    </span>
+                  </div>
+                  <div className="rol-info-item">
+                    <span className="rol-info-label">Módulo / Categoría</span>
+                    <span className="rol-info-valor">
+                      <span className="badge-categoria">{selectedPermiso.modulo}</span>
+                    </span>
+                  </div>
+                  <div className="rol-info-item">
+                    <span className="rol-info-label">Descripción</span>
+                    <span className="rol-info-valor">{selectedPermiso.descripcion || 'Sin descripción'}</span>
+                  </div>
+                </div>
+
+                <div className="rol-permisos-section">
+                  <h3>Detalles Adicionales</h3>
+                  <div className="rol-info-item">
+                    <span className="rol-info-label">Estado</span>
+                    <span className="rol-info-valor">
+                      {selectedPermiso.estado === 'activo' 
+                        ? <span className="badge-estado activo"><CheckCircleIcon fontSize="small" /> Activo</span>
+                        : <span className="badge-estado inactivo"><CancelIcon fontSize="small" /> Inactivo</span>}
+                    </span>
+                  </div>
+                  <div className="rol-info-item">
+                    <span className="rol-info-label">ID del Permiso</span>
+                    <span className="rol-info-valor">#{selectedPermiso.id}</span>
+                  </div>
+                  <div className="rol-info-item">
+                    <span className="rol-info-label">Roles que lo usan</span>
+                    <span className="rol-info-valor">0 roles</span>
+                  </div>
+                  <div className="rol-info-item">
+                    <span className="rol-info-label">Fecha de creación</span>
+                    <span className="rol-info-valor">{new Date().toLocaleDateString('es-MX')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-acciones">
+              <button 
+                className="btn-editar"
+                onClick={() => {
+                  closeModal();
+                  openModal('edit', selectedPermiso);
+                }}
+              >
+                <EditIcon />
+                Editar Permiso
+              </button>
+              <button className="btn-cancelar" onClick={closeModal}>
+                <CloseIcon />
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ELIMINAR PERMISO */}
+      {modalType === 'delete' && showModal && selectedPermiso && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icono warning">
+              <DeleteIcon />
+            </div>
+            <h3>¿Eliminar Permiso?</h3>
+            <p>Estás a punto de eliminar el permiso <strong>"{selectedPermiso.nombre}"</strong></p>
+            <p className="advertencia">Esta acción no se puede deshacer</p>
+            
+            <div className="modal-botones">
+              <button className="btn-cancelar" onClick={closeModal}>
+                Cancelar
+              </button>
+              <button className="btn-confirmar-eliminar" onClick={handleDeletePermiso}>
+                <DeleteIcon />
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CREAR MÚLTIPLES PERMISOS (BULK) */}
+      {modalType === 'bulk' && showModal && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-detalle" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <button className="modal-cerrar" onClick={closeModal}>
+              <CloseIcon />
+            </button>
+            
+            <div className="modal-header">
+              <h2>
+                <AddIcon />
+                Crear múltiples permisos
+              </h2>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-grid">
+                <div className="form-group full-width">
+                  <label>Nombres de Permisos *</label>
+                  <textarea
+                    name="nombres"
+                    value={formBulk.nombres}
+                    onChange={handleBulkInputChange}
+                    placeholder="Ingresa un nombre por línea&#10;Ej:&#10;Ver Informes&#10;Crear Informes&#10;Exportar Informes"
+                    rows="6"
+                  />
+                  <small className="form-help">Cada línea será un permiso diferente</small>
+                </div>
+
+                <div className="form-group">
+                  <label>Módulo / Categoría</label>
+                  <select
+                    name="modulo"
+                    value={formBulk.modulo}
+                    onChange={handleBulkInputChange}
+                  >
+                    {categorias.length > 0 ? categorias.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    )) : (
+                      <>
+                        <option value="general">General</option>
+                        <option value="usuarios">Usuarios</option>
+                        <option value="roles">Roles</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Estado por defecto</label>
+                  <select
+                    name="estado"
+                    value={formBulk.estado}
+                    onChange={handleBulkInputChange}
+                  >
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                  </select>
+                </div>
+
+                <div className="form-group full-width">
+                  <label>Descripción Base (opcional)</label>
+                  <input
+                    type="text"
+                    name="descripcionBase"
+                    value={formBulk.descripcionBase}
+                    onChange={handleBulkInputChange}
+                    placeholder="Descripción que se aplicará a todos"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-acciones">
+              <button className="btn-editar" onClick={handleSaveBulkPermisos}>
+                <SaveIcon />
+                Crear Permisos
+              </button>
+              <button className="btn-cancelar" onClick={closeModal}>
+                <CloseIcon />
+                Cancelar
+              </button>
             </div>
           </div>
         </div>

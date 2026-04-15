@@ -1,5 +1,6 @@
-// App.jsx - Versión corregida
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import OpheliaLogin from "./components/OpheliaLogin";
 import OpheliaRegister from "./components/OpheliaRegister";
 import LandingPage from "./components/LandingPage";
@@ -8,12 +9,12 @@ import OphelinaHome from "./Clientes/OphelinaHome";
 import MisEmpenos from "./Clientes/MisEmpenos";
 import OphelinaTienda from "./Clientes/OphelinaTienda"; 
 import Tarjetero from "./Clientes/Tarjetero"; 
+
 import Roles from "./Roles/Roles";
 import RolNuevo from "./Roles/RolNuevo";
 
-import Permisos from './Permisos/Permisos';
-import PermisoNuevo from './Permisos/PermisoNuevo';
-
+import Permisos from "./Permisos/Permisos";
+import PermisoNuevo from "./Permisos/PermisoNuevo";
 
 import Dueno from "./Home/Dueno";
 
@@ -34,7 +35,8 @@ import InventarioLista from "./DuenoInventario/InventarioLista";
 import NuevoInventario from "./DuenoInventario/NuevoInventario";
 
 import TiendaOnline from "./DuenoTienda/TiendaOnline";
-import Reporte from "./DuenoReporte/Reporte"; // Asegúrate que el import sea correcto
+import Reporte from "./DuenoReporte/Reporte";
+
 import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
@@ -42,69 +44,133 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Rutas públicas */}
+
+        {/* Públicas */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/loging" element={<OpheliaLogin />} />
-
-
-        {/* Clientes - Rutas de clientes */}
-        <Route path="/homecliente" element={<OphelinaHome />} />
-        <Route path="/misempenos" element={<MisEmpenos />} />
-        <Route path="/ophelina" element={<OphelinaTienda />} /> {/* 👈 NUEVA RUTA PARA LA TIENDA */}
-        <Route path="/tarjetas" element={<Tarjetero />} /> 
-
-        <Route path="/" element={<OpheliaLogin />} />
-
-        <Route path="/homecliente" element={<OphelinaHome />} />
-        <Route path="/misempenos" element={<MisEmpenos />} />
         <Route path="/login" element={<OpheliaLogin />} />
         <Route path="/register" element={<OpheliaRegister />} />
 
-        {/* Dashboard del dueño */}
-        <Route path="/home" element={<Dueno />} />
+        {/* CLIENTES */}
+        <Route path="/homecliente" element={
+          <ProtectedRoute>
+            <OphelinaHome />
+          </ProtectedRoute>
+        } />
 
-        {/* Clientes (dueño) */}
-        <Route path="/clientes" element={<ClientesLayout />}>
+        <Route path="/misempenos" element={
+          <ProtectedRoute>
+            <MisEmpenos />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/ophelina" element={
+          <ProtectedRoute>
+            <OphelinaTienda />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/tarjetas" element={
+          <ProtectedRoute>
+            <Tarjetero />
+          </ProtectedRoute>
+        } />
+
+        {/* DASHBOARD */}
+        <Route path="/home" element={
+          <ProtectedRoute>
+            <Dueno />
+          </ProtectedRoute>
+        } />
+
+        {/* CLIENTES ADMIN */}
+        <Route path="/clientes" element={
+          <ProtectedRoute>
+            <ClientesLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<ClientesLista />} />
           <Route path="nuevo" element={<ClienteNuevo />} />
         </Route>
 
-        {/* Pagos (dueño) */}
-        <Route path="/pagos" element={<PagosLayout />}>
+        {/* PAGOS */}
+        <Route path="/pagos" element={
+          <ProtectedRoute>
+            <PagosLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<PagosLista />} />
           <Route path="nuevo" element={<RegistrarPago />} />
         </Route>
 
-        {/* Empeños (dueño) */}
-        <Route path="/empenos" element={<EmpenosLayout />}>
+        {/* EMPEÑOS */}
+        <Route path="/empenos" element={
+          <ProtectedRoute>
+            <EmpenosLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<EmpenosLista />} />
           <Route path="nuevo" element={<NuevoEmpeno />} />
         </Route>
 
-        {/* Inventario (dueño) */}
-        <Route path="/inventario" element={<InventarioLayout />}>
+        {/* INVENTARIO */}
+        <Route path="/inventario" element={
+          <ProtectedRoute>
+            <InventarioLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<InventarioLista />} />
           <Route path="nuevo" element={<NuevoInventario />} />
         </Route>
 
-        {/* Configuración (dueño) */}
-        {/* Tienda Online */}
-        <Route path="/tienda" element={<TiendaOnline />} />     
-        
-        {/* Reportes - CORREGIDO: eliminé el Route vacío y cambié a /reportes */}
-        <Route path="/reportes" element={<Reporte />} />
+        {/* TIENDA */}
+        <Route path="/tienda" element={
+          <ProtectedRoute>
+            <TiendaOnline />
+          </ProtectedRoute>
+        } />
 
-           {/* roles */}
-        <Route path="/roles" element={<Roles />} />
-        <Route path="/roles/nuevo" element={<RolNuevo />} />
+        {/* REPORTES */}
+        <Route path="/reportes" element={
+          <ProtectedRoute>
+            <Reporte />
+          </ProtectedRoute>
+        } />
 
-        <Route path="/permisos" element={<Permisos />} />
-        <Route path="/permisos/nuevo" element={<PermisoNuevo />} />
+        {/* ROLES */}
+        <Route path="/roles" element={
+          <ProtectedRoute>
+            <Roles />
+          </ProtectedRoute>
+        } />
 
-        {/* Configuración */}
-        <Route path="/configuracion" element={<ConfiguracionesLayout />}>
+        <Route path="/roles/nuevo" element={
+          <ProtectedRoute>
+            <RolNuevo />
+          </ProtectedRoute>
+        } />
+
+        {/* PERMISOS */}
+        <Route path="/permisos" element={
+          <ProtectedRoute>
+            <Permisos />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/permisos/nuevo" element={
+          <ProtectedRoute>
+            <PermisoNuevo />
+          </ProtectedRoute>
+        } />
+
+        {/* CONFIGURACIÓN */}
+        <Route path="/configuracion" element={
+          <ProtectedRoute>
+            <ConfiguracionesLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<Configuraciones />} />
         </Route>
+
       </Routes>
     </Router>
   );
