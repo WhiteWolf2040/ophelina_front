@@ -107,18 +107,9 @@ export default function OpheliaLogin() {
           </button>
         </form>
 
-        <p className="sign-up-label">
-          ¿No tienes cuenta?{" "}
-          <Link to="/register" className="sign-up-link">
-            Regístrate
-          </Link>
-        </p>
+      
 
-        <div className="buttons-container">
-          <div className="google-login-button">
-            <span>Continuar con Google</span>
-          </div>
-        </div>
+       
       </div>
     </div>
   );
