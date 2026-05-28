@@ -87,7 +87,7 @@ body {
 
 /* CARDS SECTION */
 .cards-section {
-  margin-bottom: 30px;
+  margin-bottom: 1px;
   display: flex;
   justify-content: center;
   width: 100%;
@@ -95,27 +95,27 @@ body {
 
 .cards-grid {
   display: flex;
-  flex-wrap: wrap;
-  gap: 25px;
   justify-content: center;
-  align-items: stretch;
+  align-items: center;
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  gap: 25px;
+  padding-right: 1px;
 }
 
 .stat-card {
   background: var(--white);
   border-radius: 16px;
-  padding: 30px 25px;
   text-align: center;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 260px;
-  min-width: 240px;
+  flex: 1;
+  min-width: 200px;
+  max-width: 260px;
   transition: var(--transition);
   cursor: pointer;
 }
@@ -129,6 +129,7 @@ body {
   font-size: 24px;
   font-weight: 700;
   color: var(--gold-dark);
+  margin-top: 12px;
   margin-bottom: 0;
   line-height: 1.2;
   display: flex;
@@ -293,7 +294,6 @@ body {
   align-items: center;
   justify-content: center;
   min-width: 32px;
-  color: var(--primary-blue);
 }
 
 .activity-content {
@@ -330,17 +330,172 @@ body {
 
 /* ===== MEDIA QUERIES OPTIMIZADAS ===== */
 
+/* Pantallas grandes (1200px a 1600px) */
+@media screen and (min-width: 1200px) and (max-width: 1599px) {
+  .home-main {
+    max-width: 1100px;
+  }
+  
+  .cards-grid {
+    max-width: 1100px;
+    gap: 30px;
+  }
+  
+  .stat-card {
+    min-width: 220px;
+    max-width: 240px;
+    padding: 32px 25px;
+  }
+  
+  .stat-number {
+    font-size: 26px;
+    margin-top: 14px;
+  }
+  
+  .stat-card svg {
+    font-size: 52px !important;
+  }
+}
+
+/* Pantallas extra grandes (1600px en adelante) */
+@media screen and (min-width: 1600px) {
+  .home-main {
+    max-width: 1400px;
+  }
+  
+  .cards-grid {
+    max-width: 1400px;
+    gap: 35px;
+  }
+  
+  .stat-card {
+    min-width: 260px;
+    max-width: 280px;
+    padding: 35px 30px;
+  }
+  
+  .stat-number {
+    font-size: 28px;
+    margin-top: 16px;
+  }
+  
+  .stat-card svg {
+    font-size: 56px !important;
+  }
+  
+  .welcome-title {
+    font-size: 38px;
+  }
+  
+  .welcome-name {
+    font-size: 38px;
+  }
+  
+  .welcome-subtitle {
+    font-size: 18px;
+  }
+  
+  .contenido-section {
+    padding: 32px;
+  }
+  
+  .section-title {
+    font-size: 20px;
+    margin-bottom: 24px;
+  }
+  
+  .pawn-title {
+    font-size: 17px;
+  }
+  
+  .pawn-date {
+    font-size: 14px;
+  }
+  
+  .days-badge {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+  
+  .debt-row {
+    font-size: 16px;
+  }
+  
+  .total-row {
+    font-size: 18px;
+  }
+  
+  .total-amount {
+    font-size: 20px;
+  }
+  
+  .activity-title {
+    font-size: 16px;
+  }
+  
+  .activity-detail {
+    font-size: 14px;
+  }
+}
+
+/* Pantallas ultra grandes (2000px en adelante) */
+@media screen and (min-width: 2000px) {
+  .home-main {
+    max-width: 1600px;
+  }
+  
+  .cards-grid {
+    max-width: 1600px;
+    gap: 40px;
+  }
+  
+  .stat-card {
+    min-width: 300px;
+    max-width: 320px;
+    padding: 40px 35px;
+  }
+  
+  .stat-number {
+    font-size: 32px;
+    margin-top: 18px;
+  }
+  
+  .stat-card svg {
+    font-size: 64px !important;
+  }
+  
+  .welcome-title {
+    font-size: 42px;
+  }
+  
+  .welcome-name {
+    font-size: 42px;
+  }
+  
+  .welcome-subtitle {
+    font-size: 20px;
+  }
+  
+  .contenido-section {
+    padding: 38px;
+  }
+}
+
 /* Tablets y laptops pequeñas */
-@media screen and (max-width: 1024px) {
+@media screen and (max-width: 1199px) {
   .main-content {
     padding: 30px 16px;
   }
   
   .stat-card {
-    width: calc(50% - 12.5px);
     min-width: 200px;
-    max-width: 260px;
+    max-width: 240px;
     padding: 25px 20px;
+  }
+  
+  .stat-number {
+    font-size: 22px;
+    margin-top: 10px;
   }
 }
 
@@ -351,8 +506,8 @@ body {
   }
   
   .stat-card {
-    width: calc(50% - 10px);
     min-width: 180px;
+    max-width: 220px;
     padding: 22px 18px;
   }
   
@@ -363,6 +518,11 @@ body {
   
   .contenido-section {
     padding: 24px;
+  }
+  
+  .stat-number {
+    font-size: 20px;
+    margin-top: 10px;
   }
 }
 
@@ -381,13 +541,18 @@ body {
   }
   
   .stat-card {
-    width: calc(50% - 7.5px);
-    min-width: 140px;
+    min-width: 160px;
+    max-width: 200px;
     padding: 20px 15px;
   }
   
   .stat-card svg {
     font-size: 40px !important;
+  }
+  
+  .stat-number {
+    font-size: 18px;
+    margin-top: 8px;
   }
   
   .pawn-item {
@@ -406,39 +571,28 @@ body {
   .bottom-sections {
     gap: 15px;
   }
-  
-  .debt-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-  }
-  
-  .debt-amount, .total-amount {
-    align-self: flex-end;
-  }
-  
-  .activity-item {
-    gap: 10px;
-  }
 }
 
-/* Móviles medianos */
+/* Móviles */
 @media screen and (max-width: 600px) {
   .cards-grid {
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
+    gap: 12px;
   }
   
   .stat-card {
-    width: 100%;
-    max-width: 100%;
-    min-width: 100%;
-    padding: 20px;
+    min-width: calc(50% - 6px);
+    max-width: none;
+    flex: 1;
+    padding: 16px 12px;
   }
   
   .stat-card svg {
-    font-size: 48px !important;
+    font-size: 36px !important;
+  }
+  
+  .stat-number {
+    font-size: 16px;
+    margin-top: 6px;
   }
   
   .pawn-item {
@@ -474,13 +628,7 @@ body {
   }
   
   .activity-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  
-  .activity-icon {
-    min-width: auto;
+    gap: 10px;
   }
 }
 
@@ -507,15 +655,21 @@ body {
   }
   
   .cards-grid {
-    gap: 12px;
+    gap: 10px;
   }
   
   .stat-card {
-    padding: 16px;
+    min-width: calc(50% - 5px);
+    padding: 14px 10px;
   }
   
   .stat-card svg {
-    font-size: 40px !important;
+    font-size: 32px !important;
+  }
+  
+  .stat-number {
+    font-size: 14px;
+    margin-top: 5px;
   }
   
   .contenido-section {
@@ -590,32 +744,19 @@ body {
   }
   
   .stat-card {
-    padding: 14px;
+    padding: 12px 8px;
   }
   
   .stat-card svg {
-    font-size: 36px !important;
+    font-size: 28px !important;
+  }
+  
+  .stat-number {
+    font-size: 12px;
   }
   
   .contenido-section {
     padding: 14px;
-  }
-  
-  .debt-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .debt-amount, .total-amount {
-    align-self: flex-start;
-  }
-  
-  .pawn-item {
-    gap: 6px;
-  }
-  
-  .days-badge {
-    padding: 4px 6px;
   }
 }
 
@@ -631,31 +772,11 @@ body {
   }
   
   .stat-card {
-    width: calc(33.333% - 10px);
-    min-width: 150px;
+    min-width: 180px;
+    max-width: 200px;
   }
   
   .bottom-sections {
     grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* Ajustes para pantallas muy grandes */
-@media screen and (min-width: 1600px) {
-  .home-main {
-    max-width: 1400px;
-  }
-  
-  .stat-card {
-    width: 280px;
-    padding: 35px 30px;
-  }
-  
-  .welcome-title {
-    font-size: 36px;
-  }
-  
-  .welcome-name {
-    font-size: 36px;
   }
 }
