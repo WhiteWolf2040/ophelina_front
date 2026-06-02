@@ -1,10 +1,10 @@
-// Sidebar.jsx - Versión corregida
+// Sidebar.jsx - Versión corregida con módulos por plan
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/LogoWhite.png";
 import "./Sidebar.css";
 import { logout } from "../config/auth";
-import permissionService from "../services/permisoService";
+import api from "../config/api";
 
 // Iconos
 import HomeIcon from '@mui/icons-material/Home';
@@ -25,77 +25,81 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [visibleMenus, setVisibleMenus] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
 
+  // Configuración de módulos visibles según el plan
+  const modulesByPlan = {
+    1: {  // Free Trial
+      name: 'Free',
+      menus: [
+        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
+        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
+        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" }
+      ]
+    },
+    3: {  // Profesional
+      name: 'Profesional',
+      menus: [
+        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
+        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
+        { path: "/pagos", icon: <PaymentsIcon />, text: "Pagos", modulo: "pagos" },
+        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" },
+        { path: "/configuracion", icon: <SettingsIcon />, text: "Configuración", modulo: "configuracion" }
+      ]
+    },
+    4: {  // Premium (Empresarial)
+      name: 'Premium',
+      menus: [
+        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
+        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
+        { path: "/pagos", icon: <PaymentsIcon />, text: "Pagos", modulo: "pagos" },
+        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" },
+        { path: "/tienda", icon: <StorefrontIcon />, text: "Tienda en línea", modulo: "tienda" },
+        { path: "/reportes", icon: <BarChartIcon />, text: "Reportes", modulo: "reportes" },
+        { path: "/roles", icon: <SecurityIcon />, text: "Roles", modulo: "roles" },
+        { path: "/permisos", icon: <VpnKeyIcon />, text: "Permisos", modulo: "permisos" },
+        { path: "/configuracion", icon: <SettingsIcon />, text: "Configuración", modulo: "configuracion" }
+      ]
+    }
+  };
+
   useEffect(() => {
-    const calcularMenusVisibles = () => {
-      const menus = [];
-      
-      // Obtener permisos
-      const permisos = permissionService.getPermissions();
-      console.log('Permisos disponibles:', permisos);
-      
-      // Dashboard - requiere permiso ver_dashboard
-      if (permisos.includes('ver_dashboard')) {
-        menus.push({ path: "/home", icon: <HomeIcon />, text: "Home" });
+    const cargarModulosPorPlan = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setVisibleMenus([]);
+          setLoading(false);
+          return;
+        }
+
+        const response = await api.get('/user');
+        
+        if (response.data.success) {
+          const usuario = response.data.data.usuario;
+          const planId = usuario.plan_id || 1;
+          
+          console.log('📊 Plan ID:', planId);
+          console.log('📦 Módulos permitidos:', usuario.modulos);
+          
+          // Obtener los menús según el plan
+          const planMenus = modulesByPlan[planId] || modulesByPlan[1];
+          setVisibleMenus(planMenus.menus);
+        } else {
+          setVisibleMenus([]);
+        }
+      } catch (error) {
+        console.error('Error cargando módulos del plan:', error);
+        setVisibleMenus([]);
+      } finally {
+        setLoading(false);
       }
-      
-      // Clientes - requiere permiso ver_clientes
-      if (permisos.includes('ver_clientes')) {
-        menus.push({ path: "/clientes", icon: <PeopleIcon />, text: "Clientes" });
-      }
-      
-      // Pagos - requiere permiso ver_pagos
-      if (permisos.includes('ver_pagos')) {
-        menus.push({ path: "/pagos", icon: <PaymentsIcon />, text: "Pagos" });
-      }
-      
-      // Empeños - requiere permiso ver_empenos
-      if (permisos.includes('ver_empenos')) {
-        menus.push({ path: "/empenos", icon: <DiamondIcon />, text: "Empeños" });
-      }
-      
-      // Inventario - requiere permiso ver_inventario
-      if (permisos.includes('ver_inventario')) {
-        menus.push({ path: "/inventario", icon: <InventoryIcon />, text: "Inventario" });
-      }
-      
-      // Tienda - requiere permiso ver_tienda
-      if (permisos.includes('ver_tienda')) {
-        menus.push({ path: "/tienda", icon: <StorefrontIcon />, text: "Tienda en línea" });
-      }
-      
-      // Reportes - requiere permiso ver_reportes
-      if (permisos.includes('ver_reportes')) {
-        menus.push({ path: "/reportes", icon: <BarChartIcon />, text: "Reportes" });
-      }
-      
-      // Roles - verifica si tiene permisos de roles (cualquiera de estos)
-      const tienePermisoRoles = permisos.includes('gestionar_roles') || 
-                                  permisos.includes('Rol') || 
-                                  permisos.includes('ver_roles');
-      if (tienePermisoRoles) {
-        menus.push({ path: "/roles", icon: <SecurityIcon />, text: "Roles" });
-      }
-      
-      // Permisos - verifica si tiene permisos de permisos
-      const tienePermisoPermisos = permisos.includes('gestionar_roles') || 
-                                    permisos.includes('Permiso') || 
-                                    permisos.includes('ver_permisos');
-      if (tienePermisoPermisos) {
-        menus.push({ path: "/permisos", icon: <VpnKeyIcon />, text: "Permisos" });
-      }
-      
-      // Configuración - requiere permiso ver_configuracion
-      if (permisos.includes('ver_configuracion')) {
-        menus.push({ path: "/configuracion", icon: <SettingsIcon />, text: "Configuración" });
-      }
-      
-      setVisibleMenus(menus);
     };
     
-    calcularMenusVisibles();
+    cargarModulosPorPlan();
   }, []);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
@@ -106,6 +110,19 @@ const Sidebar = () => {
     await logout();
     navigate("/login");
   };
+
+  if (loading) {
+    return (
+      <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
+        <div className="sidebar-header">
+          <div className="sidebar-log">
+            <img src={logo} alt="Ophelia Logo" className="log-image" />
+          </div>
+        </div>
+        <div className="sidebar-loading">Cargando...</div>
+      </aside>
+    );
+  }
 
   return (
     <>

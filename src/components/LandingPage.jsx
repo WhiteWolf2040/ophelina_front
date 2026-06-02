@@ -10,7 +10,24 @@ import { Link, useSearchParams } from 'react-router-dom';
 import "./LandingPage.css";
 import { loadStripe } from '@stripe/stripe-js';
 import { stripeService } from '../services/stripeService';
-import PaymentModal from '../components/PaymentModal'; // <- Ajusta la ruta según donde tengas el modal
+import PaymentModal from '../components/PaymentModal';
+
+// ============================================
+// MODAL DE CARGA
+// ============================================
+const LoadingModal = ({ isOpen }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="loading-modal-overlay">
+      <div className="loading-modal-container">
+        <div className="loading-spinner"></div>
+        <h3>Procesando tu solicitud...</h3>
+        <p>Estamos preparando tu pago, por favor espera un momento.</p>
+      </div>
+    </div>
+  );
+};
 
 // ============================================
 // DATOS CENTRALIZADOS
@@ -74,7 +91,7 @@ const plans = [
     ],
     buttonText: "Probar 30 días gratis",
     featured: false,
-    badge: "Sin tarjeta"
+    badge: null
   },
   {
     id: 'profesional',
@@ -94,7 +111,7 @@ const plans = [
   },
   {
     id: 'premium',
-    name: "Premium",
+    name: "Empresarial",
     price: 1499,
     priceInCents: 149900,
     features: [
@@ -127,7 +144,7 @@ const Navbar = memo(({ isLoggedIn, userNombre, onLogout }) => (
       
       {isLoggedIn ? (
         <div className="user-menu">
-          <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+          <Link to="/home" style={{ textDecoration: 'none' }}>
             <button className="btn-dashboard" aria-label="Ir al dashboard">
               📊 Dashboard
             </button>
@@ -210,7 +227,7 @@ const FeatureCard = memo(({ icon, title, desc }) => (
   </div>
 ));
 
-const PricingCard = memo(({ plan }) => {
+const PricingCard = memo(({ plan, onPaymentStart, onPaymentEnd }) => {
   const stripePromise = loadStripe('pk_test_51R7ma3QLK8Ukfs4sBg4baWVuYz4UpN7v5x6GxCfAs4GGXuLTdrRiiqdtjAy9wPCBqT6nybXwlw7240h3Egpcz4RQ00VNfIVDSn');
 
   const handleSubscribe = async () => {
@@ -262,10 +279,10 @@ const PricingCard = memo(({ plan }) => {
     
     localStorage.setItem('pending_plan_id', plan.id);
     localStorage.setItem('pending_plan_name', plan.name);
+
+    if (onPaymentStart) onPaymentStart();
     
     try {
-      console.log('plan.id:', plan.id); 
-
       const response = await stripeService.createCheckoutSession({
         plan_id: plan.id,
         plan_name: plan.name,
@@ -279,6 +296,7 @@ const PricingCard = memo(({ plan }) => {
     } catch (error) {
       console.error('Error:', error);
       alert('Error al iniciar el pago: ' + error.message);
+      if (onPaymentEnd) onPaymentEnd();
     }
   };
 
@@ -338,7 +356,10 @@ const Landing = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentSessionId, setPaymentSessionId] = useState(null);
   const [paymentPlanName, setPaymentPlanName] = useState('');
-  const [paymentProcessed, setPaymentProcessed] = useState(false); // 🔥 Evita duplicados
+  const [paymentProcessed, setPaymentProcessed] = useState(false);
+  
+  // Estado para el modal de carga
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
 
   // Auto-play del carrusel
   useEffect(() => {
@@ -387,22 +408,29 @@ const Landing = () => {
     checkAuth();
   }, []);
 
-  // DETECTAR PAGO EXITOSO - CORREGIDO (solo una vez)
+  // DETECTAR PAGO EXITOSO
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const paymentStatus = searchParams.get('payment');
     
-    // Solo procesar si hay sessionId, payment=success, y no se ha procesado antes
     if (sessionId && paymentStatus === 'success' && !paymentProcessed) {
-      setPaymentProcessed(true); // Marcar como procesado
+      console.log('✅ Pago detectado, abriendo modal...');
+      setPaymentProcessed(true);
       setPaymentSessionId(sessionId);
       setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
       setShowPaymentModal(true);
-      
-      // Limpiar la URL sin recargar
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [searchParams, paymentProcessed]);
+
+  // Funciones para el modal de carga
+  const handlePaymentStart = () => {
+    setIsLoadingPayment(true);
+  };
+
+  const handlePaymentEnd = () => {
+    setIsLoadingPayment(false);
+  };
 
   const handleSlideChange = useCallback((index) => {
     setActiveSlide(index);
@@ -434,37 +462,36 @@ const Landing = () => {
     const newErrors = validateForm();
     
     if (Object.keys(newErrors).length > 0) {
-        setErrors(newErrors);
-        return;
+      setErrors(newErrors);
+      return;
     }
     
-   setIsSubmitting(true);
+    setIsSubmitting(true);
     
     try {
-        const response = await fetch('http://localhost:8000/api/send-email', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            alert('¡Mensaje enviado correctamente! Te contactaremos pronto.');
-            setFormData({ nombre: '', negocio: '', telefono: '', mensaje: '' });
-        } else {
-            alert('Error: ' + result.error);
-        }
+      const response = await fetch('http://localhost:8000/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('¡Mensaje enviado correctamente! Te contactaremos pronto.');
+        setFormData({ nombre: '', negocio: '', telefono: '', mensaje: '' });
+      } else {
+        alert('Error: ' + result.error);
+      }
     } catch (error) {
-        console.error('Error:', error);
-        alert('Error de conexión. Revisa que el backend PHP esté corriendo.');
+      console.error('Error:', error);
+      alert('Error de conexión. Revisa que el backend PHP esté corriendo.');
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
-};
-
+  };
 
   // Función para cerrar sesión
   const handleLogout = () => {
@@ -479,7 +506,7 @@ const Landing = () => {
 
   // Manejar éxito del pago
   const handlePaymentSuccess = (data) => {
-    console.log('Pago verificado y suscripción activada:', data);
+    console.log('✅ Pago verificado y suscripción activada:', data);
     setTimeout(() => {
       window.location.href = '/dashboard';
     }, 2000);
@@ -487,7 +514,7 @@ const Landing = () => {
 
   const handleClosePaymentModal = () => {
     setShowPaymentModal(false);
-    setPaymentProcessed(false); // Reset para futuros pagos
+    setPaymentProcessed(false);
     localStorage.removeItem('pending_plan_id');
     localStorage.removeItem('pending_plan_name');
     localStorage.removeItem('pending_plan_price');
@@ -688,7 +715,12 @@ const Landing = () => {
 
           <div className="pricing-container">
             {plans.map((plan, index) => (
-              <PricingCard key={index} plan={plan} />
+              <PricingCard 
+                key={index} 
+                plan={plan}
+                onPaymentStart={handlePaymentStart}
+                onPaymentEnd={handlePaymentEnd}
+              />
             ))}
           </div>
         </div>
@@ -818,7 +850,6 @@ const Landing = () => {
       
       <Footer />
 
-
       {/* Modal de verificación de pago */}
       <PaymentModal
         isOpen={showPaymentModal}
@@ -828,7 +859,10 @@ const Landing = () => {
         onSuccess={handlePaymentSuccess}
       />
 
-      {/* ✅ BOTÓN DE WHATSAPP - Aquí debe ir, después de todo el contenido */}
+      {/* Modal de carga */}
+      <LoadingModal isOpen={isLoadingPayment} />
+
+      {/* Botón de WhatsApp */}
       <a 
         href="https://wa.me/529992434806?text=Hola%21%20Vengo%20de%20la%20pagina%20web%20y%20me%20gustar%C3%ADa%20recibir%20m%C3%A1s%20informaci%C3%B3n" 
         className="whatsapp-float" 
@@ -840,8 +874,6 @@ const Landing = () => {
           <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.7 23.5 9.1 31.6 11.6 13.3 4.2 25.4 3.6 34.9 2.2 10.7-1.6 32.8-13.4 37.4-26.3 4.6-12.9 4.6-24 3.2-26.3-1.3-2.3-4.8-3.7-10.3-6.5z"/>
         </svg>
       </a>
-    
-
     </>
   );
 };

@@ -1,13 +1,12 @@
-// Dueño.jsx - Versión CORREGIDA
+// Dueño.jsx - Versión CORREGIDA con gráficas condicionales por rol
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Chart from "react-apexcharts";
 import "./dueno.css";
 import api from '../config/api';
 import { useSearchParams } from 'react-router-dom';
-import { stripeService } from '../services/stripeService'; // Asegúrate de que la ruta sea correcta
-import PaymentModal from '../components/PaymentModal'; // Asegúrate de que la ruta sea correcta
-
+import { stripeService } from '../services/stripeService';
+import PaymentModal from '../components/PaymentModal';
 
 // Importar iconos de MUI
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -31,7 +30,7 @@ import AreaChartIcon from '@mui/icons-material/AreaChart';
 
 const Dueno = () => {
   // ============================================
-  // HOOKS DE PAGO (AHORA DENTRO DEL COMPONENTE)
+  // HOOKS DE PAGO
   // ============================================
   const [searchParams] = useSearchParams();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -47,8 +46,6 @@ const Dueno = () => {
       setPaymentSessionId(sessionId);
       setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
       setShowPaymentModal(true);
-      
-      // Limpiar URL
       window.history.replaceState({}, document.title, '/dashboard');
     }
   }, [searchParams]);
@@ -69,14 +66,29 @@ const Dueno = () => {
         console.error('Error al verificar suscripción:', error);
       }
     };
-    
     verificarSuscripcion();
   }, []);
 
+  const [amortizacionesPendientes, setAmortizacionesPendientes] = useState([]);
+const [loadingAmortizaciones, setLoadingAmortizaciones] = useState(false);
+
+const cargarAmortizacionesPendientes = async () => {
+    try {
+        setLoadingAmortizaciones(true);
+        const response = await api.get('/dashboard/amortizaciones-pendientes');
+        if (response.data.success) {
+            setAmortizacionesPendientes(response.data.data);
+        }
+    } catch (error) {
+        console.error('Error al cargar amortizaciones:', error);
+    } finally {
+        setLoadingAmortizaciones(false);
+    }
+};
+
   // ============================================
-  // RESTO DE TUS ESTADOS (ya los tenías)
+  // ESTADOS
   // ============================================
-  // Estados para modales
   const [showActivos, setShowActivos] = useState(false);
   const [showVencidos, setShowVencidos] = useState(false);
   const [showProximos, setShowProximos] = useState(false);
@@ -88,6 +100,10 @@ const Dueno = () => {
     series: [],
     labels: []
   });
+  const [userRole, setUserRole] = useState('');
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
+  const [modulosPermitidos, setModulosPermitidos] = useState([]);
+  const [planInfo, setPlanInfo] = useState({ plan_id: null, plan_nombre: '' });
 
   const cargarPreciosQuilates = async () => {
     try {
@@ -289,7 +305,7 @@ const Dueno = () => {
   });
 
   // ============================================
-  // FUNCIONES AUXILIARES (ya las tenías)
+  // FUNCIONES AUXILIARES
   // ============================================
   const formatearFecha = (fecha) => {
     if (!fecha) return "Fecha no disponible";
@@ -309,22 +325,24 @@ const Dueno = () => {
     return new Intl.NumberFormat('es-MX', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((valor || 0) / 100);
   };
 
-const formatFecha = (fecha) => {
-  if (!fecha || fecha === '' || fecha === 'Invalid Date') return 'Sin pagos';
-  try {
-    // Si ya tiene formato dd/mm/aaaa, devolverla directamente
-    if (typeof fecha === 'string' && fecha.includes('/')) {
-      return fecha;
+  const formatFecha = (fecha) => {
+    if (!fecha || fecha === '' || fecha === 'Invalid Date') return 'Sin pagos';
+    try {
+      if (typeof fecha === 'string' && fecha.includes('/')) {
+        return fecha;
+      }
+      const date = new Date(fecha);
+      if (isNaN(date.getTime())) return 'Sin pagos';
+      return date.toLocaleDateString('es-MX');
+    } catch (e) {
+      return 'Sin pagos';
     }
-    const date = new Date(fecha);
-    if (isNaN(date.getTime())) return 'Sin pagos';
-    return date.toLocaleDateString('es-MX');
-  } catch (e) {
-    return 'Sin pagos';
-  }
-};
+  };
 
-  // Cargar datos del usuario actual
+  // ============================================
+  // FUNCIONES DE CARGA DE DATOS
+  // ============================================
+  
   const cargarUsuarioActual = async () => {
     try {
       const userStr = localStorage.getItem('user');
@@ -339,6 +357,7 @@ const formatFecha = (fecha) => {
           fechaRegistro: formatearFecha(user.fecha_registro) || "Fecha no disponible",
           fotoPerfil: user.foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&size=128&background=1e3a8a&color=fff&bold=true`
         }));
+        setUserRole(user.rol || 'Empleado');
       }
 
       const response = await api.get('/user');
@@ -349,14 +368,52 @@ const formatFecha = (fecha) => {
           nombre: user.nombre || "Usuario",
           email: user.correo || "",
           telefono: user.telefono || "Sin teléfono",
-          rol: user.rol?.nombre || "Usuario",
+          rol: user.rol || "Usuario",
           fechaRegistro: formatearFecha(user.fecha_registro),
           fotoPerfil: user.foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&size=128&background=1e3a8a&color=fff&bold=true`
         }));
         localStorage.setItem('user', JSON.stringify(user));
+        setUserRole(user.rol || 'Empleado');
       }
     } catch (error) {
       console.error('Error cargando usuario:', error);
+    }
+  };
+
+  // Funciones para verificar roles y permisos de gráficas
+  const esAdmin = () => {
+    return userRole === 'Administrador' || userRole === 'Dueño' || userRole === 'Admin';
+  };
+
+  const esGerente = () => {
+    return userRole === 'Gerente' || userRole === 'gerente' || userRole === 'GERENTE';
+  };
+
+  // Función para verificar si puede ver la gráfica de evolución acumulada
+  const puedeVerEvolucionAcumulada = () => {
+    return esAdmin(); // Solo administradores
+  };
+
+  // Función para verificar si puede ver las gráficas de tendencia y donut
+  const puedeVerGraficasBasicas = () => {
+    return esAdmin() || esGerente(); // Administradores y Gerentes
+  };
+
+  const cargarModulosPorPlan = async () => {
+    try {
+      const response = await api.get('/user');
+      if (response.data.success) {
+        const usuario = response.data.data.usuario;
+        setModulosPermitidos(usuario.modulos || []);
+        setPlanInfo({
+          plan_id: usuario.plan_id,
+          plan_nombre: usuario.plan_nombre
+        });
+        console.log('Módulos permitidos:', usuario.modulos);
+        console.log('Plan:', usuario.plan_nombre);
+      }
+    } catch (error) {
+      console.error('Error cargando módulos:', error);
     }
   };
 
@@ -364,12 +421,10 @@ const formatFecha = (fecha) => {
     try {
       const response = await api.get('/dashboard/morosidad');
       if (response.data.success) {
-        const morosidadConCalculos = response.data.data.map(item => ({
-          ...item,
-          porcentaje_perdida: ((item.deuda || 0) / (item.total_prestado || 1)) * 100,
-          perdida_proyectada: item.deuda || 0
-        }));
-        setMorosidad(morosidadConCalculos);
+        setMorosidad(response.data.data);
+      } else {
+        console.error('Error en respuesta:', response.data.message);
+        setMorosidad([]);
       }
     } catch (error) {
       console.error('Error al cargar morosidad:', error);
@@ -495,12 +550,14 @@ const formatFecha = (fecha) => {
     cargarDistribucionCategorias();
     cargarUsuarioActual();
     cargarPreciosQuilates();
+    cargarModulosPorPlan();
+     cargarAmortizacionesPendientes();
   }, []);
 
   // Manejadores del modal de pago
   const handlePaymentSuccess = (data) => {
-    console.log('✅ Pago exitoso:', data);
-    cargarDashboard(); // Recargar datos del dashboard
+    console.log('Pago exitoso:', data);
+    cargarDashboard();
     setTimeout(() => {
       setShowPaymentModal(false);
       localStorage.removeItem('pending_plan_id');
@@ -520,7 +577,7 @@ const formatFecha = (fecha) => {
   if (loading) {
     return (
       <div className="dashboard">
-        <Sidebar />
+        <Sidebar modulosPermitidos={modulosPermitidos} />
         <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
           <div>Cargando dashboard...</div>
         </div>
@@ -532,7 +589,7 @@ const formatFecha = (fecha) => {
   if (error) {
     return (
       <div className="dashboard">
-        <Sidebar />
+        <Sidebar modulosPermitidos={modulosPermitidos} />
         <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
           <WarningIcon style={{ fontSize: 48, color: '#dc3545', marginBottom: 16 }} />
           <h3>Error de conexión</h3>
@@ -545,9 +602,9 @@ const formatFecha = (fecha) => {
     );
   }
 
-  return (
+  return ( 
     <div className="dashboard">
-      <Sidebar />
+      <Sidebar modulosPermitidos={modulosPermitidos} />
 
       <div className="content">
         {/* HEADER */}
@@ -575,7 +632,7 @@ const formatFecha = (fecha) => {
           </div>
         </div>
 
-        {/* CARDS */}
+        {/* CARDS - Visibles para todos */}
         <div className="cards-grid">
           <div className="stat-card" onClick={cargarActivos}>
             <AssignmentIcon className="card-icon" />
@@ -616,55 +673,63 @@ const formatFecha = (fecha) => {
           </div>
         </div>
 
-        {/* GRÁFICA PRINCIPAL - ÁREA APILADA */}
-        <div className="chart-section">
-          <h2>
-            <AreaChartIcon />
-            Evolución Acumulada (Capital vs Retorno vs Ganancia)
-          </h2>
-          <p className="chart-subtitle">
-            El área muestra el crecimiento total del negocio - La diferencia entre Capital y Retorno es la ganancia acumulada
-          </p>
-          <div className="chart-wrapper">
-            <Chart
-              options={areaChartData.options}
-              series={areaChartData.series}
-              type="area"
-              height={380}
-            />
-          </div>
-        </div>
-
-        {/* GRÁFICAS ADICIONALES */}
-        <div className="nuevas-graficas-grid">
-          <div className="grafica-nueva-card">
+        {/* ============================================ */}
+        {/* GRÁFICAS - SEGÚN ROL DEL USUARIO */}
+        {/* ============================================ */}
+        
+        {/* GRÁFICA PRINCIPAL - Solo para Administradores */}
+        {puedeVerEvolucionAcumulada() && (
+          <div className="chart-section">
             <h2>
-              <TrendingUpIcon />
-              Tendencia de Ingresos
+              <AreaChartIcon />
+              Evolución Acumulada (Capital vs Retorno vs Ganancia)
             </h2>
-            <Chart
-              options={trendChartData.options}
-              series={trendChartData.series}
-              type="line"
-              height={300}
-            />
+            <p className="chart-subtitle">
+              El área muestra el crecimiento total del negocio - La diferencia entre Capital y Retorno es la ganancia acumulada
+            </p>
+            <div className="chart-wrapper">
+              <Chart
+                options={areaChartData.options}
+                series={areaChartData.series}
+                type="area"
+                height={380}
+              />
+            </div>
           </div>
+        )}
 
-          <div className="grafica-nueva-card">
-            <h2>
-              <PieChartIcon />
-              Distribución por Categoría
-            </h2>
-            <Chart
-              options={categoriaDistribucion.options}
-              series={categoriaDistribucion.series}
-              type="donut"
-              height={300}
-            />
+        {/* GRÁFICAS ADICIONALES - Para Administradores y Gerentes */}
+        {puedeVerGraficasBasicas() && (
+          <div className="nuevas-graficas-grid">
+            <div className="grafica-nueva-card">
+              <h2>
+                <TrendingUpIcon />
+                Tendencia de Ingresos
+              </h2>
+              <Chart
+                options={trendChartData.options}
+                series={trendChartData.series}
+                type="line"
+                height={300}
+              />
+            </div>
+
+            <div className="grafica-nueva-card">
+              <h2>
+                <PieChartIcon />
+                Distribución por Categoría
+              </h2>
+              <Chart
+                options={categoriaDistribucion.options}
+                series={categoriaDistribucion.series}
+                type="donut"
+                height={300}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Top Clientes */}
+        {/* Top Clientes - Visible para todos */}
         <div className="nueva-seccion">
           <h2>
             <EmojiEventsIcon />
@@ -707,61 +772,118 @@ const formatFecha = (fecha) => {
           </div>
         </div>
 
-        {/* SECCIÓN DE MOROSIDAD */}
-     
-<div className="nueva-seccion">
-  <h2>
-    <WarningIcon />
-    Morosidad - Clientes con Mayor Pérdida
-  </h2>
-  <div className="tabla-container">
-    <table className="tabla-moderna">
-      <thead>
-        <tr>
-          <th>Cliente</th>
-          <th>Total Prestado</th>
-          <th>Deuda Vencida</th>
-          <th>Pérdida Proyectada</th>
-          <th>% Pérdida</th>
-          <th>Días en Mora</th>
-          <th>Último Pago</th>
-        </tr>
-      </thead>
-      <tbody>
-        {morosidad.map((item, index) => {
-          // Calcular porcentaje correctamente (máximo 100%)
-          let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
-          if (porcentaje > 100) porcentaje = 100;
-          
-          return (
-            <tr key={index}>
-              <td><strong>{item.cliente}</strong></td>
-              <td>{formatearMoneda(item.total_prestado)}</td>
-              <td className="loss-text">{formatearMoneda(item.deuda)}</td>
-              <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
-              <td>
-                <span className="loss-badge">
-                  -{porcentaje.toFixed(2)}%
-                </span>
-              </td>
-              <td><span className="badge-danger">{item.pagos_atrasados || item.dias_mora} días</span></td>
-              <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' 
-                ? formatFecha(item.ultimo_pago) 
-                : 'Sin registro'}</td>
-            </tr>
-          );
-        })}
-        {morosidad.length === 0 && (
-          <tr>
-            <td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-</div>
+        {/* SECCIÓN DE MOROSIDAD - Visible para todos */}
+        <div className="nueva-seccion">
+          <h2>
+            <WarningIcon />
+            Morosidad - Clientes con Mayor Pérdida
+          </h2>
+          <div className="tabla-container">
+            <table className="tabla-moderna">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Total Prestado</th>
+                  <th>Deuda Vencida</th>
+                  <th>Pérdida Proyectada</th>
+                  <th>% Pérdida</th>
+                  <th>Días en Mora</th>
+                  <th>Último Pago</th>
+                </tr>
+              </thead>
+              <tbody>
+                {morosidad.map((item, index) => {
+                  let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
+                  if (porcentaje > 100) porcentaje = 100;
+                  
+                  return (
+                    <tr key={index}>
+                      <td><strong>{item.cliente}</strong></td>
+                      <td>{formatearMoneda(item.total_prestado)}</td>
+                      <td className="loss-text">{formatearMoneda(item.deuda)}</td>
+                      <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
+                      <td>
+                        <span className="loss-badge">
+                          -{porcentaje.toFixed(2)}%
+                        </span>
+                      </td>
+                      <td><span className="badge-danger">{item.pagos_atrasados || item.dias_mora} días</span></td>
+                      <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' 
+                        ? formatFecha(item.ultimo_pago) 
+                        : 'Sin registro'}</td>
+                    </tr>
+                  );
+                })}
+                {morosidad.length === 0 && (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-        {/* Artículos más empeñados */}
+        {/* ============================================ */}
+{/* TABLA DE AMORTIZACIÓN - Solo para Administradores */}
+{/* ============================================ */}
+{puedeVerEvolucionAcumulada() && (
+    <div className="nueva-seccion">
+        <h2>
+            <AssignmentIcon />
+            Amortizaciones Pendientes
+            <span className="seccion-badge">
+                {amortizacionesPendientes.length} registros
+            </span>
+        </h2>
+        <div className="tabla-container">
+            <table className="tabla-moderna">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Artículo</th>
+                        <th>Folio</th>
+                        <th>N° Pago</th>
+                        <th>Fecha Programada</th>
+                        <th>Monto Total</th>
+                        <th>Pagado</th>
+                        <th>Saldo Restante</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {loadingAmortizaciones ? (
+                        <tr><td colSpan="9" style={{ textAlign: 'center' }}>Cargando...</td></tr>
+                    ) : amortizacionesPendientes.length === 0 ? (
+                        <tr><td colSpan="9" style={{ textAlign: 'center' }}>No hay amortizaciones pendientes</td></tr>
+                    ) : (
+                        amortizacionesPendientes.map((item) => (
+                            <tr key={item.id_amortizacion} className={item.dias_atraso > 0 ? 'fila-atrasada' : ''}>
+                                <td><strong>{item.cliente_nombre}</strong></td>
+                                <td>{item.articulo}</td>
+                                <td><span className="folio-badge">{item.folio}</span></td>
+                                <td>{item.numero_pago}</td>
+                                <td>{new Date(item.fecha_pago_programado).toLocaleDateString('es-MX')}</td>
+                                <td className="monto">{formatearMoneda(item.monto_total)}</td>
+                                <td className="monto-pagado">{formatearMoneda(item.monto_pagado || 0)}</td>
+                                <td className="monto-restante">{formatearMoneda(item.saldo_restante)}</td>
+                                <td>
+                                    {item.dias_atraso > 0 ? (
+                                        <span className="badge-danger">{item.dias_atraso} días atrasado</span>
+                                    ) : (
+                                        <span className="badge-warning">Pendiente</span>
+                                    )}
+                                </td>
+                            </tr>
+                        ))
+                    )}
+                </tbody>
+            </table>
+        </div>
+    </div>
+)}
+
+        {/* Artículos más empeñados - Visible para todos */}
         <div className="nueva-seccion">
           <h2>
             <LocalOfferIcon />
@@ -796,7 +918,7 @@ const formatFecha = (fecha) => {
           </div>
         </div>
 
-        {/* Actividad Reciente */}
+        {/* Actividad Reciente - Visible para todos */}
         <div className="nueva-seccion">
           <h2>
             <HistoryIcon />
@@ -828,7 +950,7 @@ const formatFecha = (fecha) => {
         </div>
       </div>
 
-      {/* MODALES (se mantienen igual) */}
+      {/* MODALES */}
       {showPerfil && (
         <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
           <div className="modal-detalle modal-perfil" onClick={(e) => e.stopPropagation()}>
@@ -982,100 +1104,47 @@ const formatFecha = (fecha) => {
             <button className="modal-cerrar" onClick={() => setShowPrecioOroModal(false)}>
               <CloseIcon />
             </button>
-            
             <div className="modal-header oro-header">
-              <h2>
-                <MonetizationOnIcon /> 
-                Precios del Oro por Quilate
-              </h2>
+              <h2><MonetizationOnIcon /> Precios del Oro por Quilate</h2>
               {preciosQuilates.ultima_actualizacion && (
                 <span className="cliente-id">
                   Actualizado: {new Date(preciosQuilates.ultima_actualizacion).toLocaleString('es-MX')}
                 </span>
               )}
             </div>
-
             <div className="modal-body">
               <div className="quilates-grid">
                 <div className="quilate-card quilate-24k">
-                  <div className="quilate-info">
-                    <h3>Oro 24k</h3>
-                    <p>99.9% pureza</p>
-                  </div>
-                  <div className="quilate-precio">
-                    <span className="precio">${preciosQuilates.precio_24k?.toLocaleString()}</span>
-                    <span className="unidad">/ gramo</span>
-                  </div>
+                  <div className="quilate-info"><h3>Oro 24k</h3><p>99.9% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_24k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
-
                 <div className="quilate-card quilate-22k">
-                  <div className="quilate-info">
-                    <h3>Oro 22k</h3>
-                    <p>91.7% pureza</p>
-                  </div>
-                  <div className="quilate-precio">
-                    <span className="precio">${preciosQuilates.precio_22k?.toLocaleString()}</span>
-                    <span className="unidad">/ gramo</span>
-                  </div>
+                  <div className="quilate-info"><h3>Oro 22k</h3><p>91.7% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_22k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
-
                 <div className="quilate-card quilate-21k">
-                  <div className="quilate-info">
-                    <h3>Oro 21k</h3>
-                    <p>87.5% pureza</p>
-                  </div>
-                  <div className="quilate-precio">
-                    <span className="precio">${preciosQuilates.precio_21k?.toLocaleString()}</span>
-                    <span className="unidad">/ gramo</span>
-                  </div>
+                  <div className="quilate-info"><h3>Oro 21k</h3><p>87.5% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_21k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
-
                 <div className="quilate-card quilate-18k">
-                  <div className="quilate-info">
-                    <h3>Oro 18k</h3>
-                    <p>75.0% pureza</p>
-                  </div>
-                  <div className="quilate-precio">
-                    <span className="precio">${preciosQuilates.precio_18k?.toLocaleString()}</span>
-                    <span className="unidad">/ gramo</span>
-                  </div>
+                  <div className="quilate-info"><h3>Oro 18k</h3><p>75.0% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_18k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
-
                 <div className="quilate-card quilate-14k">
-                  <div className="quilate-info">
-                    <h3>Oro 14k</h3>
-                    <p>58.5% pureza</p>
-                  </div>
-                  <div className="quilate-precio">
-                    <span className="precio">${preciosQuilates.precio_14k?.toLocaleString()}</span>
-                    <span className="unidad">/ gramo</span>
-                  </div>
+                  <div className="quilate-info"><h3>Oro 14k</h3><p>58.5% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_14k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
-
                 <div className="quilate-card quilate-10k">
-                  <div className="quilate-info">
-                    <h3>Oro 10k</h3>
-                    <p>41.7% pureza</p>
-                  </div>
-                  <div className="quilate-precio">
-                    <span className="precio">${preciosQuilates.precio_10k?.toLocaleString()}</span>
-                    <span className="unidad">/ gramo</span>
-                  </div>
+                  <div className="quilate-info"><h3>Oro 10k</h3><p>41.7% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_10k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
               </div>
-
               <div className="oro-nota">
-                <small>
-                  ℹ️ Los precios son referenciales basados en el precio del oro de 24k.
-                  El precio final puede variar según la joyería y el mercado.
-                </small>
+                <small>ℹ️ Los precios son referenciales basados en el precio del oro de 24k. El precio final puede variar según la joyería y el mercado.</small>
               </div>
             </div>
-
             <div className="modal-acciones">
-              <button className="btn-cerrar" onClick={() => setShowPrecioOroModal(false)}>
-                Cerrar
-              </button>
+              <button className="btn-cerrar" onClick={() => setShowPrecioOroModal(false)}>Cerrar</button>
             </div>
           </div>
         </div>
@@ -1127,7 +1196,7 @@ const formatFecha = (fecha) => {
         </div>
       )}
 
-      {/* MODAL DE PAGO - AGREGADO AL FINAL */}
+      {/* MODAL DE PAGO */}
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={handleClosePaymentModal}
