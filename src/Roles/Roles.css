@@ -1,0 +1,692 @@
+/* src/Roles/Roles.css */
+
+.roles-content {
+  padding: 2rem;
+}
+
+.roles-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.roles-header h1 {
+  font-size: 1.8rem;
+  color: #0d1b3e;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-sub {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: normal;
+  margin-top: 0.3rem;
+}
+
+.btn-nuevo-rol {
+  background: #0d1b3e;
+  color: white;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-nuevo-rol:hover {
+  background: #1e3a8a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 27, 62, 0.2);
+}
+
+/* Stats */
+.roles-stats .stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+}
+
+.stat-icon.dueño-bg {
+  background: #0d1b3e;
+  color: #e9c46a;
+}
+
+.stat-icon.admin-bg {
+  background: #1e3a8a;
+  color: white;
+}
+
+.stat-icon.permiso-bg {
+  background: #10b981;
+  color: white;
+}
+
+/* Buscador */
+.buscador-roles {
+  margin: 2rem 0;
+}
+
+.search-wrapper {
+  position: relative;
+  max-width: 400px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #adb5bd;
+}
+
+.search-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 50px 0 22px;
+  border-radius: 30px;
+  border: none;
+  background-color: #e9e9e9;
+  font-size: 14px;
+  outline: none;
+  color: #2c2c2c;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #0d1b3e;
+  box-shadow: 0 0 0 3px rgba(13, 27, 62, 0.1);
+}
+
+/* Tabla */
+.roles-table {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.rol-nombre-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.rol-icon {
+  font-size: 1.5rem;
+}
+
+.rol-icon.dueño {
+  color: #e9c46a;
+}
+
+.rol-icon.admin {
+  color: #1e3a8a;
+}
+
+.rol-icon.ejecutivo {
+  color: #10b981;
+}
+
+.rol-icon.caja {
+  color: #6c757d;
+}
+
+.badge-nivel {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-nivel.nivel-1 {
+  background: #0d1b3e;
+  color: #e9c46a;
+}
+
+.badge-nivel.nivel-2 {
+  background: #1e3a8a;
+  color: white;
+}
+
+.badge-nivel.nivel-3 {
+  background: #10b981;
+  color: white;
+}
+
+.badge-nivel.nivel-4 {
+  background: #6c757d;
+  color: white;
+}
+
+.badge-nivel.nivel-5 {
+  background: #adb5bd;
+  color: white;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.acciones-cell {
+  display: flex;
+  gap: 0.3rem;
+  justify-content: center;
+}
+
+.btn-accion {
+  background: none;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6c757d;
+}
+
+.btn-accion.ver:hover {
+  background: #e9ecef;
+  color: #0d1b3e;
+}
+
+.btn-accion.editar:hover {
+  background: #e9ecef;
+  color: #10b981;
+}
+
+.btn-accion.eliminar:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ============================================ */
+/* MODALES MEJORADOS */
+/* ============================================ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-producto,
+.modal-detalle,
+.modal-confirmar {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Header del modal con gradiente y botón de cierre */
+.modal-header {
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, #0d1b3e 0%, #1e3a8a 100%);
+  border-radius: 20px 20px 0 0;
+  position: relative;
+}
+
+.modal-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 0;
+  font-size: 1.3rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.modal-header h2 svg {
+  color: #e9c46a;
+}
+
+/* Botón de cierre en la esquina superior derecha */
+.modal-cerrar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  cursor: pointer;
+  color: white;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  width: 36px;
+  height: 36px;
+}
+
+.modal-cerrar:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Cuerpo del modal con padding más espaciado */
+.modal-body {
+  padding: 2rem;
+}
+
+/* Formulario con más separación */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.8rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.form-group.full-width {
+  grid-column: span 2;
+}
+
+.form-group label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #0d1b3e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.9rem 1rem;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #0d1b3e;
+  box-shadow: 0 0 0 3px rgba(13, 27, 62, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-help {
+  font-size: 0.7rem;
+  color: #6c757d;
+  margin-top: 0.3rem;
+}
+
+/* Área de permisos con mejor espaciado */
+.permisos-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 0.8rem;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #fafbfc;
+}
+
+.permiso-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e9ecef;
+}
+
+.permiso-checkbox:hover {
+  background: #f8f9fa;
+  border-color: #0d1b3e;
+}
+
+.permiso-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #0d1b3e;
+}
+
+.permiso-checkbox span {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #0d1b3e;
+}
+
+.permiso-checkbox small {
+  color: #6c757d;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  background: #e9ecef;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+}
+
+/* Botones de acción del modal */
+.modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  border-radius: 0 0 20px 20px;
+}
+
+.btn-guardar {
+  background: #0d1b3e;
+  color: white;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btn-guardar:hover {
+  background: #1e3a8a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 27, 62, 0.2);
+}
+
+.btn-cancelar {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btn-cancelar:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+/* Modal Detalle Rol */
+.modal-rol {
+  max-width: 800px;
+}
+
+.rol-detalle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 2rem;
+}
+
+.rol-info-section,
+.rol-permisos-section {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid #e9ecef;
+}
+
+.rol-info-section h3,
+.rol-permisos-section h3 {
+  color: #0d1b3e;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e9c46a;
+  display: inline-block;
+}
+
+.rol-info-item {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.rol-info-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.rol-info-valor {
+  font-size: 0.95rem;
+  color: #0d1b3e;
+  font-weight: 500;
+}
+
+.permisos-lista {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.permiso-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem;
+  border-bottom: 1px solid #e9ecef;
+  transition: all 0.2s;
+}
+
+.permiso-item:hover {
+  background: white;
+  border-radius: 8px;
+}
+
+.permiso-item:last-child {
+  border-bottom: none;
+}
+
+.permiso-icon {
+  color: #10b981;
+  font-size: 1rem;
+}
+
+.permiso-info {
+  flex: 1;
+}
+
+.permiso-info strong {
+  display: block;
+  color: #0d1b3e;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.permiso-info span {
+  color: #6c757d;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sin-permisos {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+/* Modal Confirmar Eliminar */
+.modal-confirmar {
+  max-width: 420px;
+  text-align: center;
+  padding: 2rem;
+}
+
+.modal-icono.warning {
+  margin-bottom: 1rem;
+}
+
+.modal-icono.warning svg {
+  color: #f59e0b;
+  font-size: 3rem;
+}
+
+.modal-confirmar h3 {
+  color: #0d1b3e;
+  margin-bottom: 0.8rem;
+  font-size: 1.3rem;
+}
+
+.modal-confirmar p {
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.modal-confirmar .advertencia {
+  font-size: 0.8rem;
+  color: #dc2626;
+  margin-top: 0.8rem;
+}
+
+.modal-botones {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.8rem;
+}
+
+.btn-confirmar-eliminar {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-confirmar-eliminar:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rol-detalle-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .permisos-checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+  
+  .form-group.full-width {
+    grid-column: span 1;
+  }
+  
+  .modal-body {
+    padding: 1.5rem;
+  }
+  
+  .modal-header {
+    padding: 2.2rem 1.5rem;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.1rem;
+  }
+  
+  .modal-acciones {
+    flex-direction: column;
+  }
+  
+  .btn-guardar,
+  .btn-cancelar {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .permiso-checkbox {
+    padding: 0.6rem;
+  }
+  
+  .permiso-checkbox span {
+    font-size: 0.85rem;
+  }
+}
+
+.sin-resultados {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.sin-resultados svg {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
