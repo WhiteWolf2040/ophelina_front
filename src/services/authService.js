@@ -3,21 +3,21 @@ import api from "./api";
 
 export const login = async (email, password) => {
   try {
-    console.log('🔐 Iniciando login para:', email);
+    console.log(' Iniciando login para:', email);
     
     const response = await api.post('/login', {
       correo: email,
       contrasena: password
     });
     
-    console.log('📦 Respuesta del servidor:', response.data);
+    console.log(' Respuesta del servidor:', response.data);
     
     if (response.data.success) {
       const { token, usuario } = response.data.data;
       
-      console.log('👤 Usuario recibido:', usuario);
-      console.log('🏢 id_empresa del usuario:', usuario.id_empresa);
-      console.log('📧 correo del usuario:', usuario.correo);
+      console.log(' Usuario recibido:', usuario);
+      console.log(' id_empresa del usuario:', usuario.id_empresa);
+      console.log(' correo del usuario:', usuario.correo);
       
       // Guardar token y datos básicos
       localStorage.setItem('token', token);
@@ -26,17 +26,17 @@ export const login = async (email, password) => {
       // Guardar empresa_id
       if (usuario.id_empresa) {
         localStorage.setItem('empresa_id', usuario.id_empresa);
-        console.log('✅ empresa_id guardado:', usuario.id_empresa);
+        console.log(' empresa_id guardado:', usuario.id_empresa);
       } else {
-        console.warn('⚠️ usuario.id_empresa es null o undefined');
+        console.warn(' usuario.id_empresa es null o undefined');
       }
       
       // Guardar email
       if (usuario.correo) {
         localStorage.setItem('user_email', usuario.correo);
-        console.log('✅ user_email guardado:', usuario.correo);
+        console.log(' user_email guardado:', usuario.correo);
       } else {
-        console.warn('⚠️ usuario.correo es null o undefined');
+        console.warn(' usuario.correo es null o undefined');
       }
       
       // Guardar permisos y módulos
@@ -63,7 +63,7 @@ export const login = async (email, password) => {
     };
     
   } catch (error) {
-    console.error('❌ Error en login:', error);
+    console.error(' Error en login:', error);
     return {
       success: false,
       message: error.response?.data?.message || 'Error de conexión'

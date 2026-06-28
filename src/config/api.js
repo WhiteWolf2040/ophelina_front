@@ -8,8 +8,11 @@ INSTANCIA DE AXIOS
 ==============================
 */
 
+// ✅ USA LA VARIABLE DE ENTORNO
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: API_URL,  // ← CAMBIADO
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",

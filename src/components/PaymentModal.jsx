@@ -1,129 +1,98 @@
-// PaymentModal.jsx - VERSIÓN CORREGIDA (sin bucles)
-import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import './PaymentModal.css';
+import React, { useEffect } from 'react';
+import { stripeService } from '../services/stripeService';
 
 const PaymentModal = ({ isOpen, onClose, sessionId, planName, onSuccess }) => {
-  const [status, setStatus] = useState('verifying');
-  const [message, setMessage] = useState('');
-  const hasVerified = useRef(false); // 🔥 Evita verificar múltiples veces
-
   useEffect(() => {
-    // Solo verificar si el modal está abierto, hay sessionId, y no se ha verificado antes
-    if (!isOpen || !sessionId || hasVerified.current) return;
-
-    const verifyPayment = async () => {
-      try {
-        setStatus('verifying');
-        setMessage('Verificando tu pago...');
-
-        const empresaId = localStorage.getItem('empresa_id');
-        const planId = localStorage.getItem('pending_plan_id');
-        const userEmail = localStorage.getItem('user_email');
-        const negocioNombre = localStorage.getItem('negocio_nombre');
-
-        console.log('📤 Verificando pago:', { sessionId, empresaId, planId });
-
-        const response = await axios.post('http://127.0.0.1:8000/api/verify-payment', {
-          session_id: sessionId,
-          empresa_id: empresaId || 'nueva',
-          plan_id: planId,
-          customer_email: userEmail,
-          negocio_nombre: negocioNombre
-        });
-
-        if (response.data.success) {
-          localStorage.setItem('empresa_id', response.data.empresaId);
-          localStorage.setItem('plan_activo', 'true');
-          localStorage.setItem('fecha_fin_plan', response.data.fechaFinPlan);
+    if (isOpen && sessionId) {
+      const verifyPayment = async () => {
+        try {
+          const empresaId = localStorage.getItem('empresa_id');
+          const planId = localStorage.getItem('pending_plan_id');
           
-          localStorage.removeItem('pending_plan_id');
-          localStorage.removeItem('pending_plan_name');
-          localStorage.removeItem('pending_plan_price');
+          console.log('📤 Verificando pago:', { 
+            sessionId, 
+            empresaId, 
+            planId: planId 
+          });
           
-          setStatus('success');
-          setMessage(`¡Pago exitoso! Plan ${planName} activado correctamente.`);
+          const response = await stripeService.verifyPayment({
+            session_id: sessionId,
+            empresa_id: empresaId,
+            plan_id: planId
+          });
           
-          if (onSuccess) {
+          console.log('✅ Respuesta:', response);
+          
+          if (response.success) {
+            // Actualizar estado local
+            localStorage.setItem('user_plan', response.planId);
+            localStorage.setItem('plan_activo', 'true');
+            localStorage.removeItem('pending_plan_id');
+            
+            if (onSuccess) {
+              onSuccess(response);
+            }
+            
+            alert(`¡Pago exitoso! Plan activado correctamente.`);
+            
             setTimeout(() => {
-              onSuccess(response.data);
+              if (onClose) onClose();
+              window.location.reload();
             }, 2000);
+          } else {
+            alert('Error al verificar el pago: ' + (response.error || 'Intenta de nuevo'));
           }
-        } else {
-          setStatus('error');
-          setMessage(response.data.error || 'Error al verificar el pago. Contacta a soporte.');
+        } catch (error) {
+          console.error('❌ Error:', error);
+          alert('Error al verificar el pago');
         }
-
-      } catch (error) {
-        console.error('Error:', error);
-        setStatus('error');
-        setMessage('Error al conectar con el servidor. Intenta de nuevo.');
-      }
-    };
-
-    hasVerified.current = true; // Marcar como verificado
-    verifyPayment();
-
-    // Limpiar cuando se cierra el modal
-    return () => {
-      hasVerified.current = false;
-    };
-  }, [isOpen, sessionId, planName, onSuccess]);
-
-  const handleClose = () => {
-    hasVerified.current = false;
-    onClose();
-  };
+      };
+      
+      verifyPayment();
+    }
+  }, [isOpen, sessionId, onSuccess, onClose]);
 
   if (!isOpen) return null;
 
+  const plan = localStorage.getItem('pending_plan_name') || planName || 'Premium';
+
   return (
-    <div className="modal-overlay">
-      <div className="modal-container">
-        <div className="modal-icon">
-          {status === 'verifying' && (
-            <div className="spinner"></div>
-          )}
-          {status === 'success' && (
-            <div className="success-icon">✅</div>
-          )}
-          {status === 'error' && (
-            <div className="error-icon">❌</div>
-          )}
-        </div>
-
-        <h2 className="modal-title">
-          {status === 'verifying' && 'Verificando pago'}
-          {status === 'success' && '¡Pago exitoso!'}
-          {status === 'error' && 'Error en el pago'}
-        </h2>
-
-        <p className="modal-message">{message}</p>
-
-        <div className="modal-buttons">
-          {status === 'verifying' && (
-            <button className="btn-disabled" disabled>
-              Procesando...
-            </button>
-          )}
-          
-          {status === 'success' && (
-            <button className="btn-success" onClick={handleClose}>
-              Ir al Dashboard
-            </button>
-          )}
-          
-          {status === 'error' && (
-            <>
-              <button className="btn-secondary" onClick={handleClose}>
-                Cerrar
-              </button>
-              <button className="btn-primary" onClick={() => window.location.href = '/planes'}>
-                Ver planes
-              </button>
-            </>
-          )}
-        </div>
+    <div className="payment-modal-overlay" style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 9999
+    }}>
+      <div className="payment-modal" style={{
+        backgroundColor: 'white',
+        padding: '30px',
+        borderRadius: '10px',
+        textAlign: 'center',
+        minWidth: '300px'
+      }}>
+        <h2>🔄 Procesando tu pago...</h2>
+        <p>Verificando tu suscripción al plan <strong>{plan}</strong></p>
+        <div className="spinner" style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid #f3f3f3',
+          borderTop: '4px solid #3498db',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '20px auto'
+        }}></div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     </div>
   );
