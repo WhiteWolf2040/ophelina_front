@@ -36,6 +36,7 @@ const Dueno = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentSessionId, setPaymentSessionId] = useState(null);
   const [paymentPlanName, setPaymentPlanName] = useState('');
+  const [paymentPlanId, setPaymentPlanId] = useState(null);
 
   // Detectar pago exitoso
   useEffect(() => {
@@ -45,8 +46,9 @@ const Dueno = () => {
     if (sessionId && paymentStatus === 'success') {
       setPaymentSessionId(sessionId);
       setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
+      setPaymentPlanId(localStorage.getItem('pending_plan_id'));
       setShowPaymentModal(true);
-      window.history.replaceState({}, document.title, '/dashboard');
+      window.history.replaceState({}, document.title, '/home');
     }
   }, [searchParams]);
 
@@ -75,7 +77,7 @@ const [loadingAmortizaciones, setLoadingAmortizaciones] = useState(false);
 const cargarAmortizacionesPendientes = async () => {
     try {
         setLoadingAmortizaciones(true);
-        const response = await api.get('/dashboard/amortizaciones-pendientes');
+        const response = await api.get('/home/amortizaciones-pendientes');
         if (response.data.success) {
             setAmortizacionesPendientes(response.data.data);
         }
@@ -419,7 +421,7 @@ const cargarAmortizacionesPendientes = async () => {
 
   const cargarMorosidad = async () => {
     try {
-      const response = await api.get('/dashboard/morosidad');
+      const response = await api.get('/home/morosidad');
       if (response.data.success) {
         setMorosidad(response.data.data);
       } else {
@@ -434,7 +436,7 @@ const cargarAmortizacionesPendientes = async () => {
 
   const cargarDistribucionCategorias = async () => {
     try {
-      const response = await api.get('/dashboard/distribucion-categorias');
+      const response = await api.get('/home/distribucion-categorias');
       if (response.data.success) {
         const data = response.data.data;
         const series = data.map(item => item.total);
@@ -451,7 +453,7 @@ const cargarAmortizacionesPendientes = async () => {
       setLoading(true);
       setError(null);
       
-      const response = await api.get('/dashboard');
+      const response = await api.get('/home');
       
       if (response.data.success) {
         const data = response.data.data;
@@ -494,7 +496,7 @@ const cargarAmortizacionesPendientes = async () => {
   // Funciones para cargar datos específicos
   const cargarActivos = async () => {
     try {
-      const response = await api.get('/dashboard/activos');
+      const response = await api.get('/home/activos');
       if (response.data.success) {
         setEmpenosActivos(response.data.data);
         setShowActivos(true);
@@ -507,7 +509,7 @@ const cargarAmortizacionesPendientes = async () => {
 
   const cargarVencidos = async () => {
     try {
-      const response = await api.get('/dashboard/vencidos');
+      const response = await api.get('/home/vencidos');
       if (response.data.success) {
         setEmpenosVencidos(response.data.data);
         setShowVencidos(true);
@@ -520,7 +522,7 @@ const cargarAmortizacionesPendientes = async () => {
 
   const cargarProximos = async () => {
     try {
-      const response = await api.get('/dashboard/proximos');
+      const response = await api.get('/home/proximos');
       if (response.data.success) {
         setProximosVencer(response.data.data);
         setShowProximos(true);
@@ -1201,7 +1203,7 @@ const cargarAmortizacionesPendientes = async () => {
         isOpen={showPaymentModal}
         onClose={handleClosePaymentModal}
         sessionId={paymentSessionId}
-        planName={paymentPlanName}
+        planName={paymentPlanName} planId={paymentPlanId}
         onSuccess={handlePaymentSuccess}
       />
     </div>
