@@ -12,6 +12,16 @@ const setAuthData = (token, usuario) => {
   localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(usuario));
   localStorage.setItem("rol", usuario.rol);
+  
+  // ============================================
+  // 🔥 AGREGAR ESTAS DOS LÍNEAS 🔥
+  // ============================================
+  if (usuario.id_empresa) {
+    localStorage.setItem("empresa_id", usuario.id_empresa);
+  }
+  if (usuario.correo) {
+    localStorage.setItem("user_email", usuario.correo);
+  }
 };
 
 /*
@@ -24,6 +34,8 @@ const clearAuthData = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   localStorage.removeItem("rol");
+  localStorage.removeItem("empresa_id");   // ← AGREGAR
+  localStorage.removeItem("user_email");   // ← AGREGAR
 };
 
 /*
@@ -129,6 +141,14 @@ const fetchCurrentUser = async () => {
       const usuario = response.data.data.usuario;
 
       localStorage.setItem("user", JSON.stringify(usuario));
+      
+      // 🔥 También actualizar empresa_id si viene
+      if (usuario.id_empresa) {
+        localStorage.setItem("empresa_id", usuario.id_empresa);
+      }
+      if (usuario.correo) {
+        localStorage.setItem("user_email", usuario.correo);
+      }
 
       return usuario;
 

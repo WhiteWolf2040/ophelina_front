@@ -6,20 +6,42 @@ import client from "../assets/client.jpg";
 import admin from "../assets/admin.jpg";
 import ahorros from "../assets/ahorros.jpg";
 import StarIcon from "../assets/StarIcon.png";
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import "./LandingPage.css";
+import { loadStripe } from '@stripe/stripe-js';
+import { stripeService } from '../services/stripeService';
+import PaymentModal from '../components/PaymentModal';
 
-// Datos centralizados
+// ============================================
+// MODAL DE CARGA
+// ============================================
+const LoadingModal = ({ isOpen }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="loading-modal-overlay">
+      <div className="loading-modal-container">
+        <div className="loading-spinner"></div>
+        <h3>Procesando tu solicitud...</h3>
+        <p>Estamos preparando tu pago, por favor espera un momento.</p>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// DATOS CENTRALIZADOS
+// ============================================
 const slides = [
   {
     title: "Misión",
     text: "Optimizar la administración de casas de empeño mediante una plataforma web SaaS que automatice procesos clave y mejore la experiencia del usuario.",
-    img: ahorros  // Reemplazar con import real
+    img: ahorros
   },
   {
     title: "Visión",
     text: "Ser la plataforma líder en México para la digitalización del sector prendario, ofreciendo seguridad y eficiencia a cada negocio.",
-    img: gold // Reemplazar con import real
+    img: gold
   }
 ];
 
@@ -57,31 +79,58 @@ const clientFeatures = [
 
 const plans = [
   {
-    name: "Básico",
-    price: 50,
-    features: ["1 usuario administrador", "Precio del oro en tiempo real", "Recordatorios automáticos", "Portal de cliente básico", "Soporte por email"],
-    buttonText: "Probar",
-    featured: false
+    id: 'free',
+    name: "Gratis",
+    price: 0,
+    priceInCents: 0,
+    features: [
+      "Solo 1 sucursal",
+      "5 clientes nuevos al mes",
+      "Máximo 50 empeños activos",
+      "Control de fechas límite de pago"
+    ],
+    buttonText: "Probar 30 días gratis",
+    featured: false,
+    badge: null
   },
   {
+    id: 'profesional',
     name: "Profesional",
     price: 999,
-    features: ["Hasta 5 usuarios", "Portal de cliente avanzado", "Cálculo de intereses automático", "Reportes y control de pagos", "Soporte prioritario"],
-    buttonText: "Comenzar ahora",
+    priceInCents: 99900,
+    features: [
+      "Todo lo del plan Gratis",
+      "Evita pérdidas con control de inventario",
+      "Reportes básicos",
+      "Reduce morosidad con recordatorios automáticos",
+      "Cálculo automático de intereses"
+    ],
+    buttonText: "Suscribirme",
     featured: true,
     badge: "Más popular"
   },
   {
+    id: 'premium',
     name: "Empresarial",
-    price: 4999,
-    features: ["Usuarios ilimitados", "Múltiples sucursales", "Pasarela de pago", "Tienda en línea", "Todo lo del Plan Profesional"],
-    buttonText: "Probar",
+    price: 1499,
+    priceInCents: 149900,
+    features: [
+      "Todo lo incluido en Profesional",
+      "Reportes avanzados",
+      "Tienda en línea",
+      "Roles y permisos de usuarios",
+      "Configuración de la empresa",
+      "Multi-sucursal (hasta 5)"
+    ],
+    buttonText: "Suscribirme",
     featured: false
   }
 ];
 
-// Componentes memoizados
-const Navbar = memo(() => (
+// ============================================
+// COMPONENTES MEMOIZADOS
+// ============================================
+const Navbar = memo(({ isLoggedIn, userNombre, onLogout }) => (
   <header className="navbar">
     <div className="logo">
       <span className="logo-icon">
@@ -92,9 +141,23 @@ const Navbar = memo(() => (
       <a href="#nosotros">Nosotros</a>
       <a href="#suscripciones">Suscripciones</a>
       <a href="#contacto">Contacto</a>
-      <Link to="/login" style={{ textDecoration: 'none' }}>
-        <button className="btn-login" aria-label="Iniciar sesión">Iniciar Sesión</button>
-      </Link>
+      
+      {isLoggedIn ? (
+        <div className="user-menu">
+          <Link to="/home" style={{ textDecoration: 'none' }}>
+            <button className="btn-dashboard" aria-label="Ir al dashboard">
+              📊 Dashboard
+            </button>
+          </Link>
+          <button className="btn-logout" onClick={onLogout} aria-label="Cerrar sesión">
+            👤 {userNombre?.split(' ')[0] || 'Usuario'} | Salir
+          </button>
+        </div>
+      ) : (
+        <Link to="/login" style={{ textDecoration: 'none' }}>
+          <button className="btn-login" aria-label="Iniciar sesión">Iniciar Sesión</button>
+        </Link>
+      )}
     </nav>
   </header>
 ));
@@ -164,33 +227,114 @@ const FeatureCard = memo(({ icon, title, desc }) => (
   </div>
 ));
 
-const PricingCard = memo(({ plan }) => (
-  <div className={`pricing-card ${plan.featured ? 'featured' : ''}`}>
-    {plan.badge && <div className="badge2">{plan.badge}</div>}
-    <h3>{plan.name}</h3>
-    <div className="price">
-      <span className="currency">$</span>
-      <span className="amount ">{plan.price.toLocaleString()}</span>
-      <span className="period">/ mo</span>
+const PricingCard = memo(({ plan, onPaymentStart, onPaymentEnd }) => {
+  const stripePromise = loadStripe('pk_test_51R7ma3QLK8Ukfs4sBg4baWVuYz4UpN7v5x6GxCfAs4GGXuLTdrRiiqdtjAy9wPCBqT6nybXwlw7240h3Egpcz4RQ00VNfIVDSn');
+
+  const handleSubscribe = async () => {
+    if (plan.id === 'free') {
+      await handleFreePlan();
+    } else {
+      await handlePaidPlan();
+    }
+  };
+
+  const handleFreePlan = async () => {
+    const email = prompt('Ingresa tu correo electrónico:');
+    if (!email) return;
+    
+    const negocioNombre = prompt('Nombre de tu casa de empeño:');
+    if (!negocioNombre) return;
+    
+    try {
+      const response = await stripeService.activateFreePlan({
+        email: email,
+        negocio_nombre: negocioNombre,
+        telefono: ''
+      });
+      
+      if (response.success) {
+        localStorage.setItem('empresa_id', response.empresaId);
+        localStorage.setItem('user_email', email);
+        alert('¡Plan Free activado por 30 días!');
+        window.location.href = '/dashboard';
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al activar el plan. Intenta de nuevo.');
+    }
+  };
+
+  const handlePaidPlan = async () => {
+    let email = localStorage.getItem('user_email');
+    if (!email) {
+      email = prompt('Correo electrónico para la factura:');
+      if (!email) return;
+      localStorage.setItem('user_email', email);
+    }
+    
+    let empresaId = localStorage.getItem('empresa_id');
+    if (!empresaId) {
+      empresaId = 'nueva';
+    }
+    
+    localStorage.setItem('pending_plan_id', plan.id);
+    localStorage.setItem('pending_plan_name', plan.name);
+
+    if (onPaymentStart) onPaymentStart();
+    
+    try {
+      const response = await stripeService.createCheckoutSession({
+        plan_id: plan.id,
+        plan_name: plan.name,
+        price: plan.priceInCents,
+        empresa_id: empresaId,
+        customer_email: email,
+      });
+      
+      window.location.href = response.url;
+      
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al iniciar el pago: ' + error.message);
+      if (onPaymentEnd) onPaymentEnd();
+    }
+  };
+
+  return (
+    <div className={`pricing-card ${plan.featured ? 'featured' : ''}`}>
+      {plan.badge && <div className="badge2">{plan.badge}</div>}
+      <h3>{plan.name}</h3>
+      <div className="price">
+        {plan.price === 0 ? (
+          <span className="amount">Gratis</span>
+        ) : (
+          <>
+            <span className="currency">$</span>
+            <span className="amount">{plan.price.toLocaleString()}</span>
+            <span className="period">/ mes</span>
+          </>
+        )}
+      </div>
+      <ul>
+        {plan.features.map((feature, i) => (
+          <li key={i}>{feature}</li>
+        ))}
+      </ul>
+      
+      <button 
+        onClick={handleSubscribe}
+        className={plan.featured ? 'btn-filled' : 'btn-outline'}
+        style={{ width: '100%', cursor: 'pointer' }}
+      >
+        <center>{plan.buttonText}</center>
+      </button>
     </div>
-    <ul>
-      {plan.features.map((feature, i) => (
-        <li key={i}>{feature}</li>
-      ))}
-    </ul>
-   
+  );
+});
 
-       <a href="#contacto" className={plan.featured ? 'btn-filled' : 'btn-outline'} >
-       <center>
-         {plan.buttonText}
-       </center>
-       </a>
-          
-   
-  </div>
-));
-
-// Componente principal
+// ============================================
+// COMPONENTE PRINCIPAL LANDING
+// ============================================
 const Landing = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
@@ -202,6 +346,20 @@ const Landing = () => {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Estados de autenticación
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userNombre, setUserNombre] = useState('');
+  
+  // Estados para el modal de pago
+  const [searchParams] = useSearchParams();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentSessionId, setPaymentSessionId] = useState(null);
+  const [paymentPlanName, setPaymentPlanName] = useState('');
+  const [paymentProcessed, setPaymentProcessed] = useState(false);
+  
+  // Estado para el modal de carga
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
 
   // Auto-play del carrusel
   useEffect(() => {
@@ -229,6 +387,50 @@ const Landing = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Verificar sesión al cargar la página
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      
+      if (token && userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          setIsLoggedIn(true);
+          setUserNombre(user.nombre || user.name || 'Usuario');
+        } catch (e) {
+          console.error('Error al parsear usuario:', e);
+        }
+      }
+    };
+    
+    checkAuth();
+  }, []);
+
+  // DETECTAR PAGO EXITOSO
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id');
+    const paymentStatus = searchParams.get('payment');
+    
+    if (sessionId && paymentStatus === 'success' && !paymentProcessed) {
+      console.log('✅ Pago detectado, abriendo modal...');
+      setPaymentProcessed(true);
+      setPaymentSessionId(sessionId);
+      setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
+      setShowPaymentModal(true);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [searchParams, paymentProcessed]);
+
+  // Funciones para el modal de carga
+  const handlePaymentStart = () => {
+    setIsLoadingPayment(true);
+  };
+
+  const handlePaymentEnd = () => {
+    setIsLoadingPayment(false);
+  };
 
   const handleSlideChange = useCallback((index) => {
     setActiveSlide(index);
@@ -266,23 +468,66 @@ const Landing = () => {
     
     setIsSubmitting(true);
     
-    // Simular envío
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Formulario enviado:', formData);
-      setFormData({ nombre: '', negocio: '', telefono: '', mensaje: '' });
-      alert('¡Gracias por contactarnos! Te responderemos pronto.');
+      const response = await fetch('http://localhost:8000/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('¡Mensaje enviado correctamente! Te contactaremos pronto.');
+        setFormData({ nombre: '', negocio: '', telefono: '', mensaje: '' });
+      } else {
+        alert('Error: ' + result.error);
+      }
     } catch (error) {
-      alert('Error al enviar el formulario. Intenta de nuevo.');
+      console.error('Error:', error);
+      alert('Error de conexión. Revisa que el backend PHP esté corriendo.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('empresa_id');
+    localStorage.removeItem('user_email');
+    setIsLoggedIn(false);
+    setUserNombre('');
+    window.location.href = '/';
+  };
+
+  // Manejar éxito del pago
+  const handlePaymentSuccess = (data) => {
+    console.log('✅ Pago verificado y suscripción activada:', data);
+    setTimeout(() => {
+      window.location.href = '/dashboard';
+    }, 2000);
+  };
+
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+    setPaymentProcessed(false);
+    localStorage.removeItem('pending_plan_id');
+    localStorage.removeItem('pending_plan_name');
+    localStorage.removeItem('pending_plan_price');
+  };
+
   return (
     <>
       <div className="landing">
-        <Navbar />
+        <Navbar 
+          isLoggedIn={isLoggedIn} 
+          userNombre={userNombre} 
+          onLogout={handleLogout}
+        />
         
         <section className="hero-section" aria-label="Hero">
           <div className="heroo-overlay">
@@ -325,15 +570,9 @@ const Landing = () => {
               <p>Gestiona empeños, inventario, pagos y reportes desde una sola plataforma intuitiva.</p>
             </div>
 
-            {/* Carrusel */}
-            <div 
-              className="mv-carousel" 
-              role="region" 
-              aria-label="Carrusel de Misión y Visión"
-            >
+            <div className="mv-carousel" role="region" aria-label="Carrusel de Misión y Visión">
               <div className="mv-card">
                 <div className="mv-image">
-                 
                   <img 
                     src={slides[activeSlide].img}
                     alt={slides[activeSlide].title}
@@ -345,10 +584,9 @@ const Landing = () => {
                 <div className="mv-content">
                   <h3>{slides[activeSlide].title}</h3>
                   <p>{slides[activeSlide].text}</p>
-                   <Link to="/loging" style={{ textDecoration: 'none' }}>
-          <button className="btn-mv">Iniciar Sesión</button>
-      </Link>
-                 
+                  <Link to="/login" style={{ textDecoration: 'none' }}>
+                    <button className="btn-mv">Iniciar Sesión</button>
+                  </Link>
                 </div>
               </div>
               
@@ -366,7 +604,6 @@ const Landing = () => {
               </div>
             </div>
 
-            {/* Pasos */}
             <div className="process-steps">
               <div className="steps-line" aria-hidden="true"></div>
               {steps.map((step, index) => (
@@ -455,7 +692,6 @@ const Landing = () => {
               <p className="features-description">
                 Características que marcan la diferencia y potencian tu negocio
               </p>
-              
               <a href="#contacto"><button className="features-btn">Solicitar Demo</button></a>
             </header>
 
@@ -479,15 +715,14 @@ const Landing = () => {
 
           <div className="pricing-container">
             {plans.map((plan, index) => (
-              <PricingCard key={index} plan={plan} />
+              <PricingCard 
+                key={index} 
+                plan={plan}
+                onPaymentStart={handlePaymentStart}
+                onPaymentEnd={handlePaymentEnd}
+              />
             ))}
           </div>
-          
-          <center>
-            <p className="pricing-footer">
-              Todos los planes incluyen 14 días de prueba gratuita • Sin tarjeta de crédito requerida
-            </p>
-          </center>
         </div>
 
         {/* CONTACTO */}
@@ -574,21 +809,18 @@ const Landing = () => {
               <div className="info-card dark">
                 <h4>Otras formas de contacto</h4>
                 <div className="info-item2">
-                 
-                  <div >
+                  <div>
                     <strong> <span className="icon" aria-hidden="true">📧</span> Email</strong>
                     <p>contacto@ophelina.mx</p>
                   </div>
                 </div>
                 <div className="info-item2">
-                  
                   <div>
                     <strong><span className="icon" aria-hidden="true">📞</span> Teléfono</strong>
                     <p>+52 999 999 99 99</p>
                   </div>
                 </div>
                 <div className="info-item2">
-                  
                   <div>
                     <strong><span className="icon" aria-hidden="true">📍</span> Oficinas</strong>
                     <p>Mérida, Yucatan, México</p>
@@ -598,7 +830,6 @@ const Landing = () => {
                 <div className="info-schedule">
                   <strong>Horario de atención</strong>
                   <p>Lunes a Viernes: 9:00 - 18:00 <br /> Sábado: 9:00 - 14:00</p>
-                 
                 </div>
               </div>
 
@@ -618,6 +849,31 @@ const Landing = () => {
       </div>
       
       <Footer />
+
+      {/* Modal de verificación de pago */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={handleClosePaymentModal}
+        sessionId={paymentSessionId}
+        planName={paymentPlanName}
+        onSuccess={handlePaymentSuccess}
+      />
+
+      {/* Modal de carga */}
+      <LoadingModal isOpen={isLoadingPayment} />
+
+      {/* Botón de WhatsApp */}
+      <a 
+        href="https://wa.me/529992434806?text=Hola%21%20Vengo%20de%20la%20pagina%20web%20y%20me%20gustar%C3%ADa%20recibir%20m%C3%A1s%20informaci%C3%B3n" 
+        className="whatsapp-float" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        aria-label="Contactar por WhatsApp"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="white">
+          <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.7 23.5 9.1 31.6 11.6 13.3 4.2 25.4 3.6 34.9 2.2 10.7-1.6 32.8-13.4 37.4-26.3 4.6-12.9 4.6-24 3.2-26.3-1.3-2.3-4.8-3.7-10.3-6.5z"/>
+        </svg>
+      </a>
     </>
   );
 };
