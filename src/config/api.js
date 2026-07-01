@@ -8,12 +8,17 @@ INSTANCIA DE AXIOS
 ==============================
 */
 
-// ✅ USA LA VARIABLE DE ENTORNO
-const API_URL =  import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+console.log('🔍 VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('🔍 MODE:', import.meta.env.MODE);
+
+// URL correcta con fallback
+const API_URL = import.meta.env.VITE_API_URL || 'https://ophelina-back-v1.onrender.com/api';
+
+console.log(' API_URL final:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,  // ← CAMBIADO
-  timeout: 30000,
+  timeout: 40000,
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json"
