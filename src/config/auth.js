@@ -13,9 +13,7 @@ const setAuthData = (token, usuario) => {
   localStorage.setItem("user", JSON.stringify(usuario));
   localStorage.setItem("rol", usuario.rol);
   
-  // ============================================
-  // 🔥 AGREGAR ESTAS DOS LÍNEAS 🔥
-  // ============================================
+ 
   if (usuario.id_empresa) {
     localStorage.setItem("empresa_id", usuario.id_empresa);
   }
@@ -65,12 +63,12 @@ LOGIN
 ==============================
 */
 
-const login = async (correo, contrasena) => {
+const login = async (email, password) => {
   try {
 
     const response = await api.post("/login", {
-      correo: correo,
-      contrasena: contrasena
+      correo: email,
+      contrasena: password,
     });
 
     if (response.data.success) {
