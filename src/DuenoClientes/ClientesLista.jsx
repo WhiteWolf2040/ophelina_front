@@ -56,25 +56,54 @@ const ClientesLista = () => {
     cargarClientes();
   }, []);
 
-  const cargarClientes = async () => {
+ const cargarClientes = async () => {
     try {
-      const response = await clientesService.obtenerClientes();
-      const data = response.data || response;
+        const response = await clientesService.obtenerClientes();
+        console.log('📦 Respuesta completa:', response);
+        
+        // ✅ EXTRAER EL ARRAY CORRECTAMENTE
+        let data = [];
+        
+        // Si la respuesta tiene { success: true, data: [...] }
+        if (response.data && response.data.success && Array.isArray(response.data.data)) {
+            data = response.data.data;
+        }
+        // Si la respuesta es directamente { data: [...] }
+        else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+            data = response.data.data;
+        }
+        // Si la respuesta es directamente el array
+        else if (Array.isArray(response.data)) {
+            data = response.data;
+        }
+        // Si la respuesta tiene { success: true, data: [...] } pero sin anidar
+        else if (response.success && Array.isArray(response.data)) {
+            data = response.data;
+        }
+        // Si la respuesta es el array directamente
+        else if (Array.isArray(response)) {
+            data = response;
+        }
+        
+        console.log('✅ Array de clientes:', data);
+        console.log('📊 Cantidad:', data.length);
 
-      const clientesAdaptados = data.map(cliente => ({
-        ...cliente,
-        email: cliente.correo,
-        fecha: cliente.fecha_registro,
-        tipoIdentificacion: cliente.tipo_identificacion,
-        numeroIdentificacion: cliente.numero_identificacion,
-        codigoPostal: cliente.codigo_postal
-      }));
+        // ✅ AHORA data es un array, podemos hacer .map()
+        const clientesAdaptados = data.map(cliente => ({
+            ...cliente,
+            email: cliente.correo || cliente.email || '',
+            fecha: cliente.fecha_registro || cliente.fecha || '',
+            tipoIdentificacion: cliente.tipo_identificacion || cliente.tipoIdentificacion || 'INE',
+            numeroIdentificacion: cliente.numero_identificacion || cliente.numeroIdentificacion || '',
+            codigoPostal: cliente.codigo_postal || cliente.codigoPostal || ''
+        }));
 
-      setClientes(clientesAdaptados);
+        setClientes(clientesAdaptados);
     } catch (error) {
-      console.error("Error cargando clientes", error);
+        console.error("Error cargando clientes", error);
+        setClientes([]);
     }
-  };
+};
 
   const clientesFiltrados = clientes.filter((cliente) =>
     (cliente.nombre || "").toLowerCase().includes(busqueda.toLowerCase()) ||
