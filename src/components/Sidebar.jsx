@@ -39,7 +39,7 @@ const Sidebar = () => {
         { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" }
       ]
     },
-    3: {  // Profesional
+    2: {  // Profesional
       name: 'Profesional',
       menus: [
         { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
@@ -49,7 +49,7 @@ const Sidebar = () => {
         { path: "/configuracion", icon: <SettingsIcon />, text: "Configuración", modulo: "configuracion" }
       ]
     },
-    4: {  // Premium (Empresarial)
+    3: {  // Premium (Empresarial)
       name: 'Premium',
       menus: [
         { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
