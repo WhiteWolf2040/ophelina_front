@@ -40,18 +40,52 @@ const Dueno = () => {
 
   // Detectar pago exitoso
   useEffect(() => {
+    //  OBTENER PARÁMETROS DE LA URL
     const sessionId = searchParams.get('session_id');
     const paymentStatus = searchParams.get('payment');
     
+    console.log(' Parámetros de URL:', { sessionId, paymentStatus });
+    
     if (sessionId && paymentStatus === 'success') {
-      setPaymentSessionId(sessionId);
-      setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
-      setPaymentPlanId(localStorage.getItem('pending_plan_id'));
-      setShowPaymentModal(true);
-      window.history.replaceState({}, document.title, '/home');
+        console.log('Pago detectado, session_id:', sessionId);
+      
+        //  GUARDAR INFORMACIÓN DEL PAGO
+        setPaymentSessionId(sessionId);
+        setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
+        setPaymentPlanId(localStorage.getItem('pending_plan_id'));
+        setShowPaymentModal(true);
+        
+        //  LIMPIAR LA URL (sin perder la sesión)
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+        
+        //  VERIFICAR EL PAGO CON EL BACKEND
+        verificarPago(sessionId);
+    } else {
+        console.log('ℹ No hay parámetros de pago en la URL');
     }
-  }, [searchParams]);
+}, [searchParams]);
 
+// ✅ FUNCIÓN PARA VERIFICAR EL PAGO
+const verificarPago = async (sessionId) => {
+    try {
+        const response = await api.post('/verify-payment', { session_id: sessionId });
+        console.log('📦 Verificación de pago:', response.data);
+        
+        if (response.data.success) {
+            console.log('✅ Pago verificado correctamente');
+            // Actualizar el dashboard
+            cargarDashboard();
+            // Mostrar mensaje de éxito
+            alert('¡Pago exitoso! Tu plan ha sido actualizado.');
+        } else {
+            console.error('❌ Error verificando pago:', response.data.message);
+            alert('Hubo un problema verificando el pago. Contacta a soporte.');
+        }
+    } catch (error) {
+        console.error('❌ Error al verificar pago:', error);
+    }
+};
   // Verificar suscripción al cargar
   useEffect(() => {
     const verificarSuscripcion = async () => {
