@@ -66,7 +66,7 @@ const Dueno = () => {
     }
 }, [searchParams]);
 
-// ✅ FUNCIÓN PARA VERIFICAR EL PAGO
+//  FUNCIÓN PARA VERIFICAR EL PAGO
 const verificarPago = async (sessionId) => {
     try {
         const response = await api.post('/verify-payment', { session_id: sessionId });
@@ -86,6 +86,7 @@ const verificarPago = async (sessionId) => {
         console.error('❌ Error al verificar pago:', error);
     }
 };
+
   // Verificar suscripción al cargar
   useEffect(() => {
     const verificarSuscripcion = async () => {
