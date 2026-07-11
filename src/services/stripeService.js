@@ -1,27 +1,59 @@
 // src/services/stripeService.js
 import axios from 'axios';
 
-// Hardcodea la URL de tu backend
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// URL de tu backend (Render)
+const API_URL = import.meta.env.VITE_API_URL || 'https://ophelina-back-v1.onrender.com/api';
 
 export const stripeService = {
+  /**
+   * Crear sesión de checkout en Stripe
+   */
   createCheckoutSession: async (data) => {
-    const response = await axios.post(`${API_URL}/create-checkout-session`, data);
-    return response.data;
+    try {
+      const response = await axios.post(`${API_URL}/stripe/create-checkout-session`, data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error en createCheckoutSession:', error);
+      throw error;
+    }
   },
 
+  /**
+   * Verificar pago después de que Stripe redirija
+   */
   verifyPayment: async (data) => {
-    const response = await axios.post(`${API_URL}/verify-payment`, data);
-    return response.data;
+    try {
+      const response = await axios.post(`${API_URL}/stripe/verify-payment`, data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error en verifyPayment:', error);
+      throw error;
+    }
   },
 
+  /**
+   * Activar plan free para nuevos usuarios
+   */
   activateFreePlan: async (data) => {
-    const response = await axios.post(`${API_URL}/activate-free-plan`, data);
-    return response.data;
+    try {
+      const response = await axios.post(`${API_URL}/stripe/activate-free-plan`, data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error en activateFreePlan:', error);
+      throw error;
+    }
   },
 
+  /**
+   * Verificar estado de suscripción de una empresa
+   */
   checkSubscription: async (empresaId) => {
-    const response = await axios.get(`${API_URL}/check-subscription/${empresaId}`);
-    return response.data;
+    try {
+      const response = await axios.get(`${API_URL}/stripe/check-subscription/${empresaId}`);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error en checkSubscription:', error);
+      throw error;
+    }
   }
 };

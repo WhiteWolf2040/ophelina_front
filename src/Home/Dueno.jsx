@@ -70,47 +70,43 @@ const Dueno = () => {
   // FUNCIÓN PARA VERIFICAR EL PAGO
   const verificarPago = async (sessionId, planId) => {
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const empresaId = user.id_empresa;
-      
-      console.log('🔄 Verificando pago...', { sessionId, empresaId, planId });
-      
-      // USAR empresa_id DEL USUARIO LOGUEADO
-      const response = await api.post('/verify-payment', {
-        session_id: sessionId,
-        empresa_id: empresaId,
-        plan_id: planId || 'premium'
-      });
-      
-      console.log(' Respuesta de verificación:', response.data);
-      
-      if (response.data.success) {
-        console.log(' Pago verificado correctamente');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const empresaId = user.id_empresa;
         
-        //  ACTUALIZAR DATOS DEL USUARIO
-        await cargarUsuarioActual();
-        await cargarDashboard();
-        await cargarModulosPorPlan();
+        console.log(' Verificando pago...', { sessionId, empresaId, planId });
         
-        //  MOSTRAR MENSAJE DE ÉXITO
-        alert(' ¡Pago exitoso! Tu plan ha sido actualizado.');
-      
-        //  LIMPIAR LOCALSTORAGE
-        localStorage.removeItem('pending_plan_id');
-        localStorage.removeItem('pending_plan_name');
-        localStorage.removeItem('pending_plan_price');
+        //  USAR STRIPE SERVICE
+        const response = await stripeService.verifyPayment({
+            session_id: sessionId,
+            empresa_id: empresaId,
+            plan_id: planId || 'premium'
+        });
         
-        //  ACTUALIZAR MODAL
-        setShowPaymentModal(false);
-      } else {
-        console.error(' Error verificando pago:', response.data.message);
-        alert('Hubo un problema verificando el pago. Contacta a soporte.');
-      }
+        console.log(' Respuesta de verificación:', response);
+        
+        if (response.success) {
+            console.log('🎉 Pago verificado correctamente');
+            
+            // Actualizar datos del usuario
+            await cargarUsuarioActual();
+            await cargarDashboard();
+            await cargarModulosPorPlan();
+            
+            alert(' ¡Pago exitoso! Tu plan ha sido actualizado.');
+          
+            localStorage.removeItem('pending_plan_id');
+            localStorage.removeItem('pending_plan_name');
+            localStorage.removeItem('pending_plan_price');
+            setShowPaymentModal(false);
+        } else {
+            console.error('❌ Error verificando pago:', response.message);
+            alert('Hubo un problema verificando el pago. Contacta a soporte.');
+        }
     } catch (error) {
-      console.error(' Error al verificar pago:', error);
-      alert('Error al verificar el pago. Contacta a soporte.');
+        console.error('❌ Error al verificar pago:', error);
+        alert('Error al verificar el pago. Contacta a soporte.');
     }
-  };
+};
 
   //  Verificar suscripción al cargar
   useEffect(() => {
