@@ -1,18 +1,34 @@
 // OpheliaLogin.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./OpheliaLogin.css";
 import logo from "../assets/ophelina_logo-sinFondo.png";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { login } from "../config/auth";
 
 export default function OpheliaLogin() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ✅ CAPTURAR PARÁMETROS DE STRIPE AL CARGAR EL LOGIN
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id');
+    const paymentStatus = searchParams.get('payment');
+    
+    console.log('🔍 Parámetros en login:', { sessionId, paymentStatus });
+    
+    if (sessionId && paymentStatus === 'success') {
+      console.log('✅ Pago detectado en login!');
+      // Guardar en localStorage para usarlo después del login
+      localStorage.setItem('pending_session_id', sessionId);
+      localStorage.setItem('pending_payment', 'success');
+    }
+  }, [searchParams]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,8 +62,21 @@ export default function OpheliaLogin() {
         localStorage.setItem('modulos', JSON.stringify(result.data.modulos));
       }
       
+      // ✅ VERIFICAR SI HAY PAGO PENDIENTE
+      const pendingSessionId = localStorage.getItem('pending_session_id');
+      const pendingPayment = localStorage.getItem('pending_payment');
+      
+      if (pendingSessionId && pendingPayment === 'success') {
+        console.log('✅ Pago pendiente detectado, redirigiendo a /home con parámetros');
+        localStorage.removeItem('pending_session_id');
+        localStorage.removeItem('pending_payment');
+        // Redirigir a /home con los parámetros de pago
+        window.location.href = `/home?session_id=${pendingSessionId}&payment=success`;
+        setLoading(false);
+        return;
+      }
+      
       // Redirigir según los permisos
-      // Si tiene permiso para ver dashboard, va al panel de admin
       if (result.data.permisos?.includes('ver_dashboard')) {
         navigate("/home");
       } else {
@@ -106,10 +135,6 @@ export default function OpheliaLogin() {
             {loading ? "Iniciando sesión..." : "Ingresar"}
           </button>
         </form>
-
-      
-
-       
       </div>
     </div>
   );

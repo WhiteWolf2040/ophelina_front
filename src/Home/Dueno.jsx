@@ -57,17 +57,17 @@ const Dueno = () => {
       setPaymentPlanId(planId);
       setShowPaymentModal(true);
       
-      // ✅ VERIFICAR EL PAGO CON EL BACKEND
+      //  VERIFICAR EL PAGO CON EL BACKEND
       verificarPago(sessionId, planId);
       
-      // ✅ LIMPIAR LA URL
+      //  LIMPIAR LA URL
       window.history.replaceState({}, document.title, '/home');
     } else {
-      console.log('ℹ️ No hay parámetros de pago en la URL');
+      console.log('ℹ No hay parámetros de pago en la URL');
     }
   }, [searchParams]);
 
-  // ✅ FUNCIÓN PARA VERIFICAR EL PAGO
+  // FUNCIÓN PARA VERIFICAR EL PAGO
   const verificarPago = async (sessionId, planId) => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -75,44 +75,44 @@ const Dueno = () => {
       
       console.log('🔄 Verificando pago...', { sessionId, empresaId, planId });
       
-      // ✅ USAR empresa_id DEL USUARIO LOGUEADO
+      // USAR empresa_id DEL USUARIO LOGUEADO
       const response = await api.post('/verify-payment', {
         session_id: sessionId,
         empresa_id: empresaId,
         plan_id: planId || 'premium'
       });
       
-      console.log('📦 Respuesta de verificación:', response.data);
+      console.log(' Respuesta de verificación:', response.data);
       
       if (response.data.success) {
-        console.log('✅ Pago verificado correctamente');
+        console.log(' Pago verificado correctamente');
         
-        // ✅ ACTUALIZAR DATOS DEL USUARIO
+        //  ACTUALIZAR DATOS DEL USUARIO
         await cargarUsuarioActual();
         await cargarDashboard();
         await cargarModulosPorPlan();
         
-        // ✅ MOSTRAR MENSAJE DE ÉXITO
-        alert('✅ ¡Pago exitoso! Tu plan ha sido actualizado.');
-        
-        // ✅ LIMPIAR LOCALSTORAGE
+        //  MOSTRAR MENSAJE DE ÉXITO
+        alert(' ¡Pago exitoso! Tu plan ha sido actualizado.');
+      
+        //  LIMPIAR LOCALSTORAGE
         localStorage.removeItem('pending_plan_id');
         localStorage.removeItem('pending_plan_name');
         localStorage.removeItem('pending_plan_price');
         
-        // ✅ ACTUALIZAR MODAL
+        //  ACTUALIZAR MODAL
         setShowPaymentModal(false);
       } else {
-        console.error('❌ Error verificando pago:', response.data.message);
+        console.error(' Error verificando pago:', response.data.message);
         alert('Hubo un problema verificando el pago. Contacta a soporte.');
       }
     } catch (error) {
-      console.error('❌ Error al verificar pago:', error);
+      console.error(' Error al verificar pago:', error);
       alert('Error al verificar el pago. Contacta a soporte.');
     }
   };
 
-  // ✅ Verificar suscripción al cargar
+  //  Verificar suscripción al cargar
   useEffect(() => {
     const verificarSuscripcion = async () => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -122,7 +122,7 @@ const Dueno = () => {
       
       try {
         const response = await stripeService.checkSubscription(empresaId);
-        console.log('🔍 Estado de suscripción:', response);
+        console.log(' Estado de suscripción:', response);
         
         if (!response.activo && response.dias_restantes <= 0) {
           alert('Tu suscripción ha vencido. Por favor, renueva.');
@@ -473,8 +473,8 @@ const Dueno = () => {
           plan_id: usuario.plan_id,
           plan_nombre: usuario.plan_nombre
         });
-        console.log('📦 Módulos permitidos:', usuario.modulos);
-        console.log('📊 Plan:', usuario.plan_nombre);
+        console.log(' Módulos permitidos:', usuario.modulos);
+        console.log(' Plan:', usuario.plan_nombre);
       }
     } catch (error) {
       console.error('Error cargando módulos:', error);
