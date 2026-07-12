@@ -47,7 +47,7 @@
 }
 
 .btn-nuevo-permiso {
-  background: #0d1b3e;
+  background: #15337f;
   color: white;
   border: none;
   padding: 0.7rem 1.5rem;
@@ -61,12 +61,13 @@
 }
 
 .btn-nuevo-permiso:hover {
-  background: #1e3a8a;
+  background: #08132d;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(13, 27, 62, 0.2);
 }
 
 .btn-bulk-permisos {
+  background: #15337f;
   background: #10b981;
   color: white;
   border: none;
@@ -81,20 +82,27 @@
 }
 
 .btn-bulk-permisos:hover {
+  background: #08132d;
   background: #059669;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
 /* Stats */
+.stat-card{
+width: 100%;
+}
+
+
 .permisos-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
-  margin-bottom: 2rem;
 }
 
 .permisos-stats .stat-card {
+  background: rgb(255, 255, 255);
+  border-radius: 15px;
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
@@ -111,8 +119,13 @@
   height: 70px;
   border-radius: 12px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.8rem;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
   font-size: 2.5rem;
   transition: transform 0.3s ease;
   flex-shrink: 0;
@@ -133,10 +146,16 @@
   color: white;
 }
 
+.stat-icon.dueño-bg,
+.stat-icon.admin-bg,
+.stat-icon.permiso-bg,
 .stat-icon.ejecutivo-bg {
-  background: #f59e0b;
-  color: white;
+  background: #ffffff00;
+  color: #e8d018;
+  transform: scale(2.5) !important;
+  display: inline-block !important;
 }
+
 
 .stat-content {
   display: flex;
@@ -180,6 +199,7 @@
 }
 
 .search-wrapper {
+  padding-top: 30px;
   position: relative;
   flex: 1;
   min-width: 300px;
@@ -194,8 +214,10 @@
 }
 
 .search-input {
-  width: 100%;
+  width: 120%;
   height: 48px;
+  border-radius: 15px;
+  border: none;
   padding: 0 60px 0 48px;
   border-radius: 24px;
   border: 1px solid #e9ecef;
@@ -226,18 +248,20 @@
   background-color: #ffffff;
   font-size: 14px;
   outline: none;
-  color: #2c2c2c;
+  color: #000000;
   min-width: 150px;
   cursor: pointer;
 }
 
 .filter-select:focus {
+  outline: none;
+  border-color: #0e163e;
   border-color: #0d1b3e;
   box-shadow: 0 0 0 3px rgba(13, 27, 62, 0.1);
 }
 
 .btn-delete-selected {
-  background: #dc2626;
+  background: #c52222;
   color: white;
   border: none;
   padding: 0 1.5rem;
@@ -256,7 +280,7 @@
   transform: translateY(-2px);
 }
 
-/* Tabla */
+/* TABLA DE PERMISOS*/
 .permisos-table {
   background: white;
   border-radius: 16px;
@@ -299,6 +323,8 @@
 }
 
 .permiso-icon {
+  font-size: 1.5rem;
+  color: #020c27;
   width: 32px;
   height: 32px;
   display: flex;
@@ -355,7 +381,7 @@
 
 .badge-estado.activo {
   background: #d1fae5;
-  color: #065f46;
+  color: #000000;
 }
 
 .badge-estado.activo svg {

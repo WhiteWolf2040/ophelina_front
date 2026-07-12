@@ -108,20 +108,7 @@ export default function Navbar() {
               Mis Empeños
             </NavLink>
           </li>
-
-          <li>
-            <NavLink
-              to="/tarjetas"
-              className={({ isActive }) =>
-                isActive
-                  ? "Ophe-nav-item Ophe-active"
-                  : "Ophe-nav-item"
-              }
-            >
-              Tarjetas
-            </NavLink>
-          </li>
-
+          
           <li>
             <NavLink
               to="/ophelina"
