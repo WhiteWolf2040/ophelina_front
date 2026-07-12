@@ -514,7 +514,7 @@ const TiendaOnline = () => {
                         required
                       >
                         {categorias.filter(c => c !== "Todas").map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
+                       <option key={cat} value={cat}>{cat}</option>
                         ))}
                       </select>
                     </div>
