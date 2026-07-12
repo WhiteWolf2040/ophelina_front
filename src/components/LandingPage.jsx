@@ -77,9 +77,18 @@ const clientFeatures = [
   { icon: "⭐", title: "Tienda en línea", desc: "Aparta y compra artículos" }
 ];
 
+// ✅ MAPEO DE PLANES A IDs NUMÉRICOS (para la base de datos)
+const PLAN_ID_MAP = {
+    'free': 1,
+    'profesional': 2,
+    'premium': 3
+};
+
+// ✅ INFORMACIÓN DE PLANES CON IDs NUMÉRICOS
 const plans = [
   {
-    id: 'free',
+    id: 1,  // ← ID numérico para Free
+    idKey: 'free',  // ← Clave para identificar en el mapa
     name: "Gratis",
     price: 0,
     priceInCents: 0,
@@ -94,7 +103,8 @@ const plans = [
     badge: null
   },
   {
-    id: 'profesional',
+    id: 2,  // ← ID numérico para Profesional
+    idKey: 'profesional',
     name: "Profesional",
     price: 999,
     priceInCents: 99900,
@@ -110,7 +120,8 @@ const plans = [
     badge: "Más popular"
   },
   {
-    id: 'premium',
+    id: 3,  // ← ID numérico para Premium
+    idKey: 'premium',
     name: "Empresarial",
     price: 1499,
     priceInCents: 149900,
@@ -123,7 +134,8 @@ const plans = [
       "Multi-sucursal (hasta 5)"
     ],
     buttonText: "Suscribirme",
-    featured: false
+    featured: false,
+    badge: null
   }
 ];
 
@@ -231,7 +243,7 @@ const PricingCard = memo(({ plan, onPaymentStart, onPaymentEnd }) => {
   const stripePromise = loadStripe('pk_test_51R7ma3QLK8Ukfs4sBg4baWVuYz4UpN7v5x6GxCfAs4GGXuLTdrRiiqdtjAy9wPCBqT6nybXwlw7240h3Egpcz4RQ00VNfIVDSn');
 
   const handleSubscribe = async () => {
-    if (plan.id === 'free') {
+    if (plan.id === 1 || plan.idKey === 'free') {  // ← Verificar por ID numérico o clave
       await handleFreePlan();
     } else {
       await handlePaidPlan();
@@ -264,6 +276,7 @@ const PricingCard = memo(({ plan, onPaymentStart, onPaymentEnd }) => {
     }
   };
 
+  // ✅ FUNCIÓN CORREGIDA: Usa IDs numéricos
   const handlePaidPlan = async () => {
     let email = localStorage.getItem('user_email');
     if (!email) {
@@ -277,14 +290,19 @@ const PricingCard = memo(({ plan, onPaymentStart, onPaymentEnd }) => {
       empresaId = 'nueva';
     }
     
-    localStorage.setItem('pending_plan_id', plan.id);
+    // ✅ GUARDAR EL ID NUMÉRICO (plan.id ya es número)
+    const numericPlanId = plan.id;  // ← Ya es número (1, 2 o 3)
+    console.log('📝 Plan seleccionado:', plan.name, 'ID:', numericPlanId);
+    
+    localStorage.setItem('pending_plan_id', numericPlanId);
     localStorage.setItem('pending_plan_name', plan.name);
+    localStorage.setItem('pending_plan_price', plan.price);
 
     if (onPaymentStart) onPaymentStart();
     
     try {
       const response = await stripeService.createCheckoutSession({
-        plan_id: plan.id,
+        plan_id: numericPlanId,  // ← Enviar número al backend
         plan_name: plan.name,
         price: plan.priceInCents,
         empresa_id: empresaId,
@@ -469,7 +487,9 @@ const Landing = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('http://localhost:8000/api/send-email', {
+      // ✅ Usar la URL de producción de Render
+      const API_URL = import.meta.env.VITE_API_URL || 'https://ophelina-back-v1.onrender.com/api';
+      const response = await fetch(`${API_URL}/send-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -483,11 +503,11 @@ const Landing = () => {
         alert('¡Mensaje enviado correctamente! Te contactaremos pronto.');
         setFormData({ nombre: '', negocio: '', telefono: '', mensaje: '' });
       } else {
-        alert('Error: ' + result.error);
+        alert('Error: ' + (result.error || 'No se pudo enviar el mensaje'));
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error de conexión. Revisa que el backend PHP esté corriendo.');
+      alert('Error de conexión. Por favor, intenta más tarde.');
     } finally {
       setIsSubmitting(false);
     }
@@ -508,7 +528,7 @@ const Landing = () => {
   const handlePaymentSuccess = (data) => {
     console.log('✅ Pago verificado y suscripción activada:', data);
     setTimeout(() => {
-      window.location.href = '/dashboard';
+      window.location.href = '/home';
     }, 2000);
   };
 

@@ -90,10 +90,17 @@ const Dueno = () => {
             return;
         }
         
+        // ✅ CORREGIDO: Convertir planId a número
+        // Si planId es "premium" → parseInt devuelve NaN → usa 3
+        const planIdNumerico = parseInt(planId);
+        const planIdFinal = isNaN(planIdNumerico) ? 3 : planIdNumerico;
+        
+        console.log('📝 Plan ID numérico:', planIdFinal);
+        
         const response = await stripeService.verifyPayment({
             session_id: sessionId,
             empresa_id: empresaId,
-            plan_id: planId || 'premium'
+            plan_id: planIdFinal  // ← Ahora siempre es un número
         });
         
         console.log('✅ Respuesta de verificación:', response);
@@ -127,7 +134,7 @@ const Dueno = () => {
             alert('Error al verificar el pago. Contacta a soporte.');
         }
     }
-};
+};  
 
   // ✅ Verificar suscripción al cargar
   useEffect(() => {
