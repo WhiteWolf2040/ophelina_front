@@ -68,11 +68,19 @@ export default function OpheliaLogin() {
       
       if (pendingSessionId && pendingPayment === 'success') {
         console.log('✅ Pago pendiente detectado, redirigiendo a /home con parámetros');
+        
+        // ✅ GUARDAR EL SESSION_ID PARA USARLO EN EL HOME
+        localStorage.setItem('stripe_session_id', pendingSessionId);
+        
+        // Limpiar variables temporales
         localStorage.removeItem('pending_session_id');
         localStorage.removeItem('pending_payment');
-        // Redirigir a /home con los parámetros de pago
-        window.location.href = `/home?session_id=${pendingSessionId}&payment=success`;
+        
         setLoading(false);
+        
+        // ✅ REDIRIGIR A /home CON LOS PARÁMETROS
+        // Usar window.location para recargar la página y asegurar que el token esté disponible
+        window.location.href = `/home?session_id=${pendingSessionId}&payment=success`;
         return;
       }
       
