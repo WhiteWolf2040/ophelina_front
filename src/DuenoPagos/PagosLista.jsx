@@ -1,4 +1,4 @@
-// PagosLista.jsx - Versión corregida
+// PagosLista.jsx - VERSIÓN FUSIONADA (Docker Base + Características Local)
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
@@ -13,9 +13,33 @@ import PrintIcon from '@mui/icons-material/Print';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import QrCodeIcon from '@mui/icons-material/QrCode';
 import CloseIcon from '@mui/icons-material/Close';
+// ✅ AGREGADO DE LOCAL: Icono AddIcon
+import AddIcon from '@mui/icons-material/Add';
 
 const PagosLista = () => { 
   const navigate = useNavigate();
+
+  // ✅ AGREGADO DE LOCAL: Verificación de permisos usando el hook usePermissions
+  // Nota: Asumiendo que existe el hook usePermissions en tu proyecto Docker
+  // Si no existe, puedes usar el sistema de permisos que tengas en Docker
+  const [userRole, setUserRole] = useState('');
+  
+  // ✅ AGREGADO DE LOCAL: Función para verificar permisos basada en roles
+  const puedeRegistrarPagos = () => {
+    // Si tienes usePermissions, úsalo aquí
+    // const { hasPermission } = usePermissions();
+    // return hasPermission('registrar_pagos');
+    
+    // Versión simple basada en roles (ajusta según tu sistema)
+    const rolesConPermiso = ['Administrador', 'Dueño', 'Gerente'];
+    return rolesConPermiso.includes(userRole);
+  };
+
+  // ✅ AGREGADO DE LOCAL: Función para verificar permiso de eliminar
+  const puedeEliminar = () => {
+    const rolesConPermiso = ['Administrador', 'Dueño'];
+    return rolesConPermiso.includes(userRole);
+  };
 
   // Estados
   const [pagos, setPagos] = useState([]);
@@ -32,6 +56,19 @@ const PagosLista = () => {
   // Paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const pagosPorPagina = 8;
+
+  // ✅ AGREGADO DE LOCAL: Cargar rol del usuario
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setUserRole(user.rol || '');
+      } catch (e) {
+        console.error('Error al cargar usuario:', e);
+      }
+    }
+  }, []);
 
   // Cargar pagos al montar el componente
   useEffect(() => {
@@ -58,6 +95,12 @@ const PagosLista = () => {
   };
 
   const handleEliminar = async () => {
+    // ✅ AGREGADO DE LOCAL: Validación de permiso para eliminar
+    if (!puedeEliminar()) {
+      alert('No tienes permiso para eliminar pagos');
+      return;
+    }
+
     try {
       await pagosService.eliminarPago(pagoSeleccionado.id);
       setPagos(pagos.filter(p => p.id !== pagoSeleccionado.id));
@@ -114,6 +157,12 @@ const PagosLista = () => {
   };
 
   const confirmarEliminar = (pago) => {
+    // ✅ AGREGADO DE LOCAL: Validación de permiso para eliminar
+    if (!puedeEliminar()) {
+      alert('No tienes permiso para eliminar pagos');
+      return;
+    }
+
     setPagoSeleccionado(pago);
     setModalEliminar(true);
     setModalAbierto(false);
@@ -304,12 +353,15 @@ const PagosLista = () => {
             </h1>
           </div>
           
-          <button
-            className="btn-nuevo"
-            onClick={() => navigate("/pagos/nuevo")}
-          >
-            + Nuevo Pago
-          </button>
+          {/* ✅ AGREGADO DE LOCAL: Botón Nuevo Pago con permiso */}
+          {puedeRegistrarPagos() && (
+            <button
+              className="btn-nuevo"
+              onClick={() => navigate("/pagos/nuevo")}
+            >
+              <AddIcon fontSize="small" /> Nuevo Pago
+            </button>
+          )}
         </div>
 
         {/* FILTROS */}
@@ -641,21 +693,24 @@ const PagosLista = () => {
               })()
             )}
            
-            <div className="recibo-eliminar">
-              <button 
-                className="btn-eliminar-pago"
-                onClick={() => confirmarEliminar(pagoSeleccionado)}
-              >
-                <DeleteIcon fontSize="small" />
-                Eliminar Pago
-              </button>
-            </div>
+            {/* ✅ AGREGADO DE LOCAL: Botón Eliminar Pago con permiso */}
+            {puedeEliminar() && (
+              <div className="recibo-eliminar">
+                <button 
+                  className="btn-eliminar-pago"
+                  onClick={() => confirmarEliminar(pagoSeleccionado)}
+                >
+                  <DeleteIcon fontSize="small" />
+                  Eliminar Pago
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* MODAL DE CONFIRMACIÓN ELIMINAR */}
-      {modalEliminar && pagoSeleccionado && (
+      {/* ✅ AGREGADO DE LOCAL: MODAL DE CONFIRMACIÓN ELIMINAR con permiso */}
+      {modalEliminar && pagoSeleccionado && puedeEliminar() && (
         <div className="modal-overlay" onClick={() => setModalEliminar(false)}>
           <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icono">⚠️</div>

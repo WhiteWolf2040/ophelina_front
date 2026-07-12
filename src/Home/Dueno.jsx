@@ -1,4 +1,4 @@
-// Dueño.jsx - Versión CORREGIDA con manejo de pagos y suscripción
+// Dueño.jsx - VERSIÓN FUSIONADA (Docker Base + Características Local)
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Chart from "react-apexcharts";
@@ -7,6 +7,10 @@ import api from '../config/api';
 import { useSearchParams } from 'react-router-dom';
 import { stripeService } from '../services/stripeService';
 import PaymentModal from '../components/PaymentModal';
+// ✅ IMPORTAR PERMISOS (de Docker)
+import { usePermissions } from '../hooks/usePermissions';
+import PermissionGuard from '../components/PermissionGuard';
+import PermissionButton from '../components/PermissionButton';
 
 // Importar iconos de MUI
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -30,21 +34,33 @@ import AreaChartIcon from '@mui/icons-material/AreaChart';
 
 const Dueno = () => {
   // ============================================
-  // HOOKS DE PAGO
+  // 🆕 HOOK DE PERMISOS (DE DOCKER)
+  // ============================================
+  const { 
+    hasPermission, 
+    hasAnyPermission, 
+    hasAllPermissions, 
+    hasModule,
+    permisos,
+    modulos,
+    userRole,
+    loading: permissionsLoading 
+  } = usePermissions();
+
+  // ============================================
+  // 🆕 HOOKS DE PAGO (DE DOCKER)
   // ============================================
   const [searchParams] = useSearchParams();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentSessionId, setPaymentSessionId] = useState(null);
   const [paymentPlanName, setPaymentPlanName] = useState('');
-  const [paymentPlanId, setPaymentPlanId] = useState(null);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentPlanId, setPaymentPlanId] = useState(null); // ✅ De Docker
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false); // ✅ De Docker
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false); // ✅ De Docker
 
-  // ✅ CORREGIDO: Detectar pago exitoso y verificar
+  // Detectar pago exitoso (DE DOCKER - VERSIÓN MEJORADA)
   useEffect(() => {
-    // ✅ PRIMERO VERIFICAR SI HAY SESSION_ID EN LOCALSTORAGE
     const storedSessionId = localStorage.getItem('stripe_session_id');
-    
-    // ✅ LUEGO VERIFICAR PARÁMETROS DE URL
     const sessionId = searchParams.get('session_id') || storedSessionId;
     const paymentStatus = searchParams.get('payment');
     
@@ -54,7 +70,6 @@ const Dueno = () => {
     if (sessionId && (paymentStatus === 'success' || storedSessionId)) {
       console.log('✅ Pago detectado, session_id:', sessionId);
       
-      // Guardar información del pago
       const planId = localStorage.getItem('pending_plan_id');
       const planName = localStorage.getItem('pending_plan_name');
       
@@ -63,80 +78,69 @@ const Dueno = () => {
       setPaymentPlanId(planId);
       setShowPaymentModal(true);
       
-      // ✅ VERIFICAR EL PAGO CON EL BACKEND
       verificarPago(sessionId, planId);
       
-      // ✅ LIMPIAR URL Y LOCALSTORAGE
       localStorage.removeItem('stripe_session_id');
-      window.history.replaceState({}, document.title, '/home');
+      window.history.replaceState({}, document.title, '/dashboard');
     } else {
       console.log('ℹ No hay parámetros de pago en la URL');
     }
   }, [searchParams]);
 
-  // FUNCIÓN PARA VERIFICAR EL PAGO
- const verificarPago = async (sessionId, planId) => {
+  // 🆕 Función de verificación de pago (DE DOCKER)
+  const verificarPago = async (sessionId, planId) => {
     try {
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        const empresaId = user.id_empresa;
-        
-        console.log('🔄 Verificando pago...', { sessionId, empresaId, planId });
-        
-        // ✅ VERIFICAR QUE EL USUARIO TENGA TOKEN
-        const token = localStorage.getItem('token');
-        if (!token) {
-            alert('⚠️ No tienes sesión activa. Inicia sesión nuevamente.');
-            window.location.href = '/login';
-            return;
-        }
-        
-        // ✅ CORREGIDO: Convertir planId a número
-        // Si planId es "premium" → parseInt devuelve NaN → usa 3
-        const planIdNumerico = parseInt(planId);
-        const planIdFinal = isNaN(planIdNumerico) ? 3 : planIdNumerico;
-        
-        console.log('📝 Plan ID numérico:', planIdFinal);
-        
-        const response = await stripeService.verifyPayment({
-            session_id: sessionId,
-            empresa_id: empresaId,
-            plan_id: planIdFinal  // ← Ahora siempre es un número
-        });
-        
-        console.log('✅ Respuesta de verificación:', response);
-        
-        // ✅ VERIFICAR QUE LA RESPUESTA NO ESTÉ VACÍA
-        if (!response) {
-            console.error('❌ Respuesta vacía del servidor');
-            alert('Error: El servidor no respondió correctamente. Contacta a soporte.');
-            return;
-        }
-        
-        if (response.success) {
-            console.log('🎉 Pago verificado correctamente');
-            await cargarUsuarioActual();
-            await cargarDashboard();
-            await cargarModulosPorPlan();
-            alert('✅ ¡Pago exitoso! Tu plan ha sido actualizado.');
-            localStorage.removeItem('pending_plan_id');
-            localStorage.removeItem('pending_plan_name');
-            localStorage.removeItem('pending_plan_price');
-            setShowPaymentModal(false);
-        } else {
-            console.error('❌ Error verificando pago:', response.message);
-            alert(`Error: ${response.message || 'Error desconocido'}`);
-        }
+      setIsProcessingPayment(true);
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const empresaId = user.id_empresa;
+      
+      console.log('🔄 Verificando pago...', { sessionId, empresaId, planId });
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('⚠️ No tienes sesión activa. Inicia sesión nuevamente.');
+        window.location.href = '/login';
+        return;
+      }
+      
+      const planIdNumerico = parseInt(planId);
+      const planIdFinal = isNaN(planIdNumerico) ? 3 : planIdNumerico;
+      
+      const response = await stripeService.verifyPayment({
+        session_id: sessionId,
+        empresa_id: empresaId,
+        plan_id: planIdFinal
+      });
+      
+      console.log('✅ Respuesta de verificación:', response);
+      
+      if (response.success) {
+        console.log('🎉 Pago verificado correctamente');
+        await cargarUsuarioActual();
+        await cargarDashboard();
+        await cargarModulosPorPlan();
+        alert('✅ ¡Pago exitoso! Tu plan ha sido actualizado.');
+        localStorage.removeItem('pending_plan_id');
+        localStorage.removeItem('pending_plan_name');
+        localStorage.removeItem('pending_plan_price');
+        setShowPaymentModal(false);
+      } else {
+        console.error('❌ Error verificando pago:', response.message);
+        alert(`Error: ${response.message || 'Error desconocido'}`);
+      }
     } catch (error) {
-        console.error('❌ Error al verificar pago:', error);
-        if (error.response) {
-            alert(`Error ${error.response.status}: ${error.response.data?.message || error.message}`);
-        } else {
-            alert('Error al verificar el pago. Contacta a soporte.');
-        }
+      console.error('❌ Error al verificar pago:', error);
+      if (error.response) {
+        alert(`Error ${error.response.status}: ${error.response.data?.message || error.message}`);
+      } else {
+        alert('Error al verificar el pago. Contacta a soporte.');
+      }
+    } finally {
+      setIsProcessingPayment(false);
     }
-};  
+  };
 
-  // ✅ Verificar suscripción al cargar
+  // 🆕 Verificar suscripción (DE DOCKER)
   useEffect(() => {
     const verificarSuscripcion = async () => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -148,10 +152,8 @@ const Dueno = () => {
         const response = await stripeService.checkSubscription(empresaId);
         console.log('📊 Estado de suscripción:', response);
         
-        // ✅ Si está vencido y NO estamos procesando un pago
         if (!response.activo && response.dias_restantes <= 0 && !isProcessingPayment) {
           alert('⚠️ Tu suscripción ha vencido. Serás redirigido para renovar.');
-          // Guardar información para después del pago
           localStorage.setItem('redirect_after_payment', '/home');
           window.location.href = '/';
         }
@@ -160,31 +162,13 @@ const Dueno = () => {
       }
     };
     
-    // Solo verificar si no estamos procesando un pago
     if (!isProcessingPayment) {
       verificarSuscripcion();
     }
   }, [isProcessingPayment]);
 
-  const [amortizacionesPendientes, setAmortizacionesPendientes] = useState([]);
-  const [loadingAmortizaciones, setLoadingAmortizaciones] = useState(false);
-
-  const cargarAmortizacionesPendientes = async () => {
-    try {
-      setLoadingAmortizaciones(true);
-      const response = await api.get('/home/amortizaciones-pendientes');
-      if (response.data.success) {
-        setAmortizacionesPendientes(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error al cargar amortizaciones:', error);
-    } finally {
-      setLoadingAmortizaciones(false);
-    }
-  };
-
   // ============================================
-  // ESTADOS
+  // ESTADOS (DE AMBOS)
   // ============================================
   const [showActivos, setShowActivos] = useState(false);
   const [showVencidos, setShowVencidos] = useState(false);
@@ -197,23 +181,18 @@ const Dueno = () => {
     series: [],
     labels: []
   });
-  const [userRole, setUserRole] = useState('');
   const [modulosPermitidos, setModulosPermitidos] = useState([]);
   const [planInfo, setPlanInfo] = useState({ plan_id: null, plan_nombre: '' });
+  const [amortizacionesPendientes, setAmortizacionesPendientes] = useState([]);
+  const [loadingAmortizaciones, setLoadingAmortizaciones] = useState(false);
 
-  const cargarPreciosQuilates = async () => {
-    try {
-      const response = await api.get('/precio-oro/quilates');
-      console.log('Respuesta de la API:', response.data);
-      if (response.data.success) {
-        setPreciosQuilates(response.data.data);
-        console.log('Precios cargados:', response.data.data);
-      }
-    } catch (error) {
-      console.error('Error al cargar precios por quilate:', error);
-    }
-  };
+  // Estados para datos de modales
+  const [empenosActivos, setEmpenosActivos] = useState([]);
+  const [empenosVencidos, setEmpenosVencidos] = useState([]);
+  const [proximosVencer, setProximosVencer] = useState([]);
+  const [ingresosRecientes, setIngresosRecientes] = useState([]);
 
+  // Estado para precios del oro
   const [showPrecioOroModal, setShowPrecioOroModal] = useState(false);
   const [preciosQuilates, setPreciosQuilates] = useState({
     precio_24k: 0,
@@ -224,7 +203,18 @@ const Dueno = () => {
     precio_10k: 0,
     ultima_actualizacion: null
   });
-  
+
+  // DATOS DEL PERFIL
+  const [datosPerfil, setDatosPerfil] = useState({
+    nombre: "Cargando...",
+    email: "cargando...",
+    telefono: "cargando...",
+    rol: "cargando...",
+    fechaRegistro: "cargando...",
+    sucursal: "Casa Matriz - Mérida",
+    fotoPerfil: "https://ui-avatars.com/api/?name=Usuario&size=128&background=1e3a8a&color=fff&bold=true"
+  });
+
   // Estados para datos del dashboard
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -243,23 +233,6 @@ const Dueno = () => {
     actividad_reciente: [],
     ingresos_mensuales: []
   });
-
-  // DATOS DEL PERFIL - DESDE BD
-  const [datosPerfil, setDatosPerfil] = useState({
-    nombre: "Cargando...",
-    email: "cargando...",
-    telefono: "cargando...",
-    rol: "cargando...",
-    fechaRegistro: "cargando...",
-    sucursal: "Casa Matriz - Mérida",
-    fotoPerfil: "https://ui-avatars.com/api/?name=Usuario&size=128&background=1e3a8a&color=fff&bold=true"
-  });
-
-  // Estados para datos de modales
-  const [empenosActivos, setEmpenosActivos] = useState([]);
-  const [empenosVencidos, setEmpenosVencidos] = useState([]);
-  const [proximosVencer, setProximosVencer] = useState([]);
-  const [ingresosRecientes, setIngresosRecientes] = useState([]);
 
   // Configuración de GRÁFICA DE ÁREA APILADA
   const [areaChartData, setAreaChartData] = useState({
@@ -401,6 +374,33 @@ const Dueno = () => {
   });
 
   // ============================================
+  // 🆕 FUNCIONES DE VERIFICACIÓN DE PERMISOS (DE DOCKER)
+  // ============================================
+  const puedeVerEvolucionAcumulada = () => {
+    return hasPermission('ver_dashboard') && hasAnyPermission(['ver_reportes', 'ver_dashboard']);
+  };
+
+  const puedeVerGraficasBasicas = () => {
+    return hasAnyPermission(['ver_reportes', 'ver_dashboard']);
+  };
+
+  const puedeVerAmortizaciones = () => {
+    return hasPermission('ver_empenos');
+  };
+
+  const puedeVerMorosidad = () => {
+    return hasAnyPermission(['ver_reportes', 'ver_empenos']);
+  };
+
+  const puedeVerTopClientes = () => {
+    return hasPermission('ver_clientes');
+  };
+
+  const puedeVerArticulosMasEmpenados = () => {
+    return hasAnyPermission(['ver_tienda', 'ver_empenos']);
+  };
+
+  // ============================================
   // FUNCIONES AUXILIARES
   // ============================================
   const formatearFecha = (fecha) => {
@@ -453,7 +453,6 @@ const Dueno = () => {
           fechaRegistro: formatearFecha(user.fecha_registro) || "Fecha no disponible",
           fotoPerfil: user.foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&size=128&background=1e3a8a&color=fff&bold=true`
         }));
-        setUserRole(user.rol || 'Empleado');
       }
 
       const response = await api.get('/user');
@@ -469,28 +468,10 @@ const Dueno = () => {
           fotoPerfil: user.foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&size=128&background=1e3a8a&color=fff&bold=true`
         }));
         localStorage.setItem('user', JSON.stringify(user));
-        setUserRole(user.rol || 'Empleado');
       }
     } catch (error) {
       console.error('Error cargando usuario:', error);
     }
-  };
-
-  // Funciones para verificar roles y permisos de gráficas
-  const esAdmin = () => {
-    return userRole === 'Administrador' || userRole === 'Dueño' || userRole === 'Admin';
-  };
-
-  const esGerente = () => {
-    return userRole === 'Gerente' || userRole === 'gerente' || userRole === 'GERENTE';
-  };
-
-  const puedeVerEvolucionAcumulada = () => {
-    return esAdmin();
-  };
-
-  const puedeVerGraficasBasicas = () => {
-    return esAdmin() || esGerente();
   };
 
   const cargarModulosPorPlan = async () => {
@@ -513,7 +494,7 @@ const Dueno = () => {
 
   const cargarMorosidad = async () => {
     try {
-      const response = await api.get('/home/morosidad');
+      const response = await api.get('/dashboard/morosidad');
       if (response.data.success) {
         setMorosidad(response.data.data);
       } else {
@@ -528,7 +509,7 @@ const Dueno = () => {
 
   const cargarDistribucionCategorias = async () => {
     try {
-      const response = await api.get('/home/distribucion-categorias');
+      const response = await api.get('/dashboard/distribucion-categorias');
       if (response.data.success) {
         const data = response.data.data;
         const series = data.map(item => item.total);
@@ -545,7 +526,7 @@ const Dueno = () => {
       setLoading(true);
       setError(null);
       
-      const response = await api.get('/home');
+      const response = await api.get('/dashboard');
       
       if (response.data.success) {
         const data = response.data.data;
@@ -585,10 +566,36 @@ const Dueno = () => {
     }
   };
 
-  // Funciones para cargar datos específicos
-  const cargarActivos = async () => {
+  const cargarAmortizacionesPendientes = async () => {
     try {
-      const response = await api.get('/home/activos');
+      setLoadingAmortizaciones(true);
+      const response = await api.get('/dashboard/amortizaciones-pendientes');
+      if (response.data.success) {
+        setAmortizacionesPendientes(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error al cargar amortizaciones:', error);
+    } finally {
+      setLoadingAmortizaciones(false);
+    }
+  };
+
+  const cargarPreciosQuilates = async () => {
+    try {
+      const response = await api.get('/precio-oro/quilates');
+      if (response.data.success) {
+        setPreciosQuilates(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error al cargar precios por quilate:', error);
+    }
+  };
+
+  // Funciones para cargar datos específicos de modales
+  const cargarActivos = async () => {
+    if (!hasPermission('ver_empenos')) return;
+    try {
+      const response = await api.get('/dashboard/activos');
       if (response.data.success) {
         setEmpenosActivos(response.data.data);
         setShowActivos(true);
@@ -600,8 +607,9 @@ const Dueno = () => {
   };
 
   const cargarVencidos = async () => {
+    if (!hasPermission('ver_empenos')) return;
     try {
-      const response = await api.get('/home/vencidos');
+      const response = await api.get('/dashboard/vencidos');
       if (response.data.success) {
         setEmpenosVencidos(response.data.data);
         setShowVencidos(true);
@@ -613,8 +621,9 @@ const Dueno = () => {
   };
 
   const cargarProximos = async () => {
+    if (!hasPermission('ver_empenos')) return;
     try {
-      const response = await api.get('/home/proximos');
+      const response = await api.get('/dashboard/proximos');
       if (response.data.success) {
         setProximosVencer(response.data.data);
         setShowProximos(true);
@@ -626,26 +635,30 @@ const Dueno = () => {
   };
 
   const cargarIngresos = async () => {
+    if (!hasPermission('ver_pagos')) return;
     try {
-      setIngresosRecientes([
-        { id: 1, concepto: "Pago de Juan Pérez", monto: 5000, fecha: "10/03/2024" },
-        { id: 2, concepto: "Pago de María García", monto: 3500, fecha: "09/03/2024" },
-      ]);
-      setShowIngresos(true);
+      const response = await api.get('/dashboard/ingresos-recientes');
+      if (response.data.success) {
+        setIngresosRecientes(response.data.data);
+        setShowIngresos(true);
+      }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error al cargar ingresos:', error);
+      alert('Error al cargar ingresos recientes');
     }
   };
 
-  // Efecto principal de carga
+  // ============================================
+  // 🆕 EFECTO PRINCIPAL DE CARGA (FUSIONADO)
+  // ============================================
   useEffect(() => {
     cargarDashboard();
     cargarMorosidad();
     cargarDistribucionCategorias();
     cargarUsuarioActual();
-    cargarPreciosQuilates();
+    cargarPreciosQuilates(); // ✅ AGREGADO DE LOCAL
     cargarModulosPorPlan();
-    cargarAmortizacionesPendientes();
+    cargarAmortizacionesPendientes(); // ✅ AGREGADO DE LOCAL
   }, []);
 
   // Manejadores del modal de pago
@@ -670,7 +683,7 @@ const Dueno = () => {
   };
 
   // Loading state
-  if (loading) {
+  if (loading || permissionsLoading) {
     return (
       <div className="dashboard">
         <Sidebar modulosPermitidos={modulosPermitidos} />
@@ -703,11 +716,11 @@ const Dueno = () => {
       <Sidebar modulosPermitidos={modulosPermitidos} />
 
       <div className="content">
-        {/* HEADER */}
+        {/* HEADER - Visible para todos */}
         <div className="owner-header">
           <div className="header-top">
             <h1>
-              Hola, {datosPerfil.nombre.split(' ')[0] || 'Dueño'}
+              Hola, {datosPerfil.nombre.split(' ')[0] || 'Usuario'}
               <p className="header-sub">Conoce el estado de tu casa de empeño</p>
             </h1>
           
@@ -728,32 +741,43 @@ const Dueno = () => {
           </div>
         </div>
 
-        {/* CARDS - Visibles para todos */}
+        {/* ============================================ */}
+        {/* CARDS - CON PERMISOS (DE DOCKER) */}
+        {/* ============================================ */}
         <div className="cards-grid">
-          <div className="stat-card" onClick={cargarActivos}>
-            <AssignmentIcon className="card-icon" />
-            <h3>Empeños Activos</h3>
-            <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
-          </div>
+          <PermissionGuard permission="ver_empenos">
+            <div className="stat-card" onClick={cargarActivos} style={{ cursor: 'pointer' }}>
+              <AssignmentIcon className="card-icon" />
+              <h3>Empeños Activos</h3>
+              <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
+            </div>
+          </PermissionGuard>
 
-          <div className="stat-card" onClick={cargarVencidos}>
-            <WarningIcon className="card-icon" />
-            <h3>Empeños Vencidos</h3>
-            <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
-          </div>
+          <PermissionGuard permission="ver_empenos">
+            <div className="stat-card" onClick={cargarVencidos} style={{ cursor: 'pointer' }}>
+              <WarningIcon className="card-icon" />
+              <h3>Empeños Vencidos</h3>
+              <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
+            </div>
+          </PermissionGuard>
 
-          <div className="stat-card" onClick={cargarProximos}>
-            <AccessTimeIcon className="card-icon" />
-            <h3>Próximos a Vencer</h3>
-            <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
-          </div>
+          <PermissionGuard permission="ver_empenos">
+            <div className="stat-card" onClick={cargarProximos} style={{ cursor: 'pointer' }}>
+              <AccessTimeIcon className="card-icon" />
+              <h3>Próximos a Vencer</h3>
+              <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
+            </div>
+          </PermissionGuard>
 
-          <div className="stat-card" onClick={cargarIngresos}>
-            <AttachMoneyIcon className="card-icon" />
-            <h3>Ingresos Recientes</h3>
-            <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
-          </div>
+          <PermissionGuard permission="ver_pagos">
+            <div className="stat-card" onClick={cargarIngresos} style={{ cursor: 'pointer' }}>
+              <AttachMoneyIcon className="card-icon" />
+              <h3>Ingresos Recientes</h3>
+              <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
+            </div>
+          </PermissionGuard>
 
+          {/* Card de Precio del Oro - siempre visible */}
           <div className="stat-card gold-card" onClick={() => setShowPrecioOroModal(true)} style={{ cursor: 'pointer' }}>
             <MonetizationOnIcon className="card-icon" />
             <h3>Precio del Oro</h3>
@@ -769,7 +793,9 @@ const Dueno = () => {
           </div>
         </div>
 
-        {/* GRÁFICAS */}
+        {/* ============================================ */}
+        {/* GRÁFICAS - CON PERMISOS (DE DOCKER) */}
+        {/* ============================================ */}
         {puedeVerEvolucionAcumulada() && (
           <div className="chart-section">
             <h2>
@@ -820,103 +846,113 @@ const Dueno = () => {
           </div>
         )}
 
-        {/* Top Clientes */}
-        <div className="nueva-seccion">
-          <h2>
-            <EmojiEventsIcon />
-            Top 5 Clientes (Mayores Ganancias)
-          </h2>
-          <div className="tabla-container">
-            <table className="tabla-moderna">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Empeños</th>
-                  <th>Monto Prestado</th>
-                  <th>Ganancia Generada</th>
-                  <th>% Ganancia</th>
-                  <th>Último Empeño</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboardData.top_clientes?.map(cliente => (
-                  <tr key={cliente.id_cliente}>
-                    <td><strong>{cliente.nombre}</strong></td>
-                    <td>{cliente.empenos}</td>
-                    <td>{formatearMoneda(cliente.monto_total)}</td>
-                    <td className="profit-text">{formatearMoneda(cliente.ganancia_generada || (cliente.monto_total * 0.15))}</td>
-                    <td>
-                      <span className="profit-badge">
-                        +{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}
-                      </span>
-                    </td>
-                    <td>{formatFecha(cliente.ultimo_empeno)}</td>
-                  </tr>
-                ))}
-                {dashboardData.top_clientes?.length === 0 && (
+        {/* ============================================ */}
+        {/* TOP CLIENTES - Con permiso ver_clientes (DE DOCKER) */}
+        {/* ============================================ */}
+        {puedeVerTopClientes() && (
+          <div className="nueva-seccion">
+            <h2>
+              <EmojiEventsIcon />
+              Top 5 Clientes (Mayores Ganancias)
+            </h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
                   <tr>
-                    <td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td>
+                    <th>Cliente</th>
+                    <th>Empeños</th>
+                    <th>Monto Prestado</th>
+                    <th>Ganancia Generada</th>
+                    <th>% Ganancia</th>
+                    <th>Último Empeño</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* MOROSIDAD */}
-        <div className="nueva-seccion">
-          <h2>
-            <WarningIcon />
-            Morosidad - Clientes con Mayor Pérdida
-          </h2>
-          <div className="tabla-container">
-            <table className="tabla-moderna">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Total Prestado</th>
-                  <th>Deuda Vencida</th>
-                  <th>Pérdida Proyectada</th>
-                  <th>% Pérdida</th>
-                  <th>Días en Mora</th>
-                  <th>Último Pago</th>
-                </tr>
-              </thead>
-              <tbody>
-                {morosidad.map((item, index) => {
-                  let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
-                  if (porcentaje > 100) porcentaje = 100;
-                  
-                  return (
-                    <tr key={index}>
-                      <td><strong>{item.cliente}</strong></td>
-                      <td>{formatearMoneda(item.total_prestado)}</td>
-                      <td className="loss-text">{formatearMoneda(item.deuda)}</td>
-                      <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
+                </thead>
+                <tbody>
+                  {dashboardData.top_clientes?.map(cliente => (
+                    <tr key={cliente.id_cliente}>
+                      <td><strong>{cliente.nombre}</strong></td>
+                      <td>{cliente.empenos}</td>
+                      <td>{formatearMoneda(cliente.monto_total)}</td>
+                      <td className="profit-text">{formatearMoneda(cliente.ganancia_generada || (cliente.monto_total * 0.15))}</td>
                       <td>
-                        <span className="loss-badge">
-                          -{porcentaje.toFixed(2)}%
+                        <span className="profit-badge">
+                          +{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}
                         </span>
                       </td>
-                      <td><span className="badge-danger">{item.pagos_atrasados || item.dias_mora} días</span></td>
-                      <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' 
-                        ? formatFecha(item.ultimo_pago) 
-                        : 'Sin registro'}</td>
+                      <td>{formatFecha(cliente.ultimo_empeno)}</td>
                     </tr>
-                  );
-                })}
-                {morosidad.length === 0 && (
-                  <tr>
-                    <td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  ))}
+                  {dashboardData.top_clientes?.length === 0 && (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* AMORTIZACIÓN */}
-        {puedeVerEvolucionAcumulada() && (
+        {/* ============================================ */}
+        {/* MOROSIDAD - Con permisos (DE DOCKER) */}
+        {/* ============================================ */}
+        {puedeVerMorosidad() && (
+          <div className="nueva-seccion">
+            <h2>
+              <WarningIcon />
+              Morosidad - Clientes con Mayor Pérdida
+            </h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Total Prestado</th>
+                    <th>Deuda Vencida</th>
+                    <th>Pérdida Proyectada</th>
+                    <th>% Pérdida</th>
+                    <th>Días en Mora</th>
+                    <th>Último Pago</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {morosidad.map((item, index) => {
+                    let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
+                    if (porcentaje > 100) porcentaje = 100;
+                    
+                    return (
+                      <tr key={index}>
+                        <td><strong>{item.cliente}</strong></td>
+                        <td>{formatearMoneda(item.total_prestado)}</td>
+                        <td className="loss-text">{formatearMoneda(item.deuda)}</td>
+                        <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
+                        <td>
+                          <span className="loss-badge">
+                            -{porcentaje.toFixed(2)}%
+                          </span>
+                        </td>
+                        <td><span className="badge-danger">{item.pagos_atrasados || item.dias_mora} días</span></td>
+                        <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' 
+                          ? formatFecha(item.ultimo_pago) 
+                          : 'Sin registro'}</td>
+                      </tr>
+                    );
+                  })}
+                  {morosidad.length === 0 && (
+                    <tr>
+                      <td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================ */}
+        {/* AMORTIZACIONES PENDIENTES - Con permisos (DE DOCKER) */}
+        {/* ============================================ */}
+        {puedeVerAmortizaciones() && (
           <div className="nueva-seccion">
             <h2>
               <AssignmentIcon />
@@ -972,42 +1008,48 @@ const Dueno = () => {
           </div>
         )}
 
-        {/* Artículos más empeñados */}
-        <div className="nueva-seccion">
-          <h2>
-            <LocalOfferIcon />
-            Artículos Más Empeñados
-          </h2>
-          <div className="tabla-container">
-            <table className="tabla-moderna">
-              <thead>
-                <tr>
-                  <th>Artículo</th>
-                  <th>Categoría</th>
-                  <th>Cantidad</th>
-                  <th>Monto Promedio</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboardData.top_articulos?.map((articulo, index) => (
-                  <tr key={index}>
-                    <td><strong>{articulo.nombre}</strong></td>
-                    <td>{articulo.categoria}</td>
-                    <td>{articulo.cantidad}</td>
-                    <td>{formatearMoneda(articulo.monto_promedio)}</td>
-                  </tr>
-                ))}
-                {dashboardData.top_articulos?.length === 0 && (
+        {/* ============================================ */}
+        {/* ARTÍCULOS MÁS EMPEÑADOS - Con permisos (DE DOCKER) */}
+        {/* ============================================ */}
+        {puedeVerArticulosMasEmpenados() && (
+          <div className="nueva-seccion">
+            <h2>
+              <LocalOfferIcon />
+              Artículos Más Empeñados
+            </h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
                   <tr>
-                    <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
+                    <th>Artículo</th>
+                    <th>Categoría</th>
+                    <th>Cantidad</th>
+                    <th>Monto Promedio</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {dashboardData.top_articulos?.map((articulo, index) => (
+                    <tr key={index}>
+                      <td><strong>{articulo.nombre}</strong></td>
+                      <td>{articulo.categoria}</td>
+                      <td>{articulo.cantidad}</td>
+                      <td>{formatearMoneda(articulo.monto_promedio)}</td>
+                    </tr>
+                  ))}
+                  {dashboardData.top_articulos?.length === 0 && (
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Actividad Reciente */}
+        {/* ============================================ */}
+        {/* ACTIVIDAD RECIENTE - Visible para todos */}
+        {/* ============================================ */}
         <div className="nueva-seccion">
           <h2>
             <HistoryIcon />
@@ -1039,12 +1081,302 @@ const Dueno = () => {
         </div>
       </div>
 
+      {/* ============================================ */}
+      {/* MODALES (TODOS DE LOCAL, CON PERMISOS DE DOCKER) */}
+      {/* ============================================ */}
+
+      {/* MODAL DE PERFIL */}
+      {showPerfil && (
+        <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
+          <div className="modal-detalle modal-perfil" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={() => setShowPerfil(false)}><CloseIcon /></button>
+            <div className="modal-header perfil-header">
+              <h2>Mi Perfil</h2>
+              <span className="cliente-id">Información personal</span>
+            </div>
+            <div className="modal-body">
+              <div className="perfil-container">
+                <div className="perfil-avatar">
+                  <img src={datosPerfil.fotoPerfil} alt={datosPerfil.nombre} />
+                </div>
+                <div className="perfil-info-grid">
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Nombre completo</span>
+                    <span className="perfil-valor">{datosPerfil.nombre}</span>
+                  </div>
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Email</span>
+                    <span className="perfil-valor">{datosPerfil.email}</span>
+                  </div>
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Teléfono</span>
+                    <span className="perfil-valor">{datosPerfil.telefono}</span>
+                  </div>
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Rol</span>
+                    <span className="perfil-valor">{datosPerfil.rol}</span>
+                  </div>
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Sucursal</span>
+                    <span className="perfil-valor">{datosPerfil.sucursal}</span>
+                  </div>
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Miembro desde</span>
+                    <span className="perfil-valor">{datosPerfil.fechaRegistro}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE EMPEÑOS ACTIVOS */}
+      {showActivos && (
+        <PermissionGuard permission="ver_empenos">
+          <div className="modal-overlay" onClick={() => setShowActivos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowActivos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><AssignmentIcon /> Empeños Activos</h2>
+                <span className="cliente-id">Total: {empenosActivos.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Fecha</th></tr></thead>
+                    <tbody>
+                      {empenosActivos.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowActivos(false)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </PermissionGuard>
+      )}
+
+      {/* MODAL DE EMPEÑOS VENCIDOS */}
+      {showVencidos && (
+        <PermissionGuard permission="ver_empenos">
+          <div className="modal-overlay" onClick={() => setShowVencidos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowVencidos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><WarningIcon /> Empeños Vencidos</h2>
+                <span className="cliente-id">Total: {empenosVencidos.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vencido</th><th>Días</th></tr></thead>
+                    <tbody>
+                      {empenosVencidos.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                          <td><span className="badge-danger">{item.dias} días</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowVencidos(false)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </PermissionGuard>
+      )}
+
+      {/* MODAL DE PRÓXIMOS A VENCER */}
+      {showProximos && (
+        <PermissionGuard permission="ver_empenos">
+          <div className="modal-overlay" onClick={() => setShowProximos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowProximos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><AccessTimeIcon /> Próximos a Vencer</h2>
+                <span className="cliente-id">Total: {proximosVencer.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vence</th><th>Días</th></tr></thead>
+                    <tbody>
+                      {proximosVencer.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                          <td><span className="badge-warning">{item.dias} días</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowProximos(false)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </PermissionGuard>
+      )}
+
+      {/* MODAL DE INGRESOS */}
+      {showIngresos && (
+        <PermissionGuard permission="ver_pagos">
+          <div className="modal-overlay" onClick={() => setShowIngresos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowIngresos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><AttachMoneyIcon /> Ingresos Recientes</h2>
+                <span className="cliente-id">Total: {ingresosRecientes.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Concepto</th><th>Monto</th><th>Fecha</th></tr></thead>
+                    <tbody>
+                      {ingresosRecientes.map(item => (
+                        <tr key={item.id}>
+                          <td><strong>{item.concepto}</strong></td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowIngresos(false)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </PermissionGuard>
+      )}
+
+      {/* MODAL DE PRECIOS DEL ORO */}
+      {showPrecioOroModal && (
+        <div className="modal-overlay" onClick={() => setShowPrecioOroModal(false)}>
+          <div className="modal-detalle modal-oro" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={() => setShowPrecioOroModal(false)}>
+              <CloseIcon />
+            </button>
+            <div className="modal-header oro-header">
+              <h2><MonetizationOnIcon /> Precios del Oro por Quilate</h2>
+              {preciosQuilates.ultima_actualizacion && (
+                <span className="cliente-id">
+                  Actualizado: {new Date(preciosQuilates.ultima_actualizacion).toLocaleString('es-MX')}
+                </span>
+              )}
+            </div>
+            <div className="modal-body">
+              <div className="quilates-grid">
+                <div className="quilate-card quilate-24k">
+                  <div className="quilate-info"><h3>Oro 24k</h3><p>99.9% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_24k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
+                </div>
+                <div className="quilate-card quilate-22k">
+                  <div className="quilate-info"><h3>Oro 22k</h3><p>91.7% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_22k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
+                </div>
+                <div className="quilate-card quilate-21k">
+                  <div className="quilate-info"><h3>Oro 21k</h3><p>87.5% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_21k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
+                </div>
+                <div className="quilate-card quilate-18k">
+                  <div className="quilate-info"><h3>Oro 18k</h3><p>75.0% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_18k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
+                </div>
+                <div className="quilate-card quilate-14k">
+                  <div className="quilate-info"><h3>Oro 14k</h3><p>58.5% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_14k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
+                </div>
+                <div className="quilate-card quilate-10k">
+                  <div className="quilate-info"><h3>Oro 10k</h3><p>41.7% pureza</p></div>
+                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_10k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
+                </div>
+              </div>
+              <div className="oro-nota">
+                <small>ℹ️ Los precios son referenciales basados en el precio del oro de 24k. El precio final puede variar según la joyería y el mercado.</small>
+              </div>
+            </div>
+            <div className="modal-acciones">
+              <button className="btn-cerrar" onClick={() => setShowPrecioOroModal(false)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ALERTAS */}
+      {showAlertas && (
+        <div className="modal-overlay" onClick={() => setShowAlertas(false)}>
+          <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={() => setShowAlertas(false)}><CloseIcon /></button>
+            <div className="modal-header">
+              <h2><NotificationsIcon /> Alertas y Notificaciones</h2>
+              <span className="cliente-id">Actualizadas hoy</span>
+            </div>
+            <div className="modal-body">
+              <div className="alertas-modal-lista">
+                <div className="alerta-modal-item warning">
+                  <WarningIcon className="alerta-modal-icon" />
+                  <div className="alerta-modal-contenido">
+                    <h4>{dashboardData.resumen?.proximos_vencer} empeños por vencer esta semana</h4>
+                    <p>Próximos a vencer: Revisa el detalle</p>
+                    <small>Vencen en los próximos 7 días</small>
+                  </div>
+                </div>
+                <div className="alerta-modal-item danger">
+                  <ErrorIcon className="alerta-modal-icon" />
+                  <div className="alerta-modal-contenido">
+                    <h4>{dashboardData.resumen?.empenos_vencidos} empeños vencidos requieren atención</h4>
+                    <p>Monto total vencido: {formatearMoneda(dashboardData.resumen?.perdida_total)}</p>
+                    <small>Requieren acción inmediata</small>
+                  </div>
+                </div>
+                <div className="alerta-modal-item info">
+                  <AttachMoneyIcon className="alerta-modal-icon" />
+                  <div className="alerta-modal-contenido">
+                    <h4>Ingresos del mes: {formatearMoneda(dashboardData.resumen?.ingresos_mes_actual || 0)}</h4>
+                    <p>Meta mensual: $100,000</p>
+                    <div className="progreso-barra">
+                      <div className="progreso-lleno" style={{ width: `${(dashboardData.resumen?.ingresos_mes_actual / 100000 * 100) || 0}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="modal-acciones">
+              <button className="btn-cancelar" onClick={() => setShowAlertas(false)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL DE PAGO */}
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={handleClosePaymentModal}
         sessionId={paymentSessionId}
-        planName={paymentPlanName} 
+        planName={paymentPlanName}
         planId={paymentPlanId}
         onSuccess={handlePaymentSuccess}
       />
