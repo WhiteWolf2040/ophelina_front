@@ -20,7 +20,7 @@
     "axios": "^1.13.6",
     "bootstrap": "^5.3.8",
     "file-saver": "^2.0.5",
-    "google-icon-react": "^3.0.71",
+    "google-icon-react": "^1.0.5",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
     "react": "^19.2.0",
