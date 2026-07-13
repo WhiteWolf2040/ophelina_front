@@ -5,82 +5,175 @@ import Navbar from "../ClientesNav/Navbar";
 import anillo_oro from "../assets/anillo_oro.jpg";
 import collar_plata from "../assets/collar_plata.jpg";
 import arete_diamante from "../assets/arete_diamante.jpg";
+import arete_oro from "../assets/arete_oro.jpg";
+import anillo_compromiso from "../assets/anillo_compromiso.jpg";
 
 export default function MisEmpenos() {
   const [busqueda, setBusqueda] = useState("");
-  const [popupAbierto, setPopupAbierto] = useState(null); // 'pagar', 'detalles', o null
+  const [popupAbierto, setPopupAbierto] = useState(null);
   const [empeñoSeleccionado, setEmpeñoSeleccionado] = useState(null);
-  const [empeñosPagados, setEmpeñosPagados] = useState({}); // Estado para tracking de pagos completos
-  const [montoPago, setMontoPago] = useState(""); // Estado para el monto a pagar
 
-  // Tipos de prendas
-  const tiposPrenda = [
+  // Funcion para obtener fecha actual y calcular estado
+  const obtenerFechaActual = () => new Date(2026, 3, 17);
+  
+  const formatearFecha = (fechaStr) => {
+    const [dia, mes, año] = fechaStr.split('/');
+    return new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia));
+  };
+
+  const estaVencido = (fechaVencimiento) => {
+    const fechaActual = obtenerFechaActual();
+    const fechaVen = formatearFecha(fechaVencimiento);
+    return fechaVen < fechaActual;
+  };
+
+  const estaProximoAVencer = (fechaVencimiento) => {
+    const fechaActual = obtenerFechaActual();
+    const fechaVen = formatearFecha(fechaVencimiento);
+    const diffTime = fechaVen - fechaActual;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 7 && diffDays > 0;
+  };
+
+  // Funcion para determinar el estado del empeño
+  const obtenerEstado = (empeño) => {
+    if (empeño.pagadoCompleto) {
+      return "PAGADO";
+    }
+    if (empeño.enTienda) {
+      return "EN TIENDA";
+    }
+    if (estaVencido(empeño.vencimiento)) {
+      return "VENCIDO";
+    }
+    if (estaProximoAVencer(empeño.vencimiento)) {
+      return "PROXIMO A VENCER";
+    }
+    return "ACTIVO";
+  };
+
+  const empeños = [
     {
+      id: 1,
       nombre: "Anillo de Oro 14k",
-      imagen: anillo_oro
+      descripcion: "Anillo de oro amarillo 14k con diamante central talla brillante",
+      prestado: "$8,500.00",
+      prestadoNumerico: 8500,
+      totalPagar: "$9,775.00",
+      totalPagarNumerico: 9775,
+      vencimiento: "15/03/2026",
+      imagen: anillo_oro,
+      gramos: "5.2 gramos",
+      casaEmpeño: "JSK",
+      tasaInteres: "15%",
+      intereses: "$1,275.00",
+      interesesNumerico: 1275,
+      pagadoCompleto: false,
+      enTienda: true, // Este ya paso a venta por no liquidar
+      abonos: [
+        { fecha: "15/01/2026", monto: "$1,500.00", interesesPagados: "$225.00", montoNumerico: 1500 },
+        { fecha: "01/02/2026", monto: "$2,000.00", interesesPagados: "$300.00", montoNumerico: 2000 },
+        { fecha: "28/02/2026", monto: "$1,000.00", interesesPagados: "$150.00", montoNumerico: 1000 }
+      ],
+      saldoRestante: 9775 - 4500
     },
     {
+      id: 2,
       nombre: "Collar de Plata",
-      imagen: collar_plata
+      descripcion: "Collar de plata 925 con dije de corazon, cadena tipo rolo",
+      prestado: "$12,500.00",
+      prestadoNumerico: 12500,
+      totalPagar: "$14,375.00",
+      totalPagarNumerico: 14375,
+      vencimiento: "20/04/2026",
+      imagen: collar_plata,
+      gramos: "12.5 gramos",
+      casaEmpeño: "JSK",
+      tasaInteres: "15%",
+      intereses: "$1,875.00",
+      interesesNumerico: 1875,
+      pagadoCompleto: false,
+      enTienda: false,
+      abonos: [
+        { fecha: "20/01/2026", monto: "$2,500.00", interesesPagados: "$375.00", montoNumerico: 2500 },
+        { fecha: "05/02/2026", monto: "$3,000.00", interesesPagados: "$450.00", montoNumerico: 3000 },
+        { fecha: "20/03/2026", monto: "$2,000.00", interesesPagados: "$300.00", montoNumerico: 2000 }
+      ],
+      saldoRestante: 14375 - 7500
     },
     {
+      id: 3,
       nombre: "Aretes de Diamante",
-      imagen: arete_diamante
+      descripcion: "Pares de aretes en oro blanco 18k con diamantes talla princesa",
+      prestado: "$3,200.00",
+      prestadoNumerico: 3200,
+      totalPagar: "$3,680.00",
+      totalPagarNumerico: 3680,
+      vencimiento: "25/05/2026",
+      imagen: arete_diamante,
+      gramos: "2.8 gramos",
+      casaEmpeño: "JSK",
+      tasaInteres: "15%",
+      intereses: "$480.00",
+      interesesNumerico: 480,
+      pagadoCompleto: true, // Este ya esta pagado completamente
+      enTienda: false,
+      abonos: [
+        { fecha: "25/01/2026", monto: "$1,000.00", interesesPagados: "$150.00", montoNumerico: 1000 },
+        { fecha: "25/02/2026", monto: "$800.00", interesesPagados: "$120.00", montoNumerico: 800 },
+        { fecha: "10/03/2026", monto: "$1,880.00", interesesPagados: "$210.00", montoNumerico: 1880 }
+      ],
+      saldoRestante: 0
+    },
+    {
+      id: 4,
+      nombre: "Aretes de Oro",
+      descripcion: "Aretes de oro amarillo 18k estilo aro, diseño italiano",
+      prestado: "$7,800.00",
+      prestadoNumerico: 7800,
+      totalPagar: "$8,970.00",
+      totalPagarNumerico: 8970,
+      vencimiento: "28/04/2026",
+      imagen: arete_oro,
+      gramos: "6.4 gramos",
+      casaEmpeño: "JSK",
+      tasaInteres: "15%",
+      intereses: "$1,170.00",
+      interesesNumerico: 1170,
+      pagadoCompleto: false,
+      enTienda: false,
+      abonos: [
+        { fecha: "28/01/2026", monto: "$2,000.00", interesesPagados: "$300.00", montoNumerico: 2000 },
+        { fecha: "15/02/2026", monto: "$1,500.00", interesesPagados: "$225.00", montoNumerico: 1500 }
+      ],
+      saldoRestante: 8970 - 3500
+    },
+    {
+      id: 5,
+      nombre: "Anillo de Compromiso",
+      descripcion: "Anillo de compromiso en oro blanco 14k con diamante central 0.5 quilates",
+      prestado: "$10,500.00",
+      prestadoNumerico: 10500,
+      totalPagar: "$12,075.00",
+      totalPagarNumerico: 12075,
+      vencimiento: "10/06/2026",
+      imagen: anillo_compromiso,
+      gramos: "8.1 gramos",
+      casaEmpeño: "JSK",
+      tasaInteres: "15%",
+      intereses: "$1,575.00",
+      interesesNumerico: 1575,
+      pagadoCompleto: false,
+      enTienda: false,
+      abonos: [
+        { fecha: "10/01/2026", monto: "$3,000.00", interesesPagados: "$450.00", montoNumerico: 3000 },
+        { fecha: "25/01/2026", monto: "$2,000.00", interesesPagados: "$300.00", montoNumerico: 2000 },
+        { fecha: "10/02/2026", monto: "$1,500.00", interesesPagados: "$225.00", montoNumerico: 1500 }
+      ],
+      saldoRestante: 12075 - 6500
     }
   ];
 
-  // Generar empeños
-  const generarEmpeños = () => {
-    const empeños = [];
-
-    const descripciones = [
-      "Anillo de oro amarillo con diamante central",
-      "Diseño clásico y elegante",
-      "Con detalles artesanales",
-      "Estilo moderno",
-      "Pieza única",
-      "Con grabados especiales"
-    ];
-
-    const preciosBase = [
-      8500, 12500, 3200, 7800, 6200,
-      4500, 9300, 11000, 2800, 8900,
-      7500, 5200, 10500
-    ];
-
-    for (let i = 0; i < 15; i++) {
-      const tipoIndex = i % 3;
-      const precioBase = preciosBase[i % preciosBase.length];
-      const interes = precioBase * 0.15;
-
-      empeños.push({
-        id: i + 1,
-        nombre: tiposPrenda[tipoIndex].nombre,
-        descripcion: descripciones[i % descripciones.length],
-        prestado: `$${precioBase.toLocaleString("en-US")}`,
-        prestadoNumerico: precioBase,
-        totalPagar: `$${(precioBase + interes).toLocaleString("en-US")}`,
-        totalPagarNumerico: precioBase + interes,
-        vencimiento: `${Math.floor(Math.random() * 28) + 1}/${
-          Math.floor(Math.random() * 12) + 1
-        }/2026`,
-        imagen: tiposPrenda[tipoIndex].imagen,
-        gramos: "5.2 gramos",
-        casaEmpeño: "JSK",
-        intereses: `$${interes.toLocaleString("en-US")}`,
-        abonos: [
-          { fecha: "15/01/2026", monto: "$1,400.00" },
-          { fecha: "01/01/2026", monto: "$2,000.00" }
-        ]
-      });
-    }
-
-    return empeños;
-  };
-
-  const empeños = generarEmpeños();
-
-  // FILTRO DEL BUSCADOR
   const empenosFiltrados = empeños.filter((empeño) =>
     (
       empeño.nombre +
@@ -92,50 +185,38 @@ export default function MisEmpenos() {
       .includes(busqueda.toLowerCase())
   );
 
-  // Función para abrir popup
   const abrirPopup = (tipo, empeño) => {
     setEmpeñoSeleccionado(empeño);
     setPopupAbierto(tipo);
-    setMontoPago(""); // Resetear el monto al abrir el popup
   };
 
-  // Función para cerrar popup
   const cerrarPopup = () => {
     setPopupAbierto(null);
     setEmpeñoSeleccionado(null);
-    setMontoPago("");
   };
 
-  // Función para procesar el pago (abono)
-  const procesarPago = () => {
-    if (empeñoSeleccionado) {
-      // Convertir el monto ingresado a número
-      const montoIngresado = parseFloat(montoPago.replace(/[^0-9.-]+/g, ""));
-      
-      // Verificar si el monto es válido
-      if (isNaN(montoIngresado) || montoIngresado <= 0) {
-        alert("Por favor ingresa un monto válido");
-        return;
-      }
-
-      // Aquí puedes agregar la lógica para registrar el abono
-      // Por ahora, solo simulamos que el pago se procesó
-      
-      alert(`¡Abono de $${montoIngresado.toLocaleString("en-US")} realizado con éxito!`);
-      cerrarPopup();
-      
-      // NOTA: El estado "PAGADO" solo debería activarse cuando el usuario
-      // haya completado todos los pagos. Como es una simulación, 
-      // no activamos automáticamente el estado pagado.
-    }
+  const getSaldoRestante = (empeño) => {
+    return `$${empeño.saldoRestante.toLocaleString("en-US")}`;
   };
 
-  // Función para formatear el monto mientras el usuario escribe
-  const handleMontoChange = (e) => {
-    const valor = e.target.value;
-    // Permitir solo números y un punto decimal
-    if (valor === "" || /^\d*\.?\d*$/.test(valor)) {
-      setMontoPago(valor);
+  const getTotalAbonado = (empeño) => {
+    const total = empeño.totalPagarNumerico - empeño.saldoRestante;
+    return `$${total.toLocaleString("en-US")}`;
+  };
+
+  // Obtener clase CSS y mensaje según el estado
+  const getEstadoConfig = (estado) => {
+    switch(estado) {
+      case "PAGADO":
+        return { clase: "estado-pagado", mensaje: "PAGADO" };
+      case "EN TIENDA":
+        return { clase: "estado-tienda", mensaje: "EN TIENDA" };
+      case "VENCIDO":
+        return { clase: "estado-vencido", mensaje: "VENCIDO" };
+      case "PROXIMO A VENCER":
+        return { clase: "estado-proximo", mensaje: "PROXIMO A VENCER" };
+      default:
+        return { clase: "estado-activo", mensaje: "ACTIVO" };
     }
   };
 
@@ -144,7 +225,6 @@ export default function MisEmpenos() {
       <Navbar />
       <div className="me-dashboard">
 
-        {/* Header */}
         <section className="me-page-header">
           <h1 className="me-page-title">
             Administra y consulta tus prendas empeñadas
@@ -162,11 +242,17 @@ export default function MisEmpenos() {
           </div>
         </section>
 
-        {/* Lista */}
         <section className="me-empenos-list">
           {empenosFiltrados.length > 0 ? (
-            empenosFiltrados.map((empeño) => (
-              <div key={empeño.id} className="me-empeno-card">
+            empenosFiltrados.map((empeño) => {
+              const estado = obtenerEstado(empeño);
+              const estadoConfig = getEstadoConfig(estado);
+              const vencido = estado === "VENCIDO";
+              const enTienda = estado === "EN TIENDA";
+              const pagado = estado === "PAGADO";
+              
+              return (
+              <div key={empeño.id} className={`me-empeno-card ${estadoConfig.clase}`}>
                 <div className="me-empeno-contenido-superior">
                   <div className="me-empeno-imagen-container">
                     <img
@@ -174,13 +260,15 @@ export default function MisEmpenos() {
                       alt={empeño.nombre}
                       className="me-empeno-imagen"
                     />
-                    {empeñosPagados[empeño.id] && (
-                      <div className="me-empeno-pagado-badge">✓ PAGADO</div>
-                    )}
                   </div>
 
                   <div className="me-empeno-info">
-                    <h2 className="me-empeno-nombre">{empeño.nombre}</h2>
+                    <div className="me-empeno-header">
+                      <h2 className="me-empeno-nombre">{empeño.nombre}</h2>
+                      <span className={`me-badge ${estadoConfig.clase}`}>
+                        {estadoConfig.mensaje}
+                      </span>
+                    </div>
 
                     {empeño.descripcion && (
                       <p className="me-empeno-descripcion">
@@ -200,16 +288,27 @@ export default function MisEmpenos() {
                         <span className="me-detalle-label">
                           Total a pagar:
                         </span>
-                        <span className={`me-detalle-valor me-total ${empeñosPagados[empeño.id] ? 'pagado' : ''}`}>
-                          {empeñosPagados[empeño.id] ? "Pagado" : empeño.totalPagar}
+                        <span className={`me-detalle-valor me-total ${pagado ? 'pagado' : ''}`}>
+                          {pagado ? "Pagado" : empeño.totalPagar}
                         </span>
                       </div>
+
+                      {!pagado && !enTienda && (
+                        <div className="me-detalle-item">
+                          <span className="me-detalle-label">
+                            Saldo restante:
+                          </span>
+                          <span className="me-detalle-valor me-saldo">
+                            {getSaldoRestante(empeño)}
+                          </span>
+                        </div>
+                      )}
 
                       <div className="me-detalle-item">
                         <span className="me-detalle-label">
                           Vencimiento:
                         </span>
-                        <span className="me-detalle-valor">
+                        <span className={`me-detalle-valor ${vencido ? 'fecha-vencida' : ''}`}>
                           {empeño.vencimiento}
                         </span>
                       </div>
@@ -217,39 +316,35 @@ export default function MisEmpenos() {
                   </div>
                 </div>
 
-                {/* ACCIONES CON BOTONES CONDICIONALES */}
                 <div className="me-empeno-acciones">
-                  {!empeñosPagados[empeño.id] ? (
-                    <>
-                      <button 
-                        className="me-btn-pagar"
-                        onClick={() => abrirPopup('pagar', empeño)}
-                      >
-                        Abonar
-                      </button>
-                      <button 
-                        className="me-btn-ver-detalles"
-                        onClick={() => abrirPopup('detalles', empeño)}
-                      >
-                        Ver detalles
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="me-btn-pagado">
-                        ✓ Pagado
-                      </div>
-                      <button 
-                        className="me-btn-ver-detalles"
-                        onClick={() => abrirPopup('detalles', empeño)}
-                      >
-                        Ver detalles
-                      </button>
-                    </>
+                  {enTienda && (
+                    <div className="me-mensaje-tienda">
+                      Esta prenda no fue liquidada a tiempo y ya se encuentra disponible en tienda fisica.
+                    </div>
                   )}
+                  
+                  {pagado && (
+                    <div className="me-mensaje-pagado">
+                      Prenda liquidada completamente. Gracias por tu pago.
+                    </div>
+                  )}
+                  
+                  {vencido && !pagado && !enTienda && (
+                    <div className="me-mensaje-vencido">
+                      Lo sentimos, has excedido el plazo para pagar. 
+                      La prenda se pasara a venta en automatico.
+                    </div>
+                  )}
+                  
+                  <button 
+                    className="me-btn-ver-detalles"
+                    onClick={() => abrirPopup('detalles', empeño)}
+                  >
+                    Ver detalles
+                  </button>
                 </div>
               </div>
-            ))
+            )})
           ) : (
             <p className="me-sin-resultados">
               No se encontraron empeños
@@ -258,73 +353,10 @@ export default function MisEmpenos() {
         </section>
       </div>
 
-      {/* POPUP DE PAGO (ABONO) */}
-      {popupAbierto === 'pagar' && empeñoSeleccionado && (
-        <div className="popup-overlay" onClick={cerrarPopup}>
-          <div className="popup-content" onClick={(e) => e.stopPropagation()}>
-            <button className="popup-close" onClick={cerrarPopup}>×</button>
-            
-            <div className="popup-header">
-              <h2>Realizar Abono</h2>
-              <h3>{empeñoSeleccionado.nombre}</h3>
-            </div>
-
-            <div className="popup-body">
-              <div className="pago-detalles">
-                <div className="pago-item">
-                  <span className="pago-label">Total a pagar:</span>
-                  <span className="pago-valor">{empeñoSeleccionado.totalPagar}</span>
-                </div>
-                <div className="pago-item">
-                  <span className="pago-label">Vencimiento:</span>
-                  <span className="pago-valor">{empeñoSeleccionado.vencimiento}</span>
-                </div>
-              </div>
-
-              <div className="pago-input-group">
-                <label>Monto a abonar:</label>
-                <input 
-                  type="text" 
-                  className="pago-input"
-                  placeholder="Ingresa el monto del abono"
-                  value={montoPago}
-                  onChange={handleMontoChange}
-                />
-                <small className="pago-ayuda">
-                  Puedes abonar cualquier monto. El préstamo se marcará como pagado cuando completes el total.
-                </small>
-              </div>
-
-              <div className="pago-metodos">
-                <h4>Método de pago</h4>
-                <div className="metodo-opcion">
-                  <input type="radio" name="metodo" id="tarjeta" defaultChecked />
-                  <label htmlFor="tarjeta">Tarjeta de crédito/débito</label>
-                </div>
-                <div className="metodo-opcion">
-                  <input type="radio" name="metodo" id="efectivo" />
-                  <label htmlFor="efectivo">Efectivo (en tienda)</label>
-                </div>
-                <div className="metodo-opcion">
-                  <input type="radio" name="metodo" id="transferencia" />
-                  <label htmlFor="transferencia">Transferencia bancaria</label>
-                </div>
-              </div>
-            </div>
-
-            <div className="popup-footer">
-              <button className="pago-confirmar-btn" onClick={procesarPago}>
-                Confirmar Abono
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* POPUP DE DETALLES */}
       {popupAbierto === 'detalles' && empeñoSeleccionado && (
         <div className="popup-overlay" onClick={cerrarPopup}>
-          <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+          <div className="popup-content popup-detalles" onClick={(e) => e.stopPropagation()}>
             <button className="popup-close" onClick={cerrarPopup}>×</button>
             
             <div className="popup-detalles-flex">
@@ -334,8 +366,14 @@ export default function MisEmpenos() {
                   alt={empeñoSeleccionado.nombre}
                   className="popup-imagen-left"
                 />
-                {empeñosPagados[empeñoSeleccionado.id] && (
-                  <div className="popup-pagado-badge">✓ PAGADO</div>
+                {empeñoSeleccionado.pagadoCompleto && (
+                  <div className="popup-pagado-badge">PAGADO</div>
+                )}
+                {empeñoSeleccionado.enTienda && (
+                  <div className="popup-tienda-badge">EN TIENDA</div>
+                )}
+                {!empeñoSeleccionado.pagadoCompleto && !empeñoSeleccionado.enTienda && estaVencido(empeñoSeleccionado.vencimiento) && (
+                  <div className="popup-vencido-badge">VENCIDO</div>
                 )}
               </div>
                   
@@ -348,36 +386,107 @@ export default function MisEmpenos() {
                   <p><strong>Casa de empeño: {empeñoSeleccionado.casaEmpeño}</strong></p>
                 </div>
 
-                <div className="detalle-seccion">
-                  <h4>Información Financiera</h4>
+                <div className="detalle-seccion resumen-financiero">
+                  <h4>Resumen Financiero</h4>
                   <div className="detalle-financiero">
                     <div className="financiero-item">
                       <span>Monto prestado:</span>
-                      <span>{empeñoSeleccionado.prestado}</span>
+                      <span className="valor-destacado">{empeñoSeleccionado.prestado}</span>
                     </div>
                     <div className="financiero-item">
-                      <span>Intereses:</span>
+                      <span>Tasa de interes:</span>
+                      <span>{empeñoSeleccionado.tasaInteres}</span>
+                    </div>
+                    <div className="financiero-item">
+                      <span>Intereses generados:</span>
                       <span>{empeñoSeleccionado.intereses}</span>
                     </div>
-                    <div className={`financiero-item total ${empeñosPagados[empeñoSeleccionado.id] ? 'pagado' : ''}`}>
+                    <div className="financiero-item total">
                       <span>Total a pagar:</span>
-                      <span>{empeñosPagados[empeñoSeleccionado.id] ? "Pagado" : empeñoSeleccionado.totalPagar}</span>
+                      <span className="valor-destacado">{empeñoSeleccionado.totalPagar}</span>
+                    </div>
+                    
+                    {!empeñoSeleccionado.pagadoCompleto && !empeñoSeleccionado.enTienda && (
+                      <>
+                        <div className="financiero-item abonado">
+                          <span>Total abonado:</span>
+                          <span className="valor-abonado">{getTotalAbonado(empeñoSeleccionado)}</span>
+                        </div>
+                        <div className="financiero-item pendiente">
+                          <span>Saldo pendiente:</span>
+                          <span className="valor-pendiente">{getSaldoRestante(empeñoSeleccionado)}</span>
+                        </div>
+                      </>
+                    )}
+                    
+                    {empeñoSeleccionado.pagadoCompleto && (
+                      <div className="financiero-item pagado-completo">
+                        <span>Estado:</span>
+                        <span className="valor-pagado">Pagado completamente</span>
+                      </div>
+                    )}
+                    
+                    {empeñoSeleccionado.enTienda && (
+                      <div className="financiero-item en-tienda">
+                        <span>Estado:</span>
+                        <span className="valor-tienda">En tienda fisica - No liquidado</span>
+                      </div>
+                    )}
+                    
+                    <div className="financiero-item">
+                      <span>Fecha de vencimiento:</span>
+                      <span className={!empeñoSeleccionado.pagadoCompleto && !empeñoSeleccionado.enTienda && estaVencido(empeñoSeleccionado.vencimiento) ? 'texto-vencido' : ''}>
+                        {empeñoSeleccionado.vencimiento}
+                        {!empeñoSeleccionado.pagadoCompleto && !empeñoSeleccionado.enTienda && estaVencido(empeñoSeleccionado.vencimiento) && " (VENCIDO)"}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="detalle-seccion">
-                  <h4>Historial de Pagos</h4>
-                  {empeñoSeleccionado.abonos.map((abono, index) => (
-                    <div key={index} className="historial-item">
-                      <span>Abono: {abono.monto}</span>
-                      <span className="historial-intereses">Intereses: $2,000.00</span>
+                <div className="detalle-seccion historial-pagos">
+                  <h4>Historial de Pagos Realizados</h4>
+                  {empeñoSeleccionado.abonos.length > 0 ? (
+                    <div className="tabla-historial">
+                      <div className="historial-header">
+                        <span>Fecha</span>
+                        <span>Monto Abonado</span>
+                        <span>Intereses Cubiertos</span>
+                      </div>
+                      {empeñoSeleccionado.abonos.map((abono, index) => (
+                        <div key={index} className="historial-item">
+                          <span className="historial-fecha">{abono.fecha}</span>
+                          <span className="historial-monto">{abono.monto}</span>
+                          <span className="historial-intereses">{abono.interesesPagados}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  {empeñosPagados[empeñoSeleccionado.id] && (
+                  ) : (
+                    <p className="sin-pagos">No se han registrado pagos aun</p>
+                  )}
+                  
+                  {!empeñoSeleccionado.pagadoCompleto && !empeñoSeleccionado.enTienda && (
+                    <div className="historial-total">
+                      <span><strong>Total de abonos realizados:</strong></span>
+                      <span className="total-abonado-valor">{getTotalAbonado(empeñoSeleccionado)}</span>
+                    </div>
+                  )}
+
+                  {empeñoSeleccionado.pagadoCompleto && (
                     <div className="historial-item pagado-final">
-                      <span>Pago total realizado</span>
+                      <span>Pago total completado</span>
                       <span className="historial-fecha">{new Date().toLocaleDateString()}</span>
+                    </div>
+                  )}
+
+                  {empeñoSeleccionado.enTienda && (
+                    <div className="aviso-tienda">
+                      <strong>ATENCION:</strong> Esta prenda no fue liquidada en el plazo establecido y ya se encuentra disponible para su venta en nuestra tienda fisica.
+                    </div>
+                  )}
+
+                  {!empeñoSeleccionado.pagadoCompleto && !empeñoSeleccionado.enTienda && estaVencido(empeñoSeleccionado.vencimiento) && (
+                    <div className="aviso-vencimiento">
+                      <strong>ATENCION:</strong> Este prestamo ha vencido. La prenda sera transferida a venta automatica si no se liquida el saldo pendiente.
                     </div>
                   )}
                 </div>

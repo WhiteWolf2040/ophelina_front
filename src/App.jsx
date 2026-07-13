@@ -8,7 +8,6 @@ import LandingPage from "./components/LandingPage";
 import OphelinaHome from "./Clientes/OphelinaHome";
 import MisEmpenos from "./Clientes/MisEmpenos";
 import OphelinaTienda from "./Clientes/OphelinaTienda"; 
-import Tarjetero from "./Clientes/Tarjetero"; 
 
 import Roles from "./Roles/Roles";
 import RolNuevo from "./Roles/RolNuevo";
@@ -69,11 +68,6 @@ function App() {
           </ProtectedRoute>
         } />
 
-        <Route path="/tarjetas" element={
-          <ProtectedRoute>
-            <Tarjetero />
-          </ProtectedRoute>
-        } />
 
         {/* DASHBOARD */}
         <Route path="/home" element={

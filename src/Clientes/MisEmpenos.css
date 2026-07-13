@@ -906,3 +906,172 @@ body {
   font-style: italic;
 }
 }
+/* Estados de las tarjetas */
+.me-empeno-card.estado-pagado {
+  border-left: 4px solid #28a745;
+  background: #f0fff4;
+}
+
+.me-empeno-card.estado-tienda {
+  border-left: 4px solid #ff9800;
+  background: #fff8f0;
+}
+
+.me-empeno-card.estado-vencido {
+  border-left: 4px solid #dc3545;
+  background: #fff5f5;
+}
+
+.me-empeno-card.estado-proximo {
+  border-left: 4px solid #ffc107;
+  background: #fffef5;
+}
+
+/* Header con nombre y badge en la misma linea */
+.me-empeno-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.me-empeno-nombre {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* Badges de estado */
+.me-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.me-badge.estado-pagado {
+  background: #28a745;
+  color: white;
+}
+
+.me-badge.estado-tienda {
+  background: #ff9800;
+  color: white;
+}
+
+.me-badge.estado-vencido {
+  background: #dc3545;
+  color: white;
+}
+
+.me-badge.estado-proximo {
+  background: #ffc107;
+  color: #856404;
+}
+
+.me-badge.estado-activo {
+  background: #17a2b8;
+  color: white;
+}
+
+/* Mensajes de estado */
+.me-mensaje-pagado {
+  background: #28a745;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+  flex: 1;
+  font-weight: 500;
+}
+
+.me-mensaje-tienda {
+  background: #ff9800;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+  flex: 1;
+  font-weight: 500;
+}
+
+.me-mensaje-vencido {
+  background: #dc3545;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+  flex: 1;
+  font-weight: 500;
+}
+
+/* Badges en popup */
+.popup-tienda-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  background: #ff9800;
+  color: white;
+  padding: 6px;
+  text-align: center;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Items financieros nuevos */
+.financiero-item.pagado-completo {
+  background: #d4edda;
+  margin: 5px -15px;
+  padding: 8px 15px;
+  border-radius: 8px;
+}
+
+.financiero-item.en-tienda {
+  background: #fff3e0;
+  margin: 5px -15px;
+  padding: 8px 15px;
+  border-radius: 8px;
+}
+
+.valor-pagado {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.valor-tienda {
+  color: #ff9800;
+  font-weight: bold;
+}
+
+.aviso-tienda {
+  background: #fff3e0;
+  border: 1px solid #ffcc80;
+  color: #856404;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 15px;
+  font-size: 13px;
+}
+
+.fecha-vencida {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* Asegurar que el contenedor del nombre sea flexible */
+.me-empeno-info {
+  flex: 1;
+}
+
+.me-empeno-contenido-superior {
+  display: flex;
+  gap: 16px;
+}

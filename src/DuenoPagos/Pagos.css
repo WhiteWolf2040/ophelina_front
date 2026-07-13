@@ -1519,3 +1519,56 @@ tbody tr:first-child {
   overflow: visible !important;
 }
 
+/* Estilos para React-Select - Versión que SÍ funciona */
+.react-select-container {
+  width: 100%;
+}
+
+.react-select__control {
+  border-radius: 8px !important;
+  border-color: #e9ecef !important;
+  min-height: 48px !important;
+  box-shadow: none !important;
+}
+
+.react-select__control:hover {
+  border-color: #0d1b3e !important;
+}
+
+.react-select__control--is-focused {
+  border-color: #0d1b3e !important;
+  box-shadow: 0 0 0 3px rgba(13, 27, 62, 0.1) !important;
+}
+
+.react-select__menu {
+  z-index: 9999 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.react-select__option {
+  padding: 10px 12px !important;
+  cursor: pointer !important;
+}
+
+.react-select__option--is-focused {
+  background-color: #f8f9fa !important;
+}
+
+.react-select__option--is-selected {
+  background-color: #0d1b3e !important;
+}
+
+.react-select__placeholder {
+  color: #adb5bd !important;
+}
+
+.react-select__dropdown-indicator {
+  color: #6c757d !important;
+}
+
+.react-select__clear-indicator {
+  color: #6c757d !important;
+  cursor: pointer !important;
+}
+

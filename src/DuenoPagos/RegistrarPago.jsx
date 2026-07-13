@@ -119,31 +119,47 @@ const RegistrarPago = () => {
   };
   
   // Cargar empeños activos
-  const cargarEmpenosActivos = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/empenos/activos-con-saldo');
-      if (response.data.success) {
-        const empenos = response.data.data.map(emp => ({
-          id: emp.id_empeno,
-          cliente: emp.cliente,
-          monto_prestado: emp.monto_prestado,
-          saldo_total_pendiente: emp.saldo_total_pendiente,
-          saldo_pendiente_cuota: emp.saldo_pendiente_cuota,
-          articulo: emp.articulo,
-          fecha_vencimiento: emp.fecha_vencimiento,
-          pagos_realizados: emp.pagos_realizados || 0
-        }));
-        setEmpenosActivos(empenos);
-      }
-    } catch (error) {
-      console.error('Error al cargar empeños activos:', error);
-      alert("Error al cargar los empeños activos");
-    } finally {
-      setLoading(false);
+const cargarEmpenosActivos = async () => {
+  try {
+    setLoading(true);
+    const response = await api.get('/empenos/activos-con-saldo');
+    
+    console.log('=== RESPUESTA COMPLETA ===', response.data);
+    
+    if (response.data.success) {
+      const empenos = response.data.data.map(emp => ({
+        id: emp.id_empeno,
+        cliente: emp.cliente,
+        monto_prestado: emp.monto_prestado,
+        saldo_total_pendiente: emp.saldo_total_pendiente,
+        saldo_pendiente_cuota: emp.saldo_pendiente_cuota,
+        articulo: emp.articulo,
+        fecha_vencimiento: emp.fecha_vencimiento,
+        pagos_realizados: emp.pagos_realizados || 0
+      }));
+      
+      console.log('Empeños procesados:', empenos);
+      console.log('Cantidad de empeños:', empenos.length);
+      
+      // 🔑 IMPORTANTE: Verifica que cada empeño tenga un ID válido
+      empenos.forEach((emp, index) => {
+        console.log(`Empeño ${index + 1}: ID=${emp.id}, Cliente=${emp.cliente}`);
+      });
+      
+      setEmpenosActivos(empenos);
+      
+      // 🔑 Verifica que el estado se actualizó correctamente
+      setTimeout(() => {
+        console.log('Estado empenosActivos después de set:', empenosActivos);
+      }, 100);
     }
-  };
-  
+  } catch (error) {
+    console.error('Error al cargar empeños activos:', error);
+    alert("Error al cargar los empeños activos");
+  } finally {
+    setLoading(false);
+  }
+};
   // Cargar amortización pendiente
   const cargarAmortizacionPendiente = async (idEmpeno) => {
     try {
@@ -195,11 +211,24 @@ const RegistrarPago = () => {
       setTotalPagosRealizados(0);
     }
   }, [form.id_empeno]);
+
+  useEffect(() => {
+  console.log('=== empenosActivos CAMBIÓ ===');
+  console.log('Nuevo valor:', empenosActivos);
+  console.log('Cantidad:', empenosActivos.length);
+  
+  // Verificar empenosOptions
+  const options = empenosActivos.map(emp => ({
+    value: emp.id,
+    label: `${emp.cliente} - ${emp.articulo?.substring(0, 50)}...`,
+  }));
+  console.log('Opciones generadas para React-Select:', options);
+}, [empenosActivos]);
   
   // Obtener el valor seleccionado para react-select
   const selectedOption = empenosOptions.find(opt => opt.value === form.id_empeno);
   
-  // Sugerir monto según tipo de pago
+  // Sugerir monto según tipo de pago, Ayuda al usuario a saber cuánto debe pagar según el tipo de pago que elija.
   const getMontoSugerido = () => {
     if (!amortizacionPendiente) return null;
     
@@ -299,8 +328,9 @@ const RegistrarPago = () => {
         <div className="form-card">
           <form onSubmit={handleSubmit} className="form-grid">
             
-            {/* Empeños con React-Select */}
-            <div className="form-group full-width" style={{ position: 'relative', zIndex: 1000 }}>
+         
+             {/* Empeños con React-Select */}
+            <div className="form-group full-width">
               <label>
                 <ReceiptIcon className="input-icon" />
                 Empeño *
@@ -309,47 +339,16 @@ const RegistrarPago = () => {
                 options={empenosOptions}
                 value={selectedOption}
                 onChange={(selected) => setForm({ ...form, id_empeno: selected?.value || "" })}
-                placeholder="Buscar por cliente o artículo..."
+                placeholder="Selecciona un empeño..."
                 isClearable
                 isSearchable
-                styles={customStyles}
                 noOptionsMessage={() => "No se encontraron empeños"}
-                loadingMessage={() => "Cargando..."}
                 isLoading={loading}
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
+                // ELIMINAMOS temporalmente: menuPortalTarget, menuPosition, styles personalizados
                 className="react-select-container"
                 classNamePrefix="react-select"
-                formatOptionLabel={(option) => (
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    width: '100%'
-                  }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 'bold', color: '#0d1b3e' }}>
-                        {option.cliente}
-                      </div>
-                      <div style={{ fontSize: '0.7rem', color: '#6c757d' }}>
-                        {option.articulo?.substring(0, 80)}...
-                      </div>
-                    </div>
-                    <div style={{ 
-                      fontSize: '0.85rem', 
-                      fontWeight: 'bold', 
-                      color: '#1e3a8a',
-                      backgroundColor: '#eef2ff',
-                      padding: '2px 8px',
-                      borderRadius: '20px'
-                    }}>
-                      ${formatNumber(option.saldo)}
-                    </div>
-                  </div>
-                )}
               />
             </div>
-            
             {/* Información de la Cuota */}
             {amortizacionPendiente && (
               <div className="cuota-card full-width">

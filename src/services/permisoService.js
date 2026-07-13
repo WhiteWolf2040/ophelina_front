@@ -2,9 +2,9 @@
 import api from "../config/api";
 
 const permissionService = {
-    // ============================================
+  
     // MÉTODOS PARA CONSULTAR LA API (CRUD de permisos)
-    // ============================================
+ 
     
     /**
      * Obtener todos los permisos desde la API
