@@ -1,4 +1,4 @@
-// Dueño.jsx - VERSIÓN FUSIONADA (Docker Base + Características Local)
+// Dueño.jsx - VERSIÓN CORREGIDA (Rutas /home en lugar de /dashboard)
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Chart from "react-apexcharts";
@@ -54,9 +54,9 @@ const Dueno = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentSessionId, setPaymentSessionId] = useState(null);
   const [paymentPlanName, setPaymentPlanName] = useState('');
-  const [paymentPlanId, setPaymentPlanId] = useState(null); // ✅ De Docker
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false); // ✅ De Docker
-  const [isLoadingPayment, setIsLoadingPayment] = useState(false); // ✅ De Docker
+  const [paymentPlanId, setPaymentPlanId] = useState(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
 
   // Detectar pago exitoso (DE DOCKER - VERSIÓN MEJORADA)
   useEffect(() => {
@@ -81,7 +81,7 @@ const Dueno = () => {
       verificarPago(sessionId, planId);
       
       localStorage.removeItem('stripe_session_id');
-      window.history.replaceState({}, document.title, '/dashboard');
+      window.history.replaceState({}, document.title, '/home');
     } else {
       console.log('ℹ No hay parámetros de pago en la URL');
     }
@@ -436,7 +436,7 @@ const Dueno = () => {
   };
 
   // ============================================
-  // FUNCIONES DE CARGA DE DATOS
+  // FUNCIONES DE CARGA DE DATOS (CORREGIDAS con /home)
   // ============================================
   
   const cargarUsuarioActual = async () => {
@@ -492,9 +492,10 @@ const Dueno = () => {
     }
   };
 
+  // ✅ CORREGIDO: /dashboard/morosidad → /home/morosidad
   const cargarMorosidad = async () => {
     try {
-      const response = await api.get('/dashboard/morosidad');
+      const response = await api.get('/home/morosidad');
       if (response.data.success) {
         setMorosidad(response.data.data);
       } else {
@@ -507,9 +508,10 @@ const Dueno = () => {
     }
   };
 
+  // ✅ CORREGIDO: /dashboard/distribucion-categorias → /home/distribucion-categorias
   const cargarDistribucionCategorias = async () => {
     try {
-      const response = await api.get('/dashboard/distribucion-categorias');
+      const response = await api.get('/home/distribucion-categorias');
       if (response.data.success) {
         const data = response.data.data;
         const series = data.map(item => item.total);
@@ -521,12 +523,13 @@ const Dueno = () => {
     }
   };
 
+  // ✅ CORREGIDO: /dashboard → /home
   const cargarDashboard = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await api.get('/dashboard');
+      const response = await api.get('/home');
       
       if (response.data.success) {
         const data = response.data.data;
@@ -566,10 +569,11 @@ const Dueno = () => {
     }
   };
 
+  // ✅ CORREGIDO: /dashboard/amortizaciones-pendientes → /home/amortizaciones-pendientes
   const cargarAmortizacionesPendientes = async () => {
     try {
       setLoadingAmortizaciones(true);
-      const response = await api.get('/dashboard/amortizaciones-pendientes');
+      const response = await api.get('/home/amortizaciones-pendientes');
       if (response.data.success) {
         setAmortizacionesPendientes(response.data.data);
       }
@@ -592,10 +596,11 @@ const Dueno = () => {
   };
 
   // Funciones para cargar datos específicos de modales
+  // ✅ CORREGIDOS: /dashboard/activos → /home/activos, etc.
   const cargarActivos = async () => {
     if (!hasPermission('ver_empenos')) return;
     try {
-      const response = await api.get('/dashboard/activos');
+      const response = await api.get('/home/activos');
       if (response.data.success) {
         setEmpenosActivos(response.data.data);
         setShowActivos(true);
@@ -609,7 +614,7 @@ const Dueno = () => {
   const cargarVencidos = async () => {
     if (!hasPermission('ver_empenos')) return;
     try {
-      const response = await api.get('/dashboard/vencidos');
+      const response = await api.get('/home/vencidos');
       if (response.data.success) {
         setEmpenosVencidos(response.data.data);
         setShowVencidos(true);
@@ -623,7 +628,7 @@ const Dueno = () => {
   const cargarProximos = async () => {
     if (!hasPermission('ver_empenos')) return;
     try {
-      const response = await api.get('/dashboard/proximos');
+      const response = await api.get('/home/proximos');
       if (response.data.success) {
         setProximosVencer(response.data.data);
         setShowProximos(true);
@@ -637,7 +642,7 @@ const Dueno = () => {
   const cargarIngresos = async () => {
     if (!hasPermission('ver_pagos')) return;
     try {
-      const response = await api.get('/dashboard/ingresos-recientes');
+      const response = await api.get('/home/ingresos-recientes');
       if (response.data.success) {
         setIngresosRecientes(response.data.data);
         setShowIngresos(true);
@@ -656,9 +661,9 @@ const Dueno = () => {
     cargarMorosidad();
     cargarDistribucionCategorias();
     cargarUsuarioActual();
-    cargarPreciosQuilates(); // ✅ AGREGADO DE LOCAL
+    cargarPreciosQuilates();
     cargarModulosPorPlan();
-    cargarAmortizacionesPendientes(); // ✅ AGREGADO DE LOCAL
+    cargarAmortizacionesPendientes();
   }, []);
 
   // Manejadores del modal de pago
