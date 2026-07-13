@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "./Clientes.css";
 import clientesService from "../services/clientesService";
+import permissionService from "../services/permisoService"; // 👈 Importar tu servicio
 
 // Importar iconos de MUI
 import SearchIcon from '@mui/icons-material/Search';
@@ -25,6 +26,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
 import GroupIcon from '@mui/icons-material/Group';
 import PinIcon from '@mui/icons-material/Room';
+import LockIcon from '@mui/icons-material/Lock';
 
 const ClientesLista = () => {
   const [clientes, setClientes] = useState([]);
@@ -33,6 +35,7 @@ const ClientesLista = () => {
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [modalEliminar, setModalEliminar] = useState(false);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [cargando, setCargando] = useState(true);
 
   const [formEditar, setFormEditar] = useState({
     nombre: "",
@@ -52,11 +55,37 @@ const ClientesLista = () => {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    cargarClientes();
-  }, []);
+  // ============================================
+  // 👇 VERIFICAR PERMISOS USANDO TU SERVICIO
+  // ============================================
+  const puedeVerClientes = permissionService.hasPermission('ver_clientes');
+  const puedeCrearClientes = permissionService.hasPermission('crear_clientes');
+  const puedeEditarClientes = permissionService.hasPermission('editar_clientes');
+  const puedeEliminarClientes = permissionService.hasPermission('eliminar_clientes');
 
+  // También puedes verificar por módulo (si lo necesitas)
+  const puedeAccederModuloClientes = permissionService.canAccessModule('clientes');
+
+  // ============================================
+  // REDIRIGIR SI NO TIENE PERMISO PARA VER
+  // ============================================
+  useEffect(() => {
+    if (!puedeVerClientes) {
+      navigate('/dashboard');
+    }
+  }, [puedeVerClientes, navigate]);
+
+  useEffect(() => {
+    if (puedeVerClientes) {
+      cargarClientes();
+    }
+  }, [puedeVerClientes]);
+
+  // ============================================
+  // FUNCIONES CRUD
+  // ============================================
   const cargarClientes = async () => {
+    setCargando(true);
     try {
       const response = await clientesService.obtenerClientes();
       const data = response.data || response;
@@ -73,6 +102,8 @@ const ClientesLista = () => {
       setClientes(clientesAdaptados);
     } catch (error) {
       console.error("Error cargando clientes", error);
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -88,6 +119,11 @@ const ClientesLista = () => {
   const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
 
   const abrirDetalle = async (cliente) => {
+    if (!puedeVerClientes) {
+      alert('No tienes permiso para ver detalles de clientes');
+      return;
+    }
+
     try {
       if (!cliente.id_cliente) {
         console.error("ERROR: El cliente no tiene id_cliente");
@@ -118,6 +154,12 @@ const ClientesLista = () => {
   };
 
   const abrirModalEditar = (cliente) => {
+    // 👇 Validar permiso usando tu servicio
+    if (!puedeEditarClientes) {
+      alert('No tienes permiso para editar clientes');
+      return;
+    }
+
     const clienteParaEditar = cliente || clienteSeleccionado;
     
     setFormEditar({
@@ -143,10 +185,16 @@ const ClientesLista = () => {
 
   const handleEditarSubmit = async (e) => {
     e.preventDefault();
+    
+    // 👇 Validar permiso usando tu servicio
+    if (!puedeEditarClientes) {
+      alert('No tienes permiso para editar clientes');
+      return;
+    }
+
     try {
       await editarCliente(clienteSeleccionado.id_cliente, formEditar);
       cerrarModalEditar();
-      // Recargar la lista para mostrar los cambios
       cargarClientes();
     } catch (error) {
       console.error("Error al guardar cambios", error);
@@ -154,11 +202,23 @@ const ClientesLista = () => {
   };
 
   const confirmarEliminar = (cliente) => {
+    // 👇 Validar permiso usando tu servicio
+    if (!puedeEliminarClientes) {
+      alert('No tienes permiso para eliminar clientes');
+      return;
+    }
+
     setClienteSeleccionado(cliente);
     setModalEliminar(true);
   };
 
   const handleEliminar = async () => {
+    // 👇 Validar permiso usando tu servicio
+    if (!puedeEliminarClientes) {
+      alert('No tienes permiso para eliminar clientes');
+      return;
+    }
+
     try {
       await clientesService.eliminarCliente(clienteSeleccionado.id_cliente);
       setClientes(clientes.filter(c => c.id_cliente !== clienteSeleccionado.id_cliente));
@@ -203,6 +263,25 @@ const ClientesLista = () => {
     }
   };
 
+  // Si no tiene permiso, no renderizar nada (ya redirigirá el useEffect)
+  if (!puedeVerClientes) {
+    return null;
+  }
+
+  // Mostrar loader mientras carga
+  if (cargando) {
+    return (
+      <div className="dashboard">
+        <div className="content2 owner-header">
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Cargando clientes...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard">
       <div className="content2 owner-header">
@@ -214,9 +293,15 @@ const ClientesLista = () => {
               <p className="header-sub">Gestiona y administra tus clientes</p>
             </h1>
           </div>
-          <button className="btn-nuevo" onClick={() => navigate("nuevo")}>
-            <AddIcon fontSize="small" /> Nuevo Registro
-          </button>
+          
+          {/* ============================================ */}
+          {/* 👇 BOTÓN NUEVO - SOLO CON PERMISO crear_clientes */}
+          {/* ============================================ */}
+          {puedeCrearClientes && (
+            <button className="btn-nuevo" onClick={() => navigate("nuevo")}>
+              <AddIcon fontSize="small" /> Nuevo Registro
+            </button>
+          )}
         </div>
 
         {/* BUSCADOR */}
@@ -284,12 +369,42 @@ const ClientesLista = () => {
                       <td>{cliente.fecha}</td>
                       <td>
                         <div className="acciones-container">
-                          <button className="btn-accion ver" onClick={() => abrirDetalle(cliente)}>
+                          {/* ============================================ */}
+                          {/* BOTÓN VER - SIEMPRE VISIBLE */}
+                          {/* ============================================ */}
+                          <button 
+                            className="btn-accion ver" 
+                            onClick={() => abrirDetalle(cliente)}
+                            title="Ver detalles"
+                          >
                             <VisibilityIcon fontSize="small" />
                           </button>
-                          <button className="btn-accion editar" onClick={() => abrirModalEditar(cliente)}>
-                            <EditIcon fontSize="small" />
-                          </button>
+                          
+                          {/* ============================================ */}
+                          {/* 👇 BOTÓN EDITAR - SOLO CON PERMISO editar_clientes */}
+                          {/* ============================================ */}
+                          {puedeEditarClientes && (
+                            <button 
+                              className="btn-accion editar" 
+                              onClick={() => abrirModalEditar(cliente)}
+                              title="Editar cliente"
+                            >
+                              <EditIcon fontSize="small" />
+                            </button>
+                          )}
+                          
+                          {/* ============================================ */}
+                          {/* 👇 BOTÓN ELIMINAR - SOLO CON PERMISO eliminar_clientes */}
+                          {/* ============================================ */}
+                          {puedeEliminarClientes && (
+                            <button 
+                              className="btn-accion eliminar" 
+                              onClick={() => confirmarEliminar(cliente)}
+                              title="Eliminar cliente"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -336,7 +451,9 @@ const ClientesLista = () => {
         </div>
       </div>
 
+      {/* ============================================ */}
       {/* MODAL DE DETALLE */}
+      {/* ============================================ */}
       {modalAbierto && clienteSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -525,30 +642,47 @@ const ClientesLista = () => {
               </div>
             </div>
 
-            {/* Acciones del modal */}
+            {/* ============================================ */}
+            {/* 👇 ACCIONES DEL MODAL CON PERMISOS */}
+            {/* ============================================ */}
             <div className="modal-acciones">
-              <button 
-                className="btn-editar" 
-                onClick={() => {
-                  setModalAbierto(false);
-                  abrirModalEditar(clienteSeleccionado);
-                }}
-              >
-                <EditIcon fontSize="small" /> Editar
-              </button>
-              <button 
-                className="btn-eliminar" 
-                onClick={() => confirmarEliminar(clienteSeleccionado)}
-              >
-                <DeleteIcon fontSize="small" /> Eliminar
-              </button>
+              {puedeEditarClientes && (
+                <button 
+                  className="btn-editar" 
+                  onClick={() => {
+                    setModalAbierto(false);
+                    abrirModalEditar(clienteSeleccionado);
+                  }}
+                >
+                  <EditIcon fontSize="small" /> Editar
+                </button>
+              )}
+              
+              {puedeEliminarClientes && (
+                <button 
+                  className="btn-eliminar" 
+                  onClick={() => confirmarEliminar(clienteSeleccionado)}
+                >
+                  <DeleteIcon fontSize="small" /> Eliminar
+                </button>
+              )}
+
+              {/* Mostrar mensaje si no tiene permisos para editar ni eliminar */}
+              {!puedeEditarClientes && !puedeEliminarClientes && (
+                <div className="sin-permisos-modal">
+                  <LockIcon fontSize="small" /> 
+                  <span>Solo visualización - No tienes permisos para modificar</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL DE EDICIÓN */}
-      {modalEditarAbierto && clienteSeleccionado && (
+      {/* ============================================ */}
+      {/* 👇 MODAL DE EDICIÓN - SOLO SI TIENE PERMISO */}
+      {/* ============================================ */}
+      {modalEditarAbierto && clienteSeleccionado && puedeEditarClientes && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
           <div className="modal-editar" onClick={(e) => e.stopPropagation()}>
             <button className="modal-cerrar" onClick={cerrarModalEditar}>
@@ -651,8 +785,10 @@ const ClientesLista = () => {
         </div>
       )}
 
-      {/* MODAL DE CONFIRMAR ELIMINACIÓN */}
-      {modalEliminar && clienteSeleccionado && (
+      {/* ============================================ */}
+      {/*  MODAL DE CONFIRMAR ELIMINACIÓN - SOLO SI TIENE PERMISO */}
+      {/* ============================================ */}
+      {modalEliminar && clienteSeleccionado && puedeEliminarClientes && (
         <div className="modal-overlay" onClick={() => setModalEliminar(false)}>
           <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icono">

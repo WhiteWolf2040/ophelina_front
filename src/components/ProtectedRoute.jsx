@@ -4,14 +4,14 @@ import { isAuthenticated, getCurrentUser } from "../config/auth";
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
 
-  // 🔒 Si no está logueado → login
+  //  Si no está logueado → login
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
 
   const user = getCurrentUser();
 
-  // 🔒 Validar roles
+  // Validar roles
   if (allowedRoles.length > 0) {
     if (!user || !allowedRoles.includes(user.rol)) {
 

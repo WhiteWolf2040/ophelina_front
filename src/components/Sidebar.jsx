@@ -1,10 +1,10 @@
-// Sidebar.jsx - Versión corregida con módulos por plan
+// Sidebar.jsx - Versión CORREGIDA con permisos reales
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/LogoWhite.png";
 import "./Sidebar.css";
 import { logout } from "../config/auth";
-import api from "../config/api";
+import { usePermissions } from "../hooks/usePermissions";
 
 // Iconos
 import HomeIcon from '@mui/icons-material/Home';
@@ -24,93 +24,144 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [visibleMenus, setVisibleMenus] = useState([]);
-  const [loading, setLoading] = useState(true);
+  
+  // ============================================
+  // HOOK DE PERMISOS - PARA VERIFICAR ACCESO
+  // ============================================
+  const { 
+    hasPermission, 
+    hasModule, 
+    permisos, 
+    modulos,
+    userRole,
+    loading 
+  } = usePermissions();
 
   const navigate = useNavigate();
 
-  // Configuración de módulos visibles según el plan
-  const modulesByPlan = {
-    1: {  // Free Trial
-      name: 'Free',
-      menus: [
-        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" }
-      ]
+  // ============================================
+  // DEFINICIÓN DE TODOS LOS MENÚS POSIBLES
+  // ============================================
+  const allMenus = [
+    { 
+      path: "/home", 
+      icon: <HomeIcon />, 
+      text: "Dashboard", 
+      modulo: "dashboard",
+      permission: null // Siempre visible
     },
-    3: {  // Profesional
-      name: 'Profesional',
-      menus: [
-        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-        { path: "/pagos", icon: <PaymentsIcon />, text: "Pagos", modulo: "pagos" },
-        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" },
-        { path: "/configuracion", icon: <SettingsIcon />, text: "Configuración", modulo: "configuracion" }
-      ]
+    { 
+      path: "/clientes", 
+      icon: <PeopleIcon />, 
+      text: "Clientes", 
+      modulo: "clientes",
+      permission: "ver_clientes"
     },
-    4: {  // Premium (Empresarial)
-      name: 'Premium',
-      menus: [
-        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-        { path: "/pagos", icon: <PaymentsIcon />, text: "Pagos", modulo: "pagos" },
-        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" },
-        { path: "/tienda", icon: <StorefrontIcon />, text: "Tienda en línea", modulo: "tienda" },
-        { path: "/reportes", icon: <BarChartIcon />, text: "Reportes", modulo: "reportes" },
-        { path: "/roles", icon: <SecurityIcon />, text: "Roles", modulo: "roles" },
-        { path: "/permisos", icon: <VpnKeyIcon />, text: "Permisos", modulo: "permisos" },
-        { path: "/configuracion", icon: <SettingsIcon />, text: "Configuración", modulo: "configuracion" }
-      ]
+    { 
+      path: "/empenos", 
+      icon: <DiamondIcon />, 
+      text: "Empeños", 
+      modulo: "empenos",
+      permission: "ver_empenos"
+    },
+    { 
+      path: "/tienda", 
+      icon: <StorefrontIcon />, 
+      text: "Tienda", 
+      modulo: "tienda",
+      permission: "ver_tienda"
+    },
+    { 
+      path: "/pagos", 
+      icon: <PaymentsIcon />, 
+      text: "Pagos", 
+      modulo: "pagos",
+      permission: "ver_pagos"
+    },
+    { 
+      path: "/reportes", 
+      icon: <BarChartIcon />, 
+      text: "Reportes", 
+      modulo: "reportes",
+      permission: "ver_reportes"
+    },
+    { 
+      path: "/configuracion", 
+      icon: <SettingsIcon />, 
+      text: "Configuración", 
+      modulo: "configuracion",
+      permission: "ver_configuracion"
+    },
+    { 
+      path: "/roles", 
+      icon: <SecurityIcon />, 
+      text: "Roles", 
+      modulo: "configuracion",
+      permission: "ver_roles"
+    },
+    { 
+      path: "/permisos", 
+      icon: <VpnKeyIcon />, 
+      text: "Permisos", 
+      modulo: "configuracion",
+      permission: "ver_permisos"
     }
+  ];
+
+  // ============================================
+  // FILTRAR MENÚS POR PERMISOS DEL USUARIO
+  // ============================================
+  const getVisibleMenus = () => {
+    // Si está cargando, mostrar solo Home
+    if (loading) {
+      return allMenus.filter(m => m.path === "/home");
+    }
+
+    // Administrador ve TODO
+    if (userRole === 'Administrador' || userRole === 'Admin' || userRole === 'Dueño') {
+      return allMenus;
+    }
+
+    // Para otros roles, filtrar por permisos
+    return allMenus.filter(menu => {
+      // Home siempre visible
+      if (menu.path === "/home") return true;
+      
+      // Si tiene permiso específico
+      if (menu.permission) {
+        return hasPermission(menu.permission);
+      }
+      
+      // Si tiene módulo
+      if (menu.modulo) {
+        return hasModule(menu.modulo);
+      }
+      
+      return false;
+    });
   };
 
-  useEffect(() => {
-    const cargarModulosPorPlan = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setVisibleMenus([]);
-          setLoading(false);
-          return;
-        }
+  const visibleMenus = getVisibleMenus();
 
-        const response = await api.get('/user');
-        
-        if (response.data.success) {
-          const usuario = response.data.data.usuario;
-          const planId = usuario.plan_id || 1;
-          
-          console.log('📊 Plan ID:', planId);
-          console.log('📦 Módulos permitidos:', usuario.modulos);
-          
-          // Obtener los menús según el plan
-          const planMenus = modulesByPlan[planId] || modulesByPlan[1];
-          setVisibleMenus(planMenus.menus);
-        } else {
-          setVisibleMenus([]);
-        }
-      } catch (error) {
-        console.error('Error cargando módulos del plan:', error);
-        setVisibleMenus([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    cargarModulosPorPlan();
-  }, []);
-
+  // ============================================
+  // FUNCIONES DEL SIDEBAR
+  // ============================================
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => setIsOpen(false);
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
   const handleLogout = async () => {
     await logout();
+    // Limpiar permisos al cerrar sesión
+    localStorage.removeItem('permisos');
+    localStorage.removeItem('modulos');
+    localStorage.removeItem('user');
     navigate("/login");
   };
 
+  // ============================================
+  // RENDER - ESTADO DE CARGA
+  // ============================================
   if (loading) {
     return (
       <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
@@ -124,6 +175,9 @@ const Sidebar = () => {
     );
   }
 
+  // ============================================
+  // RENDER - SIDEBAR COMPLETO
+  // ============================================
   return (
     <>
       <button className="mobile-menu-btn" onClick={toggleSidebar}>
@@ -152,7 +206,9 @@ const Sidebar = () => {
             <NavLink 
               key={item.path}
               to={item.path} 
-              className="sidebar-link" 
+              className={({ isActive }) => 
+                `sidebar-link ${isActive ? 'active' : ''}`
+              }
               onClick={closeSidebar}
             >
               {item.icon}
@@ -170,6 +226,16 @@ const Sidebar = () => {
         {!isCollapsed && (
           <div className="sidebar-footer">
             <p>Versión 2.0.0</p>
+            {userRole && (
+              <p className="sidebar-rol">
+                <small>Rol: {userRole}</small>
+              </p>
+            )}
+            {permisos.length > 0 && (
+              <p className="sidebar-permisos-count">
+                <small>{permisos.length} permisos activos</small>
+              </p>
+            )}
           </div>
         )}
       </aside>

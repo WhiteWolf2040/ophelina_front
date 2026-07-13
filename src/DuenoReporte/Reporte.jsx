@@ -1,7 +1,8 @@
-// Reportes.jsx - Versión COMPLETA y CORREGIDA
+// Reportes.jsx - Versión con permisos
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import "./Reporte.css";
+import permissionService from "../services/permisoService"; // 👈 Importar servicio de permisos
 
 // Importar iconos de MUI
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
@@ -18,13 +19,29 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import DateRangeIcon from '@mui/icons-material/DateRange';
+import LockIcon from '@mui/icons-material/Lock';
 
-// Importar ApexCharts y jsPDF (CORREGIDO)
+// Importar ApexCharts y jsPDF
 import ApexCharts from "apexcharts";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const Reportes = () => {
+  // ============================================
+  // 👇 VERIFICAR PERMISOS
+  // ============================================
+  const puedeVerReportes = permissionService.hasPermission('ver_reportes');
+  const puedeExportarPDF = permissionService.hasPermission('ver_reportes'); // O puedes crear un permiso específico 'exportar_reportes'
+
+  // ============================================
+  // REDIRIGIR SI NO TIENE PERMISO PARA VER
+  // ============================================
+  if (!puedeVerReportes) {
+    // Redirigir a dashboard
+    window.location.href = '/dashboard';
+    return null;
+  }
+
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
@@ -185,6 +202,12 @@ const Reportes = () => {
 
   // Función para exportar a PDF (CORREGIDA)
   const exportarAPDF = async () => {
+    // 👇 Validar permiso para exportar
+    if (!puedeExportarPDF) {
+      alert('No tienes permiso para exportar reportes');
+      return;
+    }
+
     try {
       // Crear nuevo PDF (horizontal para más espacio)
       const pdf = new jsPDF({
@@ -241,7 +264,6 @@ const Reportes = () => {
 
       // Capturar la gráfica como imagen
       try {
-        // Esperar un momento para asegurar que la gráfica esté renderizada
         await new Promise(resolve => setTimeout(resolve, 500));
         
         const { imgURI } = await ApexCharts.exec('grafica-principal', 'dataURI', {
@@ -250,7 +272,6 @@ const Reportes = () => {
         });
         
         if (imgURI) {
-          // Calcular posición para la gráfica
           const yPos = pdf.lastAutoTable.finalY + 20;
           pdf.addImage(imgURI, 'PNG', 15, yPos, 250, 100);
         }
@@ -265,7 +286,6 @@ const Reportes = () => {
       pdf.setTextColor(30, 58, 138);
       pdf.text('TENDENCIAS DE EMPEÑOS', 15, 20);
 
-      // Tabla detallada de tendencias - Usar autoTable directamente
       autoTable(pdf, {
         startY: 30,
         head: [['Mes', 'Valor', 'Cantidad', 'Variación %']],
@@ -354,10 +374,15 @@ const Reportes = () => {
             <p className="header-sub">Visualiza y exporta tu información</p>
           </h1>
            
-          <button className="btn-exportar" onClick={exportarAPDF}>
-            <PictureAsPdfIcon />
-            Exportar PDF
-          </button>
+          {/* ============================================ */}
+          {/* 👇 BOTÓN EXPORTAR PDF - SOLO CON PERMISO */}
+          {/* ============================================ */}
+          {puedeExportarPDF && (
+            <button className="btn-exportar" onClick={exportarAPDF}>
+              <PictureAsPdfIcon />
+              Exportar PDF
+            </button>
+          )}
         </div>
         
 
@@ -636,10 +661,15 @@ const Reportes = () => {
             </div>
 
             <div className="modal-acciones">
-              <button className="btn-exportar-modal" onClick={exportarAPDF}>
-                <DownloadIcon />
-                Exportar PDF
-              </button>
+              {/* ============================================ */}
+              {/* 👇 BOTÓN EXPORTAR PDF EN MODAL - SOLO CON PERMISO */}
+              {/* ============================================ */}
+              {puedeExportarPDF && (
+                <button className="btn-exportar-modal" onClick={exportarAPDF}>
+                  <DownloadIcon />
+                  Exportar PDF
+                </button>
+              )}
               <button className="btn-cancelar" onClick={() => setShowSecciones(false)}>
                 <CloseIcon />
                 Cerrar

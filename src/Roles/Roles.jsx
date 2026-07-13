@@ -44,14 +44,14 @@ const Roles = () => {
 
   const [permisosDelRol, setPermisosDelRol] = useState([]);
 
-  // Convertir permisos a formato para React-Select
-  const permisosOptions = permisos.map(permiso => ({
+
+ // En Roles.jsx, después de setPermisos
+const permisosOptions = permisos.map(permiso => ({
     value: permiso.id,
     label: `${permiso.nombre} (${permiso.modulo})`,
     modulo: permiso.modulo,
     descripcion: permiso.descripcion
-  }));
-
+}));
   // Estilos personalizados para React-Select
   const customStyles = {
     control: (base, state) => ({
@@ -108,6 +108,12 @@ const Roles = () => {
 
   // Cargar datos al montar el componente
   useEffect(() => {
+        // Verificar token y usuario
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    console.log('Token:', token);
+    console.log('Usuario:', user);
+    console.log('Empresa del usuario:', user.id_empresa);
     console.log('rolesService:', rolesService);
     cargarRoles();
     cargarPermisos();
@@ -126,15 +132,28 @@ const Roles = () => {
     }
   };
 
-  const cargarPermisos = async () => {
+const cargarPermisos = async () => {
     try {
-      const response = await rolesService.obtenerPermisos();
-      setPermisos(response.data.data);
+        const response = await rolesService.obtenerPermisos();
+        console.log('Todos los permisos:', response.data.data);
+        
+        // El backend ya filtra por empresa en el método index
+        // Pero como estamos viendo 84 permisos, parece que no está filtrando
+        // Vamos a filtrar manualmente
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        console.log('Empresa del usuario:', user.id_empresa);
+        
+        // Filtrar permisos por empresa
+        const permisosFiltrados = response.data.data.filter(
+            p => p.id_empresa === user.id_empresa
+        );
+        
+        console.log('Permisos filtrados por empresa:', permisosFiltrados);
+        setPermisos(permisosFiltrados);
     } catch (error) {
-      console.error('Error cargando permisos:', error);
+        console.error('Error cargando permisos:', error);
     }
-  };
-
+};
   const cargarPermisosDelRol = async (rolId) => {
     try {
       const response = await rolesService.obtenerRol(rolId);
@@ -167,25 +186,50 @@ const Roles = () => {
     }
   };
 
-  const handleEditarRol = async (e) => {
+const handleEditarRol = async (e) => {
     e.preventDefault();
     try {
-      const data = {
-        nombre: rolSeleccionado.nombre,
-        nivel: parseInt(rolSeleccionado.nivel),
-        descripcion: rolSeleccionado.descripcion || "",
-        permisos: permisosSeleccionados
-      };
-      await rolesService.actualizarRol(rolSeleccionado.id, data);
-      await cargarRoles();
-      setModalEditar(false);
-      setRolSeleccionado(null);
-      setPermisosSeleccionados([]);
+        // Verificar que todos los permisos existan
+        const permisosValidos = permisosSeleccionados.filter(id => 
+            permisosOptions.some(p => p.value === id)
+        );
+        
+        if (permisosValidos.length !== permisosSeleccionados.length) {
+            const invalidos = permisosSeleccionados.filter(id => 
+                !permisosOptions.some(p => p.value === id)
+            );
+            console.warn('Permisos inválidos (no existen):', invalidos);
+            alert(`Algunos permisos no existen: ${invalidos.join(', ')}`);
+        }
+        
+        const data = {
+            nombre: rolSeleccionado.nombre,
+            nivel: parseInt(rolSeleccionado.nivel),
+            descripcion: rolSeleccionado.descripcion || "",
+            permisos: permisosValidos // Solo enviar permisos válidos
+        };
+        
+        console.log('Datos a enviar (válidos):', data);
+        
+        const response = await rolesService.actualizarRol(rolSeleccionado.id, data);
+        
+        if (response.data.success) {
+            alert('Rol actualizado exitosamente');
+            await cargarRoles();
+            setModalEditar(false);
+            setRolSeleccionado(null);
+            setPermisosSeleccionados([]);
+        }
     } catch (error) {
-      console.error('Error actualizando rol:', error);
-      alert(error.response?.data?.message || 'Error al actualizar el rol');
+        console.error('Error actualizando rol:', error);
+        alert(error.response?.data?.message || 'Error al actualizar el rol');
     }
-  };
+};
+const handlePermisosChange = (selected) => {
+    const selectedIds = selected ? selected.map(opt => opt.value) : [];
+    console.log('Permisos seleccionados:', selectedIds);
+    setPermisosSeleccionados(selectedIds);
+};
 
   const handleEliminar = async () => {
     try {
@@ -684,48 +728,51 @@ const Roles = () => {
 
                   <div className="form-group full-width">
                     <label>Permisos</label>
-                    <Select
-                      options={permisosOptions}
-                      isMulti
-                      isSearchable
-                      placeholder="Buscar permisos por nombre o módulo..."
-                      noOptionsMessage={() => "No se encontraron permisos"}
-                      loadingMessage={() => "Cargando permisos..."}
-                      styles={customStyles}
-                      value={permisosOptions.filter(option => 
-                        permisosSeleccionados.includes(option.value)
-                      )}
-                      onChange={(selected) => {
-                        const selectedIds = selected ? selected.map(opt => opt.value) : [];
-                        setPermisosSeleccionados(selectedIds);
-                      }}
-                      formatOptionLabel={(option) => (
-                        <div style={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
-                          alignItems: 'center',
-                          width: '100%'
-                        }}>
-                          <div>
-                            <span style={{ fontWeight: 'bold', color: '#0d1b3e' }}>
-                              {option.label.split(' (')[0]}
-                            </span>
-                            <div style={{ fontSize: '0.7rem', color: '#6c757d' }}>
-                              {option.descripcion || `Permiso para ${option.label.split(' (')[0]}`}
-                            </div>
-                          </div>
-                          <span style={{ 
-                            fontSize: '0.7rem', 
-                            backgroundColor: '#e9ecef',
-                            padding: '2px 8px',
-                            borderRadius: '20px',
-                            color: '#0d1b3e'
-                          }}>
-                            {option.modulo}
-                          </span>
-                        </div>
-                      )}
-                    />
+           <Select
+    options={permisosOptions}
+    isMulti
+    isSearchable
+    placeholder="Buscar permisos por nombre o módulo..."
+    noOptionsMessage={() => "No se encontraron permisos"}
+    loadingMessage={() => "Cargando permisos..."}
+    styles={customStyles}
+    value={permisosOptions.filter(option => 
+        permisosSeleccionados.includes(option.value)
+    )}
+    onChange={(selected) => {
+        const selectedIds = selected ? selected.map(opt => opt.value) : [];
+        console.log('=== CAMBIO EN SELECT ===');
+        console.log('IDs seleccionados:', selectedIds);
+        console.log('Cantidad seleccionada:', selectedIds.length);
+        setPermisosSeleccionados(selectedIds);
+    }}
+    formatOptionLabel={(option) => (
+        <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            width: '100%'
+        }}>
+            <div>
+                <span style={{ fontWeight: 'bold', color: '#0d1b3e' }}>
+                    {option.label.split(' (')[0]}
+                </span>
+                <div style={{ fontSize: '0.7rem', color: '#6c757d' }}>
+                    {option.descripcion || `Permiso para ${option.label.split(' (')[0]}`}
+                </div>
+            </div>
+            <span style={{ 
+                fontSize: '0.7rem', 
+                backgroundColor: '#e9ecef',
+                padding: '2px 8px',
+                borderRadius: '20px',
+                color: '#0d1b3e'
+            }}>
+                {option.modulo}
+            </span>
+        </div>
+    )}
+/>
                     <small className="form-help">
                       Puedes buscar por nombre del permiso o por módulo (clientes, empeños, etc.)
                     </small>

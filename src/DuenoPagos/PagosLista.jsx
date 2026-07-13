@@ -1,10 +1,11 @@
-// PagosLista.jsx - Versión corregida
+// PagosLista.jsx - Versión con permisos
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "./Pagos.css";
 import PaymentsIcon from '@mui/icons-material/Payments';
 import pagosService from "../services/pagosService";
+import permissionService from "../services/permisoService"; // 👈 Importar servicio de permisos
 
 // Importar iconos de MUI
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -13,9 +14,29 @@ import PrintIcon from '@mui/icons-material/Print';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import QrCodeIcon from '@mui/icons-material/QrCode';
 import CloseIcon from '@mui/icons-material/Close';
+import AddIcon from '@mui/icons-material/Add';
+import LockIcon from '@mui/icons-material/Lock';
 
 const PagosLista = () => { 
   const navigate = useNavigate();
+
+  // ============================================
+  // 👇 VERIFICAR PERMISOS
+  // ============================================
+  const puedeVerPagos = permissionService.hasPermission('ver_pagos');
+  const puedeRegistrarPagos = permissionService.hasPermission('registrar_pagos');
+  const puedeEliminarPagos = permissionService.hasPermission('eliminar_pagos'); // Si tienes este permiso
+  // Si no tienes permiso específico para eliminar pagos, usa el de registrar o crea uno nuevo
+  const puedeEliminar = permissionService.hasPermission('eliminar_pagos') || permissionService.hasPermission('registrar_pagos');
+
+  // ============================================
+  // REDIRIGIR SI NO TIENE PERMISO PARA VER
+  // ============================================
+  useEffect(() => {
+    if (!puedeVerPagos) {
+      navigate('/dashboard');
+    }
+  }, [puedeVerPagos, navigate]);
 
   // Estados
   const [pagos, setPagos] = useState([]);
@@ -35,8 +56,10 @@ const PagosLista = () => {
 
   // Cargar pagos al montar el componente
   useEffect(() => {
-    cargarPagos();
-  }, []);
+    if (puedeVerPagos) {
+      cargarPagos();
+    }
+  }, [puedeVerPagos]);
 
   const cargarPagos = async () => {
     try {
@@ -58,6 +81,12 @@ const PagosLista = () => {
   };
 
   const handleEliminar = async () => {
+    // 👇 Validar permiso para eliminar
+    if (!puedeEliminar) {
+      alert('No tienes permiso para eliminar pagos');
+      return;
+    }
+
     try {
       await pagosService.eliminarPago(pagoSeleccionado.id);
       setPagos(pagos.filter(p => p.id !== pagoSeleccionado.id));
@@ -91,6 +120,11 @@ const PagosLista = () => {
 
   // Función para abrir detalle con datos completos desde la API
   const abrirDetalle = async (pago) => {
+    if (!puedeVerPagos) {
+      alert('No tienes permiso para ver detalles de pagos');
+      return;
+    }
+
     setPagoSeleccionado(pago);
     setModalAbierto(true);
     setLoadingDetalle(true);
@@ -114,6 +148,12 @@ const PagosLista = () => {
   };
 
   const confirmarEliminar = (pago) => {
+    // 👇 Validar permiso para eliminar
+    if (!puedeEliminar) {
+      alert('No tienes permiso para eliminar pagos');
+      return;
+    }
+
     setPagoSeleccionado(pago);
     setModalEliminar(true);
     setModalAbierto(false);
@@ -261,6 +301,11 @@ const PagosLista = () => {
     return numeros;
   };
 
+  // Si no tiene permiso, no renderizar nada (ya redirigirá el useEffect)
+  if (!puedeVerPagos) {
+    return null;
+  }
+
   // Renderizado condicional
   if (loading) {
     return (
@@ -304,12 +349,17 @@ const PagosLista = () => {
             </h1>
           </div>
           
-          <button
-            className="btn-nuevo"
-            onClick={() => navigate("/pagos/nuevo")}
-          >
-            + Nuevo Pago
-          </button>
+          {/* ============================================ */}
+          {/* 👇 BOTÓN NUEVO PAGO - SOLO CON PERMISO registrar_pagos */}
+          {/* ============================================ */}
+          {puedeRegistrarPagos && (
+            <button
+              className="btn-nuevo"
+              onClick={() => navigate("/pagos/nuevo")}
+            >
+              <AddIcon fontSize="small" /> Nuevo Pago
+            </button>
+          )}
         </div>
 
         {/* FILTROS */}
@@ -428,6 +478,9 @@ const PagosLista = () => {
                       <td>{pago.fecha}</td>
                       <td>
                         <div className="acciones-container">
+                          {/* ============================================ */}
+                          {/* BOTÓN VER - SIEMPRE VISIBLE */}
+                          {/* ============================================ */}
                           <button 
                             className="btn-accion ver"
                             onClick={() => abrirDetalle(pago)}
@@ -490,7 +543,9 @@ const PagosLista = () => {
         </div>
       </div>
 
+      {/* ============================================ */}
       {/* MODAL DE DETALLE DEL PAGO */}
+      {/* ============================================ */}
       {modalAbierto && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-recibo" onClick={(e) => e.stopPropagation()}>
@@ -641,21 +696,28 @@ const PagosLista = () => {
               })()
             )}
            
-            <div className="recibo-eliminar">
-              <button 
-                className="btn-eliminar-pago"
-                onClick={() => confirmarEliminar(pagoSeleccionado)}
-              >
-                <DeleteIcon fontSize="small" />
-                Eliminar Pago
-              </button>
-            </div>
+            {/* ============================================ */}
+            {/* 👇 BOTÓN ELIMINAR PAGO - SOLO CON PERMISO */}
+            {/* ============================================ */}
+            {puedeEliminar && (
+              <div className="recibo-eliminar">
+                <button 
+                  className="btn-eliminar-pago"
+                  onClick={() => confirmarEliminar(pagoSeleccionado)}
+                >
+                  <DeleteIcon fontSize="small" />
+                  Eliminar Pago
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* MODAL DE CONFIRMACIÓN ELIMINAR */}
-      {modalEliminar && pagoSeleccionado && (
+      {/* ============================================ */}
+      {/* 👇 MODAL DE CONFIRMACIÓN ELIMINAR - SOLO SI TIENE PERMISO */}
+      {/* ============================================ */}
+      {modalEliminar && pagoSeleccionado && puedeEliminar && (
         <div className="modal-overlay" onClick={() => setModalEliminar(false)}>
           <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icono">⚠️</div>

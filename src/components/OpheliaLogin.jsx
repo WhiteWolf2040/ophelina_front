@@ -1,8 +1,8 @@
-// OpheliaLogin.jsx
+// OpheliaLogin.jsx - VERSIÓN CORREGIDA
 import React, { useState } from "react";
 import "./OpheliaLogin.css";
 import logo from "../assets/ophelina_logo-sinFondo.png";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { login } from "../config/auth";
 
 export default function OpheliaLogin() {
@@ -34,30 +34,68 @@ export default function OpheliaLogin() {
       return;
     }
 
-    // login DE auth.js
-    const result = await login(formData.email, formData.password);
-    
-    if (result.success) {
-      // Guardar permisos y módulos en localStorage
-      if (result.data.permisos) {
-        localStorage.setItem('permisos', JSON.stringify(result.data.permisos));
-      }
-      if (result.data.modulos) {
-        localStorage.setItem('modulos', JSON.stringify(result.data.modulos));
-      }
+    try {
+      const result = await login(formData.email, formData.password);
       
-      // Redirigir según los permisos
-      // Si tiene permiso para ver dashboard, va al panel de admin
-      if (result.data.permisos?.includes('ver_dashboard')) {
-        navigate("/home");
+      // ============================================
+      // VERIFICAR ESTRUCTURA DE LA RESPUESTA
+      // ============================================
+      console.log('Respuesta completa del login:', result);
+      
+      if (result.success) {
+        // Obtener los datos del usuario de forma segura
+        const userData = result.data?.usuario || result.data || result;
+        
+        console.log('Datos del usuario:', userData);
+        
+        // Guardar TODOS los datos del usuario en localStorage
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Guardar permisos si existen
+        if (userData.permisos) {
+          localStorage.setItem('permisos', JSON.stringify(userData.permisos));
+        } else {
+          // Si no hay permisos, guardar array vacío
+          localStorage.setItem('permisos', JSON.stringify([]));
+        }
+        
+        // Guardar módulos si existen
+        if (userData.modulos) {
+          localStorage.setItem('modulos', JSON.stringify(userData.modulos));
+        } else {
+          localStorage.setItem('modulos', JSON.stringify([]));
+        }
+        
+        // Guardar empresa_id
+        if (userData.id_empresa) {
+          localStorage.setItem('empresa_id', userData.id_empresa);
+        }
+
+        // Verificar si tiene token
+        if (result.data?.token) {
+          localStorage.setItem('token', result.data.token);
+        }
+
+        // Redirigir según el rol/permisos
+        const tieneDashboard = userData.permisos?.includes('ver_dashboard') || 
+                              userData.rol === 'Administrador' || 
+                              userData.rol === 'Admin' ||
+                              userData.rol === 'Dueño';
+        
+        if (tieneDashboard) {
+          navigate("/home");
+        } else {
+          navigate("/homecliente");
+        }
       } else {
-        navigate("/homecliente");
+        setError(result.message || "Error al iniciar sesión");
       }
-    } else {
-      setError(result.message);
+    } catch (error) {
+      console.error('Error en login:', error);
+      setError("Error de conexión. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -106,10 +144,6 @@ export default function OpheliaLogin() {
             {loading ? "Iniciando sesión..." : "Ingresar"}
           </button>
         </form>
-
-      
-
-       
       </div>
     </div>
   );

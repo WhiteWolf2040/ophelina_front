@@ -4,7 +4,12 @@ import Sidebar from "../components/Sidebar";
 import "./Empenos.css";
 import DiamondIcon from '@mui/icons-material/Diamond';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import LockIcon from '@mui/icons-material/Lock';
 import api from '../config/api';
+import permissionService from "../services/permisoService"; 
 
 const EmpenosLista = () => {
   const navigate = useNavigate();
@@ -20,23 +25,39 @@ const EmpenosLista = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const empenosPorPagina = 8;
 
+  // ============================================
+  // 👇 VERIFICAR PERMISOS
+  // ============================================
+  const puedeVerEmpenos = permissionService.hasPermission('ver_empenos');
+  const puedeCrearEmpenos = permissionService.hasPermission('crear_empenos');
+  const puedeEditarEmpenos = permissionService.hasPermission('editar_empenos');
+  const puedeEliminarEmpenos = permissionService.hasPermission('eliminar_empenos');
+  const puedeCancelarEmpenos = permissionService.hasPermission('cancelar_empenos');
+
+  // ============================================
+  // REDIRIGIR SI NO TIENE PERMISO PARA VER
+  // ============================================
+  useEffect(() => {
+    if (!puedeVerEmpenos) {
+      navigate('/dashboard');
+    }
+  }, [puedeVerEmpenos, navigate]);
+
   // Cargar empeños desde la API
   const cargarEmpenos = async () => {
     try {
       setLoading(true);
-      // Usar el endpoint que ya tienes: activosConSaldo
       const response = await api.get('/empenos/activos-con-saldo');
       if (response.data.success) {
-        // Transformar los datos para que coincidan con el formato que espera tu componente
         const empenosFormateados = response.data.data.map(emp => ({
           id: emp.id_empeno,
           cliente: emp.cliente,
           objeto: emp.articulo,
           monto: emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-          interes: 12, // Puedes calcularlo desde tu BD si lo tienes
+          interes: 12,
           fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
           vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
-          estado: 'activo', // Ya que solo trae activos
+          estado: 'activo',
           saldo_pendiente: emp.saldo_total_pendiente,
           saldo_cuota: emp.saldo_pendiente_cuota,
           total_pagado: emp.total_pagado
@@ -51,12 +72,9 @@ const EmpenosLista = () => {
     }
   };
 
-  // Cargar todos los empeños (activos y vencidos) - si tienes otro endpoint
   const cargarTodosEmpenos = async () => {
     try {
       setLoading(true);
-      // Si tienes un endpoint para todos los empeños, úsalo
-      // Si no, por ahora usamos el mismo y filtramos
       const response = await api.get('/empenos/activos-con-saldo');
       if (response.data.success) {
         const empenosFormateados = response.data.data.map(emp => ({
@@ -83,8 +101,10 @@ const EmpenosLista = () => {
   };
 
   useEffect(() => {
-    cargarTodosEmpenos();
-  }, []);
+    if (puedeVerEmpenos) {
+      cargarTodosEmpenos();
+    }
+  }, [puedeVerEmpenos]);
 
   // Filtrar empeños por estado
   const empenosFiltrados = empenos.filter((e) => {
@@ -101,6 +121,10 @@ const EmpenosLista = () => {
   const totalPaginas = Math.ceil(empenosFiltrados.length / empenosPorPagina);
 
   const abrirDetalle = (empeno) => {
+    if (!puedeVerEmpenos) {
+      alert('No tienes permiso para ver detalles de empeños');
+      return;
+    }
     setEmpenoSeleccionado(empeno);
     setModalAbierto(true);
   };
@@ -111,19 +135,30 @@ const EmpenosLista = () => {
   };
 
   const confirmarEliminar = (empeno) => {
+    // 👇 Validar permiso para eliminar
+    if (!puedeEliminarEmpenos) {
+      alert('No tienes permiso para eliminar empeños');
+      return;
+    }
     setEmpenoSeleccionado(empeno);
     setModalEliminar(true);
     setModalAbierto(false);
   };
 
   const handleEliminar = async () => {
+    // 👇 Validar permiso para eliminar
+    if (!puedeEliminarEmpenos) {
+      alert('No tienes permiso para eliminar empeños');
+      return;
+    }
+
     try {
       // Si tienes un endpoint para eliminar
       // await api.delete(`/empenos/${empenoSeleccionado.id}`);
       console.log("Eliminar empeño:", empenoSeleccionado.id);
       setModalEliminar(false);
       setEmpenoSeleccionado(null);
-      cargarTodosEmpenos(); // Recargar la lista
+      cargarTodosEmpenos();
     } catch (error) {
       console.error('Error al eliminar:', error);
       alert('Error al eliminar el empeño');
@@ -159,13 +194,20 @@ const EmpenosLista = () => {
     return numeros;
   };
 
+  // Si no tiene permiso, no renderizar nada (ya redirigirá el useEffect)
+  if (!puedeVerEmpenos) {
+    return null;
+  }
+
   // Estado de carga
   if (loading) {
     return (
       <div className="dashboard">
-     
         <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <div>Cargando empeños...</div>
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Cargando empeños...</p>
+          </div>
         </div>
       </div>
     );
@@ -175,7 +217,6 @@ const EmpenosLista = () => {
   if (error) {
     return (
       <div className="dashboard">
-     
         <div className="content">
           <div className="tienda-header">
             <h1>Listado de empeños</h1>
@@ -194,8 +235,6 @@ const EmpenosLista = () => {
 
   return (
     <div className="dashboard">
-   
-
       <div className="content">
         {/* HEADER */}
         <div className="tienda-header">
@@ -206,12 +245,18 @@ const EmpenosLista = () => {
             </h1>
             <p className="header-sub">Gestiona y administra tus empeños</p>
           </div>
-          <button
-            className="btn-nuevo"
-            onClick={() => navigate("/empenos/nuevo")}
-          >
-            + Nuevo Empeño
-          </button>
+          
+          {/* ============================================ */}
+          {/* 👇 BOTÓN NUEVO EMPEÑO - SOLO CON PERMISO crear_empenos */}
+          {/* ============================================ */}
+          {puedeCrearEmpenos && (
+            <button
+              className="btn-nuevo"
+              onClick={() => navigate("/empenos/nuevo")}
+            >
+              <AddIcon fontSize="small" /> Nuevo Empeño
+            </button>
+          )}
         </div>
 
         {/* FILTRO POR ESTADO */}
@@ -356,13 +401,44 @@ const EmpenosLista = () => {
                         )}
                        </td>
                       <td>
-                        <button 
-                          className="btn-accion ver"
-                          onClick={() => abrirDetalle(e)}
-                          title="Ver detalles"
-                        >
-                          <VisibilityIcon fontSize="small" />
-                        </button>
+                        <div className="acciones-container">
+                          {/* ============================================ */}
+                          {/* BOTÓN VER - SIEMPRE VISIBLE */}
+                          {/* ============================================ */}
+                          <button 
+                            className="btn-accion ver"
+                            onClick={() => abrirDetalle(e)}
+                            title="Ver detalles"
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </button>
+                          
+                          {/* ============================================ */}
+                          {/* 👇 BOTÓN EDITAR - SOLO CON PERMISO editar_empenos */}
+                          {/* ============================================ */}
+                          {puedeEditarEmpenos && (
+                            <button 
+                              className="btn-accion editar"
+                              onClick={() => navigate(`/empenos/editar/${e.id}`)}
+                              title="Editar empeño"
+                            >
+                              <EditIcon fontSize="small" />
+                            </button>
+                          )}
+                          
+                          {/* ============================================ */}
+                          {/* 👇 BOTÓN ELIMINAR - SOLO CON PERMISO eliminar_empenos */}
+                          {/* ============================================ */}
+                          {puedeEliminarEmpenos && (
+                            <button 
+                              className="btn-accion eliminar"
+                              onClick={() => confirmarEliminar(e)}
+                              title="Eliminar empeño"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </button>
+                          )}
+                        </div>
                        </td>
                     </tr>
                   ))
@@ -417,7 +493,9 @@ const EmpenosLista = () => {
         </div>
       </div>
 
+      {/* ============================================ */}
       {/* MODAL DE DETALLE DEL EMPEÑO */}
+      {/* ============================================ */}
       {modalAbierto && empenoSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -464,23 +542,60 @@ const EmpenosLista = () => {
               </div>
             </div>
 
+            {/* ============================================ */}
+            {/* 👇 ACCIONES DEL MODAL CON PERMISOS */}
+            {/* ============================================ */}
             <div className="modal-acciones">
-              <button 
-                className="btn-eliminar"
-                onClick={() => confirmarEliminar(empenoSeleccionado)}
-              >
-                🗑️ Eliminar
-              </button>
-              <button className="btn-cerrar" onClick={cerrarModal}>
-                Cerrar
-              </button>
+              {puedeEditarEmpenos && (
+                <button 
+                  className="btn-editar"
+                  onClick={() => {
+                    setModalAbierto(false);
+                    navigate(`/empenos/editar/${empenoSeleccionado.id}`);
+                  }}
+                >
+                  <EditIcon fontSize="small" /> Editar
+                </button>
+              )}
+              
+              {puedeCancelarEmpenos && (
+                <button 
+                  className="btn-cancelar"
+                  onClick={() => {
+                    // Aquí iría la lógica para cancelar el empeño
+                    console.log("Cancelar empeño:", empenoSeleccionado.id);
+                    alert('Función de cancelar empeño');
+                  }}
+                >
+                  ⛔ Cancelar
+                </button>
+              )}
+              
+              {puedeEliminarEmpenos && (
+                <button 
+                  className="btn-eliminar"
+                  onClick={() => confirmarEliminar(empenoSeleccionado)}
+                >
+                  <DeleteIcon fontSize="small" /> Eliminar
+                </button>
+              )}
+
+              {/* Mostrar mensaje si no tiene permisos para modificar */}
+              {!puedeEditarEmpenos && !puedeCancelarEmpenos && !puedeEliminarEmpenos && (
+                <div className="sin-permisos-modal">
+                  <LockIcon fontSize="small" /> 
+                  <span>Solo visualización - No tienes permisos para modificar</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL DE CONFIRMACIÓN ELIMINAR */}
-      {modalEliminar && empenoSeleccionado && (
+      {/* ============================================ */}
+      {/* 👇 MODAL DE CONFIRMACIÓN ELIMINAR - SOLO SI TIENE PERMISO */}
+      {/* ============================================ */}
+      {modalEliminar && empenoSeleccionado && puedeEliminarEmpenos && (
         <div className="modal-overlay" onClick={() => setModalEliminar(false)}>
           <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icono">⚠️</div>
