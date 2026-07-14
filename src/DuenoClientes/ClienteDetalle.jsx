@@ -1,7 +1,5 @@
-// ClienteDetalle.jsx - VERSIÓN CORREGIDA (maneja ambos formatos)
+// ClienteDetalle.jsx - VERSIÓN FINAL CORREGIDA
 import { useParams, useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import "./Clientes.css";
 import React, { useState, useEffect } from "react";
 import clientesService from "../services/clientesService";
 
@@ -31,12 +29,13 @@ const ClienteDetalle = () => {
 
   // ✅ FUNCIÓN PARA NORMALIZAR LOS DATOS DEL CLIENTE
   const normalizarCliente = (data) => {
+    console.log('🔍 Normalizando datos:', data);
+    
     return {
       id_cliente: data.id_cliente,
       nombre: data.nombre || '',
       apellido: data.apellido || '',
       telefono: data.telefono || 'No especificado',
-      // ✅ Manejar ambos nombres de campos
       email: data.email || data.correo || 'No especificado',
       direccion: data.direccion || 'No especificada',
       ciudad: data.ciudad || 'No especificada',
@@ -45,7 +44,6 @@ const ClienteDetalle = () => {
       numeroIdentificacion: data.numeroIdentificacion || data.numero_identificacion || 'No especificado',
       fecha: data.fecha || data.fecha_registro || 'No especificada',
       estado: data.estado || '',
-      // ✅ Mantener arrays originales
       empenos: data.empenos || [],
       pagos: data.pagos || []
     };
@@ -57,12 +55,15 @@ const ClienteDetalle = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await clientesService.obtenerCliente(id);
         
-        console.log('📦 Datos del cliente desde API:', response.data);
+        console.log('🔍 Cargando cliente ID:', id);
+        
+        const response = await clientesService.obtenerCliente(id);
+        console.log('📦 Respuesta completa de la API:', response);
         
         // Extraer los datos correctamente
-        const data = response.data?.data || response.data || response;
+        let data = response.data?.data || response.data || response;
+        console.log('📦 Datos extraídos:', data);
         
         // ✅ NORMALIZAR LOS DATOS
         const clienteNormalizado = normalizarCliente(data);
@@ -70,7 +71,7 @@ const ClienteDetalle = () => {
         
         setCliente(clienteNormalizado);
       } catch (error) {
-        console.error('Error cargando cliente:', error);
+        console.error('❌ Error cargando cliente:', error);
         setError('No se pudo cargar el cliente');
       } finally {
         setLoading(false);
@@ -82,7 +83,7 @@ const ClienteDetalle = () => {
     }
   }, [id]);
 
-  // ✅ FUNCIÓN PARA ELIMINAR
+  // ✅ ELIMINAR CLIENTE
   const handleEliminar = async () => {
     try {
       setEliminando(true);
@@ -97,219 +98,200 @@ const ClienteDetalle = () => {
     }
   };
 
-  // Estado de carga
+  // ============================================
+  // RENDERIZADO CONDICIONAL
+  // ============================================
+
+  // Loading
   if (loading) {
     return (
-      <div className="dashboard">
-        <Sidebar />
-        <div className="content">
-          <div className="loading-container">
-            <div className="spinner"></div>
-            <p>Cargando cliente...</p>
-          </div>
-        </div>
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Cargando cliente...</p>
       </div>
     );
   }
 
-  // Estado de error
+  // Error
   if (error || !cliente) {
     return (
-      <div className="dashboard">
-        <Sidebar />
-        <div className="content">
-          <h2>Cliente no encontrado</h2>
-          <p style={{ color: '#dc3545' }}>{error || 'El cliente no existe'}</p>
-          <button 
-            onClick={() => navigate('/clientes')}
-            style={{ marginTop: 16, padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
-          >
-            Volver a la lista
-          </button>
-        </div>
+      <div>
+        <h2>Cliente no encontrado</h2>
+        <p style={{ color: '#dc3545' }}>{error || 'El cliente no existe'}</p>
+        <button 
+          onClick={() => navigate('/clientes')}
+          style={{ padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+        >
+          Volver a la lista
+        </button>
       </div>
     );
   }
 
+  // ============================================
+  // RENDER PRINCIPAL
+  // ============================================
   return (
-    <div className="dashboard">
-      <Sidebar />
-
-      <div className="content">
-        {/* HEADER */}
-        <div className="detalle-header">
-          <h2>{cliente.nombre} {cliente.apellido || ''}</h2>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              className="btn-editar-cliente"
-              onClick={() => navigate(`/clientes/editar/${id}`)}
-            >
-              <EditIcon />
-              Editar
-            </button>
-          </div>
-        </div>
-
-        {/* ============================================ */}
-        {/* TARJETA DE DATOS PERSONALES */}
-        {/* ============================================ */}
-        <div className="detalle-card">
-          <h3>
-            <BadgeIcon />
-            Datos Personales
-          </h3>
-          
-          <div className="detalle-grid">
-            <div className="detalle-item">
-              <PhoneIcon className="detalle-icon" />
-              <div className="detalle-info">
-                <span className="detalle-label">Teléfono</span>
-                <span className="detalle-valor">{cliente.telefono}</span>
-              </div>
-            </div>
-
-            <div className="detalle-item">
-              <EmailIcon className="detalle-icon" />
-              <div className="detalle-info">
-                <span className="detalle-label">Email</span>
-                <span className="detalle-valor">{cliente.email}</span>
-              </div>
-            </div>
-
-            <div className="detalle-item">
-              <LocationOnIcon className="detalle-icon" />
-              <div className="detalle-info">
-                <span className="detalle-label">Dirección</span>
-                <span className="detalle-valor">{cliente.direccion}</span>
-              </div>
-            </div>
-
-            <div className="detalle-item">
-              <LocationOnIcon className="detalle-icon" />
-              <div className="detalle-info">
-                <span className="detalle-label">Ciudad</span>
-                <span className="detalle-valor">{cliente.ciudad}</span>
-              </div>
-            </div>
-
-            <div className="detalle-item">
-              <LocationOnIcon className="detalle-icon" />
-              <div className="detalle-info">
-                <span className="detalle-label">Código Postal</span>
-                <span className="detalle-valor">{cliente.codigoPostal}</span>
-              </div>
-            </div>
-
-            <div className="detalle-item">
-              <BadgeIcon className="detalle-icon" />
-              <div className="detalle-info">
-                <span className="detalle-label">Tipo de Identificación</span>
-                <span className="detalle-valor">{cliente.tipoIdentificacion}</span>
-              </div>
-            </div>
-
-            <div className="detalle-item">
-              <AssignmentIndIcon className="detalle-icon" />
-              <div className="detalle-info">
-                <span className="detalle-label">Número de Identificación</span>
-                <span className="detalle-valor">{cliente.numeroIdentificacion}</span>
-              </div>
-            </div>
-
-            <div className="detalle-item">
-              <CalendarTodayIcon className="detalle-icon" />
-              <div className="detalle-info">
-                <span className="detalle-label">Fecha de Registro</span>
-                <span className="detalle-valor">{cliente.fecha}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ============================================ */}
-        {/* HISTORIAL DE EMPEÑOS */}
-        {/* ============================================ */}
-        <div className="detalle-card">
-          <h3>
-            <HistoryIcon />
-            Historial de Empeños ({cliente.empenos?.length || 0})
-          </h3>
-          
-          {cliente.empenos && cliente.empenos.length > 0 ? (
-            <div className="lista-empenos">
-              {cliente.empenos.map((empeno) => (
-                <div key={empeno.id_empeno} className="item-empeno">
-                  <div className="empeno-header">
-                    <span className="empeno-fecha">{empeno.fecha_empeno}</span>
-                    <span className="empeno-monto">${empeno.monto?.toLocaleString()}</span>
-                  </div>
-                  <div className="empeno-detalle">
-                    <span>Estado: <strong>{empeno.estado}</strong></span>
-                    <span>Pagos: {empeno.pagos?.length || 0}</span>
-                  </div>
-                  {empeno.pagos && empeno.pagos.length > 0 && (
-                    <div className="empeno-pagos">
-                      {empeno.pagos.map((pago) => (
-                        <div key={pago.id_pago} className="pago-item">
-                          <span>{pago.fecha_pago}</span>
-                          <span>${pago.monto?.toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="sin-registros">
-              <p>No hay empeños registrados para este cliente</p>
-            </div>
-          )}
-        </div>
-
-        {/* ============================================ */}
-        {/* PAGOS REALIZADOS */}
-        {/* ============================================ */}
-        <div className="detalle-card">
-          <h3>
-            <PaymentIcon />
-            Pagos Realizados ({cliente.pagos?.length || 0})
-          </h3>
-          
-          {cliente.pagos && cliente.pagos.length > 0 ? (
-            <div className="lista-pagos">
-              {cliente.pagos.map((pago) => (
-                <div key={pago.id_pago} className="pago-item-detalle">
-                  <span>{pago.fecha_pago}</span>
-                  <span className="pago-monto">${pago.monto?.toLocaleString()}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="sin-registros">
-              <p>No hay pagos registrados para este cliente</p>
-            </div>
-          )}
-        </div>
-
-        {/* ============================================ */}
-        {/* BOTÓN ELIMINAR */}
-        {/* ============================================ */}
-        <div className="detalle-acciones">
+    <>
+      {/* HEADER */}
+      <div className="detalle-header">
+        <h2>{cliente.nombre} {cliente.apellido || ''}</h2>
+        <div style={{ display: 'flex', gap: '10px' }}>
           <button
-            className="btn-eliminar-cliente"
-            onClick={() => setMostrarModal(true)}
-            disabled={eliminando}
+            className="btn-editar-cliente"
+            onClick={() => navigate(`/clientes/editar/${id}`)}
           >
-            <DeleteIcon />
-            {eliminando ? 'Eliminando...' : 'Eliminar Cliente'}
+            <EditIcon /> Editar
           </button>
         </div>
       </div>
 
-      {/* ============================================ */}
+      {/* DATOS PERSONALES */}
+      <div className="detalle-card">
+        <h3><BadgeIcon /> Datos Personales</h3>
+        
+        <div className="detalle-grid">
+          <div className="detalle-item">
+            <PhoneIcon className="detalle-icon" />
+            <div className="detalle-info">
+              <span className="detalle-label">Teléfono</span>
+              <span className="detalle-valor">{cliente.telefono}</span>
+            </div>
+          </div>
+
+          <div className="detalle-item">
+            <EmailIcon className="detalle-icon" />
+            <div className="detalle-info">
+              <span className="detalle-label">Email</span>
+              <span className="detalle-valor">{cliente.email}</span>
+            </div>
+          </div>
+
+          <div className="detalle-item">
+            <LocationOnIcon className="detalle-icon" />
+            <div className="detalle-info">
+              <span className="detalle-label">Dirección</span>
+              <span className="detalle-valor">{cliente.direccion}</span>
+            </div>
+          </div>
+
+          <div className="detalle-item">
+            <LocationOnIcon className="detalle-icon" />
+            <div className="detalle-info">
+              <span className="detalle-label">Ciudad</span>
+              <span className="detalle-valor">{cliente.ciudad}</span>
+            </div>
+          </div>
+
+          <div className="detalle-item">
+            <LocationOnIcon className="detalle-icon" />
+            <div className="detalle-info">
+              <span className="detalle-label">Código Postal</span>
+              <span className="detalle-valor">{cliente.codigoPostal}</span>
+            </div>
+          </div>
+
+          <div className="detalle-item">
+            <BadgeIcon className="detalle-icon" />
+            <div className="detalle-info">
+              <span className="detalle-label">Tipo de Identificación</span>
+              <span className="detalle-valor">{cliente.tipoIdentificacion}</span>
+            </div>
+          </div>
+
+          <div className="detalle-item">
+            <AssignmentIndIcon className="detalle-icon" />
+            <div className="detalle-info">
+              <span className="detalle-label">Número de Identificación</span>
+              <span className="detalle-valor">{cliente.numeroIdentificacion}</span>
+            </div>
+          </div>
+
+          <div className="detalle-item">
+            <CalendarTodayIcon className="detalle-icon" />
+            <div className="detalle-info">
+              <span className="detalle-label">Fecha de Registro</span>
+              <span className="detalle-valor">{cliente.fecha}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* HISTORIAL DE EMPEÑOS */}
+      <div className="detalle-card">
+        <h3>
+          <HistoryIcon />
+          Historial de Empeños ({cliente.empenos?.length || 0})
+        </h3>
+        
+        {cliente.empenos && cliente.empenos.length > 0 ? (
+          <div className="lista-empenos">
+            {cliente.empenos.map((empeno) => (
+              <div key={empeno.id_empeno} className="item-empeno">
+                <div className="empeno-header">
+                  <span className="empeno-fecha">{empeno.fecha_empeno}</span>
+                  <span className="empeno-monto">${empeno.monto?.toLocaleString()}</span>
+                </div>
+                <div className="empeno-detalle">
+                  <span>Estado: <strong>{empeno.estado}</strong></span>
+                  <span>Pagos: {empeno.pagos?.length || 0}</span>
+                </div>
+                {empeno.pagos && empeno.pagos.length > 0 && (
+                  <div className="empeno-pagos">
+                    {empeno.pagos.map((pago) => (
+                      <div key={pago.id_pago} className="pago-item">
+                        <span>{pago.fecha_pago}</span>
+                        <span>${pago.monto?.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="sin-registros">
+            <p>No hay empeños registrados para este cliente</p>
+          </div>
+        )}
+      </div>
+
+      {/* PAGOS REALIZADOS */}
+      <div className="detalle-card">
+        <h3>
+          <PaymentIcon />
+          Pagos Realizados ({cliente.pagos?.length || 0})
+        </h3>
+        
+        {cliente.pagos && cliente.pagos.length > 0 ? (
+          <div className="lista-pagos">
+            {cliente.pagos.map((pago) => (
+              <div key={pago.id_pago} className="pago-item-detalle">
+                <span>{pago.fecha_pago}</span>
+                <span className="pago-monto">${pago.monto?.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="sin-registros">
+            <p>No hay pagos registrados para este cliente</p>
+          </div>
+        )}
+      </div>
+
+      {/* BOTÓN ELIMINAR */}
+      <div className="detalle-acciones">
+        <button
+          className="btn-eliminar-cliente"
+          onClick={() => setMostrarModal(true)}
+          disabled={eliminando}
+        >
+          <DeleteIcon />
+          {eliminando ? 'Eliminando...' : 'Eliminar Cliente'}
+        </button>
+      </div>
+
       {/* MODAL DE CONFIRMACIÓN */}
-      {/* ============================================ */}
       {mostrarModal && (
         <div className="modal-overlay" onClick={() => setMostrarModal(false)}>
           <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
@@ -325,8 +307,7 @@ const ClienteDetalle = () => {
                 className="btn-cancelar-modal"
                 onClick={() => setMostrarModal(false)}
               >
-                <CloseIcon />
-                Cancelar
+                <CloseIcon /> Cancelar
               </button>
 
               <button
@@ -341,7 +322,7 @@ const ClienteDetalle = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
