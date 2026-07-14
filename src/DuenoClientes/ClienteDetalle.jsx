@@ -1,4 +1,4 @@
-// ClienteDetalle.jsx - VERSIÓN CORREGIDA CON API
+// ClienteDetalle.jsx - VERSIÓN CORREGIDA (maneja ambos formatos)
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "./Clientes.css";
@@ -18,7 +18,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import WarningIcon from '@mui/icons-material/Warning';
 import CloseIcon from '@mui/icons-material/Close';
-import LockIcon from '@mui/icons-material/Lock';
 
 const ClienteDetalle = () => {
   const { id } = useParams();
@@ -29,6 +28,28 @@ const ClienteDetalle = () => {
   const [error, setError] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+
+  // ✅ FUNCIÓN PARA NORMALIZAR LOS DATOS DEL CLIENTE
+  const normalizarCliente = (data) => {
+    return {
+      id_cliente: data.id_cliente,
+      nombre: data.nombre || '',
+      apellido: data.apellido || '',
+      telefono: data.telefono || 'No especificado',
+      // ✅ Manejar ambos nombres de campos
+      email: data.email || data.correo || 'No especificado',
+      direccion: data.direccion || 'No especificada',
+      ciudad: data.ciudad || 'No especificada',
+      codigoPostal: data.codigoPostal || data.codigo_postal || 'No especificado',
+      tipoIdentificacion: data.tipoIdentificacion || data.tipo_identificacion || 'INE',
+      numeroIdentificacion: data.numeroIdentificacion || data.numero_identificacion || 'No especificado',
+      fecha: data.fecha || data.fecha_registro || 'No especificada',
+      estado: data.estado || '',
+      // ✅ Mantener arrays originales
+      empenos: data.empenos || [],
+      pagos: data.pagos || []
+    };
+  };
 
   // ✅ CARGAR DATOS DEL CLIENTE DESDE LA API
   useEffect(() => {
@@ -41,8 +62,13 @@ const ClienteDetalle = () => {
         console.log('📦 Datos del cliente desde API:', response.data);
         
         // Extraer los datos correctamente
-        const clienteData = response.data?.data || response.data || response;
-        setCliente(clienteData);
+        const data = response.data?.data || response.data || response;
+        
+        // ✅ NORMALIZAR LOS DATOS
+        const clienteNormalizado = normalizarCliente(data);
+        console.log('📦 Cliente normalizado:', clienteNormalizado);
+        
+        setCliente(clienteNormalizado);
       } catch (error) {
         console.error('Error cargando cliente:', error);
         setError('No se pudo cargar el cliente');
@@ -138,7 +164,7 @@ const ClienteDetalle = () => {
               <PhoneIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Teléfono</span>
-                <span className="detalle-valor">{cliente.telefono || 'No especificado'}</span>
+                <span className="detalle-valor">{cliente.telefono}</span>
               </div>
             </div>
 
@@ -146,7 +172,7 @@ const ClienteDetalle = () => {
               <EmailIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Email</span>
-                <span className="detalle-valor">{cliente.email || cliente.correo || 'No especificado'}</span>
+                <span className="detalle-valor">{cliente.email}</span>
               </div>
             </div>
 
@@ -154,7 +180,7 @@ const ClienteDetalle = () => {
               <LocationOnIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Dirección</span>
-                <span className="detalle-valor">{cliente.direccion || 'No especificada'}</span>
+                <span className="detalle-valor">{cliente.direccion}</span>
               </div>
             </div>
 
@@ -162,7 +188,7 @@ const ClienteDetalle = () => {
               <LocationOnIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Ciudad</span>
-                <span className="detalle-valor">{cliente.ciudad || 'No especificada'}</span>
+                <span className="detalle-valor">{cliente.ciudad}</span>
               </div>
             </div>
 
@@ -170,7 +196,7 @@ const ClienteDetalle = () => {
               <LocationOnIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Código Postal</span>
-                <span className="detalle-valor">{cliente.codigoPostal || cliente.codigo_postal || 'No especificado'}</span>
+                <span className="detalle-valor">{cliente.codigoPostal}</span>
               </div>
             </div>
 
@@ -178,7 +204,7 @@ const ClienteDetalle = () => {
               <BadgeIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Tipo de Identificación</span>
-                <span className="detalle-valor">{cliente.tipoIdentificacion || cliente.tipo_identificacion || 'INE'}</span>
+                <span className="detalle-valor">{cliente.tipoIdentificacion}</span>
               </div>
             </div>
 
@@ -186,7 +212,7 @@ const ClienteDetalle = () => {
               <AssignmentIndIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Número de Identificación</span>
-                <span className="detalle-valor">{cliente.numeroIdentificacion || cliente.numero_identificacion || 'No especificado'}</span>
+                <span className="detalle-valor">{cliente.numeroIdentificacion}</span>
               </div>
             </div>
 
@@ -194,7 +220,7 @@ const ClienteDetalle = () => {
               <CalendarTodayIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Fecha de Registro</span>
-                <span className="detalle-valor">{cliente.fecha || cliente.fecha_registro || 'No especificada'}</span>
+                <span className="detalle-valor">{cliente.fecha}</span>
               </div>
             </div>
           </div>
