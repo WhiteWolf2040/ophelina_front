@@ -21,6 +21,9 @@ import Dueno from "./Home/Dueno";
 import ClientesLayout from "./DuenoClientes/ClientesLayout";
 import ClientesLista from "./DuenoClientes/ClientesLista";
 import ClienteNuevo from "./DuenoClientes/ClienteNuevo";
+// ✅ IMPORTAR LOS NUEVOS COMPONENTES
+import ClienteDetalle from "./DuenoClientes/ClienteDetalle";
+import ClienteEditar from "./DuenoClientes/ClienteEditar";
 
 import PagosLayout from "./DuenoPagos/PagosLayout";
 import PagosLista from "./DuenoPagos/PagosLista";
@@ -82,14 +85,25 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* CLIENTES ADMIN */}
+        {/* ============================================ */}
+        {/* CLIENTES ADMIN - RUTAS ACTUALIZADAS */}
+        {/* ============================================ */}
         <Route path="/clientes" element={
           <ProtectedRoute>
             <ClientesLayout />
           </ProtectedRoute>
         }>
+          {/* ✅ RUTA PRINCIPAL - Lista de clientes */}
           <Route index element={<ClientesLista />} />
+          
+          {/* ✅ RUTA PARA NUEVO CLIENTE */}
           <Route path="nuevo" element={<ClienteNuevo />} />
+          
+          {/* ✅ RUTA PARA VER DETALLE DEL CLIENTE */}
+          <Route path=":id" element={<ClienteDetalle />} />
+          
+          {/* ✅ RUTA PARA EDITAR CLIENTE */}
+          <Route path="editar/:id" element={<ClienteEditar />} />
         </Route>
 
         {/* PAGOS */}

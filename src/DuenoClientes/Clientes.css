@@ -1197,3 +1197,134 @@ tbody tr:first-child {
 .empeno-pagos ul::-webkit-scrollbar-thumb {
   background: #d3b372;
 }
+
+/* Clientes.css - AGREGAR */
+
+.detalle-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.detalle-icon {
+    color: #1e3a8a;
+    font-size: 20px;
+    margin-top: 2px;
+}
+
+.detalle-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.detalle-label {
+    font-size: 11px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detalle-valor {
+    font-size: 14px;
+    color: #0d1b3e;
+    font-weight: 500;
+}
+
+.lista-empenos {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.item-empeno {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.empeno-header {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.empeno-fecha {
+    color: #6c757d;
+}
+
+.empeno-monto {
+    font-weight: 600;
+    color: #1e3a8a;
+}
+
+.empeno-detalle {
+    display: flex;
+    gap: 16px;
+    padding-top: 8px;
+    font-size: 13px;
+    color: #495057;
+}
+
+.empeno-pagos {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.pago-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+    border-bottom: 1px dashed #e9ecef;
+}
+
+.pago-item:last-child {
+    border-bottom: none;
+}
+
+.pago-item-detalle {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.pago-monto {
+    font-weight: 600;
+    color: #1e3a8a;
+}
+
+.form-grid-editar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-grid-editar .full-width {
+    grid-column: 1 / -1;
+}
+
+.form-grid-editar .form-buttons.full-width {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 16px;
+    border-top: 1px solid #e9ecef;
+}
+
+@media (max-width: 768px) {
+    .form-grid-editar {
+        grid-template-columns: 1fr;
+    }
+}

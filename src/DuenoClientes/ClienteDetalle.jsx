@@ -1,7 +1,9 @@
+// ClienteDetalle.jsx - VERSIÓN CORREGIDA CON API
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "./Clientes.css";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import clientesService from "../services/clientesService";
 
 // Importar iconos de MUI
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -16,20 +18,88 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import WarningIcon from '@mui/icons-material/Warning';
 import CloseIcon from '@mui/icons-material/Close';
+import LockIcon from '@mui/icons-material/Lock';
 
-const ClienteDetalle = ({ clientes, eliminarCliente }) => {
+const ClienteDetalle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  const cliente = clientes.find((c) => c.id === parseInt(id));
+  
+  const [cliente, setCliente] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
 
-  if (!cliente) {
+  // ✅ CARGAR DATOS DEL CLIENTE DESDE LA API
+  useEffect(() => {
+    const cargarCliente = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await clientesService.obtenerCliente(id);
+        
+        console.log('📦 Datos del cliente desde API:', response.data);
+        
+        // Extraer los datos correctamente
+        const clienteData = response.data?.data || response.data || response;
+        setCliente(clienteData);
+      } catch (error) {
+        console.error('Error cargando cliente:', error);
+        setError('No se pudo cargar el cliente');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      cargarCliente();
+    }
+  }, [id]);
+
+  // ✅ FUNCIÓN PARA ELIMINAR
+  const handleEliminar = async () => {
+    try {
+      setEliminando(true);
+      await clientesService.eliminarCliente(id);
+      navigate("/clientes");
+    } catch (error) {
+      console.error('Error eliminando cliente:', error);
+      alert('Error al eliminar el cliente');
+    } finally {
+      setEliminando(false);
+      setMostrarModal(false);
+    }
+  };
+
+  // Estado de carga
+  if (loading) {
+    return (
+      <div className="dashboard">
+        <Sidebar />
+        <div className="content">
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Cargando cliente...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Estado de error
+  if (error || !cliente) {
     return (
       <div className="dashboard">
         <Sidebar />
         <div className="content">
           <h2>Cliente no encontrado</h2>
+          <p style={{ color: '#dc3545' }}>{error || 'El cliente no existe'}</p>
+          <button 
+            onClick={() => navigate('/clientes')}
+            style={{ marginTop: 16, padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+          >
+            Volver a la lista
+          </button>
         </div>
       </div>
     );
@@ -40,18 +110,23 @@ const ClienteDetalle = ({ clientes, eliminarCliente }) => {
       <Sidebar />
 
       <div className="content">
+        {/* HEADER */}
         <div className="detalle-header">
-          <h2>{cliente.nombre}</h2>
-          <button
-            className="btn-editar-cliente"
-            onClick={() => navigate(`/clientes/editar/${cliente.id}`)}
-          >
-            <EditIcon />
-            Editar
-          </button>
+          <h2>{cliente.nombre} {cliente.apellido || ''}</h2>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              className="btn-editar-cliente"
+              onClick={() => navigate(`/clientes/editar/${id}`)}
+            >
+              <EditIcon />
+              Editar
+            </button>
+          </div>
         </div>
 
-        {/* Tarjeta de Datos Personales con todos los campos */}
+        {/* ============================================ */}
+        {/* TARJETA DE DATOS PERSONALES */}
+        {/* ============================================ */}
         <div className="detalle-card">
           <h3>
             <BadgeIcon />
@@ -63,7 +138,7 @@ const ClienteDetalle = ({ clientes, eliminarCliente }) => {
               <PhoneIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Teléfono</span>
-                <span className="detalle-valor">{cliente.telefono}</span>
+                <span className="detalle-valor">{cliente.telefono || 'No especificado'}</span>
               </div>
             </div>
 
@@ -71,7 +146,7 @@ const ClienteDetalle = ({ clientes, eliminarCliente }) => {
               <EmailIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Email</span>
-                <span className="detalle-valor">{cliente.email}</span>
+                <span className="detalle-valor">{cliente.email || cliente.correo || 'No especificado'}</span>
               </div>
             </div>
 
@@ -79,15 +154,7 @@ const ClienteDetalle = ({ clientes, eliminarCliente }) => {
               <LocationOnIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Dirección</span>
-                <span className="detalle-valor">{cliente.direccion}</span>
-              </div>
-            </div>
-
-            <div className="detalle-item">
-              <LocationOnIcon className="detalle-icon" />
-              <div className="detalle-info">
-                <span className="detalle-label">Colonia</span>
-                <span className="detalle-valor">{cliente.colonia || "No especificada"}</span>
+                <span className="detalle-valor">{cliente.direccion || 'No especificada'}</span>
               </div>
             </div>
 
@@ -95,7 +162,7 @@ const ClienteDetalle = ({ clientes, eliminarCliente }) => {
               <LocationOnIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Ciudad</span>
-                <span className="detalle-valor">{cliente.ciudad || "No especificada"}</span>
+                <span className="detalle-valor">{cliente.ciudad || 'No especificada'}</span>
               </div>
             </div>
 
@@ -103,7 +170,7 @@ const ClienteDetalle = ({ clientes, eliminarCliente }) => {
               <LocationOnIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Código Postal</span>
-                <span className="detalle-valor">{cliente.codigoPostal || "No especificado"}</span>
+                <span className="detalle-valor">{cliente.codigoPostal || cliente.codigo_postal || 'No especificado'}</span>
               </div>
             </div>
 
@@ -111,7 +178,7 @@ const ClienteDetalle = ({ clientes, eliminarCliente }) => {
               <BadgeIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Tipo de Identificación</span>
-                <span className="detalle-valor">{cliente.tipoIdentificacion || "INE"}</span>
+                <span className="detalle-valor">{cliente.tipoIdentificacion || cliente.tipo_identificacion || 'INE'}</span>
               </div>
             </div>
 
@@ -119,7 +186,7 @@ const ClienteDetalle = ({ clientes, eliminarCliente }) => {
               <AssignmentIndIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Número de Identificación</span>
-                <span className="detalle-valor">{cliente.numeroIdentificacion || "No especificado"}</span>
+                <span className="detalle-valor">{cliente.numeroIdentificacion || cliente.numero_identificacion || 'No especificado'}</span>
               </div>
             </div>
 
@@ -127,47 +194,96 @@ const ClienteDetalle = ({ clientes, eliminarCliente }) => {
               <CalendarTodayIcon className="detalle-icon" />
               <div className="detalle-info">
                 <span className="detalle-label">Fecha de Registro</span>
-                <span className="detalle-valor">{cliente.fecha}</span>
+                <span className="detalle-valor">{cliente.fecha || cliente.fecha_registro || 'No especificada'}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Historial de Empeños */}
+        {/* ============================================ */}
+        {/* HISTORIAL DE EMPEÑOS */}
+        {/* ============================================ */}
         <div className="detalle-card">
           <h3>
             <HistoryIcon />
-            Historial de Empeños
+            Historial de Empeños ({cliente.empenos?.length || 0})
           </h3>
-          <div className="sin-registros">
-            <p>No hay empeños registrados para este cliente</p>
-          </div>
+          
+          {cliente.empenos && cliente.empenos.length > 0 ? (
+            <div className="lista-empenos">
+              {cliente.empenos.map((empeno) => (
+                <div key={empeno.id_empeno} className="item-empeno">
+                  <div className="empeno-header">
+                    <span className="empeno-fecha">{empeno.fecha_empeno}</span>
+                    <span className="empeno-monto">${empeno.monto?.toLocaleString()}</span>
+                  </div>
+                  <div className="empeno-detalle">
+                    <span>Estado: <strong>{empeno.estado}</strong></span>
+                    <span>Pagos: {empeno.pagos?.length || 0}</span>
+                  </div>
+                  {empeno.pagos && empeno.pagos.length > 0 && (
+                    <div className="empeno-pagos">
+                      {empeno.pagos.map((pago) => (
+                        <div key={pago.id_pago} className="pago-item">
+                          <span>{pago.fecha_pago}</span>
+                          <span>${pago.monto?.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="sin-registros">
+              <p>No hay empeños registrados para este cliente</p>
+            </div>
+          )}
         </div>
 
-        {/* Pagos Realizados */}
+        {/* ============================================ */}
+        {/* PAGOS REALIZADOS */}
+        {/* ============================================ */}
         <div className="detalle-card">
           <h3>
             <PaymentIcon />
-            Pagos Realizados
+            Pagos Realizados ({cliente.pagos?.length || 0})
           </h3>
-          <div className="sin-registros">
-            <p>No hay pagos registrados para este cliente</p>
-          </div>
+          
+          {cliente.pagos && cliente.pagos.length > 0 ? (
+            <div className="lista-pagos">
+              {cliente.pagos.map((pago) => (
+                <div key={pago.id_pago} className="pago-item-detalle">
+                  <span>{pago.fecha_pago}</span>
+                  <span className="pago-monto">${pago.monto?.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="sin-registros">
+              <p>No hay pagos registrados para este cliente</p>
+            </div>
+          )}
         </div>
 
-        {/* Botón Eliminar */}
+        {/* ============================================ */}
+        {/* BOTÓN ELIMINAR */}
+        {/* ============================================ */}
         <div className="detalle-acciones">
           <button
             className="btn-eliminar-cliente"
             onClick={() => setMostrarModal(true)}
+            disabled={eliminando}
           >
             <DeleteIcon />
-            Eliminar Cliente
+            {eliminando ? 'Eliminando...' : 'Eliminar Cliente'}
           </button>
         </div>
       </div>
 
-      {/* Modal de Confirmación */}
+      {/* ============================================ */}
+      {/* MODAL DE CONFIRMACIÓN */}
+      {/* ============================================ */}
       {mostrarModal && (
         <div className="modal-overlay" onClick={() => setMostrarModal(false)}>
           <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
@@ -189,13 +305,11 @@ const ClienteDetalle = ({ clientes, eliminarCliente }) => {
 
               <button
                 className="btn-confirmar-eliminar"
-                onClick={() => {
-                  eliminarCliente(cliente.id);
-                  navigate("/clientes");
-                }}
+                onClick={handleEliminar}
+                disabled={eliminando}
               >
                 <DeleteIcon />
-                Sí, eliminar
+                {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
               </button>
             </div>
           </div>
