@@ -1,4 +1,7 @@
+// App.jsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { UserProvider } from "./contexts/UserContext"; // ✅ IMPORTAR PROVIDER
+import Sidebar from "./components/Sidebar"; // ✅ IMPORTAR SIDEBAR
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import OpheliaLogin from "./components/OpheliaLogin";
@@ -21,7 +24,6 @@ import Dueno from "./Home/Dueno";
 import ClientesLayout from "./DuenoClientes/ClientesLayout";
 import ClientesLista from "./DuenoClientes/ClientesLista";
 import ClienteNuevo from "./DuenoClientes/ClienteNuevo";
-// ✅ IMPORTAR LOS NUEVOS COMPONENTES
 import ClienteDetalle from "./DuenoClientes/ClienteDetalle";
 import ClienteEditar from "./DuenoClientes/ClienteEditar";
 
@@ -43,150 +45,186 @@ import Reporte from "./DuenoReporte/Reporte";
 import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
+// ✅ COMPONENTE PARA RUTAS CON SIDEBAR
+const AppLayout = ({ children }) => {
+  return (
+    <div className="app-layout">
+      <Sidebar />
+      <div className="main-content">
+        {children}
+      </div>
+    </div>
+  );
+};
+
 function App() {
   return (
-    <Router>
-      <Routes>
+    <UserProvider> {/* ✅ ENVOLVER TODO CON EL PROVIDER */}
+      <Router>
+        <Routes>
+          {/* 🔓 RUTAS PÚBLICAS (SIN SIDEBAR) */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<OpheliaLogin />} />
+          <Route path="/register" element={<OpheliaRegister />} />
 
-        {/* Públicas */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<OpheliaLogin />} />
-        <Route path="/register" element={<OpheliaRegister />} />
+          {/* 👤 RUTAS DE CLIENTES (CON SIDEBAR) */}
+          <Route path="/homecliente" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <OphelinaHome />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
 
-        {/* CLIENTES */}
-        <Route path="/homecliente" element={
-          <ProtectedRoute>
-            <OphelinaHome />
-          </ProtectedRoute>
-        } />
+          <Route path="/misempenos" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <MisEmpenos />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
 
-        <Route path="/misempenos" element={
-          <ProtectedRoute>
-            <MisEmpenos />
-          </ProtectedRoute>
-        } />
+          <Route path="/ophelina" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <OphelinaTienda />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
 
-        <Route path="/ophelina" element={
-          <ProtectedRoute>
-            <OphelinaTienda />
-          </ProtectedRoute>
-        } />
+          <Route path="/tarjetas" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Tarjetero />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
 
-        <Route path="/tarjetas" element={
-          <ProtectedRoute>
-            <Tarjetero />
-          </ProtectedRoute>
-        } />
+          {/* 🏠 DASHBOARD (CON SIDEBAR) */}
+          <Route path="/home" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Dueno />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
 
-        {/* DASHBOARD */}
-        <Route path="/home" element={
-          <ProtectedRoute>
-            <Dueno />
-          </ProtectedRoute>
-        } />
+          {/* 👥 CLIENTES ADMIN (CON SIDEBAR) */}
+          <Route path="/clientes" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <ClientesLayout />
+              </AppLayout>
+            </ProtectedRoute>
+          }>
+            <Route index element={<ClientesLista />} />
+            <Route path="nuevo" element={<ClienteNuevo />} />
+            <Route path=":id" element={<ClienteDetalle />} />
+            <Route path="editar/:id" element={<ClienteEditar />} />
+          </Route>
 
-        {/* ============================================ */}
-        {/* CLIENTES ADMIN - RUTAS ACTUALIZADAS */}
-        {/* ============================================ */}
-        <Route path="/clientes" element={
-          <ProtectedRoute>
-            <ClientesLayout />
-          </ProtectedRoute>
-        }>
-          {/* ✅ RUTA PRINCIPAL - Lista de clientes */}
-          <Route index element={<ClientesLista />} />
-          
-          {/* ✅ RUTA PARA NUEVO CLIENTE */}
-          <Route path="nuevo" element={<ClienteNuevo />} />
-          
-          {/* ✅ RUTA PARA VER DETALLE DEL CLIENTE */}
-          <Route path=":id" element={<ClienteDetalle />} />
-          
-          {/* ✅ RUTA PARA EDITAR CLIENTE */}
-          <Route path="editar/:id" element={<ClienteEditar />} />
-        </Route>
+          {/* 💰 PAGOS (CON SIDEBAR) */}
+          <Route path="/pagos" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <PagosLayout />
+              </AppLayout>
+            </ProtectedRoute>
+          }>
+            <Route index element={<PagosLista />} />
+            <Route path="nuevo" element={<RegistrarPago />} />
+          </Route>
 
-        {/* PAGOS */}
-        <Route path="/pagos" element={
-          <ProtectedRoute>
-            <PagosLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<PagosLista />} />
-          <Route path="nuevo" element={<RegistrarPago />} />
-        </Route>
+          {/* 💎 EMPEÑOS (CON SIDEBAR) */}
+          <Route path="/empenos" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <EmpenosLayout />
+              </AppLayout>
+            </ProtectedRoute>
+          }>
+            <Route index element={<EmpenosLista />} />
+            <Route path="nuevo" element={<NuevoEmpeno />} />
+          </Route>
 
-        {/* EMPEÑOS */}
-        <Route path="/empenos" element={
-          <ProtectedRoute>
-            <EmpenosLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<EmpenosLista />} />
-          <Route path="nuevo" element={<NuevoEmpeno />} />
-        </Route>
+          {/* 📦 INVENTARIO (CON SIDEBAR) */}
+          <Route path="/inventario" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <InventarioLayout />
+              </AppLayout>
+            </ProtectedRoute>
+          }>
+            <Route index element={<InventarioLista />} />
+            <Route path="nuevo" element={<NuevoInventario />} />
+          </Route>
 
-        {/* INVENTARIO */}
-        <Route path="/inventario" element={
-          <ProtectedRoute>
-            <InventarioLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<InventarioLista />} />
-          <Route path="nuevo" element={<NuevoInventario />} />
-        </Route>
+          {/* 🏪 TIENDA (CON SIDEBAR) */}
+          <Route path="/tienda" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <TiendaOnline />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
 
-        {/* TIENDA */}
-        <Route path="/tienda" element={
-          <ProtectedRoute>
-            <TiendaOnline />
-          </ProtectedRoute>
-        } />
+          {/* 📊 REPORTES (CON SIDEBAR) */}
+          <Route path="/reportes" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Reporte />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
 
-        {/* REPORTES */}
-        <Route path="/reportes" element={
-          <ProtectedRoute>
-            <Reporte />
-          </ProtectedRoute>
-        } />
+          {/* 🔐 ROLES (CON SIDEBAR) */}
+          <Route path="/roles" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Roles />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
 
-        {/* ROLES */}
-        <Route path="/roles" element={
-          <ProtectedRoute>
-            <Roles />
-          </ProtectedRoute>
-        } />
+          <Route path="/roles/nuevo" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <RolNuevo />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
 
-        <Route path="/roles/nuevo" element={
-          <ProtectedRoute>
-            <RolNuevo />
-          </ProtectedRoute>
-        } />
+          {/* 🔑 PERMISOS (CON SIDEBAR) */}
+          <Route path="/permisos" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Permisos />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
 
-        {/* PERMISOS */}
-        <Route path="/permisos" element={
-          <ProtectedRoute>
-            <Permisos />
-          </ProtectedRoute>
-        } />
+          <Route path="/permisos/nuevo" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <PermisoNuevo />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
 
-        <Route path="/permisos/nuevo" element={
-          <ProtectedRoute>
-            <PermisoNuevo />
-          </ProtectedRoute>
-        } />
+          {/* ⚙️ CONFIGURACIÓN (CON SIDEBAR) */}
+          <Route path="/configuracion" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <ConfiguracionesLayout />
+              </AppLayout>
+            </ProtectedRoute>
+          }>
+            <Route index element={<Configuraciones />} />
+          </Route>
 
-        {/* CONFIGURACIÓN */}
-        <Route path="/configuracion" element={
-          <ProtectedRoute>
-            <ConfiguracionesLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Configuraciones />} />
-        </Route>
-
-      </Routes>
-    </Router>
+        </Routes>
+      </Router>
+    </UserProvider>
   );
 }
 

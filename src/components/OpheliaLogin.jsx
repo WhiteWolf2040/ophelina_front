@@ -1,9 +1,10 @@
-// OpheliaLogin.jsx - VERSIÓN FUSIONADA (Docker Base + Mejoras Local)
+// OpheliaLogin.jsx - VERSIÓN CON CONTEXT API
 import React, { useState, useEffect } from "react";
 import "./OpheliaLogin.css";
 import logo from "../assets/ophelina_logo-sinFondo.png";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { login } from "../config/auth";
+import { useUser } from "../contexts/UserContext"; // Importar el hook
 
 export default function OpheliaLogin() {
   const navigate = useNavigate();
@@ -14,8 +15,11 @@ export default function OpheliaLogin() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // Obtener función para refrescar datos del contexto
+  const { refreshUserData } = useUser();
 
-  // ✅ CAPTURAR PARÁMETROS DE STRIPE AL CARGAR EL LOGIN (DE DOCKER)
+  // CAPTURAR PARÁMETROS DE STRIPE AL CARGAR EL LOGIN
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const paymentStatus = searchParams.get('payment');
@@ -23,8 +27,7 @@ export default function OpheliaLogin() {
     console.log('🔍 Parámetros en login:', { sessionId, paymentStatus });
     
     if (sessionId && paymentStatus === 'success') {
-      console.log('✅ Pago detectado en login!');
-      // Guardar en localStorage para usarlo después del login
+      console.log(' Pago detectado en login!');
       localStorage.setItem('pending_session_id', sessionId);
       localStorage.setItem('pending_payment', 'success');
     }
@@ -53,71 +56,69 @@ export default function OpheliaLogin() {
     try {
       const result = await login(formData.email, formData.password);
       
-      // ============================================
-      // ✅ MEJORADO CON LOCAL: VERIFICAR ESTRUCTURA DE LA RESPUESTA
-      // ============================================
       console.log('Respuesta completa del login:', result);
       
       if (result.success) {
-        // ✅ MEJORADO CON LOCAL: Obtener los datos del usuario de forma segura
+        // Obtener los datos del usuario
         const userData = result.data?.usuario || result.data || result;
         
         console.log('Datos del usuario:', userData);
         
-        // ✅ MEJORADO CON LOCAL: Guardar TODOS los datos del usuario en localStorage
+        // Guardar token
+        if (result.data?.token) {
+          localStorage.setItem('token', result.data.token);
+        }
+
+        // Guardar TODOS los datos del usuario en localStorage
         localStorage.setItem('user', JSON.stringify(userData));
         
-        // ✅ MEJORADO CON LOCAL: Guardar permisos si existen
+        // Guardar permisos si existen
         if (userData.permisos) {
           localStorage.setItem('permisos', JSON.stringify(userData.permisos));
         } else {
-          // Si no hay permisos, guardar array vacío
           localStorage.setItem('permisos', JSON.stringify([]));
         }
         
-        // ✅ MEJORADO CON LOCAL: Guardar módulos si existen
+        // Guardar módulos si existen
         if (userData.modulos) {
           localStorage.setItem('modulos', JSON.stringify(userData.modulos));
         } else {
           localStorage.setItem('modulos', JSON.stringify([]));
         }
         
-        // ✅ MEJORADO CON LOCAL: Guardar empresa_id
+        // Guardar empresa_id
         if (userData.id_empresa) {
           localStorage.setItem('empresa_id', userData.id_empresa);
         }
 
-        // ✅ MEJORADO CON LOCAL: Verificar si tiene token
-        if (result.data?.token) {
-          localStorage.setItem('token', result.data.token);
-        }
+        // 🆕 REFRESCAR DATOS DEL CONTEXTO
+        await refreshUserData();
 
-        // ✅ VERIFICAR SI HAY PAGO PENDIENTE (DE DOCKER)
+        // VERIFICAR SI HAY PAGO PENDIENTE
         const pendingSessionId = localStorage.getItem('pending_session_id');
         const pendingPayment = localStorage.getItem('pending_payment');
         
         if (pendingSessionId && pendingPayment === 'success') {
-          console.log('✅ Pago pendiente detectado, redirigiendo a /home con parámetros');
+          console.log('💰 Pago pendiente detectado, redirigiendo a /home con parámetros');
           
-          // Guardar el SESSION_ID para usarlo en el HOME
           localStorage.setItem('stripe_session_id', pendingSessionId);
-          
-          // Limpiar variables temporales
           localStorage.removeItem('pending_session_id');
           localStorage.removeItem('pending_payment');
           
           setLoading(false);
           
-          // Redirigir a /home CON LOS PARÁMETROS
+          // Redirigir a /home con los parámetros
           window.location.href = `/home?session_id=${pendingSessionId}&payment=success`;
           return;
         }
 
-        // ✅ MEJORADO CON LOCAL: Redirigir según el rol/permisos
+        // Redirigir según el rol/permisos
         const tieneDashboard = userData.permisos?.includes('ver_dashboard') || 
                               userData.rol === 'Administrador' || 
                               userData.rol === 'Admin' ||
                               userData.rol === 'Dueño';
+        
+        setLoading(false);
         
         if (tieneDashboard) {
           navigate("/home");
@@ -126,11 +127,11 @@ export default function OpheliaLogin() {
         }
       } else {
         setError(result.message || "Error al iniciar sesión");
+        setLoading(false);
       }
     } catch (error) {
       console.error('Error en login:', error);
       setError("Error de conexión. Intenta de nuevo.");
-    } finally {
       setLoading(false);
     }
   };

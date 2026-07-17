@@ -1,106 +1,23 @@
-// Sidebar.jsx - Versión corregida con módulos por plan
-import React, { useState, useEffect } from "react";
+// Sidebar.jsx - Versión con Context API
+import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/LogoWhite.png";
 import "./Sidebar.css";
 import { logout } from "../config/auth";
-import api from "../config/api";
+import { useUser } from "../contexts/UserContext";
 
 // Iconos
-import HomeIcon from '@mui/icons-material/Home';
-import PeopleIcon from '@mui/icons-material/People';
-import PaymentsIcon from '@mui/icons-material/Payments';
-import DiamondIcon from '@mui/icons-material/Diamond';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import StorefrontIcon from '@mui/icons-material/Storefront';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import SecurityIcon from '@mui/icons-material/Security';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [visibleMenus, setVisibleMenus] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   const navigate = useNavigate();
-
-  // Configuración de módulos visibles según el plan
-  const modulesByPlan = {
-    1: {  // Free Trial
-      name: 'Free',
-      menus: [
-        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" }
-      ]
-    },
-    2: {  // Profesional
-      name: 'Profesional',
-      menus: [
-        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-        { path: "/pagos", icon: <PaymentsIcon />, text: "Pagos", modulo: "pagos" },
-        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" },
-        { path: "/configuracion", icon: <SettingsIcon />, text: "Configuración", modulo: "configuracion" }
-      ]
-    },
-    3: {  // Premium (Empresarial)
-      name: 'Premium',
-      menus: [
-        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-        { path: "/pagos", icon: <PaymentsIcon />, text: "Pagos", modulo: "pagos" },
-        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" },
-        { path: "/tienda", icon: <StorefrontIcon />, text: "Tienda en línea", modulo: "tienda" },
-        { path: "/reportes", icon: <BarChartIcon />, text: "Reportes", modulo: "reportes" },
-        { path: "/roles", icon: <SecurityIcon />, text: "Roles", modulo: "roles" },
-        { path: "/permisos", icon: <VpnKeyIcon />, text: "Permisos", modulo: "permisos" },
-        { path: "/configuracion", icon: <SettingsIcon />, text: "Configuración", modulo: "configuracion" }
-      ]
-    }
-  };
-
-  useEffect(() => {
-    const cargarModulosPorPlan = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setVisibleMenus([]);
-          setLoading(false);
-          return;
-        }
-
-        const response = await api.get('/user');
-        
-        if (response.data.success) {
-          const usuario = response.data.data.usuario;
-          const planId = usuario.plan_id || 1;
-          
-          console.log('📊 Plan ID:', planId);
-          console.log('📦 Módulos permitidos:', usuario.modulos);
-          
-          // Obtener los menús según el plan
-          const planMenus = modulesByPlan[planId] || modulesByPlan[1];
-          setVisibleMenus(planMenus.menus);
-        } else {
-          setVisibleMenus([]);
-        }
-      } catch (error) {
-        console.error('Error cargando módulos del plan:', error);
-        setVisibleMenus([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    cargarModulosPorPlan();
-  }, []);
+  
+  // Obtener datos del contexto
+  const { modules, loading, clearUserData } = useUser();
 
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => setIsOpen(false);
@@ -108,6 +25,7 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     await logout();
+    clearUserData(); // Limpiar los datos del contexto
     navigate("/login");
   };
 
@@ -148,17 +66,23 @@ const Sidebar = () => {
         </div>
 
         <nav className="sidebar-menu">
-          {visibleMenus.map((item) => (
-            <NavLink 
-              key={item.path}
-              to={item.path} 
-              className="sidebar-link" 
-              onClick={closeSidebar}
-            >
-              {item.icon}
-              {!isCollapsed && <span>{item.text}</span>}
-            </NavLink>
-          ))}
+          {modules.length > 0 ? (
+            modules.map((item) => (
+              <NavLink 
+                key={item.path}
+                to={item.path} 
+                className="sidebar-link" 
+                onClick={closeSidebar}
+              >
+                {item.icon}
+                {!isCollapsed && <span>{item.text}</span>}
+              </NavLink>
+            ))
+          ) : (
+            <div className="sidebar-no-modules">
+              {!isCollapsed && <span>No hay módulos disponibles</span>}
+            </div>
+          )}
 
           {/* Botón de cerrar sesión siempre visible */}
           <NavLink to="#" className="sidebar-link cerrar-sesion" onClick={handleLogout}>
