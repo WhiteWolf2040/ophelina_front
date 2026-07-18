@@ -32,7 +32,7 @@ const EmpenosLayout = () => {
     setEmpenos([...empenos, empenoConId]);
   };
 
-  // ✅ RENDER - SIN SIDEBAR
+  //  RENDER - SIN SIDEBAR
   return (
     <div className="empenos-layout-content">
       <Outlet context={{ empenos, agregarEmpeno }} />
