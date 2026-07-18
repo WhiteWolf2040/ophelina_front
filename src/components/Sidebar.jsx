@@ -1,10 +1,13 @@
-// Sidebar.jsx - Versión corregida con módulos por plan
-import React, { useState, useEffect } from "react";
+// components/Sidebar.jsx
+import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/LogoWhite.png";
 import "./Sidebar.css";
 import { logout } from "../config/auth";
-import api from "../config/api";
+import { useUser } from "../contexts/UserContext";
+import LogoutIcon from '@mui/icons-material/Logout';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 
 // Iconos
 import HomeIcon from '@mui/icons-material/Home';
@@ -15,105 +18,117 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import SettingsIcon from '@mui/icons-material/Settings';
-import LogoutIcon from '@mui/icons-material/Logout';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
 import SecurityIcon from '@mui/icons-material/Security';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [visibleMenus, setVisibleMenus] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   const navigate = useNavigate();
+  const { modules, loading, clearUserData } = useUser();
 
-  // Configuración de módulos visibles según el plan
-  const modulesByPlan = {
-    1: {  // Free Trial
-      name: 'Free',
-      menus: [
-        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" }
-      ]
-    },
-    3: {  // Profesional
-      name: 'Profesional',
-      menus: [
-        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-        { path: "/pagos", icon: <PaymentsIcon />, text: "Pagos", modulo: "pagos" },
-        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" },
-        { path: "/configuracion", icon: <SettingsIcon />, text: "Configuración", modulo: "configuracion" }
-      ]
-    },
-    4: {  // Premium (Empresarial)
-      name: 'Premium',
-      menus: [
-        { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-        { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-        { path: "/pagos", icon: <PaymentsIcon />, text: "Pagos", modulo: "pagos" },
-        { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" },
-        { path: "/tienda", icon: <StorefrontIcon />, text: "Tienda en línea", modulo: "tienda" },
-        { path: "/reportes", icon: <BarChartIcon />, text: "Reportes", modulo: "reportes" },
-        { path: "/roles", icon: <SecurityIcon />, text: "Roles", modulo: "roles" },
-        { path: "/permisos", icon: <VpnKeyIcon />, text: "Permisos", modulo: "permisos" },
-        { path: "/configuracion", icon: <SettingsIcon />, text: "Configuración", modulo: "configuracion" }
-      ]
+  // Mapeo de módulos en español
+  const moduleMap = {
+    'home': { path: '/home', icon: <HomeIcon />, text: 'Home' },
+    'dashboard': { path: '/home', icon: <HomeIcon />, text: 'Home' },
+    'clientes': { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
+    'pagos': { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
+    'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
+    'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
+    'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+    'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
+    'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
+    'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
+    'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
+  };
+
+  const getModuleName = (item) => {
+    if (!item) return '';
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object') {
+      if (item.modulo && typeof item.modulo === 'string') return item.modulo;
+      if (item.nombre && typeof item.nombre === 'string') return item.nombre;
+      if (item.text && typeof item.text === 'string') return item.text;
+      if (item.path && typeof item.path === 'string') {
+        const parts = item.path.split('/');
+        return parts[parts.length - 1] || '';
+      }
+    }
+    return String(item);
+  };
+
+  const getMenus = () => {
+    if (!modules || modules.length === 0) {
+      return [
+        { path: '/home', icon: <HomeIcon />, text: 'Home' },
+        { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
+        { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
+        { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
+        { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+        { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
+        { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
+        { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
+        { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
+      ];
+    }
+
+    const result = [];
+    const seen = new Set();
+
+    for (const item of modules) {
+      const name = getModuleName(item);
+      if (!name) continue;
+      
+      const normalized = String(name).toLowerCase().trim();
+      let mapped = moduleMap[normalized];
+      
+      if (!mapped) {
+        for (const [key, value] of Object.entries(moduleMap)) {
+          if (normalized.includes(key) || key.includes(normalized)) {
+            mapped = value;
+            break;
+          }
+        }
+      }
+      
+      if (mapped && !seen.has(mapped.path)) {
+        seen.add(mapped.path);
+        result.push(mapped);
+      } else if (!mapped) {
+        const display = name.charAt(0).toUpperCase() + name.slice(1);
+        const path = `/${normalized}`;
+        if (!seen.has(path)) {
+          seen.add(path);
+          result.push({ path, icon: <HomeIcon />, text: display });
+        }
+      }
+    }
+
+    return result;
+  };
+
+  const menuItems = getMenus();
+
+  const toggleSidebar = () => {
+    if (window.innerWidth <= 768) {
+      setIsOpen(!isOpen);
     }
   };
 
-  useEffect(() => {
-    const cargarModulosPorPlan = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setVisibleMenus([]);
-          setLoading(false);
-          return;
-        }
-
-        const response = await api.get('/user');
-        
-        if (response.data.success) {
-          const usuario = response.data.data.usuario;
-          const planId = usuario.plan_id || 1;
-          
-          console.log('📊 Plan ID:', planId);
-          console.log('📦 Módulos permitidos:', usuario.modulos);
-          
-          // Obtener los menús según el plan
-          const planMenus = modulesByPlan[planId] || modulesByPlan[1];
-          setVisibleMenus(planMenus.menus);
-        } else {
-          setVisibleMenus([]);
-        }
-      } catch (error) {
-        console.error('Error cargando módulos del plan:', error);
-        setVisibleMenus([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    cargarModulosPorPlan();
-  }, []);
-
-  const toggleSidebar = () => setIsOpen(!isOpen);
-  const closeSidebar = () => setIsOpen(false);
-  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  const closeSidebar = () => {
+    if (window.innerWidth <= 768) {
+      setIsOpen(false);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
+    clearUserData();
     navigate("/login");
   };
 
   if (loading) {
     return (
-      <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
+      <aside className="sidebar">
         <div className="sidebar-header">
           <div className="sidebar-log">
             <img src={logo} alt="Ophelia Logo" className="log-image" />
@@ -126,52 +141,50 @@ const Sidebar = () => {
 
   return (
     <>
+      {/* Botón hamburguesa - SOLO visible en móvil */}
       <button className="mobile-menu-btn" onClick={toggleSidebar}>
-        <MenuIcon className="menu-icon" />
+        <MenuIcon />
       </button>
 
+      {/* Overlay oscuro al abrir en móvil */}
       {isOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
 
-      <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
+      <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-log">
             <img src={logo} alt="Ophelia Logo" className="log-image" />
           </div>
-
-          <button className="collapse-btn" onClick={toggleCollapse}>
-            <MenuIcon className="collapse-icon" />
-          </button>
-
           <button className="close-btn" onClick={closeSidebar}>
             <CloseIcon />
           </button>
         </div>
 
         <nav className="sidebar-menu">
-          {visibleMenus.map((item) => (
-            <NavLink 
-              key={item.path}
-              to={item.path} 
-              className="sidebar-link" 
-              onClick={closeSidebar}
-            >
-              {item.icon}
-              {!isCollapsed && <span>{item.text}</span>}
-            </NavLink>
-          ))}
+          {menuItems.length > 0 ? (
+            menuItems.map((item) => (
+              <NavLink 
+                key={item.path}
+                to={item.path} 
+                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                onClick={closeSidebar}
+              >
+                {item.icon}
+                <span>{item.text}</span>
+              </NavLink>
+            ))
+          ) : (
+            <div className="sidebar-no-modules">No hay módulos disponibles</div>
+          )}
 
-          {/* Botón de cerrar sesión siempre visible */}
           <NavLink to="#" className="sidebar-link cerrar-sesion" onClick={handleLogout}>
             <LogoutIcon />
-            {!isCollapsed && <span>Cerrar sesión</span>}
+            <span>Cerrar sesión</span>
           </NavLink>
         </nav>
 
-        {!isCollapsed && (
-          <div className="sidebar-footer">
-            <p>Versión 2.0.0</p>
-          </div>
-        )}
+        <div className="sidebar-footer">
+          <p>Versión 2.0.0</p>
+        </div>
       </aside>
     </>
   );
