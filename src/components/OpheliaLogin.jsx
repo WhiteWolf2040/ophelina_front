@@ -1,10 +1,10 @@
-// OpheliaLogin.jsx - VERSIÓN CON CONTEXT API
+// OpheliaLogin.jsx - CON CONTEXT API
 import React, { useState, useEffect } from "react";
 import "./OpheliaLogin.css";
 import logo from "../assets/ophelina_logo-sinFondo.png";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { login } from "../config/auth";
-import { useUser } from "../contexts/UserContext"; // Importar el hook
+import { useUser } from "../contexts/UserContext";
 
 export default function OpheliaLogin() {
   const navigate = useNavigate();
@@ -16,10 +16,10 @@ export default function OpheliaLogin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // Obtener función para refrescar datos del contexto
+  // 🔥 OBTENER FUNCIÓN DEL CONTEXTO
   const { refreshUserData } = useUser();
 
-  // CAPTURAR PARÁMETROS DE STRIPE AL CARGAR EL LOGIN
+  // CAPTURAR PARÁMETROS DE STRIPE
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const paymentStatus = searchParams.get('payment');
@@ -27,7 +27,7 @@ export default function OpheliaLogin() {
     console.log('🔍 Parámetros en login:', { sessionId, paymentStatus });
     
     if (sessionId && paymentStatus === 'success') {
-      console.log(' Pago detectado en login!');
+      console.log('✅ Pago detectado en login!');
       localStorage.setItem('pending_session_id', sessionId);
       localStorage.setItem('pending_payment', 'success');
     }
@@ -59,7 +59,6 @@ export default function OpheliaLogin() {
       console.log('Respuesta completa del login:', result);
       
       if (result.success) {
-        // Obtener los datos del usuario
         const userData = result.data?.usuario || result.data || result;
         
         console.log('Datos del usuario:', userData);
@@ -69,50 +68,45 @@ export default function OpheliaLogin() {
           localStorage.setItem('token', result.data.token);
         }
 
-        // Guardar TODOS los datos del usuario en localStorage
+        // Guardar datos en localStorage
         localStorage.setItem('user', JSON.stringify(userData));
         
-        // Guardar permisos si existen
         if (userData.permisos) {
           localStorage.setItem('permisos', JSON.stringify(userData.permisos));
         } else {
           localStorage.setItem('permisos', JSON.stringify([]));
         }
         
-        // Guardar módulos si existen
         if (userData.modulos) {
           localStorage.setItem('modulos', JSON.stringify(userData.modulos));
         } else {
           localStorage.setItem('modulos', JSON.stringify([]));
         }
         
-        // Guardar empresa_id
         if (userData.id_empresa) {
           localStorage.setItem('empresa_id', userData.id_empresa);
         }
 
-        // 🆕 REFRESCAR DATOS DEL CONTEXTO
+        // 🔥 REFRESCAR EL CONTEXTO
+        console.log('🔄 Refrescando contexto del usuario...');
         await refreshUserData();
 
-        // VERIFICAR SI HAY PAGO PENDIENTE
+        // VERIFICAR PAGO PENDIENTE
         const pendingSessionId = localStorage.getItem('pending_session_id');
         const pendingPayment = localStorage.getItem('pending_payment');
         
         if (pendingSessionId && pendingPayment === 'success') {
-          console.log('💰 Pago pendiente detectado, redirigiendo a /home con parámetros');
-          
+          console.log('💰 Pago pendiente detectado');
           localStorage.setItem('stripe_session_id', pendingSessionId);
           localStorage.removeItem('pending_session_id');
           localStorage.removeItem('pending_payment');
           
           setLoading(false);
-          
-          // Redirigir a /home con los parámetros
           window.location.href = `/home?session_id=${pendingSessionId}&payment=success`;
           return;
         }
 
-        // Redirigir según el rol/permisos
+        // REDIRIGIR SEGÚN ROL
         const tieneDashboard = userData.permisos?.includes('ver_dashboard') || 
                               userData.rol === 'Administrador' || 
                               userData.rol === 'Admin' ||
@@ -121,8 +115,10 @@ export default function OpheliaLogin() {
         setLoading(false);
         
         if (tieneDashboard) {
+          console.log('🏠 Redirigiendo a /home');
           navigate("/home");
         } else {
+          console.log('🏠 Redirigiendo a /homecliente');
           navigate("/homecliente");
         }
       } else {

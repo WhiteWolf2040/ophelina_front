@@ -1,12 +1,10 @@
-// Sidebar.jsx - Versión con Context API
-import React, { useState } from "react";
+// Sidebar.jsx
+import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/LogoWhite.png";
 import "./Sidebar.css";
 import { logout } from "../config/auth";
 import { useUser } from "../contexts/UserContext";
-
-// Iconos
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
@@ -16,8 +14,15 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
   
-  // Obtener datos del contexto
-  const { modules, loading, clearUserData } = useUser();
+  // 🔥 OBTENER DATOS DEL CONTEXTO
+  const { modules, loading, clearUserData, userData } = useUser();
+
+  // 🔥 DEBUG: VER QUÉ ESTÁ RECIBIENDO EL SIDEBAR
+  useEffect(() => {
+    console.log('📋 Sidebar - Módulos recibidos:', modules);
+    console.log('📋 Sidebar - Loading:', loading);
+    console.log('📋 Sidebar - UserData:', userData);
+  }, [modules, loading, userData]);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => setIsOpen(false);
@@ -25,7 +30,7 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     await logout();
-    clearUserData(); // Limpiar los datos del contexto
+    clearUserData();
     navigate("/login");
   };
 
@@ -66,7 +71,7 @@ const Sidebar = () => {
         </div>
 
         <nav className="sidebar-menu">
-          {modules.length > 0 ? (
+          {modules && modules.length > 0 ? (
             modules.map((item) => (
               <NavLink 
                 key={item.path}
@@ -84,7 +89,6 @@ const Sidebar = () => {
             </div>
           )}
 
-          {/* Botón de cerrar sesión siempre visible */}
           <NavLink to="#" className="sidebar-link cerrar-sesion" onClick={handleLogout}>
             <LogoutIcon />
             {!isCollapsed && <span>Cerrar sesión</span>}

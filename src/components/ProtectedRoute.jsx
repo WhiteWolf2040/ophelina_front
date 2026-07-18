@@ -1,68 +1,82 @@
-// src/components/ProtectedRoute.jsx - VERSIÓN FUSIONADA (Docker Base + Mejoras Local)
+// src/components/ProtectedRoute.jsx - VERSIÓN CON CONTEXT API
 import { Navigate, useSearchParams } from "react-router-dom";
-import { isAuthenticated, getCurrentUser } from "../config/auth";
+import { useUser } from "../contexts/UserContext";
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const [searchParams] = useSearchParams();
   
-  //  OBTENER PARÁMETROS DE STRIPE (DE DOCKER)
+  //  OBTENER DATOS DEL CONTEXTO
+  const { isAuthenticated, loading, userData, modules } = useUser();
+  
+  // OBTENER PARÁMETROS DE STRIPE
   const sessionId = searchParams.get('session_id');
   const paymentStatus = searchParams.get('payment');
   
   console.log(' ProtectedRoute - Verificando acceso...');
-  console.log(' session_id:', sessionId);
-  console.log(' payment:', paymentStatus);
+  console.log(' isAuthenticated:', isAuthenticated);
+  console.log(' loading:', loading);
+  console.log(' userData:', userData);
+  console.log(' modules:', modules);
+  console.log('session_id:', sessionId);
+  console.log('payment:', paymentStatus);
   
-  //  PERMITIR ACCESO SI VIENE DE PAGO EXITOSO (DE DOCKER)
-  // (incluso si el token no es válido, el usuario ya inició sesión antes)
+  //  ESPERAR A QUE CARGUEN LOS DATOS
+  if (loading) {
+    console.log(' Cargando datos del usuario...');
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <div>Cargando...</div>
+      </div>
+    );
+  }
+  
+  // PERMITIR ACCESO SI VIENE DE PAGO EXITOSO
   if (sessionId && paymentStatus === 'success') {
-    console.log(' Pago exitoso detectado - Permitiendo acceso para procesar pago');
-    
-    // Verificar si al menos existe un token (aunque esté expirado)
+    console.log(' Pago exitoso detectado - Permitiendo acceso');
     const token = localStorage.getItem('token');
     if (token) {
-      // Permitir acceso para procesar el pago
       return children;
     } else {
-      // Si no hay token, redirigir a login con los parámetros
       console.log(' No hay token - Redirigiendo a login');
       return <Navigate to={`/login?session_id=${sessionId}&payment=success`} replace />;
     }
   }
-
-  //  Si no está logueado → login (MEJORADO CON LOCAL)
-  if (!isAuthenticated()) {
-    console.log(' Usuario no autenticado - Redirigiendo a login');
+  //  SI NO ESTÁ AUTENTICADO → LOGIN
+  if (!isAuthenticated || !userData) {
+    console.log('❌ Usuario no autenticado - Redirigiendo a login');
     return <Navigate to="/login" replace />;
   }
 
-  //  MEJORADO CON LOCAL: Obtener usuario y validar roles
-  const user = getCurrentUser();
-  console.log('👤 Usuario autenticado:', user?.rol);
+  //  VALIDAR ROLES
+  console.log(' Usuario autenticado:', userData.rol);
+  console.log(' Roles permitidos:', allowedRoles);
 
-  //  Validar roles (MEJORADO CON LOCAL)
   if (allowedRoles.length > 0) {
-    if (!user || !allowedRoles.includes(user.rol)) {
+    if (!allowedRoles.includes(userData.rol)) {
       console.log(' Rol no autorizado - Redirigiendo...');
-    
-      //  MEJORADO CON LOCAL: Verificar si el usuario tiene permisos de dashboard
-      const tieneDashboard = user?.permisos?.includes('ver_dashboard') || 
-                            user?.rol === 'Administrador' || 
-                            user?.rol === 'Admin' ||
-                            user?.rol === 'Dueño';
       
-      if (user?.rol === "Cliente") {
+      // Verificar si tiene dashboard
+      const tieneDashboard = userData.permisos?.includes('ver_dashboard') || 
+                            userData.rol === 'Administrador' || 
+                            userData.rol === 'Admin' ||
+                            userData.rol === 'Dueño';
+      
+      if (userData.rol === "Cliente") {
         return <Navigate to="/homecliente" replace />;
       } else if (tieneDashboard) {
-        // Si tiene permisos de dashboard pero no está en allowedRoles, ir a home
         return <Navigate to="/home" replace />;
       } else {
-        // Si no tiene ningún permiso, ir a homecliente
         return <Navigate to="/homecliente" replace />;
       }
     }
   }
 
+  //  ACCESO PERMITIDO
   console.log(' Acceso permitido');
   return children;
 }
