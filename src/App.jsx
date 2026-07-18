@@ -45,7 +45,7 @@ import Reporte from "./DuenoReporte/Reporte";
 import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
-// ✅ COMPONENTE PARA RUTAS CON SIDEBAR
+//  COMPONENTE PARA RUTAS CON SIDEBAR
 const AppLayout = ({ children }) => {
   return (
     <div className="app-layout">
@@ -59,10 +59,10 @@ const AppLayout = ({ children }) => {
 
 function App() {
   return (
-    <UserProvider> {/* ✅ ENVOLVER TODO CON EL PROVIDER */}
+    <UserProvider> {/* ENVOLVER TODO CON EL PROVIDER */}
       <Router>
         <Routes>
-          {/* 🔓 RUTAS PÚBLICAS (SIN SIDEBAR) */}
+          {/*  RUTAS PÚBLICAS (SIN SIDEBAR) */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<OpheliaLogin />} />
           <Route path="/register" element={<OpheliaRegister />} />
@@ -100,7 +100,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* 🏠 DASHBOARD (CON SIDEBAR) */}
+          {/*  DASHBOARD (CON SIDEBAR) */}
           <Route path="/home" element={
             <ProtectedRoute>
               <AppLayout>
@@ -109,7 +109,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* 👥 CLIENTES ADMIN (CON SIDEBAR) */}
+          {/*  CLIENTES ADMIN (CON SIDEBAR) */}
           <Route path="/clientes" element={
             <ProtectedRoute>
               <AppLayout>
@@ -123,7 +123,7 @@ function App() {
             <Route path="editar/:id" element={<ClienteEditar />} />
           </Route>
 
-          {/* 💰 PAGOS (CON SIDEBAR) */}
+          {/*  PAGOS (CON SIDEBAR) */}
           <Route path="/pagos" element={
             <ProtectedRoute>
               <AppLayout>
@@ -135,7 +135,7 @@ function App() {
             <Route path="nuevo" element={<RegistrarPago />} />
           </Route>
 
-          {/* 💎 EMPEÑOS (CON SIDEBAR) */}
+          {/*  EMPEÑOS (CON SIDEBAR) */}
           <Route path="/empenos" element={
             <ProtectedRoute>
               <AppLayout>
@@ -147,7 +147,7 @@ function App() {
             <Route path="nuevo" element={<NuevoEmpeno />} />
           </Route>
 
-          {/* 📦 INVENTARIO (CON SIDEBAR) */}
+          {/*  INVENTARIO (CON SIDEBAR) */}
           <Route path="/inventario" element={
             <ProtectedRoute>
               <AppLayout>
@@ -159,7 +159,7 @@ function App() {
             <Route path="nuevo" element={<NuevoInventario />} />
           </Route>
 
-          {/* 🏪 TIENDA (CON SIDEBAR) */}
+          {/*  TIENDA (CON SIDEBAR) */}
           <Route path="/tienda" element={
             <ProtectedRoute>
               <AppLayout>
@@ -168,7 +168,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* 📊 REPORTES (CON SIDEBAR) */}
+          {/*  REPORTES (CON SIDEBAR) */}
           <Route path="/reportes" element={
             <ProtectedRoute>
               <AppLayout>
@@ -177,7 +177,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* 🔐 ROLES (CON SIDEBAR) */}
+          {/*  ROLES (CON SIDEBAR) */}
           <Route path="/roles" element={
             <ProtectedRoute>
               <AppLayout>
@@ -194,7 +194,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* 🔑 PERMISOS (CON SIDEBAR) */}
+          {/*  PERMISOS (CON SIDEBAR) */}
           <Route path="/permisos" element={
             <ProtectedRoute>
               <AppLayout>
@@ -211,7 +211,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* ⚙️ CONFIGURACIÓN (CON SIDEBAR) */}
+          {/* CONFIGURACIÓN (CON SIDEBAR) */}
           <Route path="/configuracion" element={
             <ProtectedRoute>
               <AppLayout>
