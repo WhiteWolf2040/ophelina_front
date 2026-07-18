@@ -4,7 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import PagosLista from "./PagosLista";
 import RegistrarPago from "./RegistrarPago";
 import DetallePago from "./DetallePago";
-// ❌ ELIMINAR import Sidebar from "../components/Sidebar";
+
 import "./Pagos.css"; // Asegúrate de tener los estilos
 
 const PagosLayout = () => {
