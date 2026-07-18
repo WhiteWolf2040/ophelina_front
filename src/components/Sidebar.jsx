@@ -103,7 +103,7 @@ const Sidebar = () => {
         {isOpen ? <CloseIcon /> : <MenuIcon />}
       </button>
 
-      {isOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
+      {isOpen && <div className="" onClick={closeSidebar}></div>}
 
       <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
