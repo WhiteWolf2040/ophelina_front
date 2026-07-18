@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 // ❌ ELIMINAR import Sidebar from "../components/Sidebar";
-import "./EmpenosLayout.css"; // Asegúrate de tener los estilos
+import "./Empenos.css"; // Asegúrate de tener los estilos
 
 const EmpenosLayout = () => {
   const [empenos, setEmpenos] = useState([

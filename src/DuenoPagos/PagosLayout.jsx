@@ -5,7 +5,7 @@ import PagosLista from "./PagosLista";
 import RegistrarPago from "./RegistrarPago";
 import DetallePago from "./DetallePago";
 // ❌ ELIMINAR import Sidebar from "../components/Sidebar";
-import "./PagosLayout.css"; // Asegúrate de tener los estilos
+import "./Pagos.css"; // Asegúrate de tener los estilos
 
 const PagosLayout = () => {
   const [pagos, setPagos] = useState([
