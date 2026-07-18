@@ -1,4 +1,4 @@
-// components/Sidebar.jsx - VERSIÓN COMBINADA (Vercel + Local)
+// components/Sidebar.jsx - VERSIÓN DEFINITIVA (CON MANEJO DE ERRORES)
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/LogoWhite.png";
@@ -21,15 +21,38 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import SecurityIcon from '@mui/icons-material/Security';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
+// 🔥 MENÚS POR DEFECTO (SIEMPRE DISPONIBLES)
+const DEFAULT_MENUS = [
+  { path: '/home', icon: <HomeIcon />, text: 'Home' },
+  { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
+  { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
+  { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
+  { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+  { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
+  { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
+  { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
+  { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
+];
+
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [menuItems, setMenuItems] = useState(DEFAULT_MENUS);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   
-  // 🔥 DEL LOCAL: usar useUser para obtener datos
-  const { modules, loading, clearUserData } = useUser();
+  // Intentar obtener el contexto, pero si falla, usar valores por defecto
+  let userContext;
+  try {
+    userContext = useUser();
+  } catch (error) {
+    console.log('⚠️ Contexto de usuario no disponible, usando menús por defecto');
+    userContext = { modules: DEFAULT_MENUS, loading: false, clearUserData: () => {} };
+  }
 
-  // Mapeo de módulos en español (FORZADO) - DEL VERCEL
+  const { modules, loading, clearUserData } = userContext;
+
+  // Mapeo de módulos en español
   const moduleMap = {
     'home': { path: '/home', icon: <HomeIcon />, text: 'Home' },
     'dashboard': { path: '/home', icon: <HomeIcon />, text: 'Home' },
@@ -44,7 +67,7 @@ const Sidebar = () => {
     'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
   };
 
-  // 🔥 DEL LOCAL: Función para obtener el nombre del módulo de forma segura
+  // 🔥 Función segura para obtener el nombre del módulo
   const getModuleName = (item) => {
     if (!item) return '';
     if (typeof item === 'string') return item;
@@ -63,20 +86,11 @@ const Sidebar = () => {
     return String(item);
   };
 
-  // 🔥 DEL VERCEL: Forzar nombres en español
+  // 🔥 Función para obtener los menús
   const getMenus = () => {
-    if (!modules || modules.length === 0) {
-      return [
-        { path: '/home', icon: <HomeIcon />, text: 'Home' },
-        { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
-        { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
-        { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
-        { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
-        { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
-        { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
-        { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
-        { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
-      ];
+    // Si está cargando, mostrar los menús por defecto
+    if (loading || !modules || modules.length === 0) {
+      return DEFAULT_MENUS;
     }
 
     const result = [];
@@ -111,10 +125,16 @@ const Sidebar = () => {
       }
     }
 
-    return result;
+    return result.length > 0 ? result : DEFAULT_MENUS;
   };
 
-  const menuItems = getMenus();
+  // 🔥 Actualizar menús cuando cambien los módulos
+  useEffect(() => {
+    setIsLoading(true);
+    const menus = getMenus();
+    setMenuItems(menus);
+    setIsLoading(false);
+  }, [modules, loading]);
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
@@ -134,12 +154,12 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     await logout();
-    clearUserData(); // 🔥 DEL LOCAL
+    if (clearUserData) clearUserData();
     navigate("/login");
   };
 
-  // 🔥 DEL LOCAL: Estado de carga
-  if (loading) {
+  // 🔥 Mostrar loader mientras carga
+  if (loading || isLoading) {
     return (
       <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
@@ -147,7 +167,10 @@ const Sidebar = () => {
             <img src={logo} alt="Ophelia Logo" className="log-image" />
           </div>
         </div>
-        <div className="sidebar-loading">Cargando...</div>
+        <div className="sidebar-loading">
+          <div className="loader-spinner"></div>
+          <span>Cargando...</span>
+        </div>
       </aside>
     );
   }
