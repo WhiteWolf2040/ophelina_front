@@ -323,7 +323,7 @@ const ClientesLista = () => {
       <div className="content2 owner-header">
         {/* HEADER */}
         <div className="header-container">
-          <div className="tienda-header">
+          <div className="">
             <h1>
               <GroupIcon className="title-icon"/> Listado de clientes
               <p className="header-sub">Gestiona y administra tus clientes</p>

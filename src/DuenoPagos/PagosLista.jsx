@@ -345,7 +345,7 @@ const PagosLista = () => {
       <div className="content">
         {/* HEADER */}
         <div className="header-container">
-          <div className="tienda-header">
+          <div className="">
             <h1>
               <PaymentsIcon className="title-icon" /> 
               Listado de pagos 

@@ -1,5 +1,5 @@
-// components/Sidebar.jsx
-import React, { useState } from "react";
+// components/Sidebar.jsx - VERSIÓN CORREGIDA
+import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/LogoWhite.png";
 import "./Sidebar.css";
@@ -9,15 +9,89 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 
+// Iconos
+import HomeIcon from '@mui/icons-material/Home';
+import PeopleIcon from '@mui/icons-material/People';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import DiamondIcon from '@mui/icons-material/Diamond';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import SettingsIcon from '@mui/icons-material/Settings';
+import SecurityIcon from '@mui/icons-material/Security';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
   const { modules, loading, clearUserData } = useUser();
 
+  // Mapeo de módulos en español (FORZADO)
+  const moduleMap = {
+    'home': { path: '/home', icon: <HomeIcon />, text: 'Home' },
+    'dashboard': { path: '/home', icon: <HomeIcon />, text: 'Home' },
+    'clientes': { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
+    'pagos': { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
+    'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
+    'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
+    'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+    'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
+    'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
+    'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
+    'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
+  };
+
+  // 🔥 CORRECCIÓN: Forzar nombres en español
+  const getMenus = () => {
+    if (!modules || modules.length === 0) {
+      // Si no hay módulos, mostrar los del plan Premium por defecto
+      return [
+        { path: '/home', icon: <HomeIcon />, text: 'Home' },
+        { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
+        { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
+        { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
+        { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+        { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
+        { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
+        { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
+        { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
+      ];
+    }
+
+    return modules
+      .map(item => {
+        // Si el módulo viene como objeto o string
+        const moduleName = typeof item === 'string' ? item : item.modulo || item.nombre || item;
+        const normalizedName = moduleName.toLowerCase().trim();
+        
+        // Buscar en el mapa, si no existe, usar el nombre original
+        const mapped = moduleMap[normalizedName];
+        if (mapped) {
+          return mapped;
+        }
+        
+        // Si no está en el mapa, intentar encontrar por coincidencia parcial
+        for (const [key, value] of Object.entries(moduleMap)) {
+          if (normalizedName.includes(key) || key.includes(normalizedName)) {
+            return value;
+          }
+        }
+        
+        // Si no se encuentra, crear un item genérico
+        return {
+          path: `/${normalizedName}`,
+          icon: <HomeIcon />,
+          text: moduleName.charAt(0).toUpperCase() + moduleName.slice(1)
+        };
+      })
+      .filter(item => item !== undefined);
+  };
+
+  const menuItems = getMenus();
+
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
-    // En móvil, alternar también el colapso
     if (window.innerWidth <= 768) {
       setIsCollapsed(!isCollapsed);
     }
@@ -53,79 +127,37 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Botón menú hamburguesa - SIEMPRE VISIBLE EN MÓVIL */}
-      <button 
-        className="mobile-menu-btn" 
-        onClick={toggleSidebar}
-        style={{
-          display: 'flex',
-          position: 'fixed',
-          top: '10px',
-          left: '10px',
-          zIndex: 1001,
-          background: '#1e3a8a',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          padding: '10px',
-          cursor: 'pointer',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
-        }}
-      >
+      <button className="mobile-menu-btn" onClick={toggleSidebar}>
         {isOpen ? <CloseIcon /> : <MenuIcon />}
       </button>
 
-      {/* Overlay para cerrar al hacer clic fuera */}
-      {isOpen && (
-        <div 
-          className="sidebar-overlay" 
-          onClick={closeSidebar}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            zIndex: 999,
-            display: 'block'
-          }}
-        />
-      )}
+      {isOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
 
       <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-log">
             <img src={logo} alt="Ophelia Logo" className="log-image" />
           </div>
-
           <button className="collapse-btn" onClick={toggleCollapse}>
             <MenuIcon className="collapse-icon" />
           </button>
-
           <button className="close-btn" onClick={closeSidebar}>
             <CloseIcon />
           </button>
         </div>
 
         <nav className="sidebar-menu">
-          {modules && modules.length > 0 ? (
-            modules.map((item) => (
-              <NavLink 
-                key={item.path}
-                to={item.path} 
-                className="sidebar-link" 
-                onClick={closeSidebar}
-              >
-                {item.icon}
-                {!isCollapsed && <span>{item.text}</span>}
-              </NavLink>
-            ))
-          ) : (
-            <div className="sidebar-no-modules">
-              {!isCollapsed && <span>No hay módulos disponibles</span>}
-            </div>
-          )}
+          {menuItems.map((item) => (
+            <NavLink 
+              key={item.path}
+              to={item.path} 
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={closeSidebar}
+            >
+              {item.icon}
+              {!isCollapsed && <span>{item.text}</span>}
+            </NavLink>
+          ))}
 
           <NavLink to="#" className="sidebar-link cerrar-sesion" onClick={handleLogout}>
             <LogoutIcon />

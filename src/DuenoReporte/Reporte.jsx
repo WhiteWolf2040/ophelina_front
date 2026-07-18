@@ -239,7 +239,7 @@ const Reportes = () => {
       <div className="content">
 
         {/* HEADER */}
-        <div className="tienda-header">
+        <div className="">
           <h1>
             <AssessmentIcon className="title-icon" />
             Reportes

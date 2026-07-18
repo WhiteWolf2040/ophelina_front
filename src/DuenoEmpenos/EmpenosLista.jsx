@@ -221,7 +221,7 @@ const EmpenosLista = () => {
     return (
       <div className="dashboard">
         <div className="content">
-          <div className="tienda-header">
+          <div className="">
             <h1>Listado de empeños</h1>
             <p className="header-sub">Error al cargar los datos</p>
           </div>
@@ -240,7 +240,7 @@ const EmpenosLista = () => {
     <div className="dashboard">
       <div className="content">
         {/* HEADER */}
-        <div className="tienda-header">
+        <div className="">
           <div>
             <h1>
               <DiamondIcon className="title-icon" />

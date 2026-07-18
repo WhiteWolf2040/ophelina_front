@@ -53,6 +53,7 @@
 }
 
 /* ===== LOADER SIMPLE ===== */
+
 .loading-spinner {
   display: flex;
   align-items: center;
