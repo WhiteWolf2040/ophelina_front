@@ -1,4 +1,4 @@
-// components/Sidebar.jsx - VERSIÓN CORREGIDA
+// components/Sidebar.jsx - VERSIÓN COMBINADA (Vercel + Local)
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/LogoWhite.png";
@@ -25,9 +25,11 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
+  
+  // 🔥 DEL LOCAL: usar useUser para obtener datos
   const { modules, loading, clearUserData } = useUser();
 
-  // Mapeo de módulos en español (FORZADO)
+  // Mapeo de módulos en español (FORZADO) - DEL VERCEL
   const moduleMap = {
     'home': { path: '/home', icon: <HomeIcon />, text: 'Home' },
     'dashboard': { path: '/home', icon: <HomeIcon />, text: 'Home' },
@@ -42,10 +44,28 @@ const Sidebar = () => {
     'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
   };
 
-  // 🔥 CORRECCIÓN: Forzar nombres en español
+  // 🔥 DEL LOCAL: Función para obtener el nombre del módulo de forma segura
+  const getModuleName = (item) => {
+    if (!item) return '';
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object') {
+      const keys = ['modulo', 'nombre', 'name', 'text', 'label', 'id', 'key'];
+      for (const key of keys) {
+        if (item[key] && typeof item[key] === 'string') {
+          return item[key];
+        }
+      }
+      if (item.path && typeof item.path === 'string') {
+        const parts = item.path.split('/');
+        return parts[parts.length - 1] || '';
+      }
+    }
+    return String(item);
+  };
+
+  // 🔥 DEL VERCEL: Forzar nombres en español
   const getMenus = () => {
     if (!modules || modules.length === 0) {
-      // Si no hay módulos, mostrar los del plan Premium por defecto
       return [
         { path: '/home', icon: <HomeIcon />, text: 'Home' },
         { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
@@ -59,33 +79,39 @@ const Sidebar = () => {
       ];
     }
 
-    return modules
-      .map(item => {
-        // Si el módulo viene como objeto o string
-        const moduleName = typeof item === 'string' ? item : item.modulo || item.nombre || item;
-        const normalizedName = moduleName.toLowerCase().trim();
-        
-        // Buscar en el mapa, si no existe, usar el nombre original
-        const mapped = moduleMap[normalizedName];
-        if (mapped) {
-          return mapped;
-        }
-        
-        // Si no está en el mapa, intentar encontrar por coincidencia parcial
+    const result = [];
+    const seen = new Set();
+
+    for (const item of modules) {
+      let name = getModuleName(item);
+      if (!name) continue;
+      
+      const normalizedName = String(name).toLowerCase().trim();
+      let mapped = moduleMap[normalizedName];
+      
+      if (!mapped) {
         for (const [key, value] of Object.entries(moduleMap)) {
           if (normalizedName.includes(key) || key.includes(normalizedName)) {
-            return value;
+            mapped = value;
+            break;
           }
         }
-        
-        // Si no se encuentra, crear un item genérico
-        return {
-          path: `/${normalizedName}`,
-          icon: <HomeIcon />,
-          text: moduleName.charAt(0).toUpperCase() + moduleName.slice(1)
-        };
-      })
-      .filter(item => item !== undefined);
+      }
+      
+      if (mapped && !seen.has(mapped.path)) {
+        seen.add(mapped.path);
+        result.push(mapped);
+      } else if (!mapped) {
+        const displayName = String(name).charAt(0).toUpperCase() + String(name).slice(1);
+        const path = `/${normalizedName}`;
+        if (!seen.has(path)) {
+          seen.add(path);
+          result.push({ path, icon: <HomeIcon />, text: displayName });
+        }
+      }
+    }
+
+    return result;
   };
 
   const menuItems = getMenus();
@@ -108,10 +134,11 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     await logout();
-    clearUserData();
+    clearUserData(); // 🔥 DEL LOCAL
     navigate("/login");
   };
 
+  // 🔥 DEL LOCAL: Estado de carga
   if (loading) {
     return (
       <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
