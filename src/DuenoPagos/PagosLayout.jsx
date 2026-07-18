@@ -43,7 +43,7 @@ const PagosLayout = () => {
     setPagos([...pagos, pagoConId]);
   };
 
-  // ✅ RENDER - SIN SIDEBAR, SOLO EL CONTENIDO
+  //  RENDER - SIN SIDEBAR, SOLO EL CONTENIDO
   return (
     <div className="pagos-layout-content">
       <Routes>
