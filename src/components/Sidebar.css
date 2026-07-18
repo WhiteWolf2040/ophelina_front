@@ -442,3 +442,92 @@
   display: none !important;
 }
 
+/* components/Sidebar.css - Agregar al final */
+
+/* ===== BOTÓN MENÚ MÓVIL ===== */
+.mobile-menu-btn {
+  display: none !important;
+}
+
+/* ===== OVERLAY ===== */
+.sidebar-overlay {
+  display: none;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex !important;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1001;
+    background: #1e3a8a;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-menu-btn:hover {
+    background: #2d4a9e;
+    transform: scale(1.05);
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 280px;
+    height: 100vh;
+    transition: left 0.3s ease;
+    z-index: 1000;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+  }
+
+  .sidebar .close-btn {
+    display: flex !important;
+  }
+
+  .sidebar .collapse-btn {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none !important;
+  }
+
+  .sidebar-overlay {
+    display: none !important;
+  }
+
+  .sidebar .close-btn {
+    display: none !important;
+  }
+
+  .sidebar .collapse-btn {
+    display: flex !important;
+  }
+}

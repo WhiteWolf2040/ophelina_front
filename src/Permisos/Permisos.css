@@ -1,5 +1,8 @@
-/* src/Permisos/Permisos.css */
+/* ============================================ */
+/* PERMISOS.CSS - VERSIÓN RESPONSIVE COMPLETA */
+/* ============================================ */
 
+/* ===== CONTENEDOR PRINCIPAL ===== */
 .app-container {
   display: flex;
   height: 100vh;
@@ -15,15 +18,22 @@
 }
 
 .permisos-content {
-  padding: 2rem;
+  padding: 1.5rem 2rem 2rem 2rem;
   min-height: 100%;
 }
 
+/* ===== HEADER ===== */
 .permisos-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 15px;
+  box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
 }
 
 .permisos-header h1 {
@@ -32,6 +42,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin: 0;
 }
 
 .header-sub {
@@ -44,6 +55,7 @@
 .header-actions {
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .btn-nuevo-permiso {
@@ -67,7 +79,6 @@
 }
 
 .btn-bulk-permisos {
-  background: #15337f;
   background: #10b981;
   color: white;
   border: none;
@@ -82,36 +93,34 @@
 }
 
 .btn-bulk-permisos:hover {
-  background: #08132d;
   background: #059669;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
-/* Stats */
-.stat-card{
-width: 100%;
-}
-
-
+/* ===== STATS ===== */
 .permisos-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .permisos-stats .stat-card {
-  background: rgb(255, 255, 255);
-  border-radius: 15px;
   background: white;
-  border-radius: 12px;
+  border-radius: 15px;
   padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
   transition: all 0.3s ease;
   cursor: pointer;
+}
+
+.permisos-stats .stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0px 8px 25px rgba(13, 27, 62, 0.12);
 }
 
 .stat-icon {
@@ -119,13 +128,8 @@ width: 100%;
   height: 70px;
   border-radius: 12px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.8rem;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative;
-  overflow: hidden;
   font-size: 2.5rem;
   transition: transform 0.3s ease;
   flex-shrink: 0;
@@ -146,16 +150,10 @@ width: 100%;
   color: white;
 }
 
-.stat-icon.dueño-bg,
-.stat-icon.admin-bg,
-.stat-icon.permiso-bg,
 .stat-icon.ejecutivo-bg {
-  background: #ffffff00;
-  color: #e8d018;
-  transform: scale(2.5) !important;
-  display: inline-block !important;
+  background: #f59e0b;
+  color: white;
 }
-
 
 .stat-content {
   display: flex;
@@ -180,45 +178,37 @@ width: 100%;
   margin-bottom: 0.2rem;
 }
 
-.permisos-stats .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(13, 27, 62, 0.12);
-}
-
-.permisos-stats .stat-card:hover .stat-icon {
-  transform: scale(1.15);
-}
-
-/* Filtros y Buscador */
+/* ===== FILTROS ===== */
 .permisos-filters {
-  margin: 2rem 0;
+  margin-bottom: 1.5rem;
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
   align-items: center;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
 }
 
 .search-wrapper {
-  padding-top: 30px;
   position: relative;
   flex: 1;
-  min-width: 300px;
+  min-width: 200px;
 }
 
 .search-icon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
   color: #adb5bd;
 }
 
 .search-input {
-  width: 120%;
-  height: 48px;
-  border-radius: 15px;
-  border: none;
-  padding: 0 60px 0 48px;
+  width: 100%;
+  height: 44px;
+  padding: 0 20px 0 44px;
   border-radius: 24px;
   border: 1px solid #e9ecef;
   background-color: #ffffff;
@@ -236,12 +226,13 @@ width: 100%;
 
 .filters-wrapper {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.8rem;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .filter-select {
-  height: 48px;
+  height: 44px;
   padding: 0 1rem;
   border-radius: 24px;
   border: 1px solid #e9ecef;
@@ -249,19 +240,18 @@ width: 100%;
   font-size: 14px;
   outline: none;
   color: #000000;
-  min-width: 150px;
+  min-width: 130px;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .filter-select:focus {
-  outline: none;
-  border-color: #0e163e;
   border-color: #0d1b3e;
   box-shadow: 0 0 0 3px rgba(13, 27, 62, 0.1);
 }
 
 .btn-delete-selected {
-  background: #c52222;
+  background: #dc2626;
   color: white;
   border: none;
   padding: 0 1.5rem;
@@ -272,7 +262,7 @@ width: 100%;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  height: 48px;
+  height: 44px;
 }
 
 .btn-delete-selected:hover {
@@ -280,18 +270,20 @@ width: 100%;
   transform: translateY(-2px);
 }
 
-/* TABLA DE PERMISOS*/
+/* ===== TABLA ===== */
 .permisos-table {
   background: white;
-  border-radius: 16px;
+  border-radius: 15px;
   padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
 .table th {
@@ -299,13 +291,15 @@ width: 100%;
   padding: 1rem;
   color: #6c757d;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   border-bottom: 2px solid #e9ecef;
+  white-space: nowrap;
 }
 
 .table td {
-  padding: 1rem;
+  padding: 0.9rem 1rem;
   border-bottom: 1px solid #e9ecef;
+  font-size: 0.9rem;
 }
 
 .table tbody tr:hover {
@@ -316,6 +310,7 @@ width: 100%;
   background-color: #e9ecef;
 }
 
+/* ===== PERMISO NOMBRE ===== */
 .permiso-nombre-cell {
   display: flex;
   align-items: center;
@@ -324,7 +319,6 @@ width: 100%;
 
 .permiso-icon {
   font-size: 1.5rem;
-  color: #020c27;
   width: 32px;
   height: 32px;
   display: flex;
@@ -333,6 +327,7 @@ width: 100%;
   background: #f8f9fa;
   border-radius: 8px;
   color: #0d1b3e;
+  flex-shrink: 0;
 }
 
 .permiso-desc {
@@ -346,7 +341,7 @@ width: 100%;
   background: #f8f9fa;
   padding: 0.3rem 0.6rem;
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #0d1b3e;
   font-family: monospace;
 }
@@ -356,11 +351,12 @@ width: 100%;
   color: #0d1b3e;
   padding: 0.3rem 0.8rem;
   border-radius: 20px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 
-/* Estado badges */
+/* ===== ESTADO BADGES ===== */
 .estado-toggle {
   background: none;
   border: none;
@@ -374,9 +370,10 @@ width: 100%;
   gap: 0.3rem;
   padding: 0.3rem 0.8rem;
   border-radius: 20px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .badge-estado.activo {
@@ -401,18 +398,17 @@ width: 100%;
   filter: brightness(0.95);
 }
 
-/* Acciones */
+/* ===== ACCIONES ===== */
 .acciones-cell {
   display: flex;
   gap: 0.3rem;
-  justify-content: center;
 }
 
 .btn-accion {
   background: none;
   border: none;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -437,7 +433,10 @@ width: 100%;
   color: #dc2626;
 }
 
-/* Modal Overlay */
+/* ============================================ */
+/* ===== MODALES ===== */
+/* ============================================ */
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -449,9 +448,10 @@ width: 100%;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
+  padding: 20px;
 }
 
-/* Modal Detalle */
 .modal-detalle {
   background: white;
   border-radius: 16px;
@@ -461,6 +461,7 @@ width: 100%;
   overflow-y: auto;
   position: relative;
   animation: modalFadeIn 0.3s ease;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.3);
 }
 
 @keyframes modalFadeIn {
@@ -504,6 +505,8 @@ width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
 }
 
 .modal-header h2 {
@@ -542,7 +545,7 @@ width: 100%;
   padding: 1.5rem;
 }
 
-/* Grid de detalle (dos columnas) */
+/* ===== GRID DE DETALLE ===== */
 .rol-detalle-grid {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
@@ -598,7 +601,7 @@ width: 100%;
   font-family: monospace;
 }
 
-/* Modal Confirmar */
+/* ===== MODAL CONFIRMAR ===== */
 .modal-confirmar {
   background: white;
   border-radius: 16px;
@@ -607,6 +610,7 @@ width: 100%;
   text-align: center;
   padding: 2rem;
   animation: modalFadeIn 0.3s ease;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.3);
 }
 
 .modal-icono.warning {
@@ -640,6 +644,7 @@ width: 100%;
   justify-content: center;
   gap: 1rem;
   margin-top: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .btn-confirmar-eliminar {
@@ -653,13 +658,15 @@ width: 100%;
   gap: 0.5rem;
   cursor: pointer;
   font-weight: 600;
+  transition: all 0.2s;
 }
 
 .btn-confirmar-eliminar:hover {
   background: #b91c1c;
+  transform: translateY(-2px);
 }
 
-/* Botones de acción modal */
+/* ===== BOTONES DE ACCIÓN MODAL ===== */
 .modal-acciones {
   display: flex;
   justify-content: flex-end;
@@ -668,6 +675,7 @@ width: 100%;
   border-top: 1px solid #e9ecef;
   background: #f8f9fa;
   border-radius: 0 0 16px 16px;
+  flex-wrap: wrap;
 }
 
 .btn-editar {
@@ -708,9 +716,13 @@ width: 100%;
 
 .btn-cancelar:hover {
   background: #5a6268;
+  transform: translateY(-2px);
 }
 
-/* Formularios */
+/* ============================================ */
+/* ===== FORMULARIOS ===== */
+/* ============================================ */
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -743,6 +755,7 @@ width: 100%;
   border-radius: 8px;
   font-size: 0.9rem;
   transition: all 0.2s;
+  font-family: inherit;
 }
 
 .form-group input:focus,
@@ -759,14 +772,19 @@ width: 100%;
   margin-top: 0.2rem;
 }
 
-/* Paginación */
+/* ============================================ */
+/* ===== PAGINACIÓN ===== */
+/* ============================================ */
+
 .pagination-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   padding: 1rem 0;
   border-top: 1px solid #e9ecef;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .pagination-info {
@@ -778,6 +796,7 @@ width: 100%;
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .pagination-button {
@@ -809,6 +828,7 @@ width: 100%;
   display: flex;
   gap: 0.3rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .pagination-page {
@@ -841,20 +861,10 @@ width: 100%;
   padding: 0 0.3rem;
 }
 
-/* Sin resultados */
-.sin-resultados {
-  text-align: center;
-  padding: 3rem;
-  color: #6c757d;
-}
+/* ============================================ */
+/* ===== LOADING Y ERROR ===== */
+/* ============================================ */
 
-.sin-resultados svg {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
-
-/* Loading */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -879,7 +889,6 @@ width: 100%;
   }
 }
 
-/* Error */
 .error-container {
   display: flex;
   flex-direction: column;
@@ -905,15 +914,45 @@ width: 100%;
 
 .btn-reintentar:hover {
   background: #1e3a8a;
+  transform: translateY(-2px);
 }
 
-/* Responsive */
+.sin-resultados {
+  text-align: center;
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.sin-resultados svg {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* ============================================ */
+/* ===== RESPONSIVE ===== */
+/* ============================================ */
+
+/* --- Tablets grandes (1024px) --- */
 @media (max-width: 1024px) {
   .permisos-stats {
     grid-template-columns: repeat(2, 1fr);
   }
+  
+  .permisos-content {
+    padding: 1.5rem;
+  }
 }
 
+/* --- Tablets medianas (968px) --- */
+@media (max-width: 968px) {
+  .rol-detalle-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* --- Móviles grandes (768px) --- */
 @media (max-width: 768px) {
   .permisos-content {
     padding: 1rem;
@@ -923,6 +962,11 @@ width: 100%;
     flex-direction: column;
     gap: 1rem;
     align-items: flex-start;
+    padding: 1.5rem;
+  }
+
+  .permisos-header h1 {
+    font-size: 1.4rem;
   }
 
   .header-actions {
@@ -938,14 +982,32 @@ width: 100%;
 
   .permisos-stats {
     grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .permisos-stats .stat-card {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.8rem;
+  }
+
+  .stat-number {
+    font-size: 1.6rem;
   }
 
   .permisos-filters {
     flex-direction: column;
+    padding: 1rem;
   }
 
   .search-wrapper {
     width: 100%;
+    min-width: unset;
   }
 
   .filters-wrapper {
@@ -955,6 +1017,7 @@ width: 100%;
 
   .filter-select {
     width: 100%;
+    min-width: unset;
   }
 
   .btn-delete-selected {
@@ -962,19 +1025,18 @@ width: 100%;
     justify-content: center;
   }
 
-  .rol-detalle-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+  .permisos-table {
+    padding: 1rem;
   }
 
-  .modal-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
+  .table {
+    min-width: 500px;
+    font-size: 0.85rem;
   }
 
-  .modal-header h2 {
-    font-size: 1.1rem;
+  .table th,
+  .table td {
+    padding: 0.7rem 0.8rem;
   }
 
   .modal-detalle {
@@ -982,8 +1044,24 @@ width: 100%;
     max-height: 95vh;
   }
 
+  .modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1.2rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
   .modal-acciones {
     flex-direction: column;
+    padding: 1rem;
   }
 
   .btn-editar,
@@ -992,8 +1070,14 @@ width: 100%;
     justify-content: center;
   }
 
+  .rol-info-section,
+  .rol-permisos-section {
+    padding: 1rem;
+  }
+
   .form-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .form-group.full-width {
@@ -1003,5 +1087,231 @@ width: 100%;
   .pagination-container {
     flex-direction: column;
     gap: 1rem;
+    align-items: center;
+  }
+
+  .pagination-controls {
+    justify-content: center;
+  }
+
+  .modal-confirmar {
+    padding: 1.5rem;
+    width: 95%;
+  }
+
+  .modal-confirmar h3 {
+    font-size: 1.2rem;
+  }
+
+  .modal-botones {
+    flex-direction: column;
+  }
+
+  .btn-confirmar-eliminar,
+  .btn-cancelar {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* --- Móviles pequeños (480px) --- */
+@media (max-width: 480px) {
+  .permisos-content {
+    padding: 0.8rem;
+  }
+
+  .permisos-header {
+    padding: 1rem;
+  }
+
+  .permisos-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .header-sub {
+    font-size: 0.8rem;
+  }
+
+  .btn-nuevo-permiso,
+  .btn-bulk-permisos {
+    font-size: 0.85rem;
+    padding: 0.6rem 1rem;
+  }
+
+  .permisos-stats .stat-card {
+    padding: 0.8rem;
+    gap: 0.8rem;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.4rem;
+  }
+
+  .stat-number {
+    font-size: 1.3rem;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+  }
+
+  .permisos-filters {
+    padding: 0.8rem;
+    gap: 0.8rem;
+  }
+
+  .search-input {
+    height: 40px;
+    font-size: 13px;
+    padding: 0 14px 0 38px;
+  }
+
+  .search-icon {
+    left: 12px;
+    font-size: 14px;
+  }
+
+  .filter-select {
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .btn-delete-selected {
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .permisos-table {
+    padding: 0.8rem;
+  }
+
+  .table {
+    min-width: 400px;
+    font-size: 0.8rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .permiso-nombre-cell {
+    gap: 0.5rem;
+  }
+
+  .permiso-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+  }
+
+  .badge-categoria,
+  .badge-estado {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .btn-accion {
+    width: 30px;
+    height: 30px;
+  }
+
+  .modal-header h2 {
+    font-size: 1rem;
+  }
+
+  .modal-body {
+    padding: 0.8rem;
+  }
+
+  .rol-info-section,
+  .rol-permisos-section {
+    padding: 0.8rem;
+  }
+
+  .rol-info-valor {
+    font-size: 0.85rem;
+  }
+
+  .form-group label {
+    font-size: 0.75rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .pagination-button,
+  .pagination-page {
+    width: 34px;
+    height: 34px;
+    font-size: 0.85rem;
+  }
+
+  .pagination-info {
+    font-size: 0.8rem;
+  }
+
+  .modal-confirmar {
+    padding: 1.2rem;
+  }
+
+  .modal-confirmar h3 {
+    font-size: 1.1rem;
+  }
+
+  .modal-confirmar p {
+    font-size: 0.9rem;
+  }
+
+  .btn-cancelar,
+  .btn-editar,
+  .btn-confirmar-eliminar {
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* --- Móviles muy pequeños (360px) --- */
+@media (max-width: 360px) {
+  .permisos-header h1 {
+    font-size: 1rem;
+  }
+
+  .table {
+    min-width: 320px;
+    font-size: 0.7rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.4rem 0.5rem;
+  }
+
+  .permiso-codigo {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .pagination-button,
+  .pagination-page {
+    width: 30px;
+    height: 30px;
+    font-size: 0.75rem;
+  }
+
+  .stat-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 1.2rem;
+  }
+
+  .stat-number {
+    font-size: 1.1rem;
   }
 }

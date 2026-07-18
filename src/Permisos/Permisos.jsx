@@ -25,7 +25,7 @@ import {
   ChevronRight as ChevronRightIcon,
   Refresh as RefreshIcon
 } from '@mui/icons-material';
-import Sidebar from "../components/Sidebar";
+
 import permisoService from "../services/permisoService";
 import './Permisos.css';
 
@@ -402,7 +402,7 @@ const Permisos = () => {
   if (loading) {
     return (
       <div className="app-container">
-        <Sidebar />
+
         <div className="main-content">
           <div className="loading-container">
             <div className="spinner"></div>
@@ -416,7 +416,7 @@ const Permisos = () => {
   if (error) {
     return (
       <div className="app-container">
-        <Sidebar />
+
         <div className="main-content">
           <div className="error-container">
             <h3>Error</h3>
@@ -432,7 +432,6 @@ const Permisos = () => {
 
   return (
     <div className="app-container">
-      <Sidebar />
       <div className="main-content">
         <div className="permisos-content">
           {/* Header */}

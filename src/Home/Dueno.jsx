@@ -604,60 +604,54 @@ const Dueno = () => {
 
   // Funciones para cargar datos específicos de modales
   const cargarActivos = async () => {
-    if (!hasPermission('ver_empenos')) return;
-    try {
-      const response = await api.get('/home/activos');
-      if (response.data.success) {
-        setEmpenosActivos(response.data.data);
-        setShowActivos(true);
-      }
-    } catch (error) {
-      console.error('Error al cargar activos:', error);
-      alert('Error al cargar empeños activos');
-    }
-  };
+  if (!hasPermission('ver_empenos')) return;
+  try {
+   
+    // Usar datos del dashboardData
+    const activos = dashboardData?.empenos_activos_data || [];
+    setEmpenosActivos(activos);
+    setShowActivos(true);
+  } catch (error) {
+    console.error('Error al cargar activos:', error);
+    alert('Error al cargar empeños activos');
+  }
+};
 
-  const cargarVencidos = async () => {
-    if (!hasPermission('ver_empenos')) return;
-    try {
-      const response = await api.get('/home/vencidos');
-      if (response.data.success) {
-        setEmpenosVencidos(response.data.data);
-        setShowVencidos(true);
-      }
-    } catch (error) {
-      console.error('Error al cargar vencidos:', error);
-      alert('Error al cargar empeños vencidos');
-    }
-  };
+const cargarVencidos = async () => {
+  if (!hasPermission('ver_empenos')) return;
+  try {
+    const vencidos = dashboardData?.empenos_vencidos_data || [];
+    setEmpenosVencidos(vencidos);
+    setShowVencidos(true);
+  } catch (error) {
+    console.error('Error al cargar vencidos:', error);
+    alert('Error al cargar empeños vencidos');
+  }
+};
 
-  const cargarProximos = async () => {
-    if (!hasPermission('ver_empenos')) return;
-    try {
-      const response = await api.get('/home/proximos');
-      if (response.data.success) {
-        setProximosVencer(response.data.data);
-        setShowProximos(true);
-      }
-    } catch (error) {
-      console.error('Error al cargar próximos:', error);
-      alert('Error al cargar próximos a vencer');
-    }
-  };
+const cargarProximos = async () => {
+  if (!hasPermission('ver_empenos')) return;
+  try {
+    const proximos = dashboardData?.proximos_vencer_data || [];
+    setProximosVencer(proximos);
+    setShowProximos(true);
+  } catch (error) {
+    console.error('Error al cargar próximos:', error);
+    alert('Error al cargar próximos a vencer');
+  }
+};
 
-  const cargarIngresos = async () => {
-    if (!hasPermission('ver_pagos')) return;
-    try {
-      const response = await api.get('/home/ingresos-recientes');
-      if (response.data.success) {
-        setIngresosRecientes(response.data.data);
-        setShowIngresos(true);
-      }
-    } catch (error) {
-      console.error('Error al cargar ingresos:', error);
-      alert('Error al cargar ingresos recientes');
-    }
-  };
+const cargarIngresos = async () => {
+  if (!hasPermission('ver_pagos')) return;
+  try {
+    const ingresos = dashboardData?.ingresos_recientes_data || [];
+    setIngresosRecientes(ingresos);
+    setShowIngresos(true);
+  } catch (error) {
+    console.error('Error al cargar ingresos:', error);
+    alert('Error al cargar ingresos recientes');
+  }
+};
 
   // ============================================
   // EFECTO PRINCIPAL DE CARGA
