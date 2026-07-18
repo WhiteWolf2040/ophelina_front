@@ -1,15 +1,13 @@
-// ClientesLayout.jsx - VERSIÓN CORREGIDA (SOLO LAYOUT)
+// DuenoClientes/ClientesLayout.jsx - VERSIÓN CORREGIDA (SIN SIDEBAR)
 import { Outlet } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+
 import "./Clientes.css";
 
 const ClientesLayout = () => {
+  //  RENDER - SIN SIDEBAR
   return (
-    <div className="dashboard">
-   
-      <div className="content">
-        <Outlet />
-      </div>
+    <div className="clientes-layout-content">
+      <Outlet />
     </div>
   );
 };

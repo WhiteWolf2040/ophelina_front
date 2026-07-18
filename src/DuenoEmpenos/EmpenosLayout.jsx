@@ -1,9 +1,10 @@
+// DuenoEmpenos/EmpenosLayout.jsx - VERSIÓN CORREGIDA (SIN SIDEBAR)
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+// ❌ ELIMINAR import Sidebar from "../components/Sidebar";
+import "./EmpenosLayout.css"; // Asegúrate de tener los estilos
 
 const EmpenosLayout = () => {
-
   const [empenos, setEmpenos] = useState([
     {
       id: 1,
@@ -28,16 +29,13 @@ const EmpenosLayout = () => {
       ...nuevoEmpeno,
       id: Date.now(),
     };
-
     setEmpenos([...empenos, empenoConId]);
   };
 
+  // ✅ RENDER - SIN SIDEBAR
   return (
-    <div className="dashboard">
-
-      <div className="content">
-        <Outlet context={{ empenos, agregarEmpeno }} />
-      </div>
+    <div className="empenos-layout-content">
+      <Outlet context={{ empenos, agregarEmpeno }} />
     </div>
   );
 };

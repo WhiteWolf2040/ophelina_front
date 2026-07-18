@@ -1,7 +1,7 @@
 // src/Roles/RolNuevo.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+
 import "./Roles.css";
 
 import AddIcon from '@mui/icons-material/Add';
@@ -49,7 +49,7 @@ const RolNuevo = () => {
 
   return (
     <div className="dashboard">
-      <Sidebar />
+  
 
       <div className="content">
         <div className="roles-header">
