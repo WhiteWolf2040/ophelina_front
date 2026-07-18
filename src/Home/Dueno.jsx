@@ -1,4 +1,4 @@
-// Home/Dueno.jsx - VERSIÓN LIMPIA (SOLO CSS)
+// Home/Dueno.jsx - VERSIÓN RESPONSIVE CON DETECCIÓN DE PANTALLA
 import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
 import "./dueno.css";
@@ -30,6 +30,24 @@ import CelebrationIcon from '@mui/icons-material/Celebration';
 import AreaChartIcon from '@mui/icons-material/AreaChart';
 
 const Dueno = () => {
+  // ============================================
+  // DETECCIÓN DE TAMAÑO DE PANTALLA
+  // ============================================
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Alturas de gráficas según el tamaño de pantalla
+  const chartHeight = windowWidth < 480 ? 250 : windowWidth < 768 ? 300 : 380;
+  const smallChartHeight = windowWidth < 480 ? 200 : windowWidth < 768 ? 250 : 300;
+
   // ============================================
   // HOOK DE PERMISOS
   // ============================================
@@ -797,7 +815,7 @@ const Dueno = () => {
                 options={areaChartData.options}
                 series={areaChartData.series}
                 type="area"
-                height={380}
+                height={chartHeight}
               />
             </div>
           </div>
@@ -814,7 +832,7 @@ const Dueno = () => {
                 options={trendChartData.options}
                 series={trendChartData.series}
                 type="line"
-                height={300}
+                height={smallChartHeight}
               />
             </div>
 
@@ -827,7 +845,7 @@ const Dueno = () => {
                 options={categoriaDistribucion.options}
                 series={categoriaDistribucion.series}
                 type="donut"
-                height={300}
+                height={smallChartHeight}
               />
             </div>
           </div>

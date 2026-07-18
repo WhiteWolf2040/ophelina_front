@@ -1,7 +1,7 @@
 // PagosLista.jsx - VERSIÓN FUSIONADA (Docker Base + Características Local)
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+
 import "./Pagos.css";
 import PaymentsIcon from '@mui/icons-material/Payments';
 import pagosService from "../services/pagosService";
@@ -314,7 +314,7 @@ const PagosLista = () => {
   if (loading) {
     return (
       <div className="dashboard">
-        <Sidebar />
+    
         <div className="content loading-container">
           <div className="spinner"></div>
           <p>Cargando pagos...</p>
@@ -326,7 +326,7 @@ const PagosLista = () => {
   if (error) {
     return (
       <div className="dashboard">
-        <Sidebar />
+   
         <div className="content error-container">
           <h3>Error</h3>
           <p>{error}</p>
@@ -340,7 +340,7 @@ const PagosLista = () => {
 
   return (
     <div className="dashboard">
-      <Sidebar />
+ 
 
       <div className="content">
         {/* HEADER */}
