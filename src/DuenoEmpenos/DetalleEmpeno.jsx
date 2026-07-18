@@ -11,7 +11,7 @@ const DetalleEmpeno = ({ empenos }) => {
 
   return (
     <div className="dashboard">
-      <Sidebar />
+
 
       <div className="content">
         <div className="pagos-title">

@@ -92,7 +92,7 @@ const ClienteEditar = () => {
   if (loading) {
     return (
       <div className="dashboard">
-        <Sidebar />
+      
         <div className="content">
           <div className="loading-container">
             <div className="spinner"></div>
@@ -105,7 +105,7 @@ const ClienteEditar = () => {
 
   return (
     <div className="dashboard">
-      <Sidebar />
+
 
       <div className="content">
         <div className="top-header">

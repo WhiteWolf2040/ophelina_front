@@ -1,7 +1,7 @@
 // EmpenosLista.jsx - VERSIÓN FUSIONADA (Docker Base + Sistema de Permisos Local)
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+
 import "./Empenos.css";
 import DiamondIcon from '@mui/icons-material/Diamond';
 import VisibilityIcon from '@mui/icons-material/Visibility';

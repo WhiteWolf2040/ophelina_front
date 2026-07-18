@@ -1,10 +1,10 @@
 // ClientesLista.jsx - VERSIÓN FUSIONADA (Docker Base + Sistema de Permisos Local)
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+
 import "./Clientes.css";
 import clientesService from "../services/clientesService";
-// ✅ AGREGADO DE LOCAL: Importar servicio de permisos
+//  AGREGADO DE LOCAL: Importar servicio de permisos
 import permissionService from "../services/permisoService";
 
 // Importar iconos de MUI

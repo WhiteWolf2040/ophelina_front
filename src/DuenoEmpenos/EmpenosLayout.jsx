@@ -34,7 +34,7 @@ const EmpenosLayout = () => {
 
   return (
     <div className="dashboard">
-      <Sidebar />
+
       <div className="content">
         <Outlet context={{ empenos, agregarEmpeno }} />
       </div>

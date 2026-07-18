@@ -1,16 +1,13 @@
-// Dueño.jsx - VERSIÓN CORREGIDA (Rutas /home en lugar de /dashboard)
+// Home/Dueno.jsx - VERSIÓN CORREGIDA (SIN SIDEBAR)
 import React, { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar";
 import Chart from "react-apexcharts";
 import "./dueno.css";
 import api from '../config/api';
 import { useSearchParams } from 'react-router-dom';
 import { stripeService } from '../services/stripeService';
 import PaymentModal from '../components/PaymentModal';
-// ✅ IMPORTAR PERMISOS (de Docker)
 import { usePermissions } from '../hooks/usePermissions';
 import PermissionGuard from '../components/PermissionGuard';
-import PermissionButton from '../components/PermissionButton';
 
 // Importar iconos de MUI
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -34,7 +31,7 @@ import AreaChartIcon from '@mui/icons-material/AreaChart';
 
 const Dueno = () => {
   // ============================================
-  // 🆕 HOOK DE PERMISOS (DE DOCKER)
+  // HOOK DE PERMISOS
   // ============================================
   const { 
     hasPermission, 
@@ -48,7 +45,7 @@ const Dueno = () => {
   } = usePermissions();
 
   // ============================================
-  // 🆕 HOOKS DE PAGO (DE DOCKER)
+  // HOOKS DE PAGO
   // ============================================
   const [searchParams] = useSearchParams();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -58,7 +55,7 @@ const Dueno = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
 
-  // Detectar pago exitoso (DE DOCKER - VERSIÓN MEJORADA)
+  // Detectar pago exitoso
   useEffect(() => {
     const storedSessionId = localStorage.getItem('stripe_session_id');
     const sessionId = searchParams.get('session_id') || storedSessionId;
@@ -87,7 +84,7 @@ const Dueno = () => {
     }
   }, [searchParams]);
 
-  // 🆕 Función de verificación de pago (DE DOCKER)
+  // Función de verificación de pago
   const verificarPago = async (sessionId, planId) => {
     try {
       setIsProcessingPayment(true);
@@ -140,7 +137,7 @@ const Dueno = () => {
     }
   };
 
-  // 🆕 Verificar suscripción (DE DOCKER)
+  // Verificar suscripción
   useEffect(() => {
     const verificarSuscripcion = async () => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -168,7 +165,7 @@ const Dueno = () => {
   }, [isProcessingPayment]);
 
   // ============================================
-  // ESTADOS (DE AMBOS)
+  // ESTADOS
   // ============================================
   const [showActivos, setShowActivos] = useState(false);
   const [showVencidos, setShowVencidos] = useState(false);
@@ -177,10 +174,6 @@ const Dueno = () => {
   const [showAlertas, setShowAlertas] = useState(false);
   const [showPerfil, setShowPerfil] = useState(false);
   const [morosidad, setMorosidad] = useState([]);
-  const [distribucionCategorias, setDistribucionCategorias] = useState({
-    series: [],
-    labels: []
-  });
   const [modulosPermitidos, setModulosPermitidos] = useState([]);
   const [planInfo, setPlanInfo] = useState({ plan_id: null, plan_nombre: '' });
   const [amortizacionesPendientes, setAmortizacionesPendientes] = useState([]);
@@ -374,7 +367,7 @@ const Dueno = () => {
   });
 
   // ============================================
-  // 🆕 FUNCIONES DE VERIFICACIÓN DE PERMISOS (DE DOCKER)
+  // FUNCIONES DE VERIFICACIÓN DE PERMISOS
   // ============================================
   const puedeVerEvolucionAcumulada = () => {
     return hasPermission('ver_dashboard') && hasAnyPermission(['ver_reportes', 'ver_dashboard']);
@@ -436,7 +429,7 @@ const Dueno = () => {
   };
 
   // ============================================
-  // FUNCIONES DE CARGA DE DATOS (CORREGIDAS con /home)
+  // FUNCIONES DE CARGA DE DATOS
   // ============================================
   
   const cargarUsuarioActual = async () => {
@@ -492,7 +485,6 @@ const Dueno = () => {
     }
   };
 
-  // ✅ CORREGIDO: /dashboard/morosidad → /home/morosidad
   const cargarMorosidad = async () => {
     try {
       const response = await api.get('/home/morosidad');
@@ -508,7 +500,6 @@ const Dueno = () => {
     }
   };
 
-  // ✅ CORREGIDO: /dashboard/distribucion-categorias → /home/distribucion-categorias
   const cargarDistribucionCategorias = async () => {
     try {
       const response = await api.get('/home/distribucion-categorias');
@@ -523,7 +514,6 @@ const Dueno = () => {
     }
   };
 
-  // ✅ CORREGIDO: /dashboard → /home
   const cargarDashboard = async () => {
     try {
       setLoading(true);
@@ -569,7 +559,6 @@ const Dueno = () => {
     }
   };
 
-  // ✅ CORREGIDO: /dashboard/amortizaciones-pendientes → /home/amortizaciones-pendientes
   const cargarAmortizacionesPendientes = async () => {
     try {
       setLoadingAmortizaciones(true);
@@ -596,7 +585,6 @@ const Dueno = () => {
   };
 
   // Funciones para cargar datos específicos de modales
-  // ✅ CORREGIDOS: /dashboard/activos → /home/activos, etc.
   const cargarActivos = async () => {
     if (!hasPermission('ver_empenos')) return;
     try {
@@ -654,7 +642,7 @@ const Dueno = () => {
   };
 
   // ============================================
-  // 🆕 EFECTO PRINCIPAL DE CARGA (FUSIONADO)
+  // EFECTO PRINCIPAL DE CARGA
   // ============================================
   useEffect(() => {
     cargarDashboard();
@@ -690,11 +678,8 @@ const Dueno = () => {
   // Loading state
   if (loading || permissionsLoading) {
     return (
-      <div className="dashboard">
-        <Sidebar modulosPermitidos={modulosPermitidos} />
-        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <div>Cargando dashboard...</div>
-        </div>
+      <div className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div>Cargando dashboard...</div>
       </div>
     );
   }
@@ -702,392 +687,388 @@ const Dueno = () => {
   // Error state
   if (error) {
     return (
-      <div className="dashboard">
-        <Sidebar modulosPermitidos={modulosPermitidos} />
-        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
-          <WarningIcon style={{ fontSize: 48, color: '#dc3545', marginBottom: 16 }} />
-          <h3>Error de conexión</h3>
-          <p>{error}</p>
-          <button onClick={cargarDashboard} style={{ marginTop: 16, padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            Reintentar
-          </button>
-        </div>
+      <div className="dashboard-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+        <WarningIcon style={{ fontSize: 48, color: '#dc3545', marginBottom: 16 }} />
+        <h3>Error de conexión</h3>
+        <p>{error}</p>
+        <button onClick={cargarDashboard} style={{ marginTop: 16, padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+          Reintentar
+        </button>
       </div>
     );
   }
 
+  // ============================================
+  // ✅ RENDER - SIN SIDEBAR (ya está en AppLayout)
+  // ============================================
   return ( 
-    <div className="dashboard">
-      <Sidebar modulosPermitidos={modulosPermitidos} />
+    <div className="dashboard-content">
+      {/* HEADER */}
+      <div className="owner-header">
+        <div className="header-top">
+          <h1>
+            Hola, {datosPerfil.nombre.split(' ')[0] || 'Usuario'}
+            <p className="header-sub">Conoce el estado de tu casa de empeño</p>
+          </h1>
+        
+          <div className="header-botones">
+            <button className="btn-perfil" onClick={() => setShowPerfil(true)} title="Mi Perfil">
+              <img src={datosPerfil.fotoPerfil} alt="Perfil" className="perfil-foto" />
+            </button>
 
-      <div className="content">
-        {/* HEADER - Visible para todos */}
-        <div className="owner-header">
-          <div className="header-top">
-            <h1>
-              Hola, {datosPerfil.nombre.split(' ')[0] || 'Usuario'}
-              <p className="header-sub">Conoce el estado de tu casa de empeño</p>
-            </h1>
-          
-            <div className="header-botones">
-              <button className="btn-perfil" onClick={() => setShowPerfil(true)} title="Mi Perfil">
-                <img src={datosPerfil.fotoPerfil} alt="Perfil" className="perfil-foto" />
-              </button>
-
-              <button className="btn-alertas" onClick={() => setShowAlertas(true)} title="Alertas">
-                <NotificationsIcon className="alerta-icon" />
-                {(dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos) > 0 && (
-                  <span className="alerta-badge">
-                    {dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* ============================================ */}
-        {/* CARDS - CON PERMISOS (DE DOCKER) */}
-        {/* ============================================ */}
-        <div className="cards-grid">
-          <PermissionGuard permission="ver_empenos">
-            <div className="stat-card" onClick={cargarActivos} style={{ cursor: 'pointer' }}>
-              <AssignmentIcon className="card-icon" />
-              <h3>Empeños Activos</h3>
-              <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
-            </div>
-          </PermissionGuard>
-
-          <PermissionGuard permission="ver_empenos">
-            <div className="stat-card" onClick={cargarVencidos} style={{ cursor: 'pointer' }}>
-              <WarningIcon className="card-icon" />
-              <h3>Empeños Vencidos</h3>
-              <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
-            </div>
-          </PermissionGuard>
-
-          <PermissionGuard permission="ver_empenos">
-            <div className="stat-card" onClick={cargarProximos} style={{ cursor: 'pointer' }}>
-              <AccessTimeIcon className="card-icon" />
-              <h3>Próximos a Vencer</h3>
-              <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
-            </div>
-          </PermissionGuard>
-
-          <PermissionGuard permission="ver_pagos">
-            <div className="stat-card" onClick={cargarIngresos} style={{ cursor: 'pointer' }}>
-              <AttachMoneyIcon className="card-icon" />
-              <h3>Ingresos Recientes</h3>
-              <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
-            </div>
-          </PermissionGuard>
-
-          {/* Card de Precio del Oro - siempre visible */}
-          <div className="stat-card gold-card" onClick={() => setShowPrecioOroModal(true)} style={{ cursor: 'pointer' }}>
-            <MonetizationOnIcon className="card-icon" />
-            <h3>Precio del Oro</h3>
-            <p className="stat-number">${dashboardData.resumen?.precio_oro || 850} / gramo</p>
-            {dashboardData.resumen?.ultima_actualizacion_oro && (
-              <small style={{ fontSize: '10px', color: '#666', display: 'block', marginTop: '5px' }}>
-                Actualizado: {new Date(dashboardData.resumen.ultima_actualizacion_oro).toLocaleDateString('es-MX')}
-              </small>
-            )}
-            <small style={{ fontSize: '9px', color: '#000000', display: 'block', marginTop: '3px' }}>
-              Haz clic para ver precios por quilate
-            </small>
-          </div>
-        </div>
-
-        {/* ============================================ */}
-        {/* GRÁFICAS - CON PERMISOS (DE DOCKER) */}
-        {/* ============================================ */}
-        {puedeVerEvolucionAcumulada() && (
-          <div className="chart-section">
-            <h2>
-              <AreaChartIcon />
-              Evolución Acumulada (Capital vs Retorno vs Ganancia)
-            </h2>
-            <p className="chart-subtitle">
-              El área muestra el crecimiento total del negocio - La diferencia entre Capital y Retorno es la ganancia acumulada
-            </p>
-            <div className="chart-wrapper">
-              <Chart
-                options={areaChartData.options}
-                series={areaChartData.series}
-                type="area"
-                height={380}
-              />
-            </div>
-          </div>
-        )}
-
-        {puedeVerGraficasBasicas() && (
-          <div className="nuevas-graficas-grid">
-            <div className="grafica-nueva-card">
-              <h2>
-                <TrendingUpIcon />
-                Tendencia de Ingresos
-              </h2>
-              <Chart
-                options={trendChartData.options}
-                series={trendChartData.series}
-                type="line"
-                height={300}
-              />
-            </div>
-
-            <div className="grafica-nueva-card">
-              <h2>
-                <PieChartIcon />
-                Distribución por Categoría
-              </h2>
-              <Chart
-                options={categoriaDistribucion.options}
-                series={categoriaDistribucion.series}
-                type="donut"
-                height={300}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ============================================ */}
-        {/* TOP CLIENTES - Con permiso ver_clientes (DE DOCKER) */}
-        {/* ============================================ */}
-        {puedeVerTopClientes() && (
-          <div className="nueva-seccion">
-            <h2>
-              <EmojiEventsIcon />
-              Top 5 Clientes (Mayores Ganancias)
-            </h2>
-            <div className="tabla-container">
-              <table className="tabla-moderna">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>Empeños</th>
-                    <th>Monto Prestado</th>
-                    <th>Ganancia Generada</th>
-                    <th>% Ganancia</th>
-                    <th>Último Empeño</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dashboardData.top_clientes?.map(cliente => (
-                    <tr key={cliente.id_cliente}>
-                      <td><strong>{cliente.nombre}</strong></td>
-                      <td>{cliente.empenos}</td>
-                      <td>{formatearMoneda(cliente.monto_total)}</td>
-                      <td className="profit-text">{formatearMoneda(cliente.ganancia_generada || (cliente.monto_total * 0.15))}</td>
-                      <td>
-                        <span className="profit-badge">
-                          +{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}
-                        </span>
-                      </td>
-                      <td>{formatFecha(cliente.ultimo_empeno)}</td>
-                    </tr>
-                  ))}
-                  {dashboardData.top_clientes?.length === 0 && (
-                    <tr>
-                      <td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ============================================ */}
-        {/* MOROSIDAD - Con permisos (DE DOCKER) */}
-        {/* ============================================ */}
-        {puedeVerMorosidad() && (
-          <div className="nueva-seccion">
-            <h2>
-              <WarningIcon />
-              Morosidad - Clientes con Mayor Pérdida
-            </h2>
-            <div className="tabla-container">
-              <table className="tabla-moderna">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>Total Prestado</th>
-                    <th>Deuda Vencida</th>
-                    <th>Pérdida Proyectada</th>
-                    <th>% Pérdida</th>
-                    <th>Días en Mora</th>
-                    <th>Último Pago</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {morosidad.map((item, index) => {
-                    let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
-                    if (porcentaje > 100) porcentaje = 100;
-                    
-                    return (
-                      <tr key={index}>
-                        <td><strong>{item.cliente}</strong></td>
-                        <td>{formatearMoneda(item.total_prestado)}</td>
-                        <td className="loss-text">{formatearMoneda(item.deuda)}</td>
-                        <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
-                        <td>
-                          <span className="loss-badge">
-                            -{porcentaje.toFixed(2)}%
-                          </span>
-                        </td>
-                        <td><span className="badge-danger">{item.pagos_atrasados || item.dias_mora} días</span></td>
-                        <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' 
-                          ? formatFecha(item.ultimo_pago) 
-                          : 'Sin registro'}</td>
-                      </tr>
-                    );
-                  })}
-                  {morosidad.length === 0 && (
-                    <tr>
-                      <td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ============================================ */}
-        {/* AMORTIZACIONES PENDIENTES - Con permisos (DE DOCKER) */}
-        {/* ============================================ */}
-        {puedeVerAmortizaciones() && (
-          <div className="nueva-seccion">
-            <h2>
-              <AssignmentIcon />
-              Amortizaciones Pendientes
-              <span className="seccion-badge">
-                {amortizacionesPendientes.length} registros
-              </span>
-            </h2>
-            <div className="tabla-container">
-              <table className="tabla-moderna">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>Artículo</th>
-                    <th>Folio</th>
-                    <th>N° Pago</th>
-                    <th>Fecha Programada</th>
-                    <th>Monto Total</th>
-                    <th>Pagado</th>
-                    <th>Saldo Restante</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loadingAmortizaciones ? (
-                    <tr><td colSpan="9" style={{ textAlign: 'center' }}>Cargando...</td></tr>
-                  ) : amortizacionesPendientes.length === 0 ? (
-                    <tr><td colSpan="9" style={{ textAlign: 'center' }}>No hay amortizaciones pendientes</td></tr>
-                  ) : (
-                    amortizacionesPendientes.map((item) => (
-                      <tr key={item.id_amortizacion} className={item.dias_atraso > 0 ? 'fila-atrasada' : ''}>
-                        <td><strong>{item.cliente_nombre}</strong></td>
-                        <td>{item.articulo}</td>
-                        <td><span className="folio-badge">{item.folio}</span></td>
-                        <td>{item.numero_pago}</td>
-                        <td>{new Date(item.fecha_pago_programado).toLocaleDateString('es-MX')}</td>
-                        <td className="monto">{formatearMoneda(item.monto_total)}</td>
-                        <td className="monto-pagado">{formatearMoneda(item.monto_pagado || 0)}</td>
-                        <td className="monto-restante">{formatearMoneda(item.saldo_restante)}</td>
-                        <td>
-                          {item.dias_atraso > 0 ? (
-                            <span className="badge-danger">{item.dias_atraso} días atrasado</span>
-                          ) : (
-                            <span className="badge-warning">Pendiente</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ============================================ */}
-        {/* ARTÍCULOS MÁS EMPEÑADOS - Con permisos (DE DOCKER) */}
-        {/* ============================================ */}
-        {puedeVerArticulosMasEmpenados() && (
-          <div className="nueva-seccion">
-            <h2>
-              <LocalOfferIcon />
-              Artículos Más Empeñados
-            </h2>
-            <div className="tabla-container">
-              <table className="tabla-moderna">
-                <thead>
-                  <tr>
-                    <th>Artículo</th>
-                    <th>Categoría</th>
-                    <th>Cantidad</th>
-                    <th>Monto Promedio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dashboardData.top_articulos?.map((articulo, index) => (
-                    <tr key={index}>
-                      <td><strong>{articulo.nombre}</strong></td>
-                      <td>{articulo.categoria}</td>
-                      <td>{articulo.cantidad}</td>
-                      <td>{formatearMoneda(articulo.monto_promedio)}</td>
-                    </tr>
-                  ))}
-                  {dashboardData.top_articulos?.length === 0 && (
-                    <tr>
-                      <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ============================================ */}
-        {/* ACTIVIDAD RECIENTE - Visible para todos */}
-        {/* ============================================ */}
-        <div className="nueva-seccion">
-          <h2>
-            <HistoryIcon />
-            Actividad Reciente
-          </h2>
-          <div className="actividad-lista">
-            {dashboardData.actividad_reciente?.map((actividad, index) => (
-              <div key={index} className="actividad-item">
-                {actividad.tipo === 'pago' ? (
-                  <CheckCircleIcon className="actividad-icon success" />
-                ) : (
-                  <CelebrationIcon className="actividad-icon info" />
-                )}
-                <div className="actividad-detalle">
-                  <p><strong>{actividad.descripcion}</strong></p>
-                  <small>{formatFecha(actividad.fecha)}</small>
-                </div>
-                {actividad.monto && (
-                  <div className="actividad-monto">
-                    {formatearMoneda(actividad.monto)}
-                  </div>
-                )}
-              </div>
-            ))}
-            {dashboardData.actividad_reciente?.length === 0 && (
-              <div style={{ textAlign: 'center', padding: 20 }}>No hay actividad reciente</div>
-            )}
+            <button className="btn-alertas" onClick={() => setShowAlertas(true)} title="Alertas">
+              <NotificationsIcon className="alerta-icon" />
+              {(dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos) > 0 && (
+                <span className="alerta-badge">
+                  {dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </div>
 
       {/* ============================================ */}
-      {/* MODALES (TODOS DE LOCAL, CON PERMISOS DE DOCKER) */}
+      {/* CARDS - CON PERMISOS */}
+      {/* ============================================ */}
+      <div className="cards-grid">
+        <PermissionGuard permission="ver_empenos">
+          <div className="stat-card" onClick={cargarActivos} style={{ cursor: 'pointer' }}>
+            <AssignmentIcon className="card-icon" />
+            <h3>Empeños Activos</h3>
+            <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
+          </div>
+        </PermissionGuard>
+
+        <PermissionGuard permission="ver_empenos">
+          <div className="stat-card" onClick={cargarVencidos} style={{ cursor: 'pointer' }}>
+            <WarningIcon className="card-icon" />
+            <h3>Empeños Vencidos</h3>
+            <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
+          </div>
+        </PermissionGuard>
+
+        <PermissionGuard permission="ver_empenos">
+          <div className="stat-card" onClick={cargarProximos} style={{ cursor: 'pointer' }}>
+            <AccessTimeIcon className="card-icon" />
+            <h3>Próximos a Vencer</h3>
+            <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
+          </div>
+        </PermissionGuard>
+
+        <PermissionGuard permission="ver_pagos">
+          <div className="stat-card" onClick={cargarIngresos} style={{ cursor: 'pointer' }}>
+            <AttachMoneyIcon className="card-icon" />
+            <h3>Ingresos Recientes</h3>
+            <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
+          </div>
+        </PermissionGuard>
+
+        {/* Card de Precio del Oro - siempre visible */}
+        <div className="stat-card gold-card" onClick={() => setShowPrecioOroModal(true)} style={{ cursor: 'pointer' }}>
+          <MonetizationOnIcon className="card-icon" />
+          <h3>Precio del Oro</h3>
+          <p className="stat-number">${dashboardData.resumen?.precio_oro || 850} / gramo</p>
+          {dashboardData.resumen?.ultima_actualizacion_oro && (
+            <small style={{ fontSize: '10px', color: '#666', display: 'block', marginTop: '5px' }}>
+              Actualizado: {new Date(dashboardData.resumen.ultima_actualizacion_oro).toLocaleDateString('es-MX')}
+            </small>
+          )}
+          <small style={{ fontSize: '9px', color: '#000000', display: 'block', marginTop: '3px' }}>
+            Haz clic para ver precios por quilate
+          </small>
+        </div>
+      </div>
+
+      {/* ============================================ */}
+      {/* GRÁFICAS - CON PERMISOS */}
+      {/* ============================================ */}
+      {puedeVerEvolucionAcumulada() && (
+        <div className="chart-section">
+          <h2>
+            <AreaChartIcon />
+            Evolución Acumulada (Capital vs Retorno vs Ganancia)
+          </h2>
+          <p className="chart-subtitle">
+            El área muestra el crecimiento total del negocio - La diferencia entre Capital y Retorno es la ganancia acumulada
+          </p>
+          <div className="chart-wrapper">
+            <Chart
+              options={areaChartData.options}
+              series={areaChartData.series}
+              type="area"
+              height={380}
+            />
+          </div>
+        </div>
+      )}
+
+      {puedeVerGraficasBasicas() && (
+        <div className="nuevas-graficas-grid">
+          <div className="grafica-nueva-card">
+            <h2>
+              <TrendingUpIcon />
+              Tendencia de Ingresos
+            </h2>
+            <Chart
+              options={trendChartData.options}
+              series={trendChartData.series}
+              type="line"
+              height={300}
+            />
+          </div>
+
+          <div className="grafica-nueva-card">
+            <h2>
+              <PieChartIcon />
+              Distribución por Categoría
+            </h2>
+            <Chart
+              options={categoriaDistribucion.options}
+              series={categoriaDistribucion.series}
+              type="donut"
+              height={300}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ============================================ */}
+      {/* TOP CLIENTES - Con permiso ver_clientes */}
+      {/* ============================================ */}
+      {puedeVerTopClientes() && (
+        <div className="nueva-seccion">
+          <h2>
+            <EmojiEventsIcon />
+            Top 5 Clientes (Mayores Ganancias)
+          </h2>
+          <div className="tabla-container">
+            <table className="tabla-moderna">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Empeños</th>
+                  <th>Monto Prestado</th>
+                  <th>Ganancia Generada</th>
+                  <th>% Ganancia</th>
+                  <th>Último Empeño</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboardData.top_clientes?.map(cliente => (
+                  <tr key={cliente.id_cliente}>
+                    <td><strong>{cliente.nombre}</strong></td>
+                    <td>{cliente.empenos}</td>
+                    <td>{formatearMoneda(cliente.monto_total)}</td>
+                    <td className="profit-text">{formatearMoneda(cliente.ganancia_generada || (cliente.monto_total * 0.15))}</td>
+                    <td>
+                      <span className="profit-badge">
+                        +{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}
+                      </span>
+                    </td>
+                    <td>{formatFecha(cliente.ultimo_empeno)}</td>
+                  </tr>
+                ))}
+                {dashboardData.top_clientes?.length === 0 && (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================ */}
+      {/* MOROSIDAD - Con permisos */}
+      {/* ============================================ */}
+      {puedeVerMorosidad() && (
+        <div className="nueva-seccion">
+          <h2>
+            <WarningIcon />
+            Morosidad - Clientes con Mayor Pérdida
+          </h2>
+          <div className="tabla-container">
+            <table className="tabla-moderna">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Total Prestado</th>
+                  <th>Deuda Vencida</th>
+                  <th>Pérdida Proyectada</th>
+                  <th>% Pérdida</th>
+                  <th>Días en Mora</th>
+                  <th>Último Pago</th>
+                </tr>
+              </thead>
+              <tbody>
+                {morosidad.map((item, index) => {
+                  let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
+                  if (porcentaje > 100) porcentaje = 100;
+                  
+                  return (
+                    <tr key={index}>
+                      <td><strong>{item.cliente}</strong></td>
+                      <td>{formatearMoneda(item.total_prestado)}</td>
+                      <td className="loss-text">{formatearMoneda(item.deuda)}</td>
+                      <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
+                      <td>
+                        <span className="loss-badge">
+                          -{porcentaje.toFixed(2)}%
+                        </span>
+                      </td>
+                      <td><span className="badge-danger">{item.pagos_atrasados || item.dias_mora} días</span></td>
+                      <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' 
+                        ? formatFecha(item.ultimo_pago) 
+                        : 'Sin registro'}</td>
+                    </tr>
+                  );
+                })}
+                {morosidad.length === 0 && (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================ */}
+      {/* AMORTIZACIONES PENDIENTES - Con permisos */}
+      {/* ============================================ */}
+      {puedeVerAmortizaciones() && (
+        <div className="nueva-seccion">
+          <h2>
+            <AssignmentIcon />
+            Amortizaciones Pendientes
+            <span className="seccion-badge">
+              {amortizacionesPendientes.length} registros
+            </span>
+          </h2>
+          <div className="tabla-container">
+            <table className="tabla-moderna">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Artículo</th>
+                  <th>Folio</th>
+                  <th>N° Pago</th>
+                  <th>Fecha Programada</th>
+                  <th>Monto Total</th>
+                  <th>Pagado</th>
+                  <th>Saldo Restante</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingAmortizaciones ? (
+                  <tr><td colSpan="9" style={{ textAlign: 'center' }}>Cargando...</td></tr>
+                ) : amortizacionesPendientes.length === 0 ? (
+                  <tr><td colSpan="9" style={{ textAlign: 'center' }}>No hay amortizaciones pendientes</td></tr>
+                ) : (
+                  amortizacionesPendientes.map((item) => (
+                    <tr key={item.id_amortizacion} className={item.dias_atraso > 0 ? 'fila-atrasada' : ''}>
+                      <td><strong>{item.cliente_nombre}</strong></td>
+                      <td>{item.articulo}</td>
+                      <td><span className="folio-badge">{item.folio}</span></td>
+                      <td>{item.numero_pago}</td>
+                      <td>{new Date(item.fecha_pago_programado).toLocaleDateString('es-MX')}</td>
+                      <td className="monto">{formatearMoneda(item.monto_total)}</td>
+                      <td className="monto-pagado">{formatearMoneda(item.monto_pagado || 0)}</td>
+                      <td className="monto-restante">{formatearMoneda(item.saldo_restante)}</td>
+                      <td>
+                        {item.dias_atraso > 0 ? (
+                          <span className="badge-danger">{item.dias_atraso} días atrasado</span>
+                        ) : (
+                          <span className="badge-warning">Pendiente</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================ */}
+      {/* ARTÍCULOS MÁS EMPEÑADOS - Con permisos */}
+      {/* ============================================ */}
+      {puedeVerArticulosMasEmpenados() && (
+        <div className="nueva-seccion">
+          <h2>
+            <LocalOfferIcon />
+            Artículos Más Empeñados
+          </h2>
+          <div className="tabla-container">
+            <table className="tabla-moderna">
+              <thead>
+                <tr>
+                  <th>Artículo</th>
+                  <th>Categoría</th>
+                  <th>Cantidad</th>
+                  <th>Monto Promedio</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboardData.top_articulos?.map((articulo, index) => (
+                  <tr key={index}>
+                    <td><strong>{articulo.nombre}</strong></td>
+                    <td>{articulo.categoria}</td>
+                    <td>{articulo.cantidad}</td>
+                    <td>{formatearMoneda(articulo.monto_promedio)}</td>
+                  </tr>
+                ))}
+                {dashboardData.top_articulos?.length === 0 && (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================ */}
+      {/* ACTIVIDAD RECIENTE - Visible para todos */}
+      {/* ============================================ */}
+      <div className="nueva-seccion">
+        <h2>
+          <HistoryIcon />
+          Actividad Reciente
+        </h2>
+        <div className="actividad-lista">
+          {dashboardData.actividad_reciente?.map((actividad, index) => (
+            <div key={index} className="actividad-item">
+              {actividad.tipo === 'pago' ? (
+                <CheckCircleIcon className="actividad-icon success" />
+              ) : (
+                <CelebrationIcon className="actividad-icon info" />
+              )}
+              <div className="actividad-detalle">
+                <p><strong>{actividad.descripcion}</strong></p>
+                <small>{formatFecha(actividad.fecha)}</small>
+              </div>
+              {actividad.monto && (
+                <div className="actividad-monto">
+                  {formatearMoneda(actividad.monto)}
+                </div>
+              )}
+            </div>
+          ))}
+          {dashboardData.actividad_reciente?.length === 0 && (
+            <div style={{ textAlign: 'center', padding: 20 }}>No hay actividad reciente</div>
+          )}
+        </div>
+      </div>
+
+      {/* ============================================ */}
+      {/* MODALES (todos igual, solo quito los repetidos) */}
       {/* ============================================ */}
 
       {/* MODAL DE PERFIL */}

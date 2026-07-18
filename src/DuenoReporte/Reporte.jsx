@@ -2,7 +2,7 @@
 // Reemplaza el archivo anterior completo
 
 import React, { useState, useRef, useEffect } from "react";
-import Sidebar           from "../components/Sidebar";
+
 import KPIsFinancieros   from "../components/KPIsFinancieros";
 import { useReportes }   from "../hooks/useReportes";
 import ApexCharts        from "apexcharts";
@@ -234,7 +234,7 @@ const Reportes = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="dashboard">
-      <Sidebar />
+
 
       <div className="content">
 

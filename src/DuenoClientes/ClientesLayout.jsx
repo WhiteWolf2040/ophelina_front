@@ -6,7 +6,7 @@ import "./Clientes.css";
 const ClientesLayout = () => {
   return (
     <div className="dashboard">
-      <Sidebar />
+   
       <div className="content">
         <Outlet />
       </div>

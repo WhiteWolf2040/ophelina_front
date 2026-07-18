@@ -1,6 +1,6 @@
 // src/Roles/Roles.jsx - VERSIÓN FUSIONADA (Docker Base + Filtro de Local)
 import React, { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar";
+
 import "./Roles.css";
 import rolesService from "../services/rolService";
 import Select from 'react-select';
@@ -265,7 +265,7 @@ const Roles = () => {
   if (loading) {
     return (
       <div className="dashboard">
-        <Sidebar />
+      
         <div className="content loading-container">
           <div className="spinner"></div>
           <p>Cargando roles...</p>
@@ -277,7 +277,7 @@ const Roles = () => {
   if (error) {
     return (
       <div className="dashboard">
-        <Sidebar />
+      
         <div className="content error-container">
           <h3>Error</h3>
           <p>{error}</p>
@@ -292,7 +292,7 @@ const Roles = () => {
 
   return (
     <div className="dashboard">
-      <Sidebar />
+   
 
       <div className="content roles-content">
         {/* HEADER */}
