@@ -1,4 +1,4 @@
-// TiendaOnline.jsx - Versión integrada con API y publicación automática
+// TiendaOnline.jsx - Versión COMPLETA Y FUNCIONAL
 
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
@@ -32,6 +32,9 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TimerIcon from '@mui/icons-material/Timer';
+
+// Placeholder para imágenes
+const PLACEHOLDER_IMAGE = '/placeholder.png';
 
 const TiendaOnline = () => {
   // ========== HOOK DE TIENDA ==========
@@ -92,12 +95,11 @@ const TiendaOnline = () => {
 
   // ========== EFECTOS ==========
   useEffect(() => {
-    // Cargar productos al montar el componente
     cargarProductos();
     cargarEstadisticas();
   }, []);
 
-  // Sincronizar filtros del componente con el hook
+  // Sincronizar filtros
   useEffect(() => {
     setFiltros({
       busqueda,
@@ -110,6 +112,7 @@ const TiendaOnline = () => {
   // ========== MANEJADORES ==========
   const abrirNuevoProducto = () => {
     setModoEdicion(false);
+    setProductoSeleccionado(null);
     setFormProducto({
       id_prenda: "",
       nombre: "",
@@ -128,19 +131,22 @@ const TiendaOnline = () => {
 
   const abrirEditarProducto = (producto) => {
     setModoEdicion(true);
-    setProductoSeleccionado(producto);
+    setProductoSeleccionado({
+      ...producto,
+      id: producto.id_producto // Para compatibilidad
+    });
     setFormProducto({
       id_prenda: producto.id_prenda || "",
-      nombre: producto.nombre,
-      categoria: producto.categoria,
-      precio: producto.precio,
+      nombre: producto.nombre || "",
+      categoria: producto.categoria || "Joyería",
+      precio: producto.precio || "",
       descuento: producto.descuento || 0,
-      stock: producto.stock,
-      imagen: producto.imagen_principal || "",
+      stock: producto.stock || 1,
+      imagen: producto.imagen_url || producto.imagen_principal || "",
       descripcion: producto.descripcion || "",
-      estado: producto.estado,
-      visible: producto.visible,
-      destacado: producto.destacado
+      estado: producto.estado_producto || producto.estado || "Buen estado",
+      visible: producto.visible !== undefined ? producto.visible : true,
+      destacado: producto.destacado || false
     });
     setModalProductoAbierto(true);
   };
@@ -164,51 +170,64 @@ const TiendaOnline = () => {
     
     try {
       const data = {
-        ...formProducto,
+        nombre: formProducto.nombre,
+        categoria: formProducto.categoria,
         precio: Number(formProducto.precio),
         descuento: Number(formProducto.descuento),
-        stock: Number(formProducto.stock)
+        stock: Number(formProducto.stock),
+        descripcion: formProducto.descripcion,
+        estado: formProducto.estado,
+        visible: formProducto.visible,
+        destacado: formProducto.destacado,
+        imagen: formProducto.imagen,
+        id_prenda: formProducto.id_prenda || null
       };
 
       if (modoEdicion && productoSeleccionado) {
-        await actualizarProducto(productoSeleccionado.id, data);
+        await actualizarProducto(productoSeleccionado.id_producto, data);
       } else {
         await crearProducto(data);
       }
       
       setModalProductoAbierto(false);
+      await cargarProductos();
+      await cargarEstadisticas();
     } catch (err) {
       console.error("Error guardando producto:", err);
-      alert("Error al guardar el producto: " + (err.message || "Intenta de nuevo"));
+      alert("Error al guardar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
     }
   };
 
   const handleEliminarProducto = async () => {
     try {
-      await eliminarProducto(productoSeleccionado.id);
+      await eliminarProducto(productoSeleccionado.id_producto);
       setModalEliminarAbierto(false);
       setProductoSeleccionado(null);
+      await cargarProductos();
+      await cargarEstadisticas();
     } catch (err) {
       console.error("Error eliminando producto:", err);
-      alert("Error al eliminar el producto: " + (err.message || "Intenta de nuevo"));
+      alert("Error al eliminar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
     }
   };
 
   const handleToggleVisible = async (id) => {
     try {
       await toggleVisibilidad(id);
+      await cargarProductos();
     } catch (err) {
       console.error("Error cambiando visibilidad:", err);
-      alert("Error al cambiar visibilidad: " + (err.message || "Intenta de nuevo"));
+      alert("Error al cambiar visibilidad: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
     }
   };
 
   const handleToggleDestacado = async (id) => {
     try {
       await toggleDestacado(id);
+      await cargarProductos();
     } catch (err) {
       console.error("Error cambiando destacado:", err);
-      alert("Error al cambiar destacado: " + (err.message || "Intenta de nuevo"));
+      alert("Error al cambiar destacado: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
     }
   };
 
@@ -225,7 +244,7 @@ const TiendaOnline = () => {
       console.error("Error en publicación automática:", err);
       setResultadoPublicacion({
         error: true,
-        message: err.message || "Error al publicar productos"
+        message: err.response?.data?.message || err.message || "Error al publicar productos"
       });
     } finally {
       setPublicando(false);
@@ -239,7 +258,7 @@ const TiendaOnline = () => {
       setMostrarConfiguracion(false);
     } catch (err) {
       console.error("Error configurando días de gracia:", err);
-      alert("Error al configurar días de gracia: " + (err.message || "Intenta de nuevo"));
+      alert("Error al configurar días de gracia: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
     }
   };
 
@@ -249,6 +268,12 @@ const TiendaOnline = () => {
       ...formProducto,
       [name]: type === "checkbox" ? checked : value
     });
+  };
+
+  // Formatear precio de forma segura
+  const formatPrice = (price) => {
+    if (price === null || price === undefined || isNaN(price)) return '0';
+    return Number(price).toLocaleString();
   };
 
   // ========== RENDER ==========
@@ -287,9 +312,7 @@ const TiendaOnline = () => {
         {/* ESTADÍSTICAS */}
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-icon">
-              <InventoryIcon />
-            </div>
+            <div className="stat-icon"><InventoryIcon /></div>
             <div className="stat-info">
               <span className="stat-label">Total Productos</span>
               <span className="stat-value">{estadisticas?.total || 0}</span>
@@ -297,9 +320,7 @@ const TiendaOnline = () => {
           </div>
           
           <div className="stat-card">
-            <div className="stat-icon">
-              <VisibilityIcon />
-            </div>
+            <div className="stat-icon"><VisibilityIcon /></div>
             <div className="stat-info">
               <span className="stat-label">Visibles</span>
               <span className="stat-value">{estadisticas?.visibles || 0}</span>
@@ -307,9 +328,7 @@ const TiendaOnline = () => {
           </div>
           
           <div className="stat-card">
-            <div className="stat-icon">
-              <VisibilityOffIcon />
-            </div>
+            <div className="stat-icon"><VisibilityOffIcon /></div>
             <div className="stat-info">
               <span className="stat-label">Ocultos</span>
               <span className="stat-value">{estadisticas?.ocultos || 0}</span>
@@ -317,9 +336,7 @@ const TiendaOnline = () => {
           </div>
           
           <div className="stat-card">
-            <div className="stat-icon">
-              <AttachMoneyIcon />
-            </div>
+            <div className="stat-icon"><AttachMoneyIcon /></div>
             <div className="stat-info">
               <span className="stat-label">Valor Total</span>
               <span className="stat-value">${estadisticas?.valor_total || 0}</span>
@@ -327,9 +344,7 @@ const TiendaOnline = () => {
           </div>
           
           <div className="stat-card">
-            <div className="stat-icon">
-              <StarIcon />
-            </div>
+            <div className="stat-icon"><StarIcon /></div>
             <div className="stat-info">
               <span className="stat-label">Destacados</span>
               <span className="stat-value">{estadisticas?.destacados || 0}</span>
@@ -337,9 +352,7 @@ const TiendaOnline = () => {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">
-              <TimerIcon />
-            </div>
+            <div className="stat-icon"><TimerIcon /></div>
             <div className="stat-info">
               <span className="stat-label">Pub. Automática</span>
               <span className="stat-value">{estadisticas?.publicaciones_automaticas || 0}</span>
@@ -441,11 +454,16 @@ const TiendaOnline = () => {
           <div className="productos-grid">
             {productos?.data?.length > 0 ? (
               productos.data.map(producto => (
-                <div key={producto.id} className={`producto-card ${!producto.visible ? 'producto-oculto' : ''}`}>
+                // ✅ KEY CORREGIDO: usar id_producto
+                <div key={producto.id_producto} className={`producto-card ${!producto.visible ? 'producto-oculto' : ''}`}>
                   <div className="producto-imagen">
                     <img 
-                      src={producto.imagen_principal || 'https://via.placeholder.com/300x200?text=Sin+Imagen'} 
-                      alt={producto.nombre} 
+                      src={producto.imagen_url || producto.imagen_principal || PLACEHOLDER_IMAGE} 
+                      alt={producto.nombre || 'Producto'} 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = PLACEHOLDER_IMAGE;
+                      }}
                     />
                     {producto.descuento > 0 && (
                       <span className="producto-descuento">-{producto.descuento}%</span>
@@ -470,32 +488,32 @@ const TiendaOnline = () => {
                   </div>
                   
                   <div className="producto-info">
-                    <h3>{producto.nombre}</h3>
+                    <h3>{producto.nombre || 'Sin nombre'}</h3>
                     <span className="producto-categoria">
                       <CategoryIcon fontSize="small" />
-                      {producto.categoria}
+                      {producto.categoria || 'Sin categoría'}
                     </span>
                     
                     <div className="producto-precios">
                       {producto.descuento > 0 ? (
                         <>
-                          <span className="precio-original">${producto.precio.toLocaleString()}</span>
+                          <span className="precio-original">${formatPrice(producto.precio)}</span>
                           <span className="precio-descuento">
-                            ${(producto.precio * (1 - producto.descuento/100)).toLocaleString()}
+                            ${formatPrice(producto.precio * (1 - producto.descuento/100))}
                           </span>
                         </>
                       ) : (
-                        <span className="precio-normal">${producto.precio.toLocaleString()}</span>
+                        <span className="precio-normal">${formatPrice(producto.precio)}</span>
                       )}
                     </div>
                     
                     <div className="producto-detalles">
-                      <span className={`estado-badge estado-${producto.estado?.toLowerCase().replace(/\s+/g, '-') || 'buen-estado'}`}>
-                        {producto.estado || 'Buen estado'}
+                      <span className={`estado-badge estado-${(producto.estado_producto || producto.estado || 'buen-estado').toLowerCase().replace(/\s+/g, '-')}`}>
+                        {producto.estado_producto || producto.estado || 'Buen estado'}
                       </span>
                       <span className="producto-stock">
                         <BoxIcon fontSize="small" />
-                        Stock: {producto.stock}
+                        Stock: {producto.stock || 0}
                       </span>
                     </div>
                     
@@ -516,14 +534,16 @@ const TiendaOnline = () => {
                       </button>
                       <button 
                         className="btn-accion toggle-visible"
-                        onClick={() => handleToggleVisible(producto.id)}
+                        // ✅ USAR id_producto
+                        onClick={() => handleToggleVisible(producto.id_producto)}
                         title={producto.visible ? "Ocultar" : "Mostrar"}
                       >
                         {producto.visible ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       </button>
                       <button 
                         className="btn-accion destacar"
-                        onClick={() => handleToggleDestacado(producto.id)}
+                        // ✅ USAR id_producto
+                        onClick={() => handleToggleDestacado(producto.id_producto)}
                         title={producto.destacado ? "Quitar destacado" : "Destacar"}
                       >
                         {producto.destacado ? <StarIcon /> : <StarBorderIcon />}
@@ -637,7 +657,7 @@ const TiendaOnline = () => {
           </div>
         )}
 
-        {/* MODAL PRODUCTO (Nuevo/Editar) - Igual que antes pero con handleGuardarProducto */}
+        {/* MODAL PRODUCTO (Nuevo/Editar) */}
         {modalProductoAbierto && (
           <div className="modal-overlay" onClick={() => setModalProductoAbierto(false)}>
             <div className="modal-producto" onClick={(e) => e.stopPropagation()}>
@@ -655,12 +675,8 @@ const TiendaOnline = () => {
               <form onSubmit={handleGuardarProducto}>
                 <div className="modal-body">
                   <div className="form-grid">
-                    {/* Los mismos campos del formulario original */}
                     <div className="form-group">
-                      <label>
-                        <SellIcon fontSize="small" />
-                        Nombre del producto *
-                      </label>
+                      <label><SellIcon fontSize="small" />Nombre del producto *</label>
                       <input
                         type="text"
                         name="nombre"
@@ -672,10 +688,7 @@ const TiendaOnline = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>
-                        <CategoryIcon fontSize="small" />
-                        Categoría *
-                      </label>
+                      <label><CategoryIcon fontSize="small" />Categoría *</label>
                       <select
                         name="categoria"
                         value={formProducto.categoria}
@@ -689,10 +702,7 @@ const TiendaOnline = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>
-                        <AttachMoneyIcon fontSize="small" />
-                        Precio ($) *
-                      </label>
+                      <label><AttachMoneyIcon fontSize="small" />Precio ($) *</label>
                       <input
                         type="number"
                         name="precio"
@@ -700,15 +710,13 @@ const TiendaOnline = () => {
                         onChange={handleInputChange}
                         required
                         min="0"
+                        step="0.01"
                         placeholder="0"
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>
-                        <LocalOfferIcon fontSize="small" />
-                        Descuento (%)
-                      </label>
+                      <label><LocalOfferIcon fontSize="small" />Descuento (%)</label>
                       <input
                         type="number"
                         name="descuento"
@@ -721,10 +729,7 @@ const TiendaOnline = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>
-                        <BoxIcon fontSize="small" />
-                        Stock *
-                      </label>
+                      <label><BoxIcon fontSize="small" />Stock *</label>
                       <input
                         type="number"
                         name="stock"
@@ -751,10 +756,7 @@ const TiendaOnline = () => {
                     </div>
 
                     <div className="form-group full-width">
-                      <label>
-                        <ImageIcon fontSize="small" />
-                        URL de la imagen
-                      </label>
+                      <label><ImageIcon fontSize="small" />URL de la imagen</label>
                       <input
                         type="text"
                         name="imagen"
@@ -765,10 +767,7 @@ const TiendaOnline = () => {
                     </div>
 
                     <div className="form-group full-width">
-                      <label>
-                        <DescriptionIcon fontSize="small" />
-                        Descripción
-                      </label>
+                      <label><DescriptionIcon fontSize="small" />Descripción</label>
                       <textarea
                         name="descripcion"
                         value={formProducto.descripcion}
@@ -821,7 +820,7 @@ const TiendaOnline = () => {
           </div>
         )}
 
-        {/* MODAL DETALLE - Igual pero con datos de API */}
+        {/* MODAL DETALLE */}
         {modalDetalleAbierto && productoSeleccionado && (
           <div className="modal-overlay" onClick={() => setModalDetalleAbierto(false)}>
             <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -830,8 +829,8 @@ const TiendaOnline = () => {
               </button>
               
               <div className="modal-header">
-                <h2>{productoSeleccionado.nombre}</h2>
-                <span className="cliente-id">ID: #{productoSeleccionado.id}</span>
+                <h2>{productoSeleccionado.nombre || 'Sin nombre'}</h2>
+                <span className="cliente-id">ID: #{productoSeleccionado.id_producto}</span>
                 {productoSeleccionado.publicacion_automatica && (
                   <span className="auto-tag">
                     <AutoAwesomeIcon fontSize="small" />
@@ -844,8 +843,12 @@ const TiendaOnline = () => {
                 <div className="detalle-grid">
                   <div className="detalle-imagen">
                     <img 
-                      src={productoSeleccionado.imagen_principal || 'https://via.placeholder.com/300x300?text=Sin+Imagen'} 
-                      alt={productoSeleccionado.nombre} 
+                      src={productoSeleccionado.imagen_url || productoSeleccionado.imagen_principal || PLACEHOLDER_IMAGE} 
+                      alt={productoSeleccionado.nombre || 'Producto'} 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = PLACEHOLDER_IMAGE;
+                      }}
                     />
                     {productoSeleccionado.fecha_vencimiento_contrato && (
                       <div className="info-contrato">
@@ -858,7 +861,7 @@ const TiendaOnline = () => {
                   <div className="detalle-info">
                     <div className="info-item">
                       <span className="info-label">Categoría</span>
-                      <span className="info-value">{productoSeleccionado.categoria}</span>
+                      <span className="info-value">{productoSeleccionado.categoria || 'Sin categoría'}</span>
                     </div>
                     
                     <div className="info-item">
@@ -866,28 +869,28 @@ const TiendaOnline = () => {
                       <span className="info-value">
                         {productoSeleccionado.descuento > 0 ? (
                           <>
-                            <span className="precio-original">${productoSeleccionado.precio.toLocaleString()}</span>
+                            <span className="precio-original">${formatPrice(productoSeleccionado.precio)}</span>
                             <span className="precio-descuento">
-                              ${(productoSeleccionado.precio * (1 - productoSeleccionado.descuento/100)).toLocaleString()}
+                              ${formatPrice(productoSeleccionado.precio * (1 - productoSeleccionado.descuento/100))}
                             </span>
                             <span className="descuento-badge">-{productoSeleccionado.descuento}%</span>
                           </>
                         ) : (
-                          `$${productoSeleccionado.precio.toLocaleString()}`
+                          `$${formatPrice(productoSeleccionado.precio)}`
                         )}
                       </span>
                     </div>
                     
                     <div className="info-item">
                       <span className="info-label">Stock</span>
-                      <span className="info-value">{productoSeleccionado.stock} unidades</span>
+                      <span className="info-value">{productoSeleccionado.stock || 0} unidades</span>
                     </div>
                     
                     <div className="info-item">
                       <span className="info-label">Estado</span>
                       <span className="info-value">
-                        <span className={`estado-badge estado-${productoSeleccionado.estado?.toLowerCase().replace(/\s+/g, '-') || 'buen-estado'}`}>
-                          {productoSeleccionado.estado || 'Buen estado'}
+                        <span className={`estado-badge estado-${(productoSeleccionado.estado_producto || productoSeleccionado.estado || 'buen-estado').toLowerCase().replace(/\s+/g, '-')}`}>
+                          {productoSeleccionado.estado_producto || productoSeleccionado.estado || 'Buen estado'}
                         </span>
                       </span>
                     </div>
@@ -919,7 +922,9 @@ const TiendaOnline = () => {
                     <div className="info-item">
                       <span className="info-label">Fecha publicación</span>
                       <span className="info-value">
-                        {new Date(productoSeleccionado.fecha_publicacion || productoSeleccionado.created_at).toLocaleDateString()}
+                        {productoSeleccionado.fecha_publicacion 
+                          ? new Date(productoSeleccionado.fecha_publicacion).toLocaleDateString() 
+                          : 'No publicada'}
                       </span>
                     </div>
 
@@ -963,7 +968,7 @@ const TiendaOnline = () => {
           </div>
         )}
 
-        {/* MODAL ELIMINAR - Con handleEliminarProducto */}
+        {/* MODAL ELIMINAR */}
         {modalEliminarAbierto && productoSeleccionado && (
           <div className="modal-overlay" onClick={() => setModalEliminarAbierto(false)}>
             <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
@@ -971,7 +976,7 @@ const TiendaOnline = () => {
                 <WarningIcon />
               </div>
               <h3>¿Eliminar producto?</h3>
-              <p>Estás a punto de eliminar <strong>{productoSeleccionado.nombre}</strong></p>
+              <p>Estás a punto de eliminar <strong>{productoSeleccionado.nombre || 'este producto'}</strong></p>
               <p className="advertencia">Esta acción no se puede deshacer</p>
               
               <div className="modal-botones">
