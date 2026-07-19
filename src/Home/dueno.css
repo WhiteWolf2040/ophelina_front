@@ -68,20 +68,6 @@
 }
 
 
-
-/* ===== LOADER SOLO TEXTO (sin spinner) ===== */
-.loading-text-only {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  width: 100%;
-  font-size: 18px;
-  color: #1e3a8a;
-  font-weight: 500;
-  background-color: #f5f7fa;
-}
-
 .error-container {
   display: flex;
   flex-direction: column;
