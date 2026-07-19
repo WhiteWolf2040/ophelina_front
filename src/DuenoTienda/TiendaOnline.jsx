@@ -283,7 +283,7 @@ const TiendaOnline = () => {
 
       <div className="content tienda-content">
         {/* HEADER */}
-        <div className="tienda-header">
+        <div>
           <h1>
             <StorefrontIcon className="title-icon" />
             Tienda Online

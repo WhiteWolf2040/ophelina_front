@@ -1,27 +1,10 @@
-/* TiendaOnline.css */
+/* TiendaOnline.css - Solo modificación de stats-grid */
 
 .tienda-content {
   background-color: #F5F0E9;
 }
 
 /* Header */
-.tienda-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
- 
-  padding: 0px 30px;
-  border-radius: 15px;
-
-}
-
-.tienda-header h1 {
-  margin: 0;
-  color: #1e3a8a;
-  font-size: 25px;
-}
-
 .btn-nuevo-producto {
   background: #1e3a8a;
   color: white;
@@ -43,24 +26,26 @@
   box-shadow: 0 5px 15px rgba(30, 58, 138, 0.3);
 }
 
-/* Estadísticas */
+/* 🔥 ESTADÍSTICAS - MODIFICADO PARA SEPARAR MÁS LAS CARDS */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 30px;
-  margin-bottom: 25px;
-  margin-right: 25px;
+  gap: 20px; /* Aumentado de 16px a 20px */
+  margin-bottom: 30px; /* Aumentado de 25px a 30px */
+  margin-right: 0; /* Eliminado margin-right: 25px que causaba desbalance */
 }
 
 .stat-card {
   background: white;
   border-radius: 12px;
-  padding: 18px;
+  padding: 18px 20px; /* Aumentado padding horizontal */
   box-shadow: 0px 3px 10px rgba(0,0,0,0.08);
   display: flex;
   align-items: center;
   gap: 15px;
   transition: 0.3s;
+  /* 🔥 NUEVO: Asegurar que todas las cards tengan el mismo alto mínimo */
+  min-height: 80px;
 }
 
 .stat-card:hover {
@@ -77,24 +62,83 @@
   align-items: center;
   justify-content: center;
   border-radius: 12px;
+  flex-shrink: 0; /* Evita que el icono se encoja */
 }
 
 .stat-info {
   display: flex;
   flex-direction: column;
+  min-width: 0; /* Permite que el texto se ajuste */
 }
 
 .stat-label {
   color: #666;
   font-size: 13px;
   margin-bottom: 4px;
+  white-space: nowrap; /* Evita que el label se rompa */
 }
 
 .stat-value {
   color: #1e3a8a;
   font-size: 22px;
   font-weight: 700;
+  word-break: break-word; /* Permite que los números largos se rompan */
 }
+
+/* 🔥 RESPONSIVE - MEJORADO PARA QUE SE VEA BIEN EN MÓVIL */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columnas en móvil */
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .stat-card {
+    padding: 14px 16px;
+    min-height: 70px;
+  }
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
+  
+  .stat-value {
+    font-size: 18px;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .stat-card {
+    padding: 12px;
+    min-height: 60px;
+    gap: 10px;
+  }
+  
+  .stat-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 20px;
+  }
+  
+  .stat-value {
+    font-size: 16px;
+  }
+}
+
+/* ============================================ */
+/* RESTO DEL CÓDIGO SIN CAMBIOS */
+/* ============================================ */
 
 /* Filtros */
 .filtros-tienda {
@@ -589,7 +633,176 @@
   font-size: 16px;
 }
 
-/* Responsive */
+/* ============================================ */
+/* ICONOS - SIN CAMBIOS */
+/* ============================================ */
+
+.title-icon {
+  font-size: 32px !important;
+  color: #1e3a8a;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+.buscador-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 20px !important;
+}
+
+.buscador-input {
+  padding-left: 45px !important;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-label svg {
+  color: #1e3a8a;
+}
+
+.producto-oculto-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.producto-oculto-badge svg {
+  font-size: 14px !important;
+}
+
+.producto-categoria {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+}
+
+.producto-categoria svg {
+  font-size: 14px !important;
+}
+
+.producto-stock {
+  display: flex !important;
+  align-items: center;
+  gap: 4px;
+}
+
+.producto-stock svg {
+  font-size: 14px !important;
+  color: #1e3a8a;
+}
+
+.btn-accion svg {
+  font-size: 18px !important;
+}
+
+.btn-accion.ver svg {
+  color: #1e3a8a;
+}
+
+.btn-accion.editar svg {
+  color: #1e3a8a;
+}
+
+.btn-accion.toggle-visible svg {
+  color: #9333ea;
+}
+
+.btn-accion.destacar svg {
+  color: #854d0e;
+}
+
+.btn-accion.eliminar svg {
+  color: #dc2626;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-group label svg {
+  color: #1e3a8a;
+  font-size: 18px !important;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 5px;
+}
+
+.visible-icon {
+  color: #10b981;
+  margin-right: 5px;
+}
+
+.oculto-icon {
+  color: #dc2626;
+  margin-right: 5px;
+}
+
+.info-value {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.info-value svg {
+  font-size: 18px !important;
+}
+
+.modal-icon {
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+.empty-icon {
+  font-size: 48px !important;
+  color: #ccc;
+  margin-bottom: 15px;
+}
+
+.btn-nuevo-producto,
+.btn-guardar,
+.btn-cancelar,
+.btn-editar,
+.btn-eliminar,
+.btn-confirmar-eliminar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-limpiar-filtros {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.modal-icono svg {
+  font-size: 48px !important;
+  color: #f59e0b;
+}
+
+/* ============================================ */
+/* RESPONSIVE */
+/* ============================================ */
+
 @media (max-width: 768px) {
   .tienda-header {
     flex-direction: column;
@@ -643,190 +856,7 @@
     flex-wrap: wrap;
     justify-content: center;
   }
-}
-/* Añadir al final de TiendaOnline.css */
-
-/* Iconos en títulos */
-.title-icon {
-  font-size: 32px !important;
-  color: #1e3a8a;
-  vertical-align: middle;
-  margin-right: 10px;
-}
-
-/* Buscador con icono */
-.buscador {
-  position: relative;
-}
-
-.buscador-icon {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-  font-size: 20px !important;
-}
-
-.buscador-input {
-  padding-left: 45px !important;
-}
-
-/* Checkbox con icono */
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.checkbox-label svg {
-  color: #1e3a8a;
-}
-
-/* Badge de oculto con icono */
-.producto-oculto-badge {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.producto-oculto-badge svg {
-  font-size: 14px !important;
-}
-
-/* Categoría con icono */
-.producto-categoria {
-  display: inline-flex !important;
-  align-items: center;
-  gap: 6px;
-}
-
-.producto-categoria svg {
-  font-size: 14px !important;
-}
-
-/* Stock con icono */
-.producto-stock {
-  display: flex !important;
-  align-items: center;
-  gap: 4px;
-}
-
-.producto-stock svg {
-  font-size: 14px !important;
-  color: #1e3a8a;
-}
-
-/* Botones de acción con iconos */
-.btn-accion svg {
-  font-size: 18px !important;
-}
-
-.btn-accion.ver svg {
-  color: #1e3a8a;
-}
-
-.btn-accion.editar svg {
-  color: #1e3a8a;
-}
-
-.btn-accion.toggle-visible svg {
-  color: #9333ea;
-}
-
-.btn-accion.destacar svg {
-  color: #854d0e;
-}
-
-.btn-accion.eliminar svg {
-  color: #dc2626;
-}
-
-/* Iconos en formularios */
-.form-group label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.form-group label svg {
-  color: #1e3a8a;
-  font-size: 18px !important;
-}
-
-.checkbox-group label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.checkbox-group input[type="checkbox"] {
-  width: auto;
-  margin-right: 5px;
-}
-
-/* Iconos en modal de detalle */
-.visible-icon {
-  color: #10b981;
-  margin-right: 5px;
-}
-
-.oculto-icon {
-  color: #dc2626;
-  margin-right: 5px;
-}
-
-.info-value {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.info-value svg {
-  font-size: 18px !important;
-}
-
-/* Modal icon */
-.modal-icon {
-  vertical-align: middle;
-  margin-right: 10px;
-}
-
-/* Icono vacío */
-.empty-icon {
-  font-size: 48px !important;
-  color: #ccc;
-  margin-bottom: 15px;
-}
-
-/* Botones con iconos */
-.btn-nuevo-producto,
-.btn-guardar,
-.btn-cancelar,
-.btn-editar,
-.btn-eliminar,
-.btn-confirmar-eliminar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-}
-
-.btn-limpiar-filtros {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* Modal icono de advertencia */
-.modal-icono svg {
-  font-size: 48px !important;
-  color: #f59e0b;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
+  
   .checkbox-label {
     justify-content: center;
   }

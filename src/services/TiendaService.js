@@ -1,87 +1,66 @@
 // src/services/TiendaService.js
-
 import api from '../config/api';
 
-class TiendaService {
-    /**
-     * Obtener productos con filtros
-     */
-    async getProductos(filtros = {}) {
+const TiendaService = {
+    // Obtener productos con filtros
+    getProductos: async (filtros = {}) => {
         const params = new URLSearchParams();
+        if (filtros.busqueda) params.append('busqueda', filtros.busqueda);
+        if (filtros.categoria && filtros.categoria !== 'Todas') params.append('categoria', filtros.categoria);
+        if (filtros.estado && filtros.estado !== 'Todos') params.append('estado', filtros.estado);
+        if (filtros.solo_visibles) params.append('solo_visibles', 'true');
         
-        Object.keys(filtros).forEach(key => {
-            if (filtros[key] && filtros[key] !== '' && filtros[key] !== 'Todas' && filtros[key] !== 'Todos') {
-                params.append(key, filtros[key]);
-            }
-        });
-        
-        const response = await api.get(`/tienda/productos?${params}`);
+        const response = await api.get(`/tienda/productos?${params.toString()}`);
         return response.data;
-    }
+    },
 
-    /**
-     * Obtener estadísticas de la tienda
-     */
-    async getEstadisticas() {
-        const response = await api.get('/tienda/productos/estadisticas');
+    // Obtener estadísticas
+    getEstadisticas: async () => {
+        const response = await api.get('/tienda/estadisticas');
         return response.data;
-    }
+    },
 
-    /**
-     * Crear un nuevo producto
-     */
-    async crearProducto(data) {
+    // Crear producto
+    crearProducto: async (data) => {
         const response = await api.post('/tienda/productos', data);
         return response.data;
-    }
+    },
 
-    /**
-     * Actualizar un producto existente
-     */
-    async actualizarProducto(id, data) {
+    // Actualizar producto
+    actualizarProducto: async (id, data) => {
         const response = await api.put(`/tienda/productos/${id}`, data);
         return response.data;
-    }
+    },
 
-    /**
-     * Cambiar visibilidad de un producto
-     */
-    async toggleVisibilidad(id) {
-        const response = await api.patch(`/tienda/productos/${id}/visibilidad`);
+    // Cambiar visibilidad
+    toggleVisibilidad: async (id) => {
+        const response = await api.post(`/tienda/productos/${id}/toggle-visible`);
         return response.data;
-    }
+    },
 
-    /**
-     * Cambiar destacado de un producto
-     */
-    async toggleDestacado(id) {
-        const response = await api.patch(`/tienda/productos/${id}/destacado`);
+    // Cambiar destacado
+    toggleDestacado: async (id) => {
+        const response = await api.post(`/tienda/productos/${id}/toggle-destacado`);
         return response.data;
-    }
+    },
 
-    /**
-     * Eliminar un producto
-     */
-    async eliminarProducto(id) {
+    // Eliminar producto
+    eliminarProducto: async (id) => {
         const response = await api.delete(`/tienda/productos/${id}`);
         return response.data;
-    }
+    },
 
-    /**
-     * Ejecutar publicación automática
-     */
-    async ejecutarPublicacionAutomatica(diasGracia = 5) {
+    // Publicación automática
+    ejecutarPublicacionAutomatica: async (diasGracia = 5) => {
         const response = await api.post('/tienda/publicacion-automatica', { dias_gracia: diasGracia });
         return response.data;
-    }
+    },
 
-    /**
-     * Configurar días de gracia
-     */
-    async configurarDiasGracia(dias) {
+    // Configurar días de gracia
+    configurarDiasGracia: async (dias) => {
         const response = await api.post('/tienda/configurar-dias-gracia', { dias_gracia: dias });
         return response.data;
     }
-}
+};
 
-export default new TiendaService();
+export default TiendaService;
