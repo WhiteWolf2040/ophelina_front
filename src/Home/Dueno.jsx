@@ -720,7 +720,7 @@ const cargarIngresos = async () => {
   }
 
   // ============================================
-  // ✅ RENDER - SOLO CSS
+  //  RENDER - SOLO CSS
   // ============================================
   return ( 
     <div className="dashboard">
