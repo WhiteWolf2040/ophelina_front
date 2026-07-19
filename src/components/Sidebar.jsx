@@ -28,6 +28,7 @@ const DEFAULT_MENUS = [
   { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
   { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
   { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+  { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
   { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
   { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
   { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
