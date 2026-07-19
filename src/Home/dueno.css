@@ -197,14 +197,14 @@
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 16px;
   width: 100%;
 }
 
 .stat-card {
   background: white;
-  padding: 14px 10px;
+  padding: 16px 12px;
   border-radius: 10px;
   box-shadow: 0px 2px 10px rgba(0,0,0,0.06);
   cursor: pointer;
@@ -214,7 +214,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  min-height: 90px;
+  min-height: 100px;
   justify-content: center;
   border: 1px solid rgba(0,0,0,0.04);
 }
@@ -225,29 +225,29 @@
 }
 
 .card-icon {
-  font-size: 22px !important;
+  font-size: 24px !important;
   color: #1e3a8a;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   background: #f0f4ff;
-  padding: 5px;
+  padding: 6px;
   border-radius: 8px;
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .stat-card h3 {
-  margin: 0 0 2px 0;
-  font-size: 11px;
+  margin: 0 0 4px 0;
+  font-size: 12px;
   color: #666;
   font-weight: 500;
 }
 
 .stat-number {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: #1e3a8a;
 }
@@ -271,19 +271,19 @@
 
 .update-info {
   display: block;
-  font-size: 8px;
+  font-size: 9px;
   color: #666;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .click-hint {
   display: block;
-  font-size: 7px;
+  font-size: 8px;
   color: #000;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
-/* ===== GRÁFICAS - CORREGIDAS ===== */
+/* ===== GRÁFICAS ===== */
 .chart-section {
   background: white;
   border-radius: 10px;
@@ -296,27 +296,27 @@
 }
 
 .chart-section h2 {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: #1f2937;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .chart-subtitle {
-  font-size: 11px;
+  font-size: 12px;
   color: #6b7280;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .chart-wrapper {
   width: 100%;
   max-width: 100%;
   overflow: visible;
-  min-height: 300px;
+  min-height: 350px;
 }
 
 .chart-wrapper > div {
@@ -354,10 +354,10 @@
 }
 
 .grafica-nueva-card h2 {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #1f2937;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -778,27 +778,27 @@
     height: 24px;
   }
 
-  /* ✅ CARDS MÁS GRANDES EN MÓVIL */
+  /* ✅ CARDS MÁS GRANDES EN TABLET */
   .cards-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
 
   .stat-card {
-    padding: 16px 12px;
-    min-height: 100px;
+    padding: 18px 14px;
+    min-height: 110px;
     border-radius: 10px;
   }
 
   .card-icon {
-    font-size: 22px !important;
-    width: 38px;
-    height: 38px;
+    font-size: 24px !important;
+    width: 40px;
+    height: 40px;
     padding: 6px;
   }
 
   .stat-number {
-    font-size: 20px;
+    font-size: 22px;
   }
 
   .stat-card h3 {
@@ -824,7 +824,7 @@
   }
 
   .chart-section h2 {
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .grafica-nueva-card {
@@ -941,7 +941,7 @@
 /* --- Móviles (480px) --- */
 @media (max-width: 480px) {
   .content {
-    padding: 6px 8px 10px 8px;
+    padding: 6px 10px 10px 10px;
   }
 
   .owner-header h1 {
@@ -952,27 +952,27 @@
     font-size: 11px;
   }
 
-  /* ✅ CARDS OCUPAN CASI TODO EL ANCHO */
+  /* ✅ CARDS MÁS GRANDES - OCUPAN TODO EL ANCHO EN 2 COLUMNAS */
   .cards-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 12px;
   }
 
   .stat-card {
-    padding: 18px 14px;
-    min-height: 120px;
+    padding: 20px 16px;
+    min-height: 130px;
     border-radius: 12px;
   }
 
   .card-icon {
-    font-size: 26px !important;
-    width: 44px;
-    height: 44px;
+    font-size: 28px !important;
+    width: 46px;
+    height: 46px;
     padding: 8px;
   }
 
   .stat-number {
-    font-size: 24px;
+    font-size: 26px;
   }
 
   .stat-card h3 {
@@ -993,7 +993,7 @@
   }
 
   .chart-section h2 {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .grafica-nueva-card {
@@ -1123,22 +1123,22 @@
 /* --- Móviles muy pequeños (360px) --- */
 @media (max-width: 360px) {
   .cards-grid {
-    gap: 8px;
+    gap: 10px;
   }
 
   .stat-card {
-    padding: 14px 10px;
-    min-height: 100px;
+    padding: 16px 12px;
+    min-height: 110px;
   }
 
   .card-icon {
-    font-size: 22px !important;
-    width: 36px;
-    height: 36px;
+    font-size: 24px !important;
+    width: 38px;
+    height: 38px;
   }
 
   .stat-number {
-    font-size: 20px;
+    font-size: 22px;
   }
 
   .stat-card h3 {
