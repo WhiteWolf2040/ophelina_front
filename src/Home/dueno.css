@@ -64,14 +64,10 @@
   font-size: 18px;
   color: #1e3a8a;
   font-weight: 500;
-  gap: 14px;
-  background-color: #f5f7fa;
+ ;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+
 
 /* ===== LOADER SOLO TEXTO (sin spinner) ===== */
 .loading-text-only {
