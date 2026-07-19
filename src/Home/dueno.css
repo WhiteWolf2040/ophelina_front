@@ -667,11 +667,13 @@
 
 .cliente-id {
   display: inline-block;
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 4px 12px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 5px 14px;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.2px;
 }
 
 .modal-body {
@@ -1180,4 +1182,74 @@
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+/* ===== TABLAS DENTRO DE MODALES (versión bonita) ===== */
+.tabla-container-modal {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+  border: 1px solid #eef0f3;
+}
+
+.tabla-modal {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 400px;
+  font-size: 13px;
+}
+
+.tabla-modal thead th {
+  text-align: left;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, #f8f9fc 0%, #f1f3f8 100%);
+  color: #1e3a8a;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 2px solid #e2e6f0;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.tabla-modal thead th:first-child {
+  border-top-left-radius: 9px;
+}
+
+.tabla-modal thead th:last-child {
+  border-top-right-radius: 9px;
+}
+
+.tabla-modal tbody tr {
+  transition: background 0.15s ease;
+}
+
+.tabla-modal tbody tr:nth-child(even) {
+  background: #fafbfd;
+}
+
+.tabla-modal tbody tr:hover {
+  background: #eef2fb;
+}
+
+.tabla-modal td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f1f5;
+  color: #374151;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.tabla-modal tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-modal td strong {
+  color: #1e293b;
+  font-weight: 600;
 }
