@@ -692,8 +692,8 @@ const cargarIngresos = async () => {
     return (
       <div className="dashboard">
         <div className="content">
-          <div className="loading-spinner">
-            <span className="spinner-small"></span>
+          <div className="dueno-loader">
+            <span className="dueno-loader-spinner"></span>
             <span>Cargando...</span>
           </div>
         </div>
