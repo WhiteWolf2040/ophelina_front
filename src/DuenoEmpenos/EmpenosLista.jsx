@@ -75,33 +75,36 @@ const EmpenosLista = () => {
     }
   };
 
-  const cargarTodosEmpenos = async () => {
+ // Cambia cargarTodosEmpenos para que use el endpoint correcto
+const cargarTodosEmpenos = async () => {
     try {
-      setLoading(true);
-      const response = await api.get('/empenos/activos-con-saldo');
-      if (response.data.success) {
-        const empenosFormateados = response.data.data.map(emp => ({
-          id: emp.id_empeno,
-          cliente: emp.cliente,
-          objeto: emp.articulo,
-          monto: emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-          interes: 12,
-          fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
-          vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
-          estado: 'activo',
-          saldo_pendiente: emp.saldo_total_pendiente,
-          saldo_cuota: emp.saldo_pendiente_cuota,
-          total_pagado: emp.total_pagado
-        }));
-        setEmpenos(empenosFormateados);
-      }
+        setLoading(true);
+        //  CAMBIO IMPORTANTE: Usar /empenos/todos en lugar de /empenos/activos-con-saldo
+        const response = await api.get('/empenos/todos');
+        if (response.data.success) {
+           const empenosFormateados = response.data.data.map(emp => ({
+              id: emp.id_empeno,
+              cliente: emp.cliente,
+              objeto: emp.articulo,
+              monto: emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+              interes: 12, // O usa emp.intereses si viene
+              fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
+              vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
+              estado: emp.estado, // 🔥 Importante: usar el estado real
+              saldo_pendiente: emp.saldo_total_pendiente,
+              saldo_cuota: emp.saldo_pendiente_cuota || 0,
+              total_pagado: emp.total_pagado || 0,
+              dias_vencidos: emp.dias_vencidos || 0 // 🔥 NUEVO
+          }));
+            setEmpenos(empenosFormateados);
+        }
     } catch (error) {
-      console.error('Error al cargar empeños:', error);
-      setError('No se pudieron cargar los empeños');
+        console.error('Error al cargar empeños:', error);
+        setError('No se pudieron cargar los empeños');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   // ✅ MEJORADO CON LOCAL: useEffect con verificación de permisos
   useEffect(() => {
