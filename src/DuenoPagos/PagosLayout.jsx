@@ -1,11 +1,11 @@
-// DuenoPagos/PagosLayout.jsx - VERSIÓN CORREGIDA (SIN SIDEBAR)
+// DuenoPagos/PagosLayout.jsx - VERSIÓN CORREGIDA
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import PagosLista from "./PagosLista";
 import RegistrarPago from "./RegistrarPago";
 import DetallePago from "./DetallePago";
 
-import "./Pagos.css"; // Asegúrate de tener los estilos
+import "./Pagos.css";
 
 const PagosLayout = () => {
   const [pagos, setPagos] = useState([
@@ -43,14 +43,16 @@ const PagosLayout = () => {
     setPagos([...pagos, pagoConId]);
   };
 
-  //  RENDER - SIN SIDEBAR, SOLO EL CONTENIDO
+  //  RENDER - CON ESTRUCTURA dashboard/content
   return (
-    <div className="pagos-layout-content">
-      <Routes>
-        <Route path="/" element={<PagosLista pagos={pagos} />} />
-        <Route path="nuevo" element={<RegistrarPago agregarPago={agregarPago} />} />
-        <Route path=":id" element={<DetallePago pagos={pagos} />} />
-      </Routes>
+    <div className="dashboard">
+      <div className="content">
+        <Routes>
+          <Route path="/" element={<PagosLista pagos={pagos} />} />
+          <Route path="nuevo" element={<RegistrarPago agregarPago={agregarPago} />} />
+          <Route path=":id" element={<DetallePago pagos={pagos} />} />
+        </Routes>
+      </div>
     </div>
   );
 };

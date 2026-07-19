@@ -52,9 +52,9 @@
   overflow-y: visible;
 }
 
-/* ===== LOADER SIMPLE ===== */
 
-/* ===== LOADER SIMPLE CON SPINNER PEQUEÑO ===== */
+
+/* ===== LOADER SOLO TEXTO (SIN SPINNER) ===== */
 .loading-spinner {
   display: flex;
   align-items: center;
@@ -64,9 +64,14 @@
   font-size: 18px;
   color: #1e3a8a;
   font-weight: 500;
- ;
+  background-color: #f5f7fa;
 }
 
+/* ELIMINAR EL SPINNER */
+.loading-spinner::before {
+  display: none !important;
+  content: none !important;
+}
 
 .error-container {
   display: flex;
