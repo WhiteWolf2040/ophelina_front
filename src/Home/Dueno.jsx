@@ -1,6 +1,5 @@
-// Dueño.jsx - Versión CORREGIDA con gráficas condicionales por rol
+// Home/Dueno.jsx - VERSIÓN FUSIONADA (Docker Base + Mejoras Local)
 import React, { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar";
 import Chart from "react-apexcharts";
 import "./dueno.css";
 import api from '../config/api';
@@ -30,7 +29,25 @@ import AreaChartIcon from '@mui/icons-material/AreaChart';
 
 const Dueno = () => {
   // ============================================
-  // HOOKS DE PAGO
+  // 🆕 DETECCIÓN DE TAMAÑO DE PANTALLA (DESDE LOCAL)
+  // ============================================
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // 🆕 Alturas de gráficas según el tamaño de pantalla (DESDE LOCAL)
+  const chartHeight = windowWidth < 480 ? 250 : windowWidth < 768 ? 300 : 380;
+  const smallChartHeight = windowWidth < 480 ? 200 : windowWidth < 768 ? 250 : 300;
+
+  // ============================================
+  // HOOKS DE PAGO (DESDE DOCKER)
   // ============================================
   const [searchParams] = useSearchParams();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -71,25 +88,8 @@ const Dueno = () => {
     verificarSuscripcion();
   }, []);
 
-  const [amortizacionesPendientes, setAmortizacionesPendientes] = useState([]);
-const [loadingAmortizaciones, setLoadingAmortizaciones] = useState(false);
-
-const cargarAmortizacionesPendientes = async () => {
-    try {
-        setLoadingAmortizaciones(true);
-        const response = await api.get('/home/amortizaciones-pendientes');
-        if (response.data.success) {
-            setAmortizacionesPendientes(response.data.data);
-        }
-    } catch (error) {
-        console.error('Error al cargar amortizaciones:', error);
-    } finally {
-        setLoadingAmortizaciones(false);
-    }
-};
-
   // ============================================
-  // ESTADOS
+  // ESTADOS (DESDE DOCKER)
   // ============================================
   const [showActivos, setShowActivos] = useState(false);
   const [showVencidos, setShowVencidos] = useState(false);
@@ -106,19 +106,8 @@ const cargarAmortizacionesPendientes = async () => {
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [modulosPermitidos, setModulosPermitidos] = useState([]);
   const [planInfo, setPlanInfo] = useState({ plan_id: null, plan_nombre: '' });
-
-  const cargarPreciosQuilates = async () => {
-    try {
-      const response = await api.get('/precio-oro/quilates');
-      console.log('Respuesta de la API:', response.data);
-      if (response.data.success) {
-        setPreciosQuilates(response.data.data);
-        console.log('Precios cargados:', response.data.data);
-      }
-    } catch (error) {
-      console.error('Error al cargar precios por quilate:', error);
-    }
-  };
+  const [amortizacionesPendientes, setAmortizacionesPendientes] = useState([]);
+  const [loadingAmortizaciones, setLoadingAmortizaciones] = useState(false);
 
   const [showPrecioOroModal, setShowPrecioOroModal] = useState(false);
   const [preciosQuilates, setPreciosQuilates] = useState({
@@ -307,7 +296,7 @@ const cargarAmortizacionesPendientes = async () => {
   });
 
   // ============================================
-  // FUNCIONES AUXILIARES
+  // FUNCIONES AUXILIARES (DESDE DOCKER)
   // ============================================
   const formatearFecha = (fecha) => {
     if (!fecha) return "Fecha no disponible";
@@ -342,7 +331,26 @@ const cargarAmortizacionesPendientes = async () => {
   };
 
   // ============================================
-  // FUNCIONES DE CARGA DE DATOS
+  // FUNCIONES DE ROLES (DESDE DOCKER)
+  // ============================================
+  const esAdmin = () => {
+    return userRole === 'Administrador' || userRole === 'Dueño' || userRole === 'Admin';
+  };
+
+  const esGerente = () => {
+    return userRole === 'Gerente' || userRole === 'gerente' || userRole === 'GERENTE';
+  };
+
+  const puedeVerEvolucionAcumulada = () => {
+    return esAdmin();
+  };
+
+  const puedeVerGraficasBasicas = () => {
+    return esAdmin() || esGerente();
+  };
+
+  // ============================================
+  // FUNCIONES DE CARGA DE DATOS (DESDE DOCKER)
   // ============================================
   
   const cargarUsuarioActual = async () => {
@@ -380,25 +388,6 @@ const cargarAmortizacionesPendientes = async () => {
     } catch (error) {
       console.error('Error cargando usuario:', error);
     }
-  };
-
-  // Funciones para verificar roles y permisos de gráficas
-  const esAdmin = () => {
-    return userRole === 'Administrador' || userRole === 'Dueño' || userRole === 'Admin';
-  };
-
-  const esGerente = () => {
-    return userRole === 'Gerente' || userRole === 'gerente' || userRole === 'GERENTE';
-  };
-
-  // Función para verificar si puede ver la gráfica de evolución acumulada
-  const puedeVerEvolucionAcumulada = () => {
-    return esAdmin(); // Solo administradores
-  };
-
-  // Función para verificar si puede ver las gráficas de tendencia y donut
-  const puedeVerGraficasBasicas = () => {
-    return esAdmin() || esGerente(); // Administradores y Gerentes
   };
 
   const cargarModulosPorPlan = async () => {
@@ -493,7 +482,32 @@ const cargarAmortizacionesPendientes = async () => {
     }
   };
 
-  // Funciones para cargar datos específicos
+  const cargarAmortizacionesPendientes = async () => {
+    try {
+      setLoadingAmortizaciones(true);
+      const response = await api.get('/home/amortizaciones-pendientes');
+      if (response.data.success) {
+        setAmortizacionesPendientes(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error al cargar amortizaciones:', error);
+    } finally {
+      setLoadingAmortizaciones(false);
+    }
+  };
+
+  const cargarPreciosQuilates = async () => {
+    try {
+      const response = await api.get('/precio-oro/quilates');
+      if (response.data.success) {
+        setPreciosQuilates(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error al cargar precios por quilate:', error);
+    }
+  };
+
+  // Funciones para cargar datos específicos de modales
   const cargarActivos = async () => {
     try {
       const response = await api.get('/home/activos');
@@ -545,7 +559,9 @@ const cargarAmortizacionesPendientes = async () => {
     }
   };
 
-  // Efecto principal de carga
+  // ============================================
+  // EFECTO PRINCIPAL DE CARGA
+  // ============================================
   useEffect(() => {
     cargarDashboard();
     cargarMorosidad();
@@ -553,7 +569,7 @@ const cargarAmortizacionesPendientes = async () => {
     cargarUsuarioActual();
     cargarPreciosQuilates();
     cargarModulosPorPlan();
-     cargarAmortizacionesPendientes();
+    cargarAmortizacionesPendientes();
   }, []);
 
   // Manejadores del modal de pago
@@ -575,13 +591,17 @@ const cargarAmortizacionesPendientes = async () => {
     localStorage.removeItem('pending_plan_price');
   };
 
-  // Loading state
+  // ============================================
+  // 🆕 LOADING STATE - CON SPINNER PEQUEÑO (DESDE LOCAL)
+  // ============================================
   if (loading) {
     return (
       <div className="dashboard">
-        <Sidebar modulosPermitidos={modulosPermitidos} />
-        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <div>Cargando dashboard...</div>
+        <div className="content">
+          <div className="dueno-loader">
+            <span className="dueno-loader-spinner"></span>
+            <span>Cargando...</span>
+          </div>
         </div>
       </div>
     );
@@ -591,23 +611,25 @@ const cargarAmortizacionesPendientes = async () => {
   if (error) {
     return (
       <div className="dashboard">
-        <Sidebar modulosPermitidos={modulosPermitidos} />
-        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
-          <WarningIcon style={{ fontSize: 48, color: '#dc3545', marginBottom: 16 }} />
-          <h3>Error de conexión</h3>
-          <p>{error}</p>
-          <button onClick={cargarDashboard} style={{ marginTop: 16, padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            Reintentar
-          </button>
+        <div className="content">
+          <div className="error-container">
+            <WarningIcon className="error-icon" />
+            <h3>Error de conexión</h3>
+            <p>{error}</p>
+            <button onClick={cargarDashboard} className="btn-reintentar">
+              Reintentar
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  // ============================================
+  // ✅ RENDER - CON ESTRUCTURA DOCKER (SIN SIDEBAR)
+  // ============================================
   return ( 
     <div className="dashboard">
-      <Sidebar modulosPermitidos={modulosPermitidos} />
-
       <div className="content">
         {/* HEADER */}
         <div className="owner-header">
@@ -679,7 +701,7 @@ const cargarAmortizacionesPendientes = async () => {
         {/* GRÁFICAS - SEGÚN ROL DEL USUARIO */}
         {/* ============================================ */}
         
-        {/* GRÁFICA PRINCIPAL - Solo para Administradores */}
+        {/* 🆕 GRÁFICA PRINCIPAL - CON chartHeight DINÁMICO (DESDE LOCAL) */}
         {puedeVerEvolucionAcumulada() && (
           <div className="chart-section">
             <h2>
@@ -694,13 +716,13 @@ const cargarAmortizacionesPendientes = async () => {
                 options={areaChartData.options}
                 series={areaChartData.series}
                 type="area"
-                height={380}
+                height={chartHeight}
               />
             </div>
           </div>
         )}
 
-        {/* GRÁFICAS ADICIONALES - Para Administradores y Gerentes */}
+        {/* 🆕 GRÁFICAS ADICIONALES - CON smallChartHeight DINÁMICO (DESDE LOCAL) */}
         {puedeVerGraficasBasicas() && (
           <div className="nuevas-graficas-grid">
             <div className="grafica-nueva-card">
@@ -712,7 +734,7 @@ const cargarAmortizacionesPendientes = async () => {
                 options={trendChartData.options}
                 series={trendChartData.series}
                 type="line"
-                height={300}
+                height={smallChartHeight}
               />
             </div>
 
@@ -725,7 +747,7 @@ const cargarAmortizacionesPendientes = async () => {
                 options={categoriaDistribucion.options}
                 series={categoriaDistribucion.series}
                 type="donut"
-                height={300}
+                height={smallChartHeight}
               />
             </div>
           </div>
@@ -826,64 +848,62 @@ const cargarAmortizacionesPendientes = async () => {
           </div>
         </div>
 
-        {/* ============================================ */}
-{/* TABLA DE AMORTIZACIÓN - Solo para Administradores */}
-{/* ============================================ */}
-{puedeVerEvolucionAcumulada() && (
-    <div className="nueva-seccion">
-        <h2>
-            <AssignmentIcon />
-            Amortizaciones Pendientes
-            <span className="seccion-badge">
+        {/* AMORTIZACIONES PENDIENTES - Solo para Administradores */}
+        {puedeVerEvolucionAcumulada() && (
+          <div className="nueva-seccion">
+            <h2>
+              <AssignmentIcon />
+              Amortizaciones Pendientes
+              <span className="seccion-badge">
                 {amortizacionesPendientes.length} registros
-            </span>
-        </h2>
-        <div className="tabla-container">
-            <table className="tabla-moderna">
+              </span>
+            </h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
                 <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Artículo</th>
-                        <th>Folio</th>
-                        <th>N° Pago</th>
-                        <th>Fecha Programada</th>
-                        <th>Monto Total</th>
-                        <th>Pagado</th>
-                        <th>Saldo Restante</th>
-                        <th>Estado</th>
-                    </tr>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Artículo</th>
+                    <th>Folio</th>
+                    <th>N° Pago</th>
+                    <th>Fecha Programada</th>
+                    <th>Monto Total</th>
+                    <th>Pagado</th>
+                    <th>Saldo Restante</th>
+                    <th>Estado</th>
+                  </tr>
                 </thead>
                 <tbody>
-                    {loadingAmortizaciones ? (
-                        <tr><td colSpan="9" style={{ textAlign: 'center' }}>Cargando...</td></tr>
-                    ) : amortizacionesPendientes.length === 0 ? (
-                        <tr><td colSpan="9" style={{ textAlign: 'center' }}>No hay amortizaciones pendientes</td></tr>
-                    ) : (
-                        amortizacionesPendientes.map((item) => (
-                            <tr key={item.id_amortizacion} className={item.dias_atraso > 0 ? 'fila-atrasada' : ''}>
-                                <td><strong>{item.cliente_nombre}</strong></td>
-                                <td>{item.articulo}</td>
-                                <td><span className="folio-badge">{item.folio}</span></td>
-                                <td>{item.numero_pago}</td>
-                                <td>{new Date(item.fecha_pago_programado).toLocaleDateString('es-MX')}</td>
-                                <td className="monto">{formatearMoneda(item.monto_total)}</td>
-                                <td className="monto-pagado">{formatearMoneda(item.monto_pagado || 0)}</td>
-                                <td className="monto-restante">{formatearMoneda(item.saldo_restante)}</td>
-                                <td>
-                                    {item.dias_atraso > 0 ? (
-                                        <span className="badge-danger">{item.dias_atraso} días atrasado</span>
-                                    ) : (
-                                        <span className="badge-warning">Pendiente</span>
-                                    )}
-                                </td>
-                            </tr>
-                        ))
-                    )}
+                  {loadingAmortizaciones ? (
+                    <tr><td colSpan="9" style={{ textAlign: 'center' }}>Cargando...</td></tr>
+                  ) : amortizacionesPendientes.length === 0 ? (
+                    <tr><td colSpan="9" style={{ textAlign: 'center' }}>No hay amortizaciones pendientes</td></tr>
+                  ) : (
+                    amortizacionesPendientes.map((item) => (
+                      <tr key={item.id_amortizacion} className={item.dias_atraso > 0 ? 'fila-atrasada' : ''}>
+                        <td><strong>{item.cliente_nombre}</strong></td>
+                        <td>{item.articulo}</td>
+                        <td><span className="folio-badge">{item.folio}</span></td>
+                        <td>{item.numero_pago}</td>
+                        <td>{new Date(item.fecha_pago_programado).toLocaleDateString('es-MX')}</td>
+                        <td className="monto">{formatearMoneda(item.monto_total)}</td>
+                        <td className="monto-pagado">{formatearMoneda(item.monto_pagado || 0)}</td>
+                        <td className="monto-restante">{formatearMoneda(item.saldo_restante)}</td>
+                        <td>
+                          {item.dias_atraso > 0 ? (
+                            <span className="badge-danger">{item.dias_atraso} días atrasado</span>
+                          ) : (
+                            <span className="badge-warning">Pendiente</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
-            </table>
-        </div>
-    </div>
-)}
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Artículos más empeñados - Visible para todos */}
         <div className="nueva-seccion">
@@ -952,7 +972,11 @@ const cargarAmortizacionesPendientes = async () => {
         </div>
       </div>
 
-      {/* MODALES */}
+      {/* ============================================ */}
+      {/* MODALES (TODOS IGUALES QUE EN DOCKER) */}
+      {/* ============================================ */}
+
+      {/* MODAL DE PERFIL */}
       {showPerfil && (
         <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
           <div className="modal-detalle modal-perfil" onClick={(e) => e.stopPropagation()}>
@@ -1203,7 +1227,8 @@ const cargarAmortizacionesPendientes = async () => {
         isOpen={showPaymentModal}
         onClose={handleClosePaymentModal}
         sessionId={paymentSessionId}
-        planName={paymentPlanName} planId={paymentPlanId}
+        planName={paymentPlanName}
+        planId={paymentPlanId}
         onSuccess={handlePaymentSuccess}
       />
     </div>
