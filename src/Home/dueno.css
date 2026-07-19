@@ -1,5 +1,5 @@
 /* ============================================ */
-/* DUENO.CSS - VERSIÓN CORREGIDA (GRÁFICA + CARDS) */
+/* DUENO.CSS - VERSIÓN CORREGIDA (CARDS EN MÓVIL) */
 /* ============================================ */
 
 /* ===== CONTENEDOR PRINCIPAL ===== */
@@ -727,7 +727,7 @@
 }
 
 /* ============================================ */
-/* ===== RESPONSIVE ===== */
+/* ===== RESPONSIVE - SOLO CARDS ===== */
 /* ============================================ */
 
 /* --- Laptops / Tablets grandes (1024px) --- */
@@ -778,16 +778,20 @@
     height: 24px;
   }
 
-  /* ✅ CARDS MÁS GRANDES EN TABLET */
+  /* ✅ CARDS - 2 COLUMNAS OCUPANDO TODO EL ANCHO */
   .cards-grid {
-    grid-template-columns: repeat(2, 1fr);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
+    width: 100%;
   }
 
   .stat-card {
     padding: 18px 14px;
     min-height: 110px;
     border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .card-icon {
@@ -952,16 +956,20 @@
     font-size: 11px;
   }
 
-  /* ✅ CARDS MÁS GRANDES - OCUPAN TODO EL ANCHO EN 2 COLUMNAS */
+  /* ✅ CARDS - 2 COLUMNAS OCUPANDO TODO EL ANCHO */
   .cards-grid {
+    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    width: 100%;
   }
 
   .stat-card {
     padding: 20px 16px;
     min-height: 130px;
     border-radius: 12px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .card-icon {
