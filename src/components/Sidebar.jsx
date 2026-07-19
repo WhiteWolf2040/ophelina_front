@@ -57,9 +57,11 @@ const Sidebar = () => {
       }
       
       // Inventario - requiere permiso ver_inventario
-      if (permisos.includes('ver_inventario')) {
-        menus.push({ path: "/inventario", icon: <InventoryIcon />, text: "Inventario" });
-      }
+      // ✅ INVENTARIO - FORZADO (siempre visible para pruebas)
+    // if (permisos.includes('ver_inventario')) {
+    //   menus.push({ path: "/inventario", icon: <InventoryIcon />, text: "Inventario" });
+    // }
+    menus.push({ path: "/inventario", icon: <InventoryIcon />, text: "Inventario" }); // ← SIEMPRE VISIBLE
       
       // Tienda - requiere permiso ver_tienda
       if (permisos.includes('ver_tienda')) {
