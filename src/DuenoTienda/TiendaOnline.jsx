@@ -1,7 +1,7 @@
 // TiendaOnline.jsx - Versión COMPLETA Y FUNCIONAL
 
 import React, { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar";
+
 import { useTienda } from "../hooks/useTienda";
 import "./TiendaOnline.css";
 
@@ -279,7 +279,7 @@ const TiendaOnline = () => {
   // ========== RENDER ==========
   return (
     <div className="dashboard">
-      <Sidebar />
+   
 
       <div className="content tienda-content">
         {/* HEADER */}
