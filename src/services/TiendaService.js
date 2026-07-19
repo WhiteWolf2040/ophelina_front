@@ -1,6 +1,6 @@
 // src/services/TiendaService.js
 
-import api from '../api/axios';
+import api from '../config/api';
 
 class TiendaService {
     /**

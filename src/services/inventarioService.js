@@ -1,6 +1,6 @@
 // src/services/inventarioService.js
 
-import api from '../api/axios';
+import api from '../config/api';
 
 class InventarioService {
     // Obtener todas las prendas
