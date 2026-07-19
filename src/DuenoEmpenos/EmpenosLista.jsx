@@ -84,7 +84,7 @@ const cargarTodosEmpenos = async () => {
         if (response.data.success) {
             const empenosFormateados = response.data.data.map(emp => ({
                 id: emp.id_empeno,
-                // ✅ El backend ya devuelve cliente como string formateado
+                //  El backend ya devuelve cliente como string formateado
                 cliente: emp.cliente || 'Cliente no disponible',
                 objeto: emp.articulo || 'Sin artículo',
                 monto: emp.monto_prestado ? emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00',
@@ -107,7 +107,7 @@ const cargarTodosEmpenos = async () => {
     }
 };
 
-    // ✅ MEJORADO CON LOCAL: useEffect con verificación de permisos
+    //  MEJORADO CON LOCAL: useEffect con verificación de permisos
     useEffect(() => {
       if (puedeVerEmpenos) {
         cargarTodosEmpenos();
