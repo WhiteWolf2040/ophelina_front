@@ -16,7 +16,8 @@ const TiendaService = {
 
     // Obtener estadísticas
     getEstadisticas: async () => {
-        const response = await api.get('/tienda/estadisticas');
+        // ✅ CORRECTO: Ya está bien
+        const response = await api.get('/tienda/productos/estadisticas');
         return response.data;
     },
 
@@ -34,13 +35,15 @@ const TiendaService = {
 
     // Cambiar visibilidad
     toggleVisibilidad: async (id) => {
-        const response = await api.post(`/tienda/productos/${id}/toggle-visible`);
+        // 🔥 CAMBIO: POST → PATCH y /toggle-visible → /visibilidad
+        const response = await api.patch(`/tienda/productos/${id}/visibilidad`);
         return response.data;
     },
 
     // Cambiar destacado
     toggleDestacado: async (id) => {
-        const response = await api.post(`/tienda/productos/${id}/toggle-destacado`);
+        // 🔥 CAMBIO: POST → PATCH y /toggle-destacado → /destacado
+        const response = await api.patch(`/tienda/productos/${id}/destacado`);
         return response.data;
     },
 
