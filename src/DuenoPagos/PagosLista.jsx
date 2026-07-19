@@ -1,4 +1,4 @@
-// PagosLista.jsx - VERSIÓN CORREGIDA (CON CSS RESPONSIVE)
+// PagosLista.jsx - VERSIÓN FUSIONADA (Docker Base + Características Local)
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -13,18 +13,29 @@ import PrintIcon from '@mui/icons-material/Print';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import QrCodeIcon from '@mui/icons-material/QrCode';
 import CloseIcon from '@mui/icons-material/Close';
+// ✅ AGREGADO DE LOCAL: Icono AddIcon
 import AddIcon from '@mui/icons-material/Add';
 
 const PagosLista = () => { 
   const navigate = useNavigate();
 
+  // ✅ AGREGADO DE LOCAL: Verificación de permisos usando el hook usePermissions
+  // Nota: Asumiendo que existe el hook usePermissions en tu proyecto Docker
+  // Si no existe, puedes usar el sistema de permisos que tengas en Docker
   const [userRole, setUserRole] = useState('');
   
+  // ✅ AGREGADO DE LOCAL: Función para verificar permisos basada en roles
   const puedeRegistrarPagos = () => {
+    // Si tienes usePermissions, úsalo aquí
+    // const { hasPermission } = usePermissions();
+    // return hasPermission('registrar_pagos');
+    
+    // Versión simple basada en roles (ajusta según tu sistema)
     const rolesConPermiso = ['Administrador', 'Dueño', 'Gerente'];
     return rolesConPermiso.includes(userRole);
   };
 
+  // ✅ AGREGADO DE LOCAL: Función para verificar permiso de eliminar
   const puedeEliminar = () => {
     const rolesConPermiso = ['Administrador', 'Dueño'];
     return rolesConPermiso.includes(userRole);
@@ -46,6 +57,7 @@ const PagosLista = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const pagosPorPagina = 8;
 
+  // ✅ AGREGADO DE LOCAL: Cargar rol del usuario
   useEffect(() => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
@@ -58,6 +70,7 @@ const PagosLista = () => {
     }
   }, []);
 
+  // Cargar pagos al montar el componente
   useEffect(() => {
     cargarPagos();
   }, []);
@@ -66,6 +79,7 @@ const PagosLista = () => {
     try {
       setLoading(true);
       const response = await pagosService.obtenerPagos();
+      // Asegurarse de que articulo sea un string
       const pagosFormateados = response.data.data.map(pago => ({
         ...pago,
         articulo: typeof pago.articulo === 'object' ? pago.articulo.descripcion || 'Sin artículo' : pago.articulo,
@@ -81,6 +95,7 @@ const PagosLista = () => {
   };
 
   const handleEliminar = async () => {
+    // ✅ AGREGADO DE LOCAL: Validación de permiso para eliminar
     if (!puedeEliminar()) {
       alert('No tienes permiso para eliminar pagos');
       return;
@@ -98,6 +113,7 @@ const PagosLista = () => {
     }
   };
 
+  // Filtrar pagos
   const pagosFiltrados = pagos.filter((pago) => {
     const coincideNombre = pago.cliente
       ?.toLowerCase()
@@ -110,11 +126,13 @@ const PagosLista = () => {
     return coincideNombre && coincideFecha;
   });
 
+  // Calcular paginación
   const indiceUltimo = paginaActual * pagosPorPagina;
   const indicePrimero = indiceUltimo - pagosPorPagina;
   const pagosActuales = pagosFiltrados.slice(indicePrimero, indiceUltimo);
   const totalPaginas = Math.ceil(pagosFiltrados.length / pagosPorPagina);
 
+  // Función para abrir detalle con datos completos desde la API
   const abrirDetalle = async (pago) => {
     setPagoSeleccionado(pago);
     setModalAbierto(true);
@@ -139,6 +157,7 @@ const PagosLista = () => {
   };
 
   const confirmarEliminar = (pago) => {
+    // ✅ AGREGADO DE LOCAL: Validación de permiso para eliminar
     if (!puedeEliminar()) {
       alert('No tienes permiso para eliminar pagos');
       return;
@@ -202,8 +221,10 @@ const PagosLista = () => {
     alert("Folio copiado al portapapeles");
   };
 
+  // Función que OBTIENE DATOS REALES - se ejecuta dentro del modal
   const getReciboData = () => {
     if (!detalleCompleto) {
+      // Si no hay detalle completo, usar datos básicos del pago seleccionado
       if (!pagoSeleccionado) return null;
       return {
         folio: pagoSeleccionado.folio || `PAG-${pagoSeleccionado.id}-${new Date().getFullYear()}`,
@@ -225,6 +246,7 @@ const PagosLista = () => {
       };
     }
     
+    // Datos REALES desde la API
     const pagoData = detalleCompleto.pago || {};
     const empenoData = detalleCompleto.empeno || {};
     const clienteData = detalleCompleto.cliente || {};
@@ -259,6 +281,7 @@ const PagosLista = () => {
     };
   };
 
+  // Funciones de paginación
   const cambiarPagina = (numeroPagina) => {
     setPaginaActual(numeroPagina);
   };
@@ -287,15 +310,14 @@ const PagosLista = () => {
     return numeros;
   };
 
-  // ============================================
-  // ✅ RENDER - CON ESTRUCTURA CORREGIDA
-  // ============================================
-  
+  // Renderizado condicional
   if (loading) {
     return (
       <div className="dashboard">
+    
         <div className="content loading-container">
-          <div className="loading-spinner">Cargando pagos...</div>
+          <div className="spinner"></div>
+          <p>Cargando pagos...</p>
         </div>
       </div>
     );
@@ -304,6 +326,7 @@ const PagosLista = () => {
   if (error) {
     return (
       <div className="dashboard">
+   
         <div className="content error-container">
           <h3>Error</h3>
           <p>{error}</p>
@@ -317,17 +340,20 @@ const PagosLista = () => {
 
   return (
     <div className="dashboard">
+ 
+
       <div className="content">
         {/* HEADER */}
-        <div className="tienda-header">
-          <div>
+        <div className="header-container">
+          <div className="">
             <h1>
               <PaymentsIcon className="title-icon" /> 
-              Listado de pagos
+              Listado de pagos 
+              <p className="header-sub">Gestiona los pagos realizados</p>
             </h1>
-            <p className="header-sub">Gestiona los pagos realizados</p>
           </div>
           
+          {/* ✅ AGREGADO DE LOCAL: Botón Nuevo Pago con permiso */}
           {puedeRegistrarPagos() && (
             <button
               className="btn-nuevo"
@@ -428,54 +454,52 @@ const PagosLista = () => {
 
           {/* Vista desktop */}
           <div className="vista-desktop">
-            <div className="tabla-wrapper">
-              <table className="tabla-moderna">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>Artículo</th>
-                    <th>Monto</th>
-                    <th>Tipo</th>
-                    <th>Fecha</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pagosActuales.length > 0 ? (
-                    pagosActuales.map((pago) => (
-                      <tr key={pago.id}>
-                        <td><strong>{pago.cliente}</strong></td>
-                        <td>{pago.articulo}</td>
-                        <td>${pago.monto}</td>
-                        <td>
-                          <span className={`tipo-badge tipo-${pago.tipo?.toLowerCase()}`}>
-                            {pago.tipo}
-                          </span>
-                        </td>
-                        <td>{pago.fecha}</td>
-                        <td>
-                          <div className="acciones-cell">
-                            <button 
-                              className="btn-accion ver"
-                              onClick={() => abrirDetalle(pago)}
-                              title="Ver detalles"
-                            >
-                              <VisibilityIcon fontSize="small" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="sin-resultados">
-                        No hay resultados con esos filtros
+            <table className="tabla-pagos">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Artículo</th>
+                  <th>Monto</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagosActuales.length > 0 ? (
+                  pagosActuales.map((pago) => (
+                    <tr key={pago.id}>
+                      <td><strong>{pago.cliente}</strong></td>
+                      <td>{pago.articulo}</td>
+                      <td>${pago.monto}</td>
+                      <td>
+                        <span className={`tipo-badge tipo-${pago.tipo?.toLowerCase()}`}>
+                          {pago.tipo}
+                        </span>
+                      </td>
+                      <td>{pago.fecha}</td>
+                      <td>
+                        <div className="acciones-container">
+                          <button 
+                            className="btn-accion ver"
+                            onClick={() => abrirDetalle(pago)}
+                            title="Ver detalles"
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="sin-resultados">
+                      No hay resultados con esos filtros
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
           {/* PAGINACIÓN */}
@@ -550,12 +574,126 @@ const PagosLista = () => {
                 if (!reciboData) return null;
                 return (
                   <div className="recibo-contenido" id="contenido-ticket-imprimir">
-                    {/* ... resto del contenido del recibo ... */}
+                    <div className="recibo-encabezado">
+                      <h2>OPHELINA</h2>
+                      <p className="recibo-lema">La que brinda apoyo</p>
+                      <p className="recibo-rfc">RFC: OPH123456789</p>
+                      <p className="recibo-direccion">Calle 60 #123, Centro, Mérida, Yucatán</p>
+                      <p className="recibo-tel">Tel: 999 123 4567</p>
+                    </div>
+
+                    <div className="recibo-folio-section">
+                      <div className="folio-group">
+                        <span className="folio-label">FOLIO:</span>
+                        <span className="folio-valor">{reciboData.folio}</span>
+                        <button className="btn-copy-small" onClick={handleCopiarFolio}>
+                          <ContentCopyIcon fontSize="small" />
+                        </button>
+                      </div>
+                      <div className="fechas-group">
+                        <p><span className="label">Emisión:</span> {pagoSeleccionado?.fecha || reciboData.fechaPago}</p>
+                        <p><span className="label">Vencimiento:</span> {reciboData.fechaVencimiento}</p>
+                      </div>
+                    </div>
+
+                    <div className="recibo-cliente-section">
+                      <h3>CLIENTE</h3>
+                      <div className="cliente-grid">
+                        <p><span>Nombre:</span> {reciboData.nombreCliente}</p>
+                        <p><span>RFC:</span> {reciboData.rfcCliente}</p>
+                        <p><span>Teléfono:</span> {reciboData.telefonoCliente}</p>
+                        <p><span>Email:</span> {reciboData.emailCliente}</p>
+                      </div>
+                    </div>
+
+                    <div className="recibo-articulo-section">
+                      <h3>DETALLE DEL EMPEÑO</h3>
+                      <table className="recibo-tabla">
+                        <thead>
+                          <tr>
+                            <th>Descripción</th>
+                            <th>Cant.</th>
+                            <th>P.Unitario</th>
+                            <th>Importe</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>{reciboData.prendaDescripcion}</td>
+                            <td className="text-center">1</td>
+                            <td className="text-right">${(reciboData.capital || 0).toFixed(2)}</td>
+                            <td className="text-right">${(reciboData.capital || 0).toFixed(2)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="recibo-desglose">
+                      <div className="desglose-fila">
+                        <span>Capital:</span>
+                        <span>${(reciboData.capital || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="desglose-fila">
+                        <span>Intereses:</span>
+                        <span>${(reciboData.interes || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="desglose-fila">
+                        <span>IVA (16% sobre intereses):</span>
+                        <span>${(reciboData.iva || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="desglose-fila subtotal">
+                        <span>Subtotal:</span>
+                        <span>${(reciboData.subtotal || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="desglose-fila total">
+                        <span>TOTAL PAGADO:</span>
+                        <span>${(reciboData.total || 0).toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    <div className="recibo-pago-info">
+                      <div className="pago-info-item">
+                        <span className="label">Método de pago:</span>
+                        <span className="valor">{reciboData.metodoPago}</span>
+                      </div>
+                      <div className="pago-info-item">
+                        <span className="label">Referencia:</span>
+                        <span className="valor">{reciboData.referencia}</span>
+                      </div>
+                      <div className="pago-info-item">
+                        <span className="label">Atendió:</span>
+                        <span className="valor">{reciboData.cajero}</span>
+                      </div>
+                      <div className="pago-info-item">
+                        <span className="label">Sucursal:</span>
+                        <span className="valor">{reciboData.sucursal}</span>
+                      </div>
+                    </div>
+
+                    <div className="recibo-footer-modal">
+                      <div className="recibo-qr">
+                        <QrCodeIcon className="qr-icon" />
+                        <div>
+                          <small>Código de verificación</small>
+                          <p className="qr-folio">{reciboData.folio}</p>
+                        </div>
+                      </div>
+                      <div className="recibo-notas">
+                        <p><strong>Nota:</strong> Este recibo es comprobante de pago.</p>
+                        <p className="recibo-garantia">* Artículo en garantía hasta 30 días después del vencimiento</p>
+                      </div>
+                    </div>
+
+                    <div className="recibo-sello">
+                      <p>Sello digital: OP-{Date.now().toString(36).toUpperCase()}</p>
+                      <p>www.ophelina.mx/verificar</p>
+                    </div>
                   </div>
                 );
               })()
             )}
            
+            {/* ✅ AGREGADO DE LOCAL: Botón Eliminar Pago con permiso */}
             {puedeEliminar() && (
               <div className="recibo-eliminar">
                 <button 
@@ -571,7 +709,7 @@ const PagosLista = () => {
         </div>
       )}
 
-      {/* MODAL DE CONFIRMACIÓN ELIMINAR */}
+      {/* ✅ AGREGADO DE LOCAL: MODAL DE CONFIRMACIÓN ELIMINAR con permiso */}
       {modalEliminar && pagoSeleccionado && puedeEliminar() && (
         <div className="modal-overlay" onClick={() => setModalEliminar(false)}>
           <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
