@@ -16,7 +16,7 @@
     "@mui/icons-material": "^7.3.8",
     "@mui/material": "^7.3.8",
     "@popperjs/core": "^2.11.8",
-    "@stripe/stripe-js": "^9.3.0",
+    "@stripe/stripe-js": "^9.8.0",
     "apexcharts": "^5.6.0",
     "axios": "^1.15.2",
     "bootstrap": "^5.3.8",

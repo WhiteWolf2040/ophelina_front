@@ -165,6 +165,98 @@ const fetchCurrentUser = async () => {
 
 /*
 ==============================
+ACTUALIZAR PERFIL (correo y teléfono)
+==============================
+*/
+
+const updateProfile = async (correo, telefono) => {
+  try {
+
+    const response = await api.put("/user", { correo, telefono });
+
+    if (response.data.success) {
+
+      const usuarioActualizado = response.data.data.usuario;
+
+      // Actualizamos el usuario guardado en localStorage con los nuevos datos
+      const usuarioActual = getCurrentUser();
+      const usuarioFinal = { ...usuarioActual, ...usuarioActualizado };
+      localStorage.setItem("user", JSON.stringify(usuarioFinal));
+
+      return { success: true, data: usuarioFinal };
+
+    }
+
+    return { success: false, message: response.data.message };
+
+  } catch (error) {
+
+    return {
+      success: false,
+      message: error.response?.data?.message || "Error al actualizar el perfil"
+    };
+
+  }
+};
+
+/*
+==============================
+OBTENER NOTIFICACIONES
+==============================
+*/
+
+const getNotificaciones = async () => {
+  try {
+
+    const response = await api.get("/notificaciones");
+
+    if (response.data.success) {
+
+      return { success: true, data: response.data.data };
+
+    }
+
+    return { success: false, data: [] };
+
+  } catch (error) {
+
+    return { success: false, data: [] };
+
+  }
+};
+
+/*
+==============================
+OBTENER MIS EMPEÑOS
+==============================
+*/
+
+const getMisEmpenos = async () => {
+  try {
+
+    const response = await api.get("/cliente/empenos");
+
+    if (response.data.success) {
+
+      return { success: true, data: response.data.data };
+
+    }
+
+    return { success: false, data: [], message: response.data.message };
+
+  } catch (error) {
+
+    return {
+      success: false,
+      data: [],
+      message: error.response?.data?.message || "Error al obtener tus empeños",
+    };
+
+  }
+};
+
+/*
+==============================
 VERIFICAR ROL
 ==============================
 */
@@ -209,5 +301,8 @@ export {
   hasPermission,
   hasRole,
   setAuthData,
-  clearAuthData
+  clearAuthData,
+  updateProfile,
+  getNotificaciones,
+  getMisEmpenos
 };

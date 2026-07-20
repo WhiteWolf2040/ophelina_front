@@ -46,12 +46,12 @@ export default function OpheliaLogin() {
         localStorage.setItem('modulos', JSON.stringify(result.data.modulos));
       }
       
-      // Redirigir según los permisos
-      // Si tiene permiso para ver dashboard, va al panel de admin
-      if (result.data.permisos?.includes('ver_dashboard')) {
-        navigate("/home");
-      } else {
+      // Redirigir según el ROL (no según el permiso, ya que
+      // 'ver_dashboard' está asignado tanto a Admin/Gerente/Cajero como a Cliente)
+      if (result.data.rol === 'Cliente') {
         navigate("/homecliente");
+      } else {
+        navigate("/home");
       }
     } else {
       setError(result.message);
