@@ -257,6 +257,67 @@ const getMisEmpenos = async () => {
 
 /*
 ==============================
+TIENDA: OBTENER PRODUCTOS
+==============================
+*/
+
+const getProductosTienda = async () => {
+  try {
+    const response = await api.get("/tienda/productos");
+    if (response.data.success) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    return {
+      success: false,
+      data: [],
+      message: error.response?.data?.message || "Error al obtener los productos",
+    };
+  }
+};
+
+/*
+==============================
+TIENDA: APARTAR PRODUCTO
+==============================
+*/
+
+const apartarProducto = async (idProducto) => {
+  try {
+    const response = await api.post(`/tienda/productos/${idProducto}/apartar`);
+    if (response.data.success) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, message: response.data.message };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.message || "Error al apartar el producto",
+    };
+  }
+};
+
+/*
+==============================
+TIENDA: MIS APARTADOS
+==============================
+*/
+
+const getMisApartados = async () => {
+  try {
+    const response = await api.get("/tienda/apartados");
+    if (response.data.success) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    return { success: false, data: [] };
+  }
+};
+
+/*
+==============================
 VERIFICAR ROL
 ==============================
 */
@@ -304,5 +365,8 @@ export {
   clearAuthData,
   updateProfile,
   getNotificaciones,
-  getMisEmpenos
+  getMisEmpenos,
+  getProductosTienda,
+  apartarProducto,
+  getMisApartados
 };
