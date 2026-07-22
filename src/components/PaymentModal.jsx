@@ -1,101 +1,123 @@
-import React, { useEffect } from 'react';
-import { stripeService } from '../services/stripeService';
+// components/PaymentModal.jsx
+import React, { useState, useEffect } from 'react';
+import api from '../config/api';  // ← IMPORTAR api
+import './PaymentModal.css';
 
-const PaymentModal = ({ isOpen, onClose, sessionId, planName, onSuccess }) => {
-  useEffect(() => {
-    if (isOpen && sessionId) {
-      const verifyPayment = async () => {
-        try {
-          const empresaId = localStorage.getItem('empresa_id');
-          const planId = localStorage.getItem('pending_plan_id');
-          
-          console.log('📤 Verificando pago:', { 
-            sessionId, 
-            empresaId, 
-            planId: planId 
-          });
-          
-          const response = await stripeService.verifyPayment({
-            session_id: sessionId,
-            empresa_id: empresaId,
-            plan_id: planId
-          });
-          
-          console.log('✅ Respuesta:', response);
-          
-          if (response.success) {
-            // Actualizar estado local
-            localStorage.setItem('user_plan', response.planId);
-            localStorage.setItem('plan_activo', 'true');
-            localStorage.removeItem('pending_plan_id');
-            
-            if (onSuccess) {
-              onSuccess(response);
-            }
-            
-            alert(`¡Pago exitoso! Plan activado correctamente.`);
-            
-            setTimeout(() => {
-              if (onClose) onClose();
-              window.location.reload();
-            }, 2000);
-          } else {
-            alert('Error al verificar el pago: ' + (response.error || 'Intenta de nuevo'));
-          }
-        } catch (error) {
-          console.error('❌ Error:', error);
-          alert('Error al verificar el pago');
+const PaymentModal = ({ isOpen, onClose, sessionId, planName, planId, onSuccess }) => {
+    const [verifying, setVerifying] = useState(false);
+    const [verified, setVerified] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (isOpen && sessionId && !verified && !verifying) {
+            console.log('🔍 Modal abierto - Verificando pago...');
+            verifyPayment();
         }
-      };
-      
-      verifyPayment();
-    }
-  }, [isOpen, sessionId, onSuccess, onClose]);
+    }, [isOpen, sessionId]);
 
-  if (!isOpen) return null;
+    const verifyPayment = async () => {
+        try {
+            setVerifying(true);
+            setError(null);
+            
+            console.log('🔍 Verificando pago con session_id:', sessionId);
+            console.log('🔑 Token en localStorage:', localStorage.getItem('token') ? 'SÍ' : 'NO');
+            
+            // ✅ USAR API DIRECTAMENTE (el interceptor agrega el token)
+            const response = await api.post('/stripe/verify-payment', {
+                session_id: sessionId
+            });
+            
+            console.log('📊 Respuesta del backend:', response.data);
+            
+            if (response.data.success) {
+                setVerified(true);
+                console.log('✅ Pago verificado correctamente');
+                
+                // Guardar información del plan
+                localStorage.setItem('plan_id', response.data.data.plan_id);
+                localStorage.setItem('plan_nombre', response.data.data.plan_nombre);
+                
+                // Notificar éxito
+                if (onSuccess) {
+                    onSuccess(response.data.data);
+                }
+                
+                // Cerrar modal automáticamente después de 3 segundos
+                setTimeout(() => {
+                    onClose();
+                }, 3000);
+            } else {
+                setError(response.data.message || 'Error al verificar el pago');
+            }
+        } catch (error) {
+            console.error('❌ Error al verificar pago:', error);
+            console.error('❌ Detalles del error:', error.response?.data);
+            
+            // Si es error 401, redirigir al login
+            if (error.response?.status === 401) {
+                setError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 3000);
+            } else {
+                setError(error.response?.data?.message || 'Error de conexión al verificar el pago');
+            }
+        } finally {
+            setVerifying(false);
+        }
+    };
 
-  const plan = localStorage.getItem('pending_plan_name') || planName || 'Premium';
+    // Si no está abierto, no renderizar nada
+    if (!isOpen) return null;
 
-  return (
-    <div className="payment-modal-overlay" style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.7)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 9999
-    }}>
-      <div className="payment-modal" style={{
-        backgroundColor: 'white',
-        padding: '30px',
-        borderRadius: '10px',
-        textAlign: 'center',
-        minWidth: '300px'
-      }}>
-        <h2>🔄 Procesando tu pago...</h2>
-        <p>Verificando tu suscripción al plan <strong>{plan}</strong></p>
-        <div className="spinner" style={{
-          width: '40px',
-          height: '40px',
-          border: '4px solid #f3f3f3',
-          borderTop: '4px solid #3498db',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          margin: '20px auto'
-        }}></div>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
-    </div>
-  );
+    return (
+        <div className="payment-modal-overlay">
+            <div className="payment-modal-container">
+                <button className="payment-modal-close" onClick={onClose}>✕</button>
+                
+                <div className="payment-modal-content">
+                    <h2>Verificando tu pago</h2>
+                    
+                    {verifying && (
+                        <div className="payment-loading">
+                            <div className="spinner"></div>
+                            <p>Verificando tu suscripción <strong>{planName || 'Premium'}</strong>...</p>
+                            <p className="payment-subtext">Por favor espera un momento</p>
+                        </div>
+                    )}
+                    
+                    {verified && (
+                        <div className="payment-success">
+                            <div className="success-icon">✅</div>
+                            <h3>¡Pago confirmado!</h3>
+                            <p>Tu plan <strong>{planName || 'Premium'}</strong> ha sido activado correctamente.</p>
+                            <p className="payment-subtext">Redirigiendo al dashboard...</p>
+                            <button className="btn-primary" onClick={onClose}>
+                                Ir al Dashboard
+                            </button>
+                        </div>
+                    )}
+                    
+                    {error && !verified && !verifying && (
+                        <div className="payment-error">
+                            <div className="error-icon">❌</div>
+                            <h3>Error al verificar el pago</h3>
+                            <p>{error}</p>
+                            <div className="payment-actions">
+                                <button className="btn-retry" onClick={verifyPayment}>
+                                    Reintentar
+                                </button>
+                                <button className="btn-secondary" onClick={onClose}>
+                                    Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 };
 
 export default PaymentModal;

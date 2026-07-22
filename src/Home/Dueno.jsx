@@ -56,37 +56,70 @@ const Dueno = () => {
   const [paymentPlanId, setPaymentPlanId] = useState(null);
 
   // Detectar pago exitoso
-  useEffect(() => {
+ // Detectar pago exitoso - en Dueno.jsx
+useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const paymentStatus = searchParams.get('payment');
     
+    console.log('🔍 Parámetros URL:', { sessionId, paymentStatus });
+    
     if (sessionId && paymentStatus === 'success') {
-      setPaymentSessionId(sessionId);
-      setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
-      setPaymentPlanId(localStorage.getItem('pending_plan_id'));
-      setShowPaymentModal(true);
-      window.history.replaceState({}, document.title, '/home');
+        console.log('✅ Pago detectado, abriendo modal...');
+        console.log('📌 session_id:', sessionId);
+        console.log('📌 plan_name:', localStorage.getItem('pending_plan_name'));
+        console.log('📌 plan_id:', localStorage.getItem('pending_plan_id'));
+        
+        setPaymentSessionId(sessionId);
+        setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
+        setPaymentPlanId(localStorage.getItem('pending_plan_id'));
+        setShowPaymentModal(true);
+        
+        // Limpiar la URL
+        window.history.replaceState({}, document.title, '/home');
     }
-  }, [searchParams]);
+}, [searchParams]);
 
   // Verificar suscripción al cargar
-  useEffect(() => {
+// Home/Dueno.jsx - Actualizar la verificación de suscripción
+
+// Verificar suscripción al cargar
+useEffect(() => {
     const verificarSuscripcion = async () => {
-      const empresaId = localStorage.getItem('empresa_id');
-      if (!empresaId) return;
-      
-      try {
-        const response = await stripeService.checkSubscription(empresaId);
-        if (!response.activo && response.dias_restantes <= 0) {
-          alert('Tu suscripción ha vencido. Por favor, renueva.');
-          window.location.href = '/planes';
+        const empresaId = localStorage.getItem('empresa_id');
+        if (!empresaId) {
+            console.warn('⚠️ No hay empresa_id en localStorage');
+            return;
         }
-      } catch (error) {
-        console.error('Error al verificar suscripción:', error);
-      }
+        
+        try {
+            console.log('🔍 Verificando suscripción para empresa:', empresaId);
+            const response = await stripeService.checkSubscription(empresaId);
+            console.log('📊 Estado suscripción:', response);
+            
+            // ✅ Si la suscripción es indefinida (sin fecha) y está activa
+            if (response.fecha_fin_plan === null && response.plan_activo === 1) {
+                console.log('✅ Suscripción activa sin fecha de vencimiento');
+                return;
+            }
+            
+            // ✅ Si tiene fecha y está activa
+            if (response.activo) {
+                console.log('✅ Suscripción activa. Días restantes:', response.dias_restantes);
+                return;
+            }
+            
+            // ❌ Si está inactiva o vencida
+            console.warn('⚠️ Suscripción inactiva o vencida');
+            alert('Tu suscripción ha vencido. Por favor, renueva.');
+            window.location.href = '/planes';
+            
+        } catch (error) {
+            console.error('❌ Error al verificar suscripción:', error);
+            // No redirigir si hay error, dejar que el usuario vea el dashboard
+        }
     };
     verificarSuscripcion();
-  }, []);
+}, []);
 
   // ============================================
   // ESTADOS (DESDE DOCKER)
