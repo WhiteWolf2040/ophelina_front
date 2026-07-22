@@ -19,9 +19,11 @@ const PaymentModal = ({ isOpen, onClose, sessionId, planName, planId, onSuccess 
         try {
             setVerifying(true);
             setError(null);
-            
-            console.log('🔍 Verificando pago con session_id:', sessionId);
-            console.log('🔑 Token en localStorage:', localStorage.getItem('token') ? 'SÍ' : 'NO');
+       console.log('🚀🚀🚀 verifyPayment INICIADO');
+        console.log('📌 sessionId:', sessionId);
+        console.log('📌 planName:', planName);
+        console.log('📌 planId:', planId);
+        console.log('🔑 Token:', localStorage.getItem('token') ? 'SÍ' : 'NO');
             
             // ✅ USAR API DIRECTAMENTE (el interceptor agrega el token)
             const response = await api.post('/stripe/verify-payment', {
