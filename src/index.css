@@ -1,4 +1,4 @@
-/* index.css - VERSIÓN ORIGINAL CON SCROLL FUNCIONAL */
+/* index.css - Scroll funcional en landing + dashboard */
 
 /* Reset básico */
 * {
@@ -7,10 +7,9 @@
   box-sizing: border-box;
 }
 
-/* Eliminar scroll en html, body y root */
+/* Por defecto, SÍ permitir scroll normal (para landing y demás páginas públicas) */
 html, body, #root {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
 }
 
 /* Fuentes globales */
@@ -21,7 +20,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* El scroll solo en el contenedor principal */
+/* Solo el layout del dashboard (app-layout) usa scroll interno controlado */
 .app-layout {
   display: flex;
   height: 100vh;
@@ -29,16 +28,14 @@ body {
   width: 100%;
 }
 
-/* Sidebar - sin scroll o con scroll interno si es necesario */
 .app-layout .sidebar {
   height: 100vh;
   overflow-y: auto;
   flex-shrink: 0;
 }
 
-/* Contenido principal - ÚNICO SCROLL PERMITIDO */
 .app-layout .main-content,
-.main-content-wrapper {
+.app-layout .main-content-wrapper {
   flex: 1;
   overflow-y: auto;
   height: 100vh;
@@ -53,7 +50,7 @@ body {
   text-align: left !important;
 }
 
-/* Scrollbar personalizado (opcional) */
+/* Scrollbar personalizado */
 ::-webkit-scrollbar {
   width: 6px;
 }
