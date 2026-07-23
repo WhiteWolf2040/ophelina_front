@@ -1,6 +1,6 @@
-// TiendaOnline.jsx - Versión COMPLETA Y FUNCIONAL
+// TiendaOnline.jsx - Versión con subida de imagen como archivo real (FormData)
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import { useTienda } from "../hooks/useTienda";
 import "./TiendaOnline.css";
@@ -32,6 +32,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TimerIcon from '@mui/icons-material/Timer';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 // Placeholder para imágenes
 const PLACEHOLDER_IMAGE = '/placeholder.png';
@@ -64,6 +65,7 @@ const TiendaOnline = () => {
   const [mostrarConfiguracion, setMostrarConfiguracion] = useState(false);
   const [diasGracia, setDiasGracia] = useState(5);
   const [publicando, setPublicando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
 
   // Estados para modales
   const [modalProductoAbierto, setModalProductoAbierto] = useState(false);
@@ -74,7 +76,15 @@ const TiendaOnline = () => {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [resultadoPublicacion, setResultadoPublicacion] = useState(null);
 
-  // Estado para el formulario de producto
+  // ✅ Referencia al input de archivo (para poder limpiarlo o abrirlo por código si se quiere)
+  const inputImagenRef = useRef(null);
+
+  // ✅ Estado para el archivo de imagen seleccionado (objeto File real)
+  const [archivoImagen, setArchivoImagen] = useState(null);
+  // ✅ Vista previa local de la imagen (antes de subirla)
+  const [previewImagen, setPreviewImagen] = useState(null);
+
+  // Estado para el formulario de producto (ya sin el campo "imagen" como texto)
   const [formProducto, setFormProducto] = useState({
     id_prenda: "",
     nombre: "",
@@ -82,7 +92,6 @@ const TiendaOnline = () => {
     precio: "",
     descuento: "0",
     stock: "1",
-    imagen: "",
     descripcion: "",
     estado: "Buen estado",
     visible: true,
@@ -109,7 +118,28 @@ const TiendaOnline = () => {
     });
   }, [busqueda, categoriaFiltro, estadoFiltro, verSoloVisibles]);
 
+  // ✅ Limpiar el object URL de la vista previa cuando cambie o se cierre el modal,
+  // para no acumular memoria del navegador
+  useEffect(() => {
+    return () => {
+      if (previewImagen) {
+        URL.revokeObjectURL(previewImagen);
+      }
+    };
+  }, [previewImagen]);
+
   // ========== MANEJADORES ==========
+  const limpiarImagenSeleccionada = () => {
+    setArchivoImagen(null);
+    if (previewImagen) {
+      URL.revokeObjectURL(previewImagen);
+    }
+    setPreviewImagen(null);
+    if (inputImagenRef.current) {
+      inputImagenRef.current.value = "";
+    }
+  };
+
   const abrirNuevoProducto = () => {
     setModoEdicion(false);
     setProductoSeleccionado(null);
@@ -120,12 +150,12 @@ const TiendaOnline = () => {
       precio: "",
       descuento: "0",
       stock: "1",
-      imagen: "",
       descripcion: "",
       estado: "Buen estado",
       visible: true,
       destacado: false
     });
+    limpiarImagenSeleccionada();
     setModalProductoAbierto(true);
   };
 
@@ -133,7 +163,7 @@ const TiendaOnline = () => {
     setModoEdicion(true);
     setProductoSeleccionado({
       ...producto,
-      id: producto.id_producto // Para compatibilidad
+      id: producto.id_producto
     });
     setFormProducto({
       id_prenda: producto.id_prenda || "",
@@ -142,12 +172,14 @@ const TiendaOnline = () => {
       precio: producto.precio || "",
       descuento: producto.descuento || 0,
       stock: producto.stock || 1,
-      imagen: producto.imagen_url || producto.imagen_principal || "",
       descripcion: producto.descripcion || "",
       estado: producto.estado_producto || producto.estado || "Buen estado",
       visible: producto.visible !== undefined ? producto.visible : true,
       destacado: producto.destacado || false
     });
+    limpiarImagenSeleccionada();
+    // Si el producto ya tiene imagen, se muestra como vista previa inicial
+    setPreviewImagen(producto.imagen_url || producto.imagen_principal || null);
     setModalProductoAbierto(true);
   };
 
@@ -165,36 +197,68 @@ const TiendaOnline = () => {
     setModalPublicacionAbierto(true);
   };
 
+  // ✅ Cuando el usuario selecciona un archivo en el input type="file"
+  const handleImagenSeleccionada = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validación básica en el cliente (el backend también valida)
+    if (!file.type.startsWith("image/")) {
+      alert("El archivo debe ser una imagen (jpg, png, etc.)");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("La imagen no debe superar los 5MB");
+      return;
+    }
+
+    if (previewImagen) {
+      URL.revokeObjectURL(previewImagen);
+    }
+
+    setArchivoImagen(file);
+    setPreviewImagen(URL.createObjectURL(file));
+  };
+
   const handleGuardarProducto = async (e) => {
     e.preventDefault();
-    
+    setGuardando(true);
+
     try {
-      const data = {
-        nombre: formProducto.nombre,
-        categoria: formProducto.categoria,
-        precio: Number(formProducto.precio),
-        descuento: Number(formProducto.descuento),
-        stock: Number(formProducto.stock),
-        descripcion: formProducto.descripcion,
-        estado: formProducto.estado,
-        visible: formProducto.visible,
-        destacado: formProducto.destacado,
-        imagen: formProducto.imagen,
-        id_prenda: formProducto.id_prenda || null
-      };
+      // ✅ Se construye un FormData en vez de un objeto plano,
+      // porque ahora sí puede llevar un archivo binario real.
+      const formData = new FormData();
+      formData.append("nombre", formProducto.nombre);
+      formData.append("categoria", formProducto.categoria);
+      formData.append("precio", Number(formProducto.precio));
+      formData.append("descuento", Number(formProducto.descuento));
+      formData.append("stock", Number(formProducto.stock));
+      formData.append("descripcion", formProducto.descripcion || "");
+      formData.append("estado", formProducto.estado);
+      // Los booleanos se mandan como '1' / '0' para que Laravel los valide bien como boolean
+      formData.append("visible", formProducto.visible ? "1" : "0");
+      formData.append("destacado", formProducto.destacado ? "1" : "0");
+
+      // Solo se agrega la imagen si el usuario seleccionó una nueva
+      if (archivoImagen) {
+        formData.append("imagen", archivoImagen);
+      }
 
       if (modoEdicion && productoSeleccionado) {
-        await actualizarProducto(productoSeleccionado.id_producto, data);
+        await actualizarProducto(productoSeleccionado.id_producto, formData);
       } else {
-        await crearProducto(data);
+        await crearProducto(formData);
       }
-      
+
       setModalProductoAbierto(false);
+      limpiarImagenSeleccionada();
       await cargarProductos();
       await cargarEstadisticas();
     } catch (err) {
       console.error("Error guardando producto:", err);
       alert("Error al guardar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -234,7 +298,7 @@ const TiendaOnline = () => {
   const handlePublicacionAutomatica = async () => {
     setPublicando(true);
     setResultadoPublicacion(null);
-    
+
     try {
       const resultado = await ejecutarPublicacionAutomatica(diasGracia);
       setResultadoPublicacion(resultado);
@@ -279,8 +343,6 @@ const TiendaOnline = () => {
   // ========== RENDER ==========
   return (
     <div className="dashboard">
-   
-
       <div className="content tienda-content">
         {/* HEADER */}
         <div>
@@ -289,9 +351,9 @@ const TiendaOnline = () => {
             Tienda Online
             <p className="header-sub">Gestiona los productos en venta</p>
           </h1>
-          
+
           <div className="header-actions">
-            <button 
+            <button
               className="btn-publicacion-auto"
               onClick={abrirModalPublicacion}
               title="Publicación automática de productos vencidos"
@@ -299,7 +361,7 @@ const TiendaOnline = () => {
               <AutoAwesomeIcon />
               Publicación Automática
             </button>
-            <button 
+            <button
               className="btn-nuevo-producto"
               onClick={abrirNuevoProducto}
             >
@@ -318,7 +380,7 @@ const TiendaOnline = () => {
               <span className="stat-value">{estadisticas?.total || 0}</span>
             </div>
           </div>
-          
+
           <div className="stat-card">
             <div className="stat-icon"><VisibilityIcon /></div>
             <div className="stat-info">
@@ -326,7 +388,7 @@ const TiendaOnline = () => {
               <span className="stat-value">{estadisticas?.visibles || 0}</span>
             </div>
           </div>
-          
+
           <div className="stat-card">
             <div className="stat-icon"><VisibilityOffIcon /></div>
             <div className="stat-info">
@@ -334,7 +396,7 @@ const TiendaOnline = () => {
               <span className="stat-value">{estadisticas?.ocultos || 0}</span>
             </div>
           </div>
-          
+
           <div className="stat-card">
             <div className="stat-icon"><AttachMoneyIcon /></div>
             <div className="stat-info">
@@ -342,7 +404,7 @@ const TiendaOnline = () => {
               <span className="stat-value">${estadisticas?.valor_total || 0}</span>
             </div>
           </div>
-          
+
           <div className="stat-card">
             <div className="stat-icon"><StarIcon /></div>
             <div className="stat-info">
@@ -404,7 +466,7 @@ const TiendaOnline = () => {
               Solo visibles
             </label>
 
-            <button 
+            <button
               className="btn-refrescar"
               onClick={() => {
                 cargarProductos();
@@ -454,12 +516,11 @@ const TiendaOnline = () => {
           <div className="productos-grid">
             {productos?.data?.length > 0 ? (
               productos.data.map(producto => (
-                // ✅ KEY CORREGIDO: usar id_producto
                 <div key={producto.id_producto} className={`producto-card ${!producto.visible ? 'producto-oculto' : ''}`}>
                   <div className="producto-imagen">
-                    <img 
-                      src={producto.imagen_url || producto.imagen_principal || PLACEHOLDER_IMAGE} 
-                      alt={producto.nombre || 'Producto'} 
+                    <img
+                      src={producto.imagen_url || producto.imagen_principal || PLACEHOLDER_IMAGE}
+                      alt={producto.nombre || 'Producto'}
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = PLACEHOLDER_IMAGE;
@@ -486,27 +547,27 @@ const TiendaOnline = () => {
                       </span>
                     )}
                   </div>
-                  
+
                   <div className="producto-info">
                     <h3>{producto.nombre || 'Sin nombre'}</h3>
                     <span className="producto-categoria">
                       <CategoryIcon fontSize="small" />
                       {producto.categoria || 'Sin categoría'}
                     </span>
-                    
+
                     <div className="producto-precios">
                       {producto.descuento > 0 ? (
                         <>
                           <span className="precio-original">${formatPrice(producto.precio)}</span>
                           <span className="precio-descuento">
-                            ${formatPrice(producto.precio * (1 - producto.descuento/100))}
+                            ${formatPrice(producto.precio * (1 - producto.descuento / 100))}
                           </span>
                         </>
                       ) : (
                         <span className="precio-normal">${formatPrice(producto.precio)}</span>
                       )}
                     </div>
-                    
+
                     <div className="producto-detalles">
                       <span className={`estado-badge estado-${(producto.estado_producto || producto.estado || 'buen-estado').toLowerCase().replace(/\s+/g, '-')}`}>
                         {producto.estado_producto || producto.estado || 'Buen estado'}
@@ -516,39 +577,37 @@ const TiendaOnline = () => {
                         Stock: {producto.stock || 0}
                       </span>
                     </div>
-                    
+
                     <div className="producto-acciones">
-                      <button 
+                      <button
                         className="btn-accion ver"
                         onClick={() => abrirDetalleProducto(producto)}
                         title="Ver detalles"
                       >
                         <VisibilityIcon />
                       </button>
-                      <button 
+                      <button
                         className="btn-accion editar"
                         onClick={() => abrirEditarProducto(producto)}
                         title="Editar"
                       >
                         <EditIcon />
                       </button>
-                      <button 
+                      <button
                         className="btn-accion toggle-visible"
-                        // ✅ USAR id_producto
                         onClick={() => handleToggleVisible(producto.id_producto)}
                         title={producto.visible ? "Ocultar" : "Mostrar"}
                       >
                         {producto.visible ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       </button>
-                      <button 
+                      <button
                         className="btn-accion destacar"
-                        // ✅ USAR id_producto
                         onClick={() => handleToggleDestacado(producto.id_producto)}
                         title={producto.destacado ? "Quitar destacado" : "Destacar"}
                       >
                         {producto.destacado ? <StarIcon /> : <StarBorderIcon />}
                       </button>
-                      <button 
+                      <button
                         className="btn-accion eliminar"
                         onClick={() => abrirEliminarProducto(producto)}
                         title="Eliminar"
@@ -575,7 +634,7 @@ const TiendaOnline = () => {
               <button className="modal-cerrar" onClick={() => setModalPublicacionAbierto(false)}>
                 <CloseIcon />
               </button>
-              
+
               <div className="modal-header">
                 <h2>
                   <AutoAwesomeIcon className="modal-icon" />
@@ -603,7 +662,7 @@ const TiendaOnline = () => {
                       className="gracia-input"
                     />
                     <span>días</span>
-                    <button 
+                    <button
                       className="btn-configurar-gracia"
                       onClick={handleConfigurarDiasGracia}
                       title="Guardar configuración"
@@ -627,15 +686,15 @@ const TiendaOnline = () => {
                       <>
                         <CheckCircleIcon />
                         <span>
-                          {resultadoPublicacion.message || 
-                           `✅ ${resultadoPublicacion.productos_creados || 0} productos publicados`}
+                          {resultadoPublicacion.message ||
+                            `✅ ${resultadoPublicacion.productos_creados || 0} productos publicados`}
                         </span>
                       </>
                     )}
                   </div>
                 )}
 
-                <button 
+                <button
                   className="btn-ejecutar-publicacion"
                   onClick={handlePublicacionAutomatica}
                   disabled={publicando}
@@ -664,7 +723,7 @@ const TiendaOnline = () => {
               <button className="modal-cerrar" onClick={() => setModalProductoAbierto(false)}>
                 <CloseIcon />
               </button>
-              
+
               <div className="modal-header">
                 <h2>
                   {modoEdicion ? <EditIcon className="modal-icon" /> : <AddIcon className="modal-icon" />}
@@ -755,15 +814,68 @@ const TiendaOnline = () => {
                       </select>
                     </div>
 
+                    {/* ✅ NUEVO: subida de archivo real en vez de input de texto con URL */}
                     <div className="form-group full-width">
-                      <label><ImageIcon fontSize="small" />URL de la imagen</label>
+                      <label><ImageIcon fontSize="small" />Imagen del producto</label>
+
                       <input
-                        type="text"
-                        name="imagen"
-                        value={formProducto.imagen}
-                        onChange={handleInputChange}
-                        placeholder="https://ejemplo.com/imagen.jpg"
+                        type="file"
+                        accept="image/*"
+                        ref={inputImagenRef}
+                        onChange={handleImagenSeleccionada}
+                        style={{ display: "none" }}
+                        id="input-imagen-producto"
                       />
+
+                      <label
+                        htmlFor="input-imagen-producto"
+                        className="btn-subir-imagen"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          cursor: "pointer",
+                          border: "1px dashed #999",
+                          borderRadius: "8px",
+                          padding: "12px",
+                          justifyContent: "center",
+                          color: "#555"
+                        }}
+                      >
+                        <CloudUploadIcon fontSize="small" />
+                        {archivoImagen ? archivoImagen.name : "Seleccionar imagen desde tu equipo"}
+                      </label>
+
+                      {previewImagen && (
+                        <div style={{ marginTop: "10px", textAlign: "center" }}>
+                          <img
+                            src={previewImagen}
+                            alt="Vista previa"
+                            style={{
+                              maxWidth: "160px",
+                              maxHeight: "160px",
+                              borderRadius: "8px",
+                              objectFit: "cover"
+                            }}
+                          />
+                          <div>
+                            <button
+                              type="button"
+                              onClick={limpiarImagenSeleccionada}
+                              style={{
+                                marginTop: "6px",
+                                background: "none",
+                                border: "none",
+                                color: "#c0392b",
+                                cursor: "pointer",
+                                fontSize: "13px"
+                              }}
+                            >
+                              Quitar imagen
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="form-group full-width">
@@ -806,11 +918,17 @@ const TiendaOnline = () => {
                 </div>
 
                 <div className="modal-acciones">
-                  <button type="submit" className="btn-guardar">
-                    {modoEdicion ? <EditIcon /> : <AddIcon />}
-                    {modoEdicion ? "Guardar Cambios" : "Crear Producto"}
+                  <button type="submit" className="btn-guardar" disabled={guardando}>
+                    {guardando ? (
+                      <span className="spinner-small"></span>
+                    ) : modoEdicion ? (
+                      <EditIcon />
+                    ) : (
+                      <AddIcon />
+                    )}
+                    {guardando ? "Guardando..." : modoEdicion ? "Guardar Cambios" : "Crear Producto"}
                   </button>
-                  <button type="button" className="btn-cancelar" onClick={() => setModalProductoAbierto(false)}>
+                  <button type="button" className="btn-cancelar" onClick={() => setModalProductoAbierto(false)} disabled={guardando}>
                     <CloseIcon />
                     Cancelar
                   </button>
@@ -827,7 +945,7 @@ const TiendaOnline = () => {
               <button className="modal-cerrar" onClick={() => setModalDetalleAbierto(false)}>
                 <CloseIcon />
               </button>
-              
+
               <div className="modal-header">
                 <h2>{productoSeleccionado.nombre || 'Sin nombre'}</h2>
                 <span className="cliente-id">ID: #{productoSeleccionado.id_producto}</span>
@@ -842,9 +960,9 @@ const TiendaOnline = () => {
               <div className="modal-body">
                 <div className="detalle-grid">
                   <div className="detalle-imagen">
-                    <img 
-                      src={productoSeleccionado.imagen_url || productoSeleccionado.imagen_principal || PLACEHOLDER_IMAGE} 
-                      alt={productoSeleccionado.nombre || 'Producto'} 
+                    <img
+                      src={productoSeleccionado.imagen_url || productoSeleccionado.imagen_principal || PLACEHOLDER_IMAGE}
+                      alt={productoSeleccionado.nombre || 'Producto'}
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = PLACEHOLDER_IMAGE;
@@ -857,13 +975,13 @@ const TiendaOnline = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="detalle-info">
                     <div className="info-item">
                       <span className="info-label">Categoría</span>
                       <span className="info-value">{productoSeleccionado.categoria || 'Sin categoría'}</span>
                     </div>
-                    
+
                     <div className="info-item">
                       <span className="info-label">Precio</span>
                       <span className="info-value">
@@ -871,7 +989,7 @@ const TiendaOnline = () => {
                           <>
                             <span className="precio-original">${formatPrice(productoSeleccionado.precio)}</span>
                             <span className="precio-descuento">
-                              ${formatPrice(productoSeleccionado.precio * (1 - productoSeleccionado.descuento/100))}
+                              ${formatPrice(productoSeleccionado.precio * (1 - productoSeleccionado.descuento / 100))}
                             </span>
                             <span className="descuento-badge">-{productoSeleccionado.descuento}%</span>
                           </>
@@ -880,12 +998,12 @@ const TiendaOnline = () => {
                         )}
                       </span>
                     </div>
-                    
+
                     <div className="info-item">
                       <span className="info-label">Stock</span>
                       <span className="info-value">{productoSeleccionado.stock || 0} unidades</span>
                     </div>
-                    
+
                     <div className="info-item">
                       <span className="info-label">Estado</span>
                       <span className="info-value">
@@ -894,23 +1012,23 @@ const TiendaOnline = () => {
                         </span>
                       </span>
                     </div>
-                    
+
                     <div className="info-item full-width">
                       <span className="info-label">Descripción</span>
                       <span className="info-value">{productoSeleccionado.descripcion || 'Sin descripción'}</span>
                     </div>
-                    
+
                     <div className="info-item">
                       <span className="info-label">Publicado</span>
                       <span className="info-value">
-                        {productoSeleccionado.visible ? 
-                          <CheckCircleIcon className="visible-icon" /> : 
+                        {productoSeleccionado.visible ?
+                          <CheckCircleIcon className="visible-icon" /> :
                           <CancelIcon className="oculto-icon" />
                         }
                         {productoSeleccionado.visible ? " Visible" : " Oculto"}
                       </span>
                     </div>
-                    
+
                     <div className="info-item">
                       <span className="info-label">Destacado</span>
                       <span className="info-value">
@@ -918,12 +1036,12 @@ const TiendaOnline = () => {
                         {productoSeleccionado.destacado ? " Sí" : " No"}
                       </span>
                     </div>
-                    
+
                     <div className="info-item">
                       <span className="info-label">Fecha publicación</span>
                       <span className="info-value">
-                        {productoSeleccionado.fecha_publicacion 
-                          ? new Date(productoSeleccionado.fecha_publicacion).toLocaleDateString() 
+                        {productoSeleccionado.fecha_publicacion
+                          ? new Date(productoSeleccionado.fecha_publicacion).toLocaleDateString()
                           : 'No publicada'}
                       </span>
                     </div>
@@ -939,7 +1057,7 @@ const TiendaOnline = () => {
               </div>
 
               <div className="modal-acciones">
-                <button 
+                <button
                   className="btn-editar"
                   onClick={() => {
                     setModalDetalleAbierto(false);
@@ -949,7 +1067,7 @@ const TiendaOnline = () => {
                   <EditIcon />
                   Editar
                 </button>
-                <button 
+                <button
                   className="btn-eliminar"
                   onClick={() => {
                     setModalDetalleAbierto(false);
@@ -978,15 +1096,15 @@ const TiendaOnline = () => {
               <h3>¿Eliminar producto?</h3>
               <p>Estás a punto de eliminar <strong>{productoSeleccionado.nombre || 'este producto'}</strong></p>
               <p className="advertencia">Esta acción no se puede deshacer</p>
-              
+
               <div className="modal-botones">
-                <button 
+                <button
                   className="btn-cancelar"
                   onClick={() => setModalEliminarAbierto(false)}
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   className="btn-confirmar-eliminar"
                   onClick={handleEliminarProducto}
                 >
