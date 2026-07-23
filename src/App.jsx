@@ -1,4 +1,4 @@
-// App.jsx - VERSIÓN CORREGIDA
+// App.jsx - VERSIÓN CORREGIDA (rutas de clientes sin Sidebar de admin)
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./contexts/UserContext";
@@ -46,6 +46,7 @@ import Reporte from "./DuenoReporte/Reporte";
 import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
+// ✅ AppLayout: SOLO para rutas de administrador/empleados (incluye Sidebar)
 const AppLayout = ({ children }) => {
   return (
     <div className="app-layout">
@@ -68,37 +69,32 @@ function App() {
           <Route path="/register" element={<OpheliaRegister />} />
 
           {/* ========================================== */}
-          {/* 👤 RUTAS DE CLIENTES (CON SIDEBAR) */}
+          {/* 👤 RUTAS DE CLIENTES (SIN AppLayout/Sidebar)  */}
+          {/* Cada página de cliente ya trae su propio      */}
+          {/* <Navbar /> integrado, por eso NO se envuelven  */}
+          {/* en AppLayout (evita duplicar menús)            */}
           {/* ========================================== */}
           <Route path="/homecliente" element={
             <ProtectedRoute allowedRoles={['Cliente']}>
-              <AppLayout>
-                <OphelinaHome />
-              </AppLayout>
+              <OphelinaHome />
             </ProtectedRoute>
           } />
 
           <Route path="/misempenos" element={
             <ProtectedRoute allowedRoles={['Cliente']}>
-              <AppLayout>
-                <MisEmpenos />
-              </AppLayout>
+              <MisEmpenos />
             </ProtectedRoute>
           } />
 
           <Route path="/ophelina" element={
             <ProtectedRoute allowedRoles={['Cliente']}>
-              <AppLayout>
-                <OphelinaTienda />
-              </AppLayout>
+              <OphelinaTienda />
             </ProtectedRoute>
           } />
 
           <Route path="/tarjetas" element={
             <ProtectedRoute allowedRoles={['Cliente']}>
-              <AppLayout>
-                <Tarjetero />
-              </AppLayout>
+              <Tarjetero />
             </ProtectedRoute>
           } />
 
