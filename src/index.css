@@ -1,16 +1,10 @@
-/* index.css - VERSIÓN CORREGIDA (sin duplicados, con scroll único) */
+/* index.css - VERSIÓN ORIGINAL */
 
 /* Reset básico */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-/* Eliminar scroll en html, body y root: el scroll real vive en .main-content */
-html, body, #root {
-  height: 100%;
-  overflow: hidden;
 }
 
 /* Fuentes globales */
@@ -21,50 +15,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ============================================
-   ✅ ÚNICA regla para #root (se quitó la que
-   duplicaba max-width/padding/text-align y
-   rompía el layout)
-   ============================================ */
+/* Estilos por defecto de Vite */
 #root {
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  text-align: left;
-  height: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
 }
 
-/* El scroll solo en el contenedor principal, CON o SIN .app-layout como padre */
-.app-layout {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-  width: 100%;
-}
-
-/* Sidebar - scroll interno si es necesario (solo aplica cuando existe, en rutas de admin) */
-.app-layout .sidebar {
-  height: 100vh;
-  overflow-y: auto;
-  flex-shrink: 0;
-}
-
-/* ============================================
-    CLAVE DEL FIX: esta regla ya NO depende
-   de estar dentro de .app-layout. Así, las
-   páginas de cliente (que NO usan AppLayout,
-   solo <Navbar /> + <div className="main-content">)
-   también obtienen su propio scroll.
-   ============================================ */
-.main-content,
-.main-content-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  height: 100vh;
-  width: 100%;
-}
-
-/* Scrollbar personalizado */
+/* Scrollbar personalizado (opcional) */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -81,45 +40,4 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #be981d;
-}
-
-/* ============================================
-   Restos del template de Vite (logo, etc.)
-   Se mantienen solo por si los usas en algún
-   lado, pero YA NO tocan #root ni rompen el layout
-   ============================================ */
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }
