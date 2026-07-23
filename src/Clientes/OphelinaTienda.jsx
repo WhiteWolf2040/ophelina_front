@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 
 import { useTienda } from "../hooks/useTienda";
-import "./TiendaOnline.css";
+import "./OphelinaTienda.css";
 
 // Importar iconos de MUI
 import StorefrontIcon from '@mui/icons-material/Storefront';
