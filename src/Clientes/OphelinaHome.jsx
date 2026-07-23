@@ -91,7 +91,7 @@ export default function OphelinaHome() {
   return (
     <>
       <Navbar />
-      <div className="main-content">
+      <div className="cliente-home-container">
         <main className="home-main">
           {/* Welcome section */}
           <section className="welcome-section">

@@ -40,3 +40,16 @@
 .read-the-docs {
   color: #888;
 }
+
+/* App.css - Agregar */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main-content-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  height: 100vh;
+}

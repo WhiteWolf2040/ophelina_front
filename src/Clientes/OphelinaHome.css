@@ -659,3 +659,54 @@ body {
     font-size: 36px;
   }
 }
+
+/* OphelinaHome.css - Agregar al inicio */
+
+/* ===== CONTENEDOR PRINCIPAL DEL CLIENTE ===== */
+.cliente-home-container {
+  flex: 1;
+  overflow-y: auto;
+  height: 100vh;
+  padding: 20px;
+  background-color: #F5F0E9;
+}
+
+/* Eliminar el .main-content duplicado */
+.cliente-home-container .main-content {
+  min-height: auto;
+  height: auto;
+  padding: 0;
+}
+
+/* El home debe ocupar todo el espacio sin scroll interno */
+.home-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding-bottom: 40px;
+  /* ← Eliminar min-height */
+}
+
+/* Asegurar que las cards no creen scroll */
+.cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 25px;
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  overflow: visible; /* ← Sin scroll */
+}
+
+/* Eliminar overflow en secciones */
+.contenido-section {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 30px;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+  overflow: visible; /* ← Cambiar de hidden a visible */
+}

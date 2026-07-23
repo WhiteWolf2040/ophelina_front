@@ -46,12 +46,12 @@ import Reporte from "./DuenoReporte/Reporte";
 import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
-// ✅ AppLayout: SOLO para rutas de administrador/empleados (incluye Sidebar)
+//  AppLayout: SOLO para rutas de administrador/empleados (incluye Sidebar)
 const AppLayout = ({ children }) => {
   return (
     <div className="app-layout">
       <Sidebar />
-      <div className="main-content">
+      <div className="main-content-wrapper">
         {children}
       </div>
     </div>
