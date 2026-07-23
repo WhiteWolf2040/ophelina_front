@@ -1,4 +1,4 @@
-/* OphelinaHome.css - VERSIÓN LIMPIA Y CORREGIDA */
+/* OphelinaHome.css - VERSIÓN FINAL - UN SOLO SCROLL */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700&display=swap');
 
@@ -39,15 +39,16 @@ body {
   flex: 1;
   overflow-y: auto;
   height: 100vh;
-  padding: 20px 20px 40px;
+  padding: 20px 30px 40px;
   background-color: #F5F0E9;
+  width: 100%;
 }
 
 /* ============================================
    HOME MAIN - SIN SCROLL INTERNO
    ============================================ */
 .home-main {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   width: 100%;
   padding-bottom: 20px;
@@ -109,7 +110,7 @@ body {
   justify-content: center;
   align-items: stretch;
   width: 100%;
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -123,8 +124,9 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 260px;
-  min-width: 240px;
+  flex: 1 1 220px;
+  min-width: 200px;
+  max-width: 300px;
   transition: var(--transition);
   cursor: pointer;
 }
@@ -160,10 +162,11 @@ body {
 .contenido-section {
   background: var(--white);
   border-radius: 16px;
-  padding: 28px;
+  padding: 28px 30px;
   margin-bottom: 30px;
   box-shadow: var(--shadow-sm);
   width: 100%;
+  overflow: visible;
 }
 
 .section-title {
@@ -255,6 +258,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
 }
 
 .debt-row {
@@ -266,11 +270,13 @@ body {
   padding: 4px 0;
   flex-wrap: wrap;
   gap: 8px;
+  width: 100%;
 }
 
 .debt-amount {
   font-weight: 600;
   color: var(--primary-blue);
+  text-align: right;
 }
 
 .debt-divider {
@@ -297,6 +303,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  width: 100%;
 }
 
 .activity-item {
@@ -352,16 +359,33 @@ body {
    RESPONSIVE
    ============================================ */
 
+/* Pantallas grandes (Desktop) */
+@media screen and (min-width: 1400px) {
+  .cliente-home-container {
+    padding: 30px 60px 40px;
+  }
+
+  .stat-card {
+    flex: 1 1 260px;
+    max-width: 340px;
+    padding: 35px 30px;
+  }
+
+  .cards-grid {
+    gap: 30px;
+  }
+}
+
 /* Tablets y laptops pequeñas */
 @media screen and (max-width: 1024px) {
   .cliente-home-container {
-    padding: 30px 16px;
+    padding: 20px 20px 30px;
   }
-  
+
   .stat-card {
-    width: calc(50% - 12.5px);
-    min-width: 200px;
-    max-width: 260px;
+    flex: 1 1 180px;
+    min-width: 160px;
+    max-width: 240px;
     padding: 25px 20px;
   }
 }
@@ -371,18 +395,18 @@ body {
   .cards-grid {
     gap: 20px;
   }
-  
+
   .stat-card {
-    width: calc(50% - 10px);
-    min-width: 180px;
+    flex: 1 1 160px;
+    min-width: 150px;
     padding: 22px 18px;
   }
-  
+
   .bottom-sections {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .contenido-section {
     padding: 24px;
   }
@@ -391,54 +415,56 @@ body {
 /* Tablets pequeñas y móviles grandes */
 @media screen and (max-width: 768px) {
   .cliente-home-container {
-    padding: 20px 12px;
+    padding: 15px 15px 25px;
   }
-  
+
   .welcome-section {
     margin-bottom: 30px;
   }
-  
+
   .cards-grid {
     gap: 15px;
   }
-  
+
   .stat-card {
-    width: calc(50% - 7.5px);
-    min-width: 140px;
+    flex: 1 1 140px;
+    min-width: 130px;
+    max-width: 200px;
     padding: 20px 15px;
   }
-  
+
   .stat-card svg {
     font-size: 40px !important;
   }
-  
+
   .pawn-item {
     padding: 12px 0;
   }
-  
+
   .days-badge {
     padding: 5px 10px;
   }
-  
+
   .contenido-section {
     padding: 20px;
     margin-bottom: 20px;
   }
-  
+
   .bottom-sections {
     gap: 15px;
   }
-  
+
   .debt-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 5px;
   }
-  
-  .debt-amount, .total-amount {
+
+  .debt-amount,
+  .total-amount {
     align-self: flex-end;
   }
-  
+
   .activity-item {
     gap: 10px;
   }
@@ -451,56 +477,56 @@ body {
     align-items: center;
     gap: 15px;
   }
-  
+
   .stat-card {
-    width: 100%;
+    flex: 1 1 100%;
     max-width: 100%;
     min-width: 100%;
     padding: 20px;
   }
-  
+
   .stat-card svg {
     font-size: 48px !important;
   }
-  
+
   .pawn-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .pawn-days {
     width: 100%;
     margin-left: 0;
   }
-  
+
   .days-badge {
     width: 100%;
     text-align: center;
     white-space: normal;
   }
-  
+
   .contenido-section {
     padding: 18px;
     border-radius: 14px;
   }
-  
+
   .section-title {
     margin-bottom: 15px;
   }
-  
+
   .debt-row {
     flex-direction: row;
     align-items: center;
     gap: 8px;
   }
-  
+
   .activity-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .activity-icon {
     min-width: auto;
   }
@@ -509,85 +535,85 @@ body {
 /* Móviles pequeños */
 @media screen and (max-width: 480px) {
   .cliente-home-container {
-    padding: 15px 10px 30px;
+    padding: 10px 10px 20px;
   }
-  
+
   .welcome-section {
     margin-bottom: 25px;
   }
-  
+
   .welcome-title {
     font-size: 22px;
   }
-  
+
   .welcome-name {
     font-size: 22px;
   }
-  
+
   .welcome-subtitle {
     font-size: 14px;
   }
-  
+
   .cards-grid {
     gap: 12px;
   }
-  
+
   .stat-card {
     padding: 16px;
   }
-  
+
   .stat-card svg {
     font-size: 40px !important;
   }
-  
+
   .contenido-section {
     padding: 16px;
     border-radius: 12px;
   }
-  
+
   .section-title {
     font-size: 15px;
     gap: 6px;
     margin-bottom: 12px;
   }
-  
+
   .section-icon svg {
     font-size: 20px !important;
   }
-  
+
   .pawn-title {
     font-size: 14px;
   }
-  
+
   .pawn-date {
     font-size: 11px;
   }
-  
+
   .days-badge {
     font-size: 11px;
     padding: 5px 8px;
   }
-  
+
   .debt-row {
     font-size: 13px;
   }
-  
+
   .total-row {
     font-size: 14px;
   }
-  
+
   .total-amount {
     font-size: 15px;
   }
-  
+
   .activity-title {
     font-size: 13px;
   }
-  
+
   .activity-detail {
     font-size: 11px;
   }
-  
+
   .activity-icon svg {
     font-size: 18px !important;
   }
@@ -596,46 +622,47 @@ body {
 /* Móviles muy pequeños */
 @media screen and (max-width: 360px) {
   .cliente-home-container {
-    padding: 12px 8px 20px;
+    padding: 8px 8px 15px;
   }
-  
+
   .welcome-title {
     font-size: 20px;
   }
-  
+
   .welcome-name {
     font-size: 20px;
   }
-  
+
   .welcome-subtitle {
     font-size: 12px;
   }
-  
+
   .stat-card {
     padding: 14px;
   }
-  
+
   .stat-card svg {
     font-size: 36px !important;
   }
-  
+
   .contenido-section {
     padding: 14px;
   }
-  
+
   .debt-row {
     flex-direction: column;
     align-items: flex-start;
   }
-  
-  .debt-amount, .total-amount {
+
+  .debt-amount,
+  .total-amount {
     align-self: flex-start;
   }
-  
+
   .pawn-item {
     gap: 6px;
   }
-  
+
   .days-badge {
     padding: 4px 6px;
   }
@@ -644,40 +671,26 @@ body {
 /* Orientación landscape en móviles */
 @media screen and (max-height: 500px) and (orientation: landscape) {
   .cliente-home-container {
-    padding: 15px 20px;
+    padding: 10px 20px;
   }
-  
+
   .cards-grid {
     flex-direction: row;
     flex-wrap: wrap;
   }
-  
+
   .stat-card {
-    width: calc(33.333% - 10px);
-    min-width: 150px;
+    flex: 1 1 150px;
+    min-width: 120px;
+    max-width: 200px;
+    padding: 15px;
   }
-  
+
+  .stat-card svg {
+    font-size: 32px !important;
+  }
+
   .bottom-sections {
     grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* Pantallas muy grandes */
-@media screen and (min-width: 1600px) {
-  .home-main {
-    max-width: 1400px;
-  }
-  
-  .stat-card {
-    width: 280px;
-    padding: 35px 30px;
-  }
-  
-  .welcome-title {
-    font-size: 36px;
-  }
-  
-  .welcome-name {
-    font-size: 36px;
   }
 }
