@@ -20,25 +20,32 @@ const TiendaService = {
         return response.data;
     },
 
-    //  Crear producto — ahora recibe un FormData (puede incluir archivo de imagen)
+    // ✅ Crear producto — ahora recibe un FormData (puede incluir archivo de imagen)
     crearProducto: async (formData) => {
         const response = await api.post('/tienda/productos', formData, {
             headers: {
-                // Importante: dejar que el navegador ponga el boundary correcto.
-                // Si se fuerza 'multipart/form-data' a mano sin boundary, el backend
-                // no puede parsear el archivo. Por eso NO se especifica manualmente,
-                // axios lo detecta solo al ver que el body es un FormData.
+                // Se anula el 'application/json' fijo de la instancia para este request.
+                // Al quedar undefined, el navegador genera el Content-Type correcto
+                // (multipart/form-data; boundary=...) automáticamente al ver que el
+                // body es un FormData. Si se deja 'application/json' o se fuerza
+                // 'multipart/form-data' a mano SIN boundary, Laravel no puede leer el
+                // archivo y responde "The imagen field must be a file".
+                'Content-Type': undefined,
             },
         });
         return response.data;
     },
 
-    //  Actualizar producto — Laravel no procesa bien multipart/form-data en PUT real,
+    // ✅ Actualizar producto — Laravel no procesa bien multipart/form-data en PUT real,
     // así que se manda como POST con el campo "_method=PUT" (method spoofing, soportado
     // nativamente por Laravel) para que el archivo sí llegue completo al backend.
     actualizarProducto: async (id, formData) => {
         formData.append('_method', 'PUT');
-        const response = await api.post(`/tienda/productos/${id}`, formData);
+        const response = await api.post(`/tienda/productos/${id}`, formData, {
+            headers: {
+                'Content-Type': undefined,
+            },
+        });
         return response.data;
     },
 
