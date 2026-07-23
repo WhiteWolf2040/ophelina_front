@@ -1,4 +1,4 @@
-/* index.css - VERSIÓN CON DISEÑO ORIGINAL */
+/* index.css - VERSIÓN ORIGINAL CON SCROLL FUNCIONAL */
 
 /* Reset básico */
 * {
@@ -7,26 +7,21 @@
   box-sizing: border-box;
 }
 
+/* Eliminar scroll en html, body y root */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
 /* Fuentes globales */
 body {
   font-family: 'Inter', sans-serif;
   background-color: #F5F0E9;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  height: 100vh;
-  overflow: hidden;
 }
 
-#root {
-  height: 100vh;
-  overflow: hidden;
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  text-align: left !important;
-}
-
-/* Layout principal */
+/* El scroll solo en el contenedor principal */
 .app-layout {
   display: flex;
   height: 100vh;
@@ -34,26 +29,31 @@ body {
   width: 100%;
 }
 
-/* Sidebar */
+/* Sidebar - sin scroll o con scroll interno si es necesario */
 .app-layout .sidebar {
   height: 100vh;
   overflow-y: auto;
   flex-shrink: 0;
-  background-color: #2C2C2C;
-  color: white;
-  width: 260px;
 }
 
-/* Contenido principal */
-.app-layout .main-content {
+/* Contenido principal - ÚNICO SCROLL PERMITIDO */
+.app-layout .main-content,
+.main-content-wrapper {
   flex: 1;
   overflow-y: auto;
   height: 100vh;
-  background-color: #F5F0E9;
-  padding: 2rem;
+  width: 100%;
 }
 
-/* Scrollbar personalizado */
+/* Eliminar estilos por defecto de Vite */
+#root {
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+}
+
+/* Scrollbar personalizado (opcional) */
 ::-webkit-scrollbar {
   width: 6px;
 }
