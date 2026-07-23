@@ -19,7 +19,7 @@ const PaymentModal = ({ isOpen, onClose, sessionId, planName, planId, onSuccess 
         try {
             setVerifying(true);
             setError(null);
-       console.log('🚀🚀🚀 verifyPayment INICIADO');
+        console.log('🚀🚀🚀 verifyPayment INICIADO');
         console.log('📌 sessionId:', sessionId);
         console.log('📌 planName:', planName);
         console.log('📌 planId:', planId);

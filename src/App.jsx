@@ -1,7 +1,8 @@
-// App.jsx
+// App.jsx - VERSIÓN CORREGIDA
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { UserProvider } from "./contexts/UserContext"; // ✅ IMPORTAR PROVIDER
-import Sidebar from "./components/Sidebar"; // ✅ IMPORTAR SIDEBAR
+import { UserProvider } from "./contexts/UserContext";
+import Sidebar from "./components/Sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import OpheliaLogin from "./components/OpheliaLogin";
@@ -10,8 +11,8 @@ import LandingPage from "./components/LandingPage";
 
 import OphelinaHome from "./Clientes/OphelinaHome";
 import MisEmpenos from "./Clientes/MisEmpenos";
-import OphelinaTienda from "./Clientes/OphelinaTienda"; 
-import Tarjetero from "./Clientes/Tarjetero"; 
+import OphelinaTienda from "./Clientes/OphelinaTienda";
+import Tarjetero from "./Clientes/Tarjetero";
 
 import Roles from "./Roles/Roles";
 import RolNuevo from "./Roles/RolNuevo";
@@ -45,7 +46,6 @@ import Reporte from "./DuenoReporte/Reporte";
 import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
-//  COMPONENTE PARA RUTAS CON SIDEBAR
 const AppLayout = ({ children }) => {
   return (
     <div className="app-layout">
@@ -59,17 +59,19 @@ const AppLayout = ({ children }) => {
 
 function App() {
   return (
-    <UserProvider> {/* ENVOLVER TODO CON EL PROVIDER */}
+    <UserProvider>
       <Router>
         <Routes>
-          {/*  RUTAS PÚBLICAS (SIN SIDEBAR) */}
+          {/* RUTAS PÚBLICAS (SIN SIDEBAR) */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<OpheliaLogin />} />
           <Route path="/register" element={<OpheliaRegister />} />
 
+          {/* ========================================== */}
           {/* 👤 RUTAS DE CLIENTES (CON SIDEBAR) */}
+          {/* ========================================== */}
           <Route path="/homecliente" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Cliente']}>
               <AppLayout>
                 <OphelinaHome />
               </AppLayout>
@@ -77,7 +79,7 @@ function App() {
           } />
 
           <Route path="/misempenos" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Cliente']}>
               <AppLayout>
                 <MisEmpenos />
               </AppLayout>
@@ -85,7 +87,7 @@ function App() {
           } />
 
           <Route path="/ophelina" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Cliente']}>
               <AppLayout>
                 <OphelinaTienda />
               </AppLayout>
@@ -93,25 +95,29 @@ function App() {
           } />
 
           <Route path="/tarjetas" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Cliente']}>
               <AppLayout>
                 <Tarjetero />
               </AppLayout>
             </ProtectedRoute>
           } />
 
-          {/*  DASHBOARD (CON SIDEBAR) */}
+          {/* ========================================== */}
+          {/* 🏠 DASHBOARD ADMIN (CON SIDEBAR) */}
+          {/* ========================================== */}
           <Route path="/home" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador', 'Gerente', 'Cajero']}>
               <AppLayout>
                 <Dueno />
               </AppLayout>
             </ProtectedRoute>
           } />
 
-          {/*  CLIENTES ADMIN (CON SIDEBAR) */}
+          {/* ========================================== */}
+          {/* CLIENTES ADMIN */}
+          {/* ========================================== */}
           <Route path="/clientes" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador', 'Gerente']}>
               <AppLayout>
                 <ClientesLayout />
               </AppLayout>
@@ -123,9 +129,11 @@ function App() {
             <Route path="editar/:id" element={<ClienteEditar />} />
           </Route>
 
-          {/*  PAGOS (CON SIDEBAR) */}
+          {/* ========================================== */}
+          {/* PAGOS */}
+          {/* ========================================== */}
           <Route path="/pagos" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador', 'Gerente', 'Cajero']}>
               <AppLayout>
                 <PagosLayout />
               </AppLayout>
@@ -135,9 +143,11 @@ function App() {
             <Route path="nuevo" element={<RegistrarPago />} />
           </Route>
 
-          {/*  EMPEÑOS (CON SIDEBAR) */}
+          {/* ========================================== */}
+          {/* EMPEÑOS */}
+          {/* ========================================== */}
           <Route path="/empenos" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador', 'Gerente']}>
               <AppLayout>
                 <EmpenosLayout />
               </AppLayout>
@@ -147,9 +157,11 @@ function App() {
             <Route path="nuevo" element={<NuevoEmpeno />} />
           </Route>
 
-          {/*  INVENTARIO (CON SIDEBAR) */}
+          {/* ========================================== */}
+          {/* INVENTARIO */}
+          {/* ========================================== */}
           <Route path="/inventario" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador', 'Gerente']}>
               <AppLayout>
                 <InventarioLayout />
               </AppLayout>
@@ -159,27 +171,33 @@ function App() {
             <Route path="nuevo" element={<NuevoInventario />} />
           </Route>
 
-          {/*  TIENDA (CON SIDEBAR) */}
+          {/* ========================================== */}
+          {/* TIENDA */}
+          {/* ========================================== */}
           <Route path="/tienda" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador']}>
               <AppLayout>
                 <TiendaOnline />
               </AppLayout>
             </ProtectedRoute>
           } />
 
-          {/*  REPORTES (CON SIDEBAR) */}
+          {/* ========================================== */}
+          {/* REPORTES */}
+          {/* ========================================== */}
           <Route path="/reportes" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador', 'Gerente']}>
               <AppLayout>
                 <Reporte />
               </AppLayout>
             </ProtectedRoute>
           } />
 
-          {/*  ROLES (CON SIDEBAR) */}
+          {/* ========================================== */}
+          {/* ROLES */}
+          {/* ========================================== */}
           <Route path="/roles" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador']}>
               <AppLayout>
                 <Roles />
               </AppLayout>
@@ -187,16 +205,18 @@ function App() {
           } />
 
           <Route path="/roles/nuevo" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador']}>
               <AppLayout>
                 <RolNuevo />
               </AppLayout>
             </ProtectedRoute>
           } />
 
-          {/*  PERMISOS (CON SIDEBAR) */}
+          {/* ========================================== */}
+          {/* PERMISOS */}
+          {/* ========================================== */}
           <Route path="/permisos" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador']}>
               <AppLayout>
                 <Permisos />
               </AppLayout>
@@ -204,16 +224,18 @@ function App() {
           } />
 
           <Route path="/permisos/nuevo" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador']}>
               <AppLayout>
                 <PermisoNuevo />
               </AppLayout>
             </ProtectedRoute>
           } />
 
-          {/* CONFIGURACIÓN (CON SIDEBAR) */}
+          {/* ========================================== */}
+          {/* CONFIGURACIÓN */}
+          {/* ========================================== */}
           <Route path="/configuracion" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['Administrador']}>
               <AppLayout>
                 <ConfiguracionesLayout />
               </AppLayout>

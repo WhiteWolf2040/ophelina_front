@@ -16,10 +16,8 @@ export default function OpheliaLogin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // 🔥 OBTENER FUNCIÓN DEL CONTEXTO
   const { refreshUserData } = useUser();
 
-  // CAPTURAR PARÁMETROS DE STRIPE
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const paymentStatus = searchParams.get('payment');
@@ -56,12 +54,13 @@ export default function OpheliaLogin() {
     try {
       const result = await login(formData.email, formData.password);
       
-      console.log('Respuesta completa del login:', result);
+      console.log('📊 Respuesta completa del login:', result);
       
       if (result.success) {
         const userData = result.data?.usuario || result.data || result;
         
-        console.log('Datos del usuario:', userData);
+        console.log('👤 Datos del usuario:', userData);
+        console.log('🎭 Rol del usuario:', userData.rol);
         
         // Guardar token
         if (result.data?.token) {
@@ -106,27 +105,28 @@ export default function OpheliaLogin() {
           return;
         }
 
-        // REDIRIGIR SEGÚN ROL
-        const tieneDashboard = userData.permisos?.includes('ver_dashboard') || 
-                              userData.rol === 'Administrador' || 
-                              userData.rol === 'Admin' ||
-                              userData.rol === 'Dueño';
-        
+        // ==========================================
+        // ✅ REDIRECCIÓN SIMPLIFICADA POR ROL
+        // ==========================================
         setLoading(false);
         
-        if (tieneDashboard) {
-          console.log('🏠 Redirigiendo a /home');
-          navigate("/home");
-        } else {
-          console.log('🏠 Redirigiendo a /homecliente');
+        // 🔥 Si es Cliente -> /homecliente
+        if (userData.rol === 'Cliente') {
+          console.log('🏠 Cliente detectado - Redirigiendo a /homecliente');
           navigate("/homecliente");
+        } 
+        // 🔥 Si es Administrador, Gerente, Cajero, etc. -> /home
+        else {
+          console.log('🏠 Admin/Empleado detectado - Redirigiendo a /home');
+          navigate("/home");
         }
+        
       } else {
         setError(result.message || "Error al iniciar sesión");
         setLoading(false);
       }
     } catch (error) {
-      console.error('Error en login:', error);
+      console.error('❌ Error en login:', error);
       setError("Error de conexión. Intenta de nuevo.");
       setLoading(false);
     }
