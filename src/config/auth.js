@@ -32,8 +32,8 @@ const clearAuthData = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   localStorage.removeItem("rol");
-  localStorage.removeItem("empresa_id");   // ← AGREGAR
-  localStorage.removeItem("user_email");   // ← AGREGAR
+  localStorage.removeItem("empresa_id");
+  localStorage.removeItem("user_email");
 };
 
 /*
@@ -140,7 +140,6 @@ const fetchCurrentUser = async () => {
 
       localStorage.setItem("user", JSON.stringify(usuario));
       
-      // 🔥 También actualizar empresa_id si viene
       if (usuario.id_empresa) {
         localStorage.setItem("empresa_id", usuario.id_empresa);
       }
@@ -191,6 +190,149 @@ const hasPermission = (permiso) => {
 
 };
 
+/*
+==============================
+ACTUALIZAR PERFIL (correo y teléfono)
+==============================
+*/
+const updateProfile = async (correo, telefono) => {
+  try {
+    const response = await api.put("/user", { correo, telefono });
+    if (response.data.success) {
+      const usuarioActualizado = response.data.data.usuario;
+      const usuarioActual = getCurrentUser();
+      const usuarioFinal = { ...usuarioActual, ...usuarioActualizado };
+      localStorage.setItem("user", JSON.stringify(usuarioFinal));
+      return { success: true, data: usuarioFinal };
+    }
+    return { success: false, message: response.data.message };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.message || "Error al actualizar el perfil"
+    };
+  }
+};
+
+/*
+==============================
+OBTENER NOTIFICACIONES
+==============================
+*/
+const getNotificaciones = async () => {
+  try {
+    const response = await api.get("/notificaciones");
+    if (response.data.success) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    return { success: false, data: [] };
+  }
+};
+
+/*
+==============================
+OBTENER MIS EMPEÑOS (portal de cliente)
+==============================
+*/
+const getMisEmpenos = async () => {
+  try {
+    const response = await api.get("/cliente/empenos");
+    if (response.data.success) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, data: [], message: response.data.message };
+  } catch (error) {
+    return {
+      success: false,
+      data: [],
+      message: error.response?.data?.message || "Error al obtener tus empeños",
+    };
+  }
+};
+
+// frontend/src/config/auth.js
+
+/*
+==============================
+OBTENER RESUMEN DE EMPEÑOS (cliente)
+==============================
+*/
+const getResumenEmpenos = async () => {
+  try {
+    const response = await api.get("/homecliente");
+    if (response.data.success) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, data: null, message: response.data.message };
+  } catch (error) {
+    return {
+      success: false,
+      data: null,
+      message: error.response?.data?.message || "Error al obtener el resumen",
+    };
+  }
+};
+
+/*
+==============================
+TIENDA: OBTENER PRODUCTOS
+==============================
+*/
+const getProductosTienda = async () => {
+  try {
+    const response = await api.get("/cliente/tienda/productos");
+    if (response.data.success) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    return {
+      success: false,
+      data: [],
+      message: error.response?.data?.message || "Error al obtener los productos",
+    };
+  }
+};
+
+/*
+==============================
+TIENDA: APARTAR PRODUCTO
+==============================
+*/
+const apartarProducto = async (idProducto) => {
+  try {
+    // ✅ Corregido: backticks agregados (faltaban en el original)
+    const response = await api.post(`/tienda/productos/${idProducto}/apartar`);
+    if (response.data.success) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, message: response.data.message };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.message || "Error al apartar el producto",
+    };
+  }
+};
+
+/*
+==============================
+TIENDA: MIS APARTADOS
+==============================
+*/
+const getMisApartados = async () => {
+  try {
+    const response = await api.get("/tienda/apartados");
+    if (response.data.success) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    return { success: false, data: [] };
+  }
+};
 
 /*
 ==============================
@@ -207,5 +349,11 @@ export {
   hasPermission,
   hasRole,
   setAuthData,
-  clearAuthData
+  clearAuthData,
+  updateProfile,
+  getNotificaciones,
+  getMisEmpenos,
+  getProductosTienda,
+  apartarProducto,
+  getMisApartados
 };

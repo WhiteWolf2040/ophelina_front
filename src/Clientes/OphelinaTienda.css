@@ -589,116 +589,13 @@ body {
   color: var(--text-primary);
 }
 
-/* ========== RESPONSIVE ========== */
-@media (max-width: 1024px) {
-  .products-grid-luxury {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
+/* ============================================================
+   ESTILOS GENERALES (antes atrapados por error dentro de la
+   media query de 480px — ahora aplican siempre, en cualquier
+   tamaño de pantalla)
+   ============================================================ */
 
-@media (max-width: 768px) {
-  .hero-luxury {
-    height: 60vh;
-    min-height: 450px;
-  }
-  
-  .products-grid-luxury {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .filter-container {
-    padding: 0 20px;
-  }
-  
-  .products-section {
-    padding: 40px 20px;
-  }
-  
-  .popup-detalles-flex {
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    padding: 20px;
-  }
-  
-  .popup-imagen-container-left {
-    width: 220px;
-    height: 220px;
-  }
-  
-  .popup-info-right {
-    width: 100%;
-  }
-  
-  .detalle-titulo {
-    font-size: 24px;
-    text-align: center;
-  }
-  
-  .detalle-descripcion {
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .products-grid-luxury {
-    grid-template-columns: 1fr;
-  }
-  
-  .product-actions {
-    gap: 15px;
-  }
-  
-  .card-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  
-  .categories-wrapper {
-    gap: 5px;
-  }
-  
-  .category-btn {
-    padding: 8px 20px;
-    font-size: 12px;
-  }
-  
-  .modal-content {
-    width: 95%;
-    padding: 0;
-  }
-  
-  .popup-detalles-flex {
-    padding: 15px;
-  }
-  
-  .popup-imagen-container-left {
-    width: 180px;
-    height: 180px;
-  }
-  
-  .detalle-titulo {
-    font-size: 22px;
-  }
-  
-  .detalle-descripcion {
-    font-size: 13px;
-  }
-  
-  .detalle-caracteristicas-vertical p {
-    font-size: 13px;
-  }
-  
-  .financiero-item {
-    font-size: 13px;
-  }
-  
-  .pago-confirmar-btn {
-    padding: 12px 20px;
-    font-size: 14px;
-  }
-  /* Mensaje de pagado */
+/* Mensaje de pagado (toast genérico verde) */
 .mensaje-pagado {
   position: fixed;
   top: 20px;
@@ -743,25 +640,6 @@ body {
   }
 }
 
-/* Responsive para el mensaje */
-@media (max-width: 768px) {
-  .mensaje-pagado {
-    top: 10px;
-    right: 10px;
-    left: 10px;
-  }
-  
-  .mensaje-contenido {
-    padding: 12px 16px;
-    font-size: 14px;
-  }
-  
-  .mensaje-icono {
-    width: 24px;
-    height: 24px;
-    font-size: 18px;
-  }
-}
 /* Botón de apartar */
 .btn-apartar {
   background: var(--accent-primary);
@@ -835,7 +713,7 @@ body {
   z-index: 1;
 }
 
-/* Mensaje de apartado */
+/* Mensaje de apartado (toast dorado, el que usa el componente) */
 .mensaje-apartado {
   position: fixed;
   top: 20px;
@@ -869,33 +747,137 @@ body {
   justify-content: center;
 }
 
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1024px) {
+  .products-grid-luxury {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
+  .hero-luxury {
+    height: 60vh;
+    min-height: 450px;
+  }
+  
+  .products-grid-luxury {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .filter-container {
+    padding: 0 20px;
+  }
+  
+  .products-section {
+    padding: 40px 20px;
+  }
+  
+  .popup-detalles-flex {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .popup-imagen-container-left {
+    width: 220px;
+    height: 220px;
+  }
+  
+  .popup-info-right {
+    width: 100%;
+  }
+  
+  .detalle-titulo {
+    font-size: 24px;
+    text-align: center;
+  }
+  
+  .detalle-descripcion {
+    text-align: center;
+  }
+
+  /* Responsive para los mensajes/toasts */
+  .mensaje-pagado,
   .mensaje-apartado {
     top: 10px;
     right: 10px;
     left: 10px;
   }
   
-  .mensaje-apartado .mensaje-contenido {
+  .mensaje-contenido {
     padding: 12px 16px;
     font-size: 14px;
   }
   
+  .mensaje-icono {
+    width: 24px;
+    height: 24px;
+    font-size: 18px;
+  }
+
   .btn-apartar, .btn-apartado-disable {
     padding: 6px 15px;
     font-size: 12px;
   }
 }
+
+@media (max-width: 480px) {
+  .products-grid-luxury {
+    grid-template-columns: 1fr;
+  }
+  
+  .product-actions {
+    gap: 15px;
+  }
+  
+  .card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .categories-wrapper {
+    gap: 5px;
+  }
+  
+  .category-btn {
+    padding: 8px 20px;
+    font-size: 12px;
+  }
+  
+  .modal-content {
+    width: 95%;
+    padding: 0;
+  }
+  
+  .popup-detalles-flex {
+    padding: 15px;
+  }
+  
+  .popup-imagen-container-left {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .detalle-titulo {
+    font-size: 22px;
+  }
+  
+  .detalle-descripcion {
+    font-size: 13px;
+  }
+  
+  .detalle-caracteristicas-vertical p {
+    font-size: 13px;
+  }
+  
+  .financiero-item {
+    font-size: 13px;
+  }
+  
+  .pago-confirmar-btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
 }

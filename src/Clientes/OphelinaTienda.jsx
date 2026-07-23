@@ -1,46 +1,45 @@
-import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./OphelinaTienda.css";
 import Navbar from "../ClientesNav/Navbar";
-
-import anillo_oro from "../assets/anillo_oro.jpg";
-import collar_plata from "../assets/collar_plata.jpg";
-import arete_diamante from "../assets/arete_diamante.jpg";
-import xbox from "../assets/xbox.jpg";
+import { getProductosTienda, apartarProducto, getMisApartados } from "../config/auth";
 
 /* ================= MODAL ================= */
-const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo }) => {
+const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo, apartando }) => {
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>×</button>
-        
+
         <div className="popup-detalles-flex">
           <div className="popup-imagen-container-left">
-            <img 
-              src={producto?.imagen} 
+            <img
+              src={producto?.imagen}
               alt={producto?.nombre}
               className="popup-imagen-left"
             />
           </div>
-          
+
           <div className="popup-info-right">
             <h3 className="detalle-titulo">{producto?.nombre}</h3>
             <p className="detalle-descripcion">{producto?.descripcion}</p>
-            
+
             <div className="detalle-caracteristicas-vertical">
-              <p><strong>Material: {producto?.material || "Oro 14k / Plata 950"}</strong></p>
-              <p><strong>Excedente: 2024</strong></p>
+              <p><strong>Material: {producto?.material || "N/A"}</strong></p>
             </div>
 
             <div className="detalle-seccion">
               <h4>Información del Producto</h4>
               <div className="detalle-financiero">
                 <div className="financiero-item">
-                  <span>Precio:</span>
-                  <span>{producto?.precio} MX</span>
+                  <span>Precio total:</span>
+                  <span>{producto?.precio}</span>
+                </div>
+                <div className="financiero-item">
+                  <span>Anticipo para apartar (50%):</span>
+                  <span>{producto?.anticipo}</span>
                 </div>
                 {producto?.exclusivo && (
                   <div className="financiero-item exclusivo">
@@ -51,13 +50,14 @@ const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo }) => {
               </div>
             </div>
 
-            {tipo === 'apartar' && (
-              <button 
-                className="pago-confirmar-btn" 
+            {tipo === "apartar" && (
+              <button
+                className="pago-confirmar-btn"
                 onClick={onConfirmarApartado}
-                style={{ marginTop: '20px' }}
+                disabled={apartando}
+                style={{ marginTop: "20px" }}
               >
-                Apartar ahora
+                {apartando ? "Apartando..." : "Apartar ahora (pagar 50%)"}
               </button>
             )}
           </div>
@@ -69,67 +69,20 @@ const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo }) => {
 
 /* ================= TIENDA ================= */
 export default function OphelinaTienda() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("todas");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
-  const [mensajeApartado, setMensajeApartado] = useState({ mostrar: false, producto: '' });
-  
-  // Estado para productos apartados
-  const [productosApartados, setProductosApartados] = useState([]);
+  const [mensajeApartado, setMensajeApartado] = useState({ mostrar: false, producto: "" });
+  const [apartando, setApartando] = useState(false);
 
-  const productos = [
-    {
-      id: 1,
-      nombre: "Anillo de Oro 14k",
-      precio: "$2,500",
-      imagen: anillo_oro,
-      descripcion: "Oro amarillo · Perfecto estado",
-      categoria: "oro",
-      material: "Oro 14k",
-      exclusivo: false
-    },
-    {
-      id: 2,
-      nombre: "Collar de Plata",
-      precio: "$2,500",
-      imagen: collar_plata,
-      descripcion: "Elegancia clásica · Perfecto estado",
-      categoria: "plata",
-      material: "Plata 950",
-      exclusivo: false
-    },
-    {
-      id: 3,
-      nombre: "Anillo de Compromiso",
-      precio: "$4,800",
-      imagen: anillo_oro,
-      descripcion: "Diseño exclusivo · Con certificado",
-      categoria: "oro",
-      material: "Oro 14k",
-      exclusivo: true
-    },
-    {
-      id: 4,
-      nombre: "Aretes de Diamante",
-      precio: "$6,200",
-      imagen: arete_diamante,
-      descripcion: "Brillo premium · Garantía incluída",
-      categoria: "oro",
-      material: "Oro 14k con diamantes",
-      exclusivo: true
-    },
-    {
-      id: 5,
-      nombre: "Xbox Series X",
-      precio: "$10,500",
-      imagen: xbox,
-      descripcion: "Consola nueva · Última generación",
-      categoria: "electronicos",
-      material: "Plástico y componentes electrónicos",
-      exclusivo: false
-    }
-  ];
+  // 🔥 Datos reales del backend
+  const [productos, setProductos] = useState([]);
+  const [misApartados, setMisApartados] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
 
   const categorias = [
     { id: "todas", nombre: "Todas las piezas" },
@@ -137,40 +90,92 @@ export default function OphelinaTienda() {
     { id: "plata", nombre: "Plata" },
     { id: "electronicos", nombre: "Electrónicos" },
     { id: "exclusivo", nombre: "Edición Limitada" },
-    { id: "apartados", nombre: "Mis apartados" }
+    { id: "apartados", nombre: "Mis apartados" },
   ];
+
+  // 🔥 Cargar productos de la tienda y mis apartados al montar
+  const cargarDatos = async () => {
+    setCargando(true);
+    setError("");
+
+    const [resProductos, resApartados] = await Promise.all([
+      getProductosTienda(),
+      getMisApartados(),
+    ]);
+
+    if (resProductos.success) {
+      setProductos(resProductos.data);
+    } else {
+      setError(resProductos.message || "No se pudieron cargar los productos");
+    }
+
+    if (resApartados.success) {
+      setMisApartados(resApartados.data);
+    }
+
+    setCargando(false);
+  };
+
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  // 🔥 Detectar el regreso desde Stripe Checkout (success_url / cancel_url)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const pago = params.get("pago");
+
+    if (pago === "exitoso") {
+      setCategoriaActiva("apartados");
+      setMensajeApartado({ mostrar: true, producto: "tu producto" });
+      setTimeout(() => setMensajeApartado({ mostrar: false, producto: "" }), 4000);
+
+      // Limpiamos el query param de la URL para que un refresh
+      // no vuelva a disparar el toast
+      navigate("/tienda", { replace: true });
+    } else if (pago === "cancelado") {
+      setError("El pago fue cancelado, tu producto no quedó apartado.");
+      navigate("/tienda", { replace: true });
+    }
+  }, [location.search]);
 
   const handleApartar = (producto) => {
     setProductoSeleccionado(producto);
     setModalAbierto(true);
   };
 
-  const handleConfirmarApartado = () => {
-    // Agregar el producto a la lista de apartados
-    setProductosApartados([...productosApartados, productoSeleccionado.id]);
-    
-    // Mostrar mensaje de confirmación
-    setMensajeApartado({ mostrar: true, producto: productoSeleccionado.nombre });
-    setModalAbierto(false);
-    
-    // Ocultar mensaje después de 3 segundos
-    setTimeout(() => {
-      setMensajeApartado({ mostrar: false, producto: '' });
-    }, 3000);
+  const handleConfirmarApartado = async () => {
+    if (!productoSeleccionado) return;
+
+    setApartando(true);
+    const result = await apartarProducto(productoSeleccionado.id);
+
+    if (result.success && result.data?.checkout_url) {
+      // 🔥 Redirige a Stripe Checkout para pagar el 50% de anticipo
+      window.location.href = result.data.checkout_url;
+      // No hace falta setApartando(false) aquí: la página está a punto de cambiar
+    } else {
+      setApartando(false);
+      setError(result.message || "No se pudo iniciar el apartado");
+      setModalAbierto(false);
+    }
   };
 
-  const productosFiltrados = productos.filter((producto) => {
-    const matchesBusqueda = producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-                           producto.descripcion.toLowerCase().includes(busqueda.toLowerCase()) ||
-                           (producto.material && producto.material.toLowerCase().includes(busqueda.toLowerCase()));
-    
-    if (categoriaActiva === "apartados") {
-      // Mostrar solo productos apartados
-      return productosApartados.includes(producto.id) && matchesBusqueda;
+  // 🔹 Fuente de datos según la pestaña activa
+  const listaBase = categoriaActiva === "apartados" ? misApartados : productos;
+
+  const productosFiltrados = listaBase.filter((producto) => {
+    const matchesBusqueda =
+      (producto.nombre || "").toLowerCase().includes(busqueda.toLowerCase()) ||
+      (producto.descripcion || "").toLowerCase().includes(busqueda.toLowerCase()) ||
+      (producto.material || "").toLowerCase().includes(busqueda.toLowerCase());
+
+    if (categoriaActiva === "apartados" || categoriaActiva === "todas") {
+      return matchesBusqueda;
     }
-    
-    if (categoriaActiva === "todas") return matchesBusqueda;
-    if (categoriaActiva === "exclusivo") return producto.exclusivo && matchesBusqueda;
+    if (categoriaActiva === "exclusivo") {
+      return producto.exclusivo && matchesBusqueda;
+    }
     return producto.categoria === categoriaActiva && matchesBusqueda;
   });
 
@@ -182,7 +187,7 @@ export default function OphelinaTienda() {
           <div className="hero-overlay"></div>
           <div className="hero-content">
             <h1 className="hero-title">
-              <span className="hero-white">Ophelina</span><br />
+              <span className="hero-white">Ophaline</span><br />
               <span className="hero-gold">la que brinda apoyo</span>
             </h1>
             <p className="hero-description">
@@ -208,7 +213,7 @@ export default function OphelinaTienda() {
               {categorias.map((cat) => (
                 <button
                   key={cat.id}
-                  className={`category-btn ${categoriaActiva === cat.id ? 'active' : ''}`}
+                  className={`category-btn ${categoriaActiva === cat.id ? "active" : ""}`}
                   onClick={() => setCategoriaActiva(cat.id)}
                 >
                   {cat.nombre}
@@ -221,115 +226,131 @@ export default function OphelinaTienda() {
         <section className="products-section">
           <div className="products-header">
             <h2 className="products-title">
-              {categoriaActiva === "apartados" 
-                ? "Mis artículos apartados" 
-                : categoriaActiva === "todas" 
-                  ? "Todas las piezas disponibles" 
-                  : categorias.find(c => c.id === categoriaActiva)?.nombre}
+              {categoriaActiva === "apartados"
+                ? "Mis artículos apartados"
+                : categoriaActiva === "todas"
+                ? "Todas las piezas disponibles"
+                : categorias.find((c) => c.id === categoriaActiva)?.nombre}
             </h2>
             <span className="products-count">
-              {categoriaActiva === "apartados" 
-                ? `${productosApartados.length} artículos apartados` 
+              {categoriaActiva === "apartados"
+                ? `${misApartados.length} artículos apartados`
                 : `${productosFiltrados.length} artículos`}
             </span>
           </div>
 
-          <div className="products-grid-luxury">
-            {productosFiltrados.map((producto) => {
-              const estaApartado = productosApartados.includes(producto.id);
-              
-              return (
-                <article key={producto.id} className={`product-card-luxury ${estaApartado ? 'producto-apartado' : ''}`}>
-                  <div className="card-media">
-                    <div className="image-wrapper">
-                      <img
-                        src={producto.imagen}
-                        alt={producto.nombre}
-                        className="product-image"
-                      />
-                      {producto.exclusivo && (
-                        <span className="exclusive-badge">Artículo exclusivo</span>
-                      )}
-                      {estaApartado && (
-                        <span className="apartado-badge">APARTADO</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="card-content">
-                    <div className="card-header">
-                      <h3 className="product-name">{producto.nombre}</h3>
-                      <p className="product-description">{producto.descripcion}</p>
-                    </div>
-
-                    <div className="card-footer">
-                      <span className="product-price">{producto.precio} MX</span>
-                      
-                      <div className="product-actions">
-                        {estaApartado ? (
-                          <span className="btn-apartado-disable">
-                            <span>Apartado ✓</span>
+          {cargando ? (
+            <p className="no-results">Cargando artículos...</p>
+          ) : error ? (
+            <p className="no-results">{error}</p>
+          ) : (
+            <>
+              <div className="products-grid-luxury">
+                {productosFiltrados.map((producto) => (
+                  <article
+                    key={producto.id}
+                    className={`product-card-luxury ${
+                      categoriaActiva === "apartados" ? "producto-apartado" : ""
+                    }`}
+                  >
+                    <div className="card-media">
+                      <div className="image-wrapper">
+                        <img
+                          src={producto.imagen}
+                          alt={producto.nombre}
+                          className="product-image"
+                        />
+                        {producto.exclusivo && (
+                          <span className="exclusive-badge">Artículo exclusivo</span>
+                        )}
+                        {categoriaActiva === "apartados" && (
+                          <span className="apartado-badge">
+                            {producto.estadoPago === "pagado" ? "APARTADO" : "PAGO PENDIENTE"}
                           </span>
-                        ) : (
-                          <button 
-                            className="btn-apartar"
-                            onClick={() => handleApartar(producto)}
-                          >
-                            <span>Apartar</span>
-                          </button>
                         )}
                       </div>
                     </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
 
-          {productosFiltrados.length === 0 && (
-            <div className="no-results">
-              {categoriaActiva === "apartados" ? (
-                <>
-                  <p>No tienes artículos apartados</p>
-                  <button 
-                    className="btn-limpiar"
-                    onClick={() => setCategoriaActiva("todas")}
-                  >
-                    Ver artículos disponibles
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p>No encontramos artículos que coincidan con tu búsqueda</p>
-                  <button 
-                    className="btn-limpiar"
-                    onClick={() => {
-                      setBusqueda("");
-                      setCategoriaActiva("todas");
-                    }}
-                  >
-                    Ver todos los artículos
-                  </button>
-                </>
+                    <div className="card-content">
+                      <div className="card-header">
+                        <h3 className="product-name">{producto.nombre}</h3>
+                        <p className="product-description">{producto.descripcion}</p>
+                      </div>
+
+                      <div className="card-footer">
+                        <span className="product-price">{producto.precio}</span>
+
+                        <div className="product-actions">
+                          {categoriaActiva === "apartados" ? (
+                            producto.estadoPago !== "pagado" && (
+                              <span className="btn-apartado-disable">
+                                <span>Pago pendiente</span>
+                              </span>
+                            )
+                          ) : (
+                            <button
+                              className="btn-apartar"
+                              onClick={() => handleApartar(producto)}
+                            >
+                              <span>Apartar (50%)</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              {productosFiltrados.length === 0 && (
+                <div className="no-results">
+                  {categoriaActiva === "apartados" ? (
+                    <>
+                      <p>No tienes artículos apartados</p>
+                      <button
+                        className="btn-limpiar"
+                        onClick={() => setCategoriaActiva("todas")}
+                      >
+                        Ver artículos disponibles
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p>No encontramos artículos que coincidan con tu búsqueda</p>
+                      <button
+                        className="btn-limpiar"
+                        onClick={() => {
+                          setBusqueda("");
+                          setCategoriaActiva("todas");
+                        }}
+                      >
+                        Ver todos los artículos
+                      </button>
+                    </>
+                  )}
+                </div>
               )}
-            </div>
+            </>
           )}
         </section>
 
-        <Modal 
+        <Modal
           isOpen={modalAbierto}
           onClose={() => setModalAbierto(false)}
           onConfirmarApartado={handleConfirmarApartado}
           producto={productoSeleccionado}
           tipo="apartar"
+          apartando={apartando}
         />
 
-        {/* Mensaje de confirmación de apartado */}
+        {/* Toast de "¡Apartado exitoso!" al volver de Stripe */}
         {mensajeApartado.mostrar && (
           <div className="mensaje-apartado">
             <div className="mensaje-contenido">
-              <span className="mensaje-icono">📌</span>
-              <p>¡Apartado! Has apartado: <strong>{mensajeApartado.producto}</strong></p>
+              <span className="mensaje-icono">✓</span>
+              <span>
+                ¡Apartado exitoso! Has apartado: <strong>{mensajeApartado.producto}</strong>
+              </span>
             </div>
           </div>
         )}
