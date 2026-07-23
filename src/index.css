@@ -1,73 +1,4 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
-/* src/index.css */
+/* index.css - VERSIÓN CORREGIDA */
 
 /* Reset básico */
 * {
@@ -76,44 +7,67 @@ button:focus-visible {
   box-sizing: border-box;
 }
 
+/* Eliminar scroll en html, body y root */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Fuentes globales */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', sans-serif;
+  background-color: #F5F0E9;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* src/index.css */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.app-with-sidebar {
+/* El scroll solo en el contenedor principal */
+.app-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   width: 100%;
-  background-color: #f5f5f5;
 }
 
-.main-content {
+/* Sidebar - sin scroll o con scroll interno si es necesario */
+.app-layout .sidebar {
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* Contenido principal - ÚNICO SCROLL PERMITIDO */
+.app-layout .main-content,
+.main-content-wrapper {
   flex: 1;
-  margin-left: 250px;
-  padding: 20px;
-  transition: margin-left 0.3s ease;
-  overflow-x: auto;
+  overflow-y: auto;
+  height: 100vh;
+  width: 100%;
 }
 
-/* Cuando el sidebar está colapsado */
-.sidebar.collapsed ~ .main-content {
-  margin-left: 70px;
+/* Eliminar estilos por defecto de Vite */
+#root {
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
 }
 
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
-    padding: 15px;
-  }
+/* Scrollbar personalizado (opcional) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c5a059;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #be981d;
 }
