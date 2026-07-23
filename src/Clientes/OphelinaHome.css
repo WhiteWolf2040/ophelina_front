@@ -1,4 +1,4 @@
-/* OphelinaHome.css - Optimizado y completamente responsive */
+/* OphelinaHome.css - VERSIÓN LIMPIA Y CORREGIDA */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700&display=swap');
 
@@ -32,23 +32,30 @@ body {
   overflow-x: hidden;
 }
 
-/* MAIN CONTENT */
-.main-content {
-  min-height: 100vh;
-  width: 100%;
-  margin: 0 auto;
-  padding: 40px 20px;
+/* ============================================
+   CONTENEDOR PRINCIPAL - UN SOLO SCROLL
+   ============================================ */
+.cliente-home-container {
+  flex: 1;
+  overflow-y: auto;
+  height: 100vh;
+  padding: 20px 20px 40px;
   background-color: #F5F0E9;
 }
 
-/* HOME MAIN */
+/* ============================================
+   HOME MAIN - SIN SCROLL INTERNO
+   ============================================ */
 .home-main {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  padding-bottom: 20px;
 }
 
-/* WELCOME SECTION */
+/* ============================================
+   WELCOME SECTION
+   ============================================ */
 .welcome-section {
   text-align: center;
   margin-bottom: 40px;
@@ -85,7 +92,9 @@ body {
   padding: 0 10px;
 }
 
-/* CARDS SECTION */
+/* ============================================
+   CARDS SECTION
+   ============================================ */
 .cards-section {
   margin-bottom: 30px;
   display: flex;
@@ -145,7 +154,9 @@ body {
   color: white !important;
 }
 
-/* CONTENIDO SECTIONS */
+/* ============================================
+   CONTENIDO SECTIONS
+   ============================================ */
 .contenido-section {
   background: var(--white);
   border-radius: 16px;
@@ -153,7 +164,6 @@ body {
   margin-bottom: 30px;
   box-shadow: var(--shadow-sm);
   width: 100%;
-  overflow: hidden;
 }
 
 .section-title {
@@ -173,7 +183,9 @@ body {
   align-items: center;
 }
 
-/* PAWN ITEMS */
+/* ============================================
+   PAWN ITEMS
+   ============================================ */
 .pawn-item {
   display: flex;
   justify-content: space-between;
@@ -220,7 +232,9 @@ body {
   white-space: nowrap;
 }
 
-/* BOTTOM SECTIONS */
+/* ============================================
+   BOTTOM SECTIONS
+   ============================================ */
 .bottom-sections {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -234,7 +248,9 @@ body {
   height: 100%;
 }
 
-/* DEBT BREAKDOWN */
+/* ============================================
+   DEBT BREAKDOWN
+   ============================================ */
 .debt-breakdown {
   display: flex;
   flex-direction: column;
@@ -274,7 +290,9 @@ body {
   font-size: clamp(16px, 4.5vw, 18px);
 }
 
-/* ACTIVITY LIST */
+/* ============================================
+   ACTIVITY LIST
+   ============================================ */
 .activity-list {
   display: flex;
   flex-direction: column;
@@ -314,7 +332,9 @@ body {
   word-break: break-word;
 }
 
-/* Tooltip */
+/* ============================================
+   TOOLTIP
+   ============================================ */
 .MuiTooltip-tooltip {
   background-color: var(--primary-blue) !important;
   color: white !important;
@@ -328,11 +348,13 @@ body {
   color: var(--primary-blue) !important;
 }
 
-/* ===== MEDIA QUERIES OPTIMIZADAS ===== */
+/* ============================================
+   RESPONSIVE
+   ============================================ */
 
 /* Tablets y laptops pequeñas */
 @media screen and (max-width: 1024px) {
-  .main-content {
+  .cliente-home-container {
     padding: 30px 16px;
   }
   
@@ -368,7 +390,7 @@ body {
 
 /* Tablets pequeñas y móviles grandes */
 @media screen and (max-width: 768px) {
-  .main-content {
+  .cliente-home-container {
     padding: 20px 12px;
   }
   
@@ -486,8 +508,8 @@ body {
 
 /* Móviles pequeños */
 @media screen and (max-width: 480px) {
-  .main-content {
-    padding: 15px 10px;
+  .cliente-home-container {
+    padding: 15px 10px 30px;
   }
   
   .welcome-section {
@@ -573,8 +595,8 @@ body {
 
 /* Móviles muy pequeños */
 @media screen and (max-width: 360px) {
-  .main-content {
-    padding: 12px 8px;
+  .cliente-home-container {
+    padding: 12px 8px 20px;
   }
   
   .welcome-title {
@@ -621,8 +643,8 @@ body {
 
 /* Orientación landscape en móviles */
 @media screen and (max-height: 500px) and (orientation: landscape) {
-  .main-content {
-    padding: 20px;
+  .cliente-home-container {
+    padding: 15px 20px;
   }
   
   .cards-grid {
@@ -640,7 +662,7 @@ body {
   }
 }
 
-/* Ajustes para pantallas muy grandes */
+/* Pantallas muy grandes */
 @media screen and (min-width: 1600px) {
   .home-main {
     max-width: 1400px;
@@ -658,55 +680,4 @@ body {
   .welcome-name {
     font-size: 36px;
   }
-}
-
-/* OphelinaHome.css - Agregar al inicio */
-
-/* ===== CONTENEDOR PRINCIPAL DEL CLIENTE ===== */
-.cliente-home-container {
-  flex: 1;
-  overflow-y: auto;
-  height: 100vh;
-  padding: 20px;
-  background-color: #F5F0E9;
-}
-
-/* Eliminar el .main-content duplicado */
-.cliente-home-container .main-content {
-  min-height: auto;
-  height: auto;
-  padding: 0;
-}
-
-/* El home debe ocupar todo el espacio sin scroll interno */
-.home-main {
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  padding-bottom: 40px;
-  /* ← Eliminar min-height */
-}
-
-/* Asegurar que las cards no creen scroll */
-.cards-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 25px;
-  justify-content: center;
-  align-items: stretch;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  overflow: visible; /* ← Sin scroll */
-}
-
-/* Eliminar overflow en secciones */
-.contenido-section {
-  background: var(--white);
-  border-radius: 16px;
-  padding: 28px;
-  margin-bottom: 30px;
-  box-shadow: var(--shadow-sm);
-  width: 100%;
-  overflow: visible; /* ← Cambiar de hidden a visible */
 }

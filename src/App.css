@@ -41,13 +41,29 @@
   color: #888;
 }
 
-/* App.css - Agregar */
+/* index.css - Agregar al inicio */
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* El scroll solo en el contenedor principal */
 .app-layout {
   display: flex;
   height: 100vh;
   overflow: hidden;
 }
 
+.app-layout .sidebar {
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.app-layout .main-content,
 .main-content-wrapper {
   flex: 1;
   overflow-y: auto;
