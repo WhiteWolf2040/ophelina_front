@@ -34,9 +34,16 @@ const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo, apartando
               <h4>Información del Producto</h4>
               <div className="detalle-financiero">
                 <div className="financiero-item">
-                  <span>Precio total:</span>
-                  <span>{producto?.precio}</span>
-                </div>
+                <span>Precio total:</span>
+                <span>
+                  {producto?.descuento > 0 && (
+                    <span style={{ textDecoration: "line-through", marginRight: "8px", color: "#999" }}>
+                      {producto?.precioOriginal}
+                    </span>
+                  )}
+                  {producto?.precio}
+                </span>
+                  </div>
                 <div className="financiero-item">
                   <span>Anticipo para apartar (50%):</span>
                   <span>{producto?.anticipo}</span>
@@ -278,7 +285,14 @@ export default function OphelinaTienda() {
                       </div>
 
                       <div className="card-footer">
-                        <span className="product-price">{producto.precio}</span>
+                        {producto.descuento > 0 ? (
+                            <div className="product-price-wrapper">
+                              <span className="product-price-original">{producto.precioOriginal}</span>
+                              <span className="product-price">{producto.precio}</span>
+                            </div>
+                          ) : (
+                            <span className="product-price">{producto.precio}</span>
+                          )}
 
                         <div className="product-actions">
                           {categoriaActiva === "apartados" ? (
