@@ -36,12 +36,10 @@ body {
    CONTENEDOR PRINCIPAL - UN SOLO SCROLL
    ============================================ */
 .cliente-home-container {
-  flex: 1;
-  overflow-y: auto;
-  height: 100vh;
   padding: 20px 30px 40px;
   background-color: #F5F0E9;
   width: 100%;
+  min-height: 100vh;
 }
 
 /* ============================================
