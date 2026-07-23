@@ -1,4 +1,4 @@
-/* index.css - VERSIÓN ORIGINAL */
+/* index.css - VERSIÓN CON DISEÑO ORIGINAL */
 
 /* Reset básico */
 * {
@@ -13,17 +13,47 @@ body {
   background-color: #F5F0E9;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* Estilos por defecto de Vite */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  height: 100vh;
+  overflow: hidden;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
 }
 
-/* Scrollbar personalizado (opcional) */
+/* Layout principal */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* Sidebar */
+.app-layout .sidebar {
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+  background-color: #2C2C2C;
+  color: white;
+  width: 260px;
+}
+
+/* Contenido principal */
+.app-layout .main-content {
+  flex: 1;
+  overflow-y: auto;
+  height: 100vh;
+  background-color: #F5F0E9;
+  padding: 2rem;
+}
+
+/* Scrollbar personalizado */
 ::-webkit-scrollbar {
   width: 6px;
 }
