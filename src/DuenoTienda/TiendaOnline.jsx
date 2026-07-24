@@ -57,6 +57,28 @@ const TiendaOnline = () => {
     configurarDiasGracia
   } = useTienda();
 
+ const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
+const CLOUDINARY_UPLOAD_PRESET = "ophelina_productos";
+
+const subirImagenACloudinary = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  formData.append("folder", "productos"); // ← aquí va el folder
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: "POST", body: formData }
+  );
+
+  if (!response.ok) {
+    throw new Error("Error al subir la imagen a Cloudinary");
+  }
+
+  const data = await response.json();
+  return data.secure_url;
+};
+
   // ========== ESTADOS LOCALES ==========
   const [busqueda, setBusqueda] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
@@ -219,48 +241,50 @@ const TiendaOnline = () => {
     setArchivoImagen(file);
     setPreviewImagen(URL.createObjectURL(file));
   };
+const handleGuardarProducto = async (e) => {
+  e.preventDefault();
+  setGuardando(true);
 
-  const handleGuardarProducto = async (e) => {
-    e.preventDefault();
-    setGuardando(true);
-
-    try {
-      // ✅ Se construye un FormData en vez de un objeto plano,
-      // porque ahora sí puede llevar un archivo binario real.
-      const formData = new FormData();
-      formData.append("nombre", formProducto.nombre);
-      formData.append("categoria", formProducto.categoria);
-      formData.append("precio", Number(formProducto.precio));
-      formData.append("descuento", Number(formProducto.descuento));
-      formData.append("stock", Number(formProducto.stock));
-      formData.append("descripcion", formProducto.descripcion || "");
-      formData.append("estado", formProducto.estado);
-      // Los booleanos se mandan como '1' / '0' para que Laravel los valide bien como boolean
-      formData.append("visible", formProducto.visible ? "1" : "0");
-      formData.append("destacado", formProducto.destacado ? "1" : "0");
-
-      // Solo se agrega la imagen si el usuario seleccionó una nueva
-      if (archivoImagen) {
-        formData.append("imagen", archivoImagen);
-      }
-
-      if (modoEdicion && productoSeleccionado) {
-        await actualizarProducto(productoSeleccionado.id_producto, formData);
-      } else {
-        await crearProducto(formData);
-      }
-
-      setModalProductoAbierto(false);
-      limpiarImagenSeleccionada();
-      await cargarProductos();
-      await cargarEstadisticas();
-    } catch (err) {
-      console.error("Error guardando producto:", err);
-      alert("Error al guardar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-    } finally {
-      setGuardando(false);
+  try {
+    // ✅ Si hay imagen nueva, primero se sube a Cloudinary y se obtiene la URL
+    let imagenUrl = null;
+    if (archivoImagen) {
+      imagenUrl = await subirImagenACloudinary(archivoImagen);
     }
-  };
+
+    const formData = new FormData();
+    formData.append("nombre", formProducto.nombre);
+    formData.append("categoria", formProducto.categoria);
+    formData.append("precio", Number(formProducto.precio));
+    formData.append("descuento", Number(formProducto.descuento));
+    formData.append("stock", Number(formProducto.stock));
+    formData.append("descripcion", formProducto.descripcion || "");
+    formData.append("estado", formProducto.estado);
+    formData.append("visible", formProducto.visible ? "1" : "0");
+    formData.append("destacado", formProducto.destacado ? "1" : "0");
+
+    // ✅ Ya no se manda el archivo, se manda la URL como texto
+    if (imagenUrl) {
+      formData.append("imagen_url", imagenUrl);
+    }
+
+    if (modoEdicion && productoSeleccionado) {
+      await actualizarProducto(productoSeleccionado.id_producto, formData);
+    } else {
+      await crearProducto(formData);
+    }
+
+    setModalProductoAbierto(false);
+    limpiarImagenSeleccionada();
+    await cargarProductos();
+    await cargarEstadisticas();
+  } catch (err) {
+    console.error("Error guardando producto:", err);
+    alert("Error al guardar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
+  } finally {
+    setGuardando(false);
+  }
+};
 
   const handleEliminarProducto = async () => {
     try {
