@@ -37,11 +37,15 @@ export function useMisEmpenos() {
         cargarResumen();
     }, [cargarEmpenos, cargarResumen]);
 
-    // Inicia el abono: crea la sesión de Stripe y redirige al checkout
-    const iniciarAbono = async (idEmpeno, monto) => {
+    // Inicia el abono O la prórroga: crea la sesión de Stripe y redirige al checkout.
+    // ✅ NUEVO parámetro `tipo`: 'abono' (default, monto libre elegido por el
+    // cliente) o 'prorroga' (monto fijo = intereses + IVA, extiende el
+    // vencimiento 30 días). Para 'prorroga' el monto se ignora: lo calcula
+    // y lo regresa el backend (ver AbonoController::crearSesionPago).
+    const iniciarAbono = async (idEmpeno, monto, tipo = 'abono') => {
         setRedirigiendoPago(true);
         try {
-            const result = await MisEmpenosService.crearSesionAbono(idEmpeno, monto);
+            const result = await MisEmpenosService.crearSesionAbono(idEmpeno, monto, tipo);
             if (result.success && result.data?.checkout_url) {
                 window.location.href = result.data.checkout_url;
             } else {
