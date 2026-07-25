@@ -21,6 +21,9 @@ export default function MisEmpenos() {
   const [montoPago, setMontoPago] = useState("");
   const [errorPago, setErrorPago] = useState(null);
 
+  // ✅ NUEVO: qué acción está eligiendo el cliente dentro del popup de pago
+  const [tipoAccion, setTipoAccion] = useState("abono"); // 'abono' | 'prorroga'
+
   // FILTRO DEL BUSCADOR (ya sobre datos reales)
   const empenosFiltrados = empenos.filter((empeño) =>
     (
@@ -38,6 +41,7 @@ export default function MisEmpenos() {
     setPopupAbierto(tipo);
     setMontoPago("");
     setErrorPago(null);
+    setTipoAccion("abono");
   };
 
   const cerrarPopup = () => {
@@ -45,28 +49,43 @@ export default function MisEmpenos() {
     setEmpeñoSeleccionado(null);
     setMontoPago("");
     setErrorPago(null);
+    setTipoAccion("abono");
   };
 
-  // Procesa el abono: crea la sesión de Stripe y redirige al checkout real
+  // Procesa el pago: crea la sesión de Stripe y redirige al checkout real.
+  // Si tipoAccion === 'prorroga', el backend ignora el monto (cobra
+  // intereses + IVA automáticamente) y extiende el vencimiento 30 días.
   const procesarPago = async () => {
     if (!empeñoSeleccionado) return;
 
-    const montoIngresado = parseFloat(montoPago.replace(/[^0-9.-]+/g, ""));
+    if (tipoAccion === "abono") {
+      const montoIngresado = parseFloat(montoPago.replace(/[^0-9.-]+/g, ""));
 
-    if (isNaN(montoIngresado) || montoIngresado <= 0) {
-      setErrorPago("Por favor ingresa un monto válido");
+      if (isNaN(montoIngresado) || montoIngresado <= 0) {
+        setErrorPago("Por favor ingresa un monto válido");
+        return;
+      }
+
+      try {
+        setErrorPago(null);
+        await iniciarAbono(empeñoSeleccionado.id, montoIngresado, "abono");
+      } catch (err) {
+        console.error("Error al iniciar el abono:", err);
+        setErrorPago(
+          err.response?.data?.message || err.message || "Error al iniciar el pago, intenta de nuevo"
+        );
+      }
       return;
     }
 
+    // tipoAccion === 'prorroga': no se manda monto, el backend lo calcula.
     try {
       setErrorPago(null);
-      // Redirige a Stripe Checkout; al volver, el webhook ya habrá
-      // registrado el abono si el pago se completó.
-      await iniciarAbono(empeñoSeleccionado.id, montoIngresado);
+      await iniciarAbono(empeñoSeleccionado.id, null, "prorroga");
     } catch (err) {
-      console.error("Error al iniciar el abono:", err);
+      console.error("Error al iniciar la prórroga:", err);
       setErrorPago(
-        err.response?.data?.message || err.message || "Error al iniciar el pago, intenta de nuevo"
+        err.response?.data?.message || err.message || "Error al iniciar la prórroga, intenta de nuevo"
       );
     }
   };
@@ -188,7 +207,7 @@ export default function MisEmpenos() {
                           className="me-btn-pagar"
                           onClick={() => abrirPopup('pagar', empeño)}
                         >
-                          Abonar
+                          Abonar / Prorrogar
                         </button>
                         <button
                           className="me-btn-ver-detalles"
@@ -222,48 +241,80 @@ export default function MisEmpenos() {
         )}
       </div>
 
-      {/* POPUP DE PAGO (ABONO) */}
+      {/* POPUP DE PAGO (ABONO o PRÓRROGA) */}
       {popupAbierto === 'pagar' && empeñoSeleccionado && (
         <div className="popup-overlay" onClick={cerrarPopup}>
           <div className="popup-content" onClick={(e) => e.stopPropagation()}>
             <button className="popup-close" onClick={cerrarPopup}>×</button>
 
             <div className="popup-header">
-              <h2>Realizar Abono</h2>
+              <h2>Realizar pago</h2>
               <h3>{empeñoSeleccionado.nombre}</h3>
             </div>
 
             <div className="popup-body">
+
+              {/* ✅ NUEVO: selector Abonar vs Prorrogar */}
+              <div className="pago-tabs" role="tablist">
+                <button
+                  type="button"
+                  className={`pago-tab ${tipoAccion === "abono" ? "activo" : ""}`}
+                  onClick={() => { setTipoAccion("abono"); setErrorPago(null); }}
+                >
+                  Abonar
+                </button>
+                <button
+                  type="button"
+                  className={`pago-tab ${tipoAccion === "prorroga" ? "activo" : ""}`}
+                  onClick={() => { setTipoAccion("prorroga"); setErrorPago(null); }}
+                >
+                  Prorrogar 30 días
+                </button>
+              </div>
+
               <div className="pago-detalles">
                 <div className="pago-item">
                   <span className="pago-label">Saldo restante:</span>
                   <span className="pago-valor">{empeñoSeleccionado.saldoRestante}</span>
                 </div>
                 <div className="pago-item">
-                  <span className="pago-label">Vencimiento:</span>
+                  <span className="pago-label">Vencimiento actual:</span>
                   <span className="pago-valor">{empeñoSeleccionado.vencimiento}</span>
                 </div>
               </div>
 
-              <div className="pago-input-group">
-                <label>Monto a abonar:</label>
-                <input
-                  type="text"
-                  className="pago-input"
-                  placeholder="Ingresa el monto del abono"
-                  value={montoPago}
-                  onChange={handleMontoChange}
-                />
-                <small className="pago-ayuda">
-                  Puedes abonar cualquier monto hasta el saldo restante. Se te
-                  redirigirá a la pasarela de pago segura para completar el abono.
-                </small>
-                {errorPago && (
-                  <small className="pago-error" style={{ color: "#c0392b", display: "block", marginTop: "6px" }}>
-                    {errorPago}
+              {tipoAccion === "abono" ? (
+                <div className="pago-input-group">
+                  <label>Monto a abonar:</label>
+                  <input
+                    type="text"
+                    className="pago-input"
+                    placeholder="Ingresa el monto del abono"
+                    value={montoPago}
+                    onChange={handleMontoChange}
+                  />
+                  <small className="pago-ayuda">
+                    Puedes abonar cualquier monto hasta el saldo restante. El abono
+                    reduce tu deuda pero <strong>no mueve tu fecha de vencimiento</strong>.
+                    Se te redirigirá a la pasarela de pago segura para completarlo.
                   </small>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="pago-input-group">
+                  <small className="pago-ayuda">
+                    La prórroga cobra los intereses (+ IVA) de tu cuota actual —el
+                    monto exacto se calcula y se te mostrará en la pasarela de pago—
+                    y <strong>extiende tu fecha de vencimiento 30 días</strong>. No
+                    abona capital.
+                  </small>
+                </div>
+              )}
+
+              {errorPago && (
+                <small className="pago-error" style={{ color: "#c0392b", display: "block", marginTop: "6px" }}>
+                  {errorPago}
+                </small>
+              )}
 
               <div className="pago-metodos">
                 <h4>Método de pago</h4>
@@ -280,7 +331,11 @@ export default function MisEmpenos() {
                 onClick={procesarPago}
                 disabled={redirigiendoPago}
               >
-                {redirigiendoPago ? "Redirigiendo..." : "Confirmar Abono"}
+                {redirigiendoPago
+                  ? "Redirigiendo..."
+                  : tipoAccion === "abono"
+                    ? "Confirmar Abono"
+                    : "Confirmar Prórroga"}
               </button>
             </div>
           </div>
