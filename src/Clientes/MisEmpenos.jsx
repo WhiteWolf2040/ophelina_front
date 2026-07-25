@@ -134,6 +134,12 @@ export default function MisEmpenos() {
                       {empeño.pagadoCompleto && (
                         <div className="me-empeno-pagado-badge">✓ PAGADO</div>
                       )}
+                      {!empeño.pagadoCompleto && empeño.estado === 'VENCIDO' && (
+                        <div className="me-empeno-vencido-badge">⚠ VENCIDO</div>
+                      )}
+                      {!empeño.pagadoCompleto && empeño.estado !== 'VENCIDO' && empeño.proximoAVencer && (
+                        <div className="me-empeno-porvencer-badge">⏳ POR VENCER</div>
+                      )}
                     </div>
 
                     <div className="me-empeno-info">
