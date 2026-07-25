@@ -1,139 +1,78 @@
 import React, { useState } from "react";
 import "./MisEmpenos.css";
 import Navbar from "../ClientesNav/Navbar";
+import { useMisEmpenos } from "../hooks/useMisEmpenos";
 
-import anillo_oro from "../assets/anillo_oro.jpg";
-import collar_plata from "../assets/collar_plata.jpg";
-import arete_diamante from "../assets/arete_diamante.jpg";
+const PLACEHOLDER_IMAGE = "/placeholder.png";
 
 export default function MisEmpenos() {
+  const {
+    empenos,
+    loading,
+    error,
+    redirigiendoPago,
+    cargarEmpenos,
+    iniciarAbono,
+  } = useMisEmpenos();
+
   const [busqueda, setBusqueda] = useState("");
   const [popupAbierto, setPopupAbierto] = useState(null); // 'pagar', 'detalles', o null
   const [empeñoSeleccionado, setEmpeñoSeleccionado] = useState(null);
-  const [empeñosPagados, setEmpeñosPagados] = useState({}); // Estado para tracking de pagos completos
-  const [montoPago, setMontoPago] = useState(""); // Estado para el monto a pagar
+  const [montoPago, setMontoPago] = useState("");
+  const [errorPago, setErrorPago] = useState(null);
 
-  // Tipos de prendas
-  const tiposPrenda = [
-    {
-      nombre: "Anillo de Oro 14k",
-      imagen: anillo_oro
-    },
-    {
-      nombre: "Collar de Plata",
-      imagen: collar_plata
-    },
-    {
-      nombre: "Aretes de Diamante",
-      imagen: arete_diamante
-    }
-  ];
-
-  // Generar empeños
-  const generarEmpeños = () => {
-    const empeños = [];
-
-    const descripciones = [
-      "Anillo de oro amarillo con diamante central",
-      "Diseño clásico y elegante",
-      "Con detalles artesanales",
-      "Estilo moderno",
-      "Pieza única",
-      "Con grabados especiales"
-    ];
-
-    const preciosBase = [
-      8500, 12500, 3200, 7800, 6200,
-      4500, 9300, 11000, 2800, 8900,
-      7500, 5200, 10500
-    ];
-
-    for (let i = 0; i < 15; i++) {
-      const tipoIndex = i % 3;
-      const precioBase = preciosBase[i % preciosBase.length];
-      const interes = precioBase * 0.15;
-
-      empeños.push({
-        id: i + 1,
-        nombre: tiposPrenda[tipoIndex].nombre,
-        descripcion: descripciones[i % descripciones.length],
-        prestado: `$${precioBase.toLocaleString("en-US")}`,
-        prestadoNumerico: precioBase,
-        totalPagar: `$${(precioBase + interes).toLocaleString("en-US")}`,
-        totalPagarNumerico: precioBase + interes,
-        vencimiento: `${Math.floor(Math.random() * 28) + 1}/${
-          Math.floor(Math.random() * 12) + 1
-        }/2026`,
-        imagen: tiposPrenda[tipoIndex].imagen,
-        gramos: "5.2 gramos",
-        casaEmpeño: "JSK",
-        intereses: `$${interes.toLocaleString("en-US")}`,
-        abonos: [
-          { fecha: "15/01/2026", monto: "$1,400.00" },
-          { fecha: "01/01/2026", monto: "$2,000.00" }
-        ]
-      });
-    }
-
-    return empeños;
-  };
-
-  const empeños = generarEmpeños();
-
-  // FILTRO DEL BUSCADOR
-  const empenosFiltrados = empeños.filter((empeño) =>
+  // FILTRO DEL BUSCADOR (ya sobre datos reales)
+  const empenosFiltrados = empenos.filter((empeño) =>
     (
-      empeño.nombre +
-      empeño.descripcion +
-      empeño.prestado +
-      empeño.vencimiento
+      (empeño.nombre || "") +
+      (empeño.descripcion || "") +
+      (empeño.prestado || "") +
+      (empeño.vencimiento || "")
     )
       .toLowerCase()
       .includes(busqueda.toLowerCase())
   );
 
-  // Función para abrir popup
   const abrirPopup = (tipo, empeño) => {
     setEmpeñoSeleccionado(empeño);
     setPopupAbierto(tipo);
-    setMontoPago(""); // Resetear el monto al abrir el popup
+    setMontoPago("");
+    setErrorPago(null);
   };
 
-  // Función para cerrar popup
   const cerrarPopup = () => {
     setPopupAbierto(null);
     setEmpeñoSeleccionado(null);
     setMontoPago("");
+    setErrorPago(null);
   };
 
-  // Función para procesar el pago (abono)
-  const procesarPago = () => {
-    if (empeñoSeleccionado) {
-      // Convertir el monto ingresado a número
-      const montoIngresado = parseFloat(montoPago.replace(/[^0-9.-]+/g, ""));
-      
-      // Verificar si el monto es válido
-      if (isNaN(montoIngresado) || montoIngresado <= 0) {
-        alert("Por favor ingresa un monto válido");
-        return;
-      }
+  // Procesa el abono: crea la sesión de Stripe y redirige al checkout real
+  const procesarPago = async () => {
+    if (!empeñoSeleccionado) return;
 
-      // Aquí puedes agregar la lógica para registrar el abono
-      // Por ahora, solo simulamos que el pago se procesó
-      
-      alert(`¡Abono de $${montoIngresado.toLocaleString("en-US")} realizado con éxito!`);
-      cerrarPopup();
-      
-      // NOTA: El estado "PAGADO" solo debería activarse cuando el usuario
-      // haya completado todos los pagos. Como es una simulación, 
-      // no activamos automáticamente el estado pagado.
+    const montoIngresado = parseFloat(montoPago.replace(/[^0-9.-]+/g, ""));
+
+    if (isNaN(montoIngresado) || montoIngresado <= 0) {
+      setErrorPago("Por favor ingresa un monto válido");
+      return;
+    }
+
+    try {
+      setErrorPago(null);
+      // Redirige a Stripe Checkout; al volver, el webhook ya habrá
+      // registrado el abono si el pago se completó.
+      await iniciarAbono(empeñoSeleccionado.id, montoIngresado);
+    } catch (err) {
+      console.error("Error al iniciar el abono:", err);
+      setErrorPago(
+        err.response?.data?.message || err.message || "Error al iniciar el pago, intenta de nuevo"
+      );
     }
   };
 
-  // Función para formatear el monto mientras el usuario escribe
   const handleMontoChange = (e) => {
     const valor = e.target.value;
-    // Permitir solo números y un punto decimal
     if (valor === "" || /^\d*\.?\d*$/.test(valor)) {
       setMontoPago(valor);
     }
@@ -162,100 +101,119 @@ export default function MisEmpenos() {
           </div>
         </section>
 
+        {/* LOADING */}
+        {loading && (
+          <p className="me-sin-resultados">Cargando tus empeños...</p>
+        )}
+
+        {/* ERROR */}
+        {error && !loading && (
+          <div className="me-sin-resultados">
+            <p>{error}</p>
+            <button onClick={cargarEmpenos}>Reintentar</button>
+          </div>
+        )}
+
         {/* Lista */}
-        <section className="me-empenos-list">
-          {empenosFiltrados.length > 0 ? (
-            empenosFiltrados.map((empeño) => (
-              <div key={empeño.id} className="me-empeno-card">
-                <div className="me-empeno-contenido-superior">
-                  <div className="me-empeno-imagen-container">
-                    <img
-                      src={empeño.imagen}
-                      alt={empeño.nombre}
-                      className="me-empeno-imagen"
-                    />
-                    {empeñosPagados[empeño.id] && (
-                      <div className="me-empeno-pagado-badge">✓ PAGADO</div>
-                    )}
-                  </div>
+        {!loading && !error && (
+          <section className="me-empenos-list">
+            {empenosFiltrados.length > 0 ? (
+              empenosFiltrados.map((empeño) => (
+                <div key={empeño.id} className="me-empeno-card">
+                  <div className="me-empeno-contenido-superior">
+                    <div className="me-empeno-imagen-container">
+                      <img
+                        src={empeño.imagen || PLACEHOLDER_IMAGE}
+                        alt={empeño.nombre}
+                        className="me-empeno-imagen"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = PLACEHOLDER_IMAGE;
+                        }}
+                      />
+                      {empeño.pagadoCompleto && (
+                        <div className="me-empeno-pagado-badge">✓ PAGADO</div>
+                      )}
+                    </div>
 
-                  <div className="me-empeno-info">
-                    <h2 className="me-empeno-nombre">{empeño.nombre}</h2>
+                    <div className="me-empeno-info">
+                      <h2 className="me-empeno-nombre">{empeño.nombre}</h2>
 
-                    {empeño.descripcion && (
-                      <p className="me-empeno-descripcion">
-                        {empeño.descripcion}
-                      </p>
-                    )}
+                      {empeño.descripcion && (
+                        <p className="me-empeno-descripcion">
+                          {empeño.descripcion}
+                        </p>
+                      )}
 
-                    <div className="me-empeno-detalles">
-                      <div className="me-detalle-item">
-                        <span className="me-detalle-label">Prestado:</span>
-                        <span className="me-detalle-valor">
-                          {empeño.prestado}
-                        </span>
-                      </div>
+                      <div className="me-empeno-detalles">
+                        <div className="me-detalle-item">
+                          <span className="me-detalle-label">Prestado:</span>
+                          <span className="me-detalle-valor">
+                            {empeño.prestado}
+                          </span>
+                        </div>
 
-                      <div className="me-detalle-item">
-                        <span className="me-detalle-label">
-                          Total a pagar:
-                        </span>
-                        <span className={`me-detalle-valor me-total ${empeñosPagados[empeño.id] ? 'pagado' : ''}`}>
-                          {empeñosPagados[empeño.id] ? "Pagado" : empeño.totalPagar}
-                        </span>
-                      </div>
+                        <div className="me-detalle-item">
+                          <span className="me-detalle-label">
+                            Total a pagar:
+                          </span>
+                          <span className={`me-detalle-valor me-total ${empeño.pagadoCompleto ? 'pagado' : ''}`}>
+                            {empeño.pagadoCompleto ? "Pagado" : empeño.totalPagar}
+                          </span>
+                        </div>
 
-                      <div className="me-detalle-item">
-                        <span className="me-detalle-label">
-                          Vencimiento:
-                        </span>
-                        <span className="me-detalle-valor">
-                          {empeño.vencimiento}
-                        </span>
+                        <div className="me-detalle-item">
+                          <span className="me-detalle-label">
+                            Vencimiento:
+                          </span>
+                          <span className="me-detalle-valor">
+                            {empeño.vencimiento || "N/A"}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* ACCIONES CON BOTONES CONDICIONALES */}
-                <div className="me-empeno-acciones">
-                  {!empeñosPagados[empeño.id] ? (
-                    <>
-                      <button 
-                        className="me-btn-pagar"
-                        onClick={() => abrirPopup('pagar', empeño)}
-                      >
-                        Abonar
-                      </button>
-                      <button 
-                        className="me-btn-ver-detalles"
-                        onClick={() => abrirPopup('detalles', empeño)}
-                      >
-                        Ver detalles
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="me-btn-pagado">
-                        ✓ Pagado
-                      </div>
-                      <button 
-                        className="me-btn-ver-detalles"
-                        onClick={() => abrirPopup('detalles', empeño)}
-                      >
-                        Ver detalles
-                      </button>
-                    </>
-                  )}
+                  {/* ACCIONES CON BOTONES CONDICIONALES */}
+                  <div className="me-empeno-acciones">
+                    {!empeño.pagadoCompleto ? (
+                      <>
+                        <button
+                          className="me-btn-pagar"
+                          onClick={() => abrirPopup('pagar', empeño)}
+                        >
+                          Abonar
+                        </button>
+                        <button
+                          className="me-btn-ver-detalles"
+                          onClick={() => abrirPopup('detalles', empeño)}
+                        >
+                          Ver detalles
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="me-btn-pagado">
+                          ✓ Pagado
+                        </div>
+                        <button
+                          className="me-btn-ver-detalles"
+                          onClick={() => abrirPopup('detalles', empeño)}
+                        >
+                          Ver detalles
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p className="me-sin-resultados">
-              No se encontraron empeños
-            </p>
-          )}
-        </section>
+              ))
+            ) : (
+              <p className="me-sin-resultados">
+                No se encontraron empeños
+              </p>
+            )}
+          </section>
+        )}
       </div>
 
       {/* POPUP DE PAGO (ABONO) */}
@@ -263,7 +221,7 @@ export default function MisEmpenos() {
         <div className="popup-overlay" onClick={cerrarPopup}>
           <div className="popup-content" onClick={(e) => e.stopPropagation()}>
             <button className="popup-close" onClick={cerrarPopup}>×</button>
-            
+
             <div className="popup-header">
               <h2>Realizar Abono</h2>
               <h3>{empeñoSeleccionado.nombre}</h3>
@@ -272,8 +230,8 @@ export default function MisEmpenos() {
             <div className="popup-body">
               <div className="pago-detalles">
                 <div className="pago-item">
-                  <span className="pago-label">Total a pagar:</span>
-                  <span className="pago-valor">{empeñoSeleccionado.totalPagar}</span>
+                  <span className="pago-label">Saldo restante:</span>
+                  <span className="pago-valor">{empeñoSeleccionado.saldoRestante}</span>
                 </div>
                 <div className="pago-item">
                   <span className="pago-label">Vencimiento:</span>
@@ -283,16 +241,22 @@ export default function MisEmpenos() {
 
               <div className="pago-input-group">
                 <label>Monto a abonar:</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="pago-input"
                   placeholder="Ingresa el monto del abono"
                   value={montoPago}
                   onChange={handleMontoChange}
                 />
                 <small className="pago-ayuda">
-                  Puedes abonar cualquier monto. El préstamo se marcará como pagado cuando completes el total.
+                  Puedes abonar cualquier monto hasta el saldo restante. Se te
+                  redirigirá a la pasarela de pago segura para completar el abono.
                 </small>
+                {errorPago && (
+                  <small className="pago-error" style={{ color: "#c0392b", display: "block", marginTop: "6px" }}>
+                    {errorPago}
+                  </small>
+                )}
               </div>
 
               <div className="pago-metodos">
@@ -301,20 +265,16 @@ export default function MisEmpenos() {
                   <input type="radio" name="metodo" id="tarjeta" defaultChecked />
                   <label htmlFor="tarjeta">Tarjeta de crédito/débito</label>
                 </div>
-                <div className="metodo-opcion">
-                  <input type="radio" name="metodo" id="efectivo" />
-                  <label htmlFor="efectivo">Efectivo (en tienda)</label>
-                </div>
-                <div className="metodo-opcion">
-                  <input type="radio" name="metodo" id="transferencia" />
-                  <label htmlFor="transferencia">Transferencia bancaria</label>
-                </div>
               </div>
             </div>
 
             <div className="popup-footer">
-              <button className="pago-confirmar-btn" onClick={procesarPago}>
-                Confirmar Abono
+              <button
+                className="pago-confirmar-btn"
+                onClick={procesarPago}
+                disabled={redirigiendoPago}
+              >
+                {redirigiendoPago ? "Redirigiendo..." : "Confirmar Abono"}
               </button>
             </div>
           </div>
@@ -326,25 +286,31 @@ export default function MisEmpenos() {
         <div className="popup-overlay" onClick={cerrarPopup}>
           <div className="popup-content" onClick={(e) => e.stopPropagation()}>
             <button className="popup-close" onClick={cerrarPopup}>×</button>
-            
+
             <div className="popup-detalles-flex">
               <div className="popup-imagen-container-left">
-                <img 
-                  src={empeñoSeleccionado.imagen} 
+                <img
+                  src={empeñoSeleccionado.imagen || PLACEHOLDER_IMAGE}
                   alt={empeñoSeleccionado.nombre}
                   className="popup-imagen-left"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = PLACEHOLDER_IMAGE;
+                  }}
                 />
-                {empeñosPagados[empeñoSeleccionado.id] && (
+                {empeñoSeleccionado.pagadoCompleto && (
                   <div className="popup-pagado-badge">✓ PAGADO</div>
                 )}
               </div>
-                  
+
               <div className="popup-info-right">
-                <h3 className="detalle-titulo">{empeñoSeleccionado.nombre}</h3>              
-                <p className="detalle-descripcion">{empeñoSeleccionado.descripcion}</p>                
-                
+                <h3 className="detalle-titulo">{empeñoSeleccionado.nombre}</h3>
+                <p className="detalle-descripcion">{empeñoSeleccionado.descripcion}</p>
+
                 <div className="detalle-caracteristicas-vertical">
-                  <p><strong>{empeñoSeleccionado.gramos}</strong></p>
+                  {empeñoSeleccionado.gramos && (
+                    <p><strong>{empeñoSeleccionado.gramos}</strong></p>
+                  )}
                   <p><strong>Casa de empeño: {empeñoSeleccionado.casaEmpeño}</strong></p>
                 </div>
 
@@ -359,25 +325,34 @@ export default function MisEmpenos() {
                       <span>Intereses:</span>
                       <span>{empeñoSeleccionado.intereses}</span>
                     </div>
-                    <div className={`financiero-item total ${empeñosPagados[empeñoSeleccionado.id] ? 'pagado' : ''}`}>
+                    <div className="financiero-item">
+                      <span>Total abonado:</span>
+                      <span>{empeñoSeleccionado.totalAbonado}</span>
+                    </div>
+                    <div className={`financiero-item total ${empeñoSeleccionado.pagadoCompleto ? 'pagado' : ''}`}>
                       <span>Total a pagar:</span>
-                      <span>{empeñosPagados[empeñoSeleccionado.id] ? "Pagado" : empeñoSeleccionado.totalPagar}</span>
+                      <span>{empeñoSeleccionado.pagadoCompleto ? "Pagado" : empeñoSeleccionado.totalPagar}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="detalle-seccion">
                   <h4>Historial de Pagos</h4>
-                  {empeñoSeleccionado.abonos.map((abono, index) => (
-                    <div key={index} className="historial-item">
-                      <span>Abono: {abono.monto}</span>
-                      <span className="historial-intereses">Intereses: $2,000.00</span>
-                    </div>
-                  ))}
-                  {empeñosPagados[empeñoSeleccionado.id] && (
+                  {empeñoSeleccionado.abonos && empeñoSeleccionado.abonos.length > 0 ? (
+                    empeñoSeleccionado.abonos.map((abono, index) => (
+                      <div key={index} className="historial-item">
+                        <span>Abono: {abono.monto}</span>
+                        <span className="historial-intereses">
+                          Intereses: {abono.interesesPagados}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p>Aún no hay abonos registrados.</p>
+                  )}
+                  {empeñoSeleccionado.pagadoCompleto && (
                     <div className="historial-item pagado-final">
                       <span>Pago total realizado</span>
-                      <span className="historial-fecha">{new Date().toLocaleDateString()}</span>
                     </div>
                   )}
                 </div>
