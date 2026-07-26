@@ -1,0 +1,16 @@
+// src/services/ticketsService.js
+import api from '../config/api';
+
+const ticketsService = {
+    listar: async () => {
+        const response = await api.get('/cliente/tickets');
+        return response.data;
+    },
+
+    obtener: async (id) => {
+        const response = await api.get(`/cliente/tickets/${id}`);
+        return response.data;
+    },
+};
+
+export default ticketsService;
