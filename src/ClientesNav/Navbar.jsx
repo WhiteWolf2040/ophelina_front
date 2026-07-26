@@ -257,32 +257,41 @@ export default function Navbar() {
 
               <div className="divider"></div>
 
-              {/* 🔔 Notificaciones dinámicas desde el backend */}
-              {loadingNotificaciones ? (
-                <div className="notification-item">
-                  <div className="notification-text">
-                    <p className="sub-text">Cargando notificaciones...</p>
-                  </div>
-                </div>
-              ) : notificaciones.length === 0 ? (
-                <div className="notification-item">
-                  <div className="notification-text">
-                    <p className="sub-text">No tienes notificaciones</p>
-                  </div>
-                </div>
-              ) : (
-                notificaciones.map((notif, index) => (
-                  <div className="notification-item" key={index}>
-                    <span className="bell-icon">
-                      <NotificationsIcon sx={{ fontSize: 20, color: "#4A4A4A" }} />
-                    </span>
+              {/*
+                ✅ CORREGIDO: se agrega el wrapper con la clase
+                "notification-list-scroll" (ya existía en Navbar.css, pero
+                no estaba aplicada a ningún elemento del JSX, por eso el
+                scroll nunca aparecía). Header y "Cerrar sesión" se quedan
+                FUERA de este div para que permanezcan fijos mientras solo
+                la lista interna hace scroll.
+              */}
+              <div className="notification-list-scroll">
+                {loadingNotificaciones ? (
+                  <div className="notification-item">
                     <div className="notification-text">
-                      <p className="main-text">{notif.titulo}</p>
-                      <p className="sub-text">{notif.subtitulo}</p>
+                      <p className="sub-text">Cargando notificaciones...</p>
                     </div>
                   </div>
-                ))
-              )}
+                ) : notificaciones.length === 0 ? (
+                  <div className="notification-item">
+                    <div className="notification-text">
+                      <p className="sub-text">No tienes notificaciones</p>
+                    </div>
+                  </div>
+                ) : (
+                  notificaciones.map((notif, index) => (
+                    <div className="notification-item" key={index}>
+                      <span className="bell-icon">
+                        <NotificationsIcon sx={{ fontSize: 20, color: "#4A4A4A" }} />
+                      </span>
+                      <div className="notification-text">
+                        <p className="main-text">{notif.titulo}</p>
+                        <p className="sub-text">{notif.subtitulo}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
 
               <div className="divider"></div>
 

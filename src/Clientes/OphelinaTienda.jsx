@@ -128,6 +128,15 @@ export default function OphelinaTienda() {
   }, []);
 
   // 🔥 Detectar el regreso desde Stripe Checkout (success_url / cancel_url)
+  //
+  // NOTA IMPORTANTE: el success_url/cancel_url configurado en el backend
+  // (STRIPE_TIENDA_SUCCESS_URL / STRIPE_TIENDA_CANCEL_URL) ahora apunta
+  // directamente a /homecliente?pago=exitoso&tipo=apartado, así que en el
+  // flujo normal Stripe NUNCA vuelve a esta página. Este bloque se deja
+  // solo como respaldo (por si alguien llega aquí con esos query params
+  // por cualquier otro motivo) y NUNCA debe redirigir a "/tienda", porque
+  // esa ruta es exclusiva del dueño/admin (ver App.jsx) y manda al cliente
+  // a /home por error. La ruta real del cliente es "/ophelina".
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const pago = params.get("pago");
@@ -137,12 +146,12 @@ export default function OphelinaTienda() {
       setMensajeApartado({ mostrar: true, producto: "tu producto" });
       setTimeout(() => setMensajeApartado({ mostrar: false, producto: "" }), 4000);
 
-      // Limpiamos el query param de la URL para que un refresh
-      // no vuelva a disparar el toast
-      navigate("/tienda", { replace: true });
+      // ✅ CORREGIDO: antes decía navigate("/tienda", ...) que es la ruta
+      // de admin. Debe quedarse en "/ophelina", la ruta real del cliente.
+      navigate("/ophelina", { replace: true });
     } else if (pago === "cancelado") {
       setError("El pago fue cancelado, tu producto no quedó apartado.");
-      navigate("/tienda", { replace: true });
+      navigate("/ophelina", { replace: true });
     }
   }, [location.search]);
 
