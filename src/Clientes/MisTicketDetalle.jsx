@@ -8,7 +8,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Navbar from "../ClientesNav/Navbar";
-import "./Pagos.css"; // mismas clases recibo-* que usa el admin
+import "../DuenoPagos/Pagos.css"; // mismas clases recibo-* que usa el admin
 
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import PrintIcon from '@mui/icons-material/Print';
