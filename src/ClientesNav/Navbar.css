@@ -754,3 +754,49 @@ body {
  }
 
 }
+
+/* ✅ NUEVO: agregar al final de tu Navbar.css real.
+   Arregla el dropdown de notificaciones para que tenga scroll propio en
+   vez de crecer sin límite, y estiliza el botón de "eliminar notificación". */
+
+.notification-list-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Scrollbar más discreto (Chrome/Edge/Safari) */
+.notification-list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notification-list-scroll::-webkit-scrollbar-thumb {
+  background-color: #d8cdb0;
+  border-radius: 3px;
+}
+
+.notification-item {
+  position: relative;
+  padding-right: 28px; /* espacio para el botón de eliminar */
+}
+
+.notification-eliminar-btn {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: #b0a898;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.notification-eliminar-btn:hover {
+  color: #c0392b;
+  background-color: rgba(192, 57, 43, 0.08);
+}
