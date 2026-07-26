@@ -960,3 +960,52 @@ body {
   color: #b08d3e;
   border-bottom-color: #b08d3e;
 }
+
+/* ✅ NUEVO: agrega esto al final de tu MisEmpenos.css existente.
+   No tenía ese archivo, así que no pude fusionarlo directamente. */
+
+.pago-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e5e0d8;
+}
+
+.pago-tab {
+  flex: 1;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
+  color: #8a8378;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.pago-tab:hover {
+  color: #4a4438;
+}
+
+.pago-tab.activo {
+  color: #b08d3e;
+  border-bottom-color: #b08d3e;
+}
+
+.pago-cotizacion-cargando {
+  color: #8a8378;
+  font-style: italic;
+  margin-bottom: 12px;
+}
+
+.pago-item-mora .pago-label,
+.pago-valor-mora {
+  color: #c0392b;
+}
+
+.pago-item-total {
+  border-top: 1px solid #e5e0d8;
+  margin-top: 6px;
+  padding-top: 8px;
+  font-weight: 700;
+}

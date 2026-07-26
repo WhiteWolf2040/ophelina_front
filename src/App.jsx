@@ -13,6 +13,9 @@ import OphelinaHome from "./Clientes/OphelinaHome";
 import MisEmpenos from "./Clientes/MisEmpenos";
 import OphelinaTienda from "./Clientes/OphelinaTienda";
 import Tarjetero from "./Clientes/Tarjetero";
+// ✅ NUEVO: módulo de tickets del cliente
+import MisTickets from "./Clientes/MisTickets";
+import MisTicketDetalle from "./Clientes/MisTicketDetalle";
 
 import Roles from "./Roles/Roles";
 import RolNuevo from "./Roles/RolNuevo";
@@ -95,6 +98,22 @@ function App() {
           <Route path="/tarjetas" element={
             <ProtectedRoute allowedRoles={['Cliente']}>
               <Tarjetero />
+            </ProtectedRoute>
+          } />
+
+          {/* ✅ NUEVO: historial de tickets (pagos) del cliente.
+              Mismo patrón que /misempenos: protegida por rol 'Cliente',
+              sin AppLayout porque MisTickets/MisTicketDetalle ya traen
+              su propio <Navbar />. */}
+          <Route path="/mistickets" element={
+            <ProtectedRoute allowedRoles={['Cliente']}>
+              <MisTickets />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/mistickets/:id" element={
+            <ProtectedRoute allowedRoles={['Cliente']}>
+              <MisTicketDetalle />
             </ProtectedRoute>
           } />
 

@@ -9,6 +9,29 @@ export function useMisEmpenos() {
     const [error, setError] = useState(null);
     const [redirigiendoPago, setRedirigiendoPago] = useState(false);
 
+    // ✅ NUEVO: cotización (capital/interés/mora/IVA) del empeño que se está pagando
+    const [cotizacion, setCotizacion] = useState(null);
+    const [cargandoCotizacion, setCargandoCotizacion] = useState(false);
+    const [errorCotizacion, setErrorCotizacion] = useState(null);
+
+    const cargarCotizacion = useCallback(async (idEmpeno) => {
+        setCargandoCotizacion(true);
+        setErrorCotizacion(null);
+        setCotizacion(null);
+        try {
+            const result = await MisEmpenosService.obtenerCotizacion(idEmpeno);
+            if (result.success) {
+                setCotizacion(result.data);
+            } else {
+                setErrorCotizacion(result.message || 'No se pudo calcular la cotización');
+            }
+        } catch (err) {
+            setErrorCotizacion(err.response?.data?.message || err.message || 'No se pudo calcular la cotización');
+        } finally {
+            setCargandoCotizacion(false);
+        }
+    }, []);
+
     const cargarEmpenos = useCallback(async () => {
         try {
             setLoading(true);
@@ -66,5 +89,9 @@ export function useMisEmpenos() {
         cargarEmpenos,
         cargarResumen,
         iniciarAbono,
+        cotizacion,
+        cargandoCotizacion,
+        errorCotizacion,
+        cargarCotizacion,
     };
 }

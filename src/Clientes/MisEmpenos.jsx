@@ -13,6 +13,10 @@ export default function MisEmpenos() {
     redirigiendoPago,
     cargarEmpenos,
     iniciarAbono,
+    cotizacion,
+    cargandoCotizacion,
+    errorCotizacion,
+    cargarCotizacion,
   } = useMisEmpenos();
 
   const [busqueda, setBusqueda] = useState("");
@@ -42,6 +46,12 @@ export default function MisEmpenos() {
     setMontoPago("");
     setErrorPago(null);
     setTipoAccion("abono");
+
+    // ✅ NUEVO: al abrir el popup de pago, se pide el desglose real
+    // (capital/interés/mora/IVA) para mostrarlo antes de que el cliente pague.
+    if (tipo === 'pagar') {
+      cargarCotizacion(empeño.id);
+    }
   };
 
   const cerrarPopup = () => {
@@ -272,16 +282,51 @@ export default function MisEmpenos() {
                 </button>
               </div>
 
-              <div className="pago-detalles">
-                <div className="pago-item">
-                  <span className="pago-label">Saldo restante:</span>
-                  <span className="pago-valor">{empeñoSeleccionado.saldoRestante}</span>
+              {/* ✅ NUEVO: desglose real de capital / interés / mora / IVA */}
+              {cargandoCotizacion && (
+                <p className="pago-cotizacion-cargando">Calculando lo que debes...</p>
+              )}
+
+              {errorCotizacion && !cargandoCotizacion && (
+                <small className="pago-error" style={{ color: "#c0392b", display: "block", marginBottom: "12px" }}>
+                  {errorCotizacion}
+                </small>
+              )}
+
+              {cotizacion && !cargandoCotizacion && (
+                <div className="pago-detalles pago-desglose">
+                  <div className="pago-item">
+                    <span className="pago-label">Capital:</span>
+                    <span className="pago-valor">${cotizacion.capital.toFixed(2)}</span>
+                  </div>
+                  <div className="pago-item">
+                    <span className="pago-label">Interés:</span>
+                    <span className="pago-valor">${cotizacion.interes.toFixed(2)}</span>
+                  </div>
+                  {cotizacion.mora > 0 && (
+                    <div className="pago-item pago-item-mora">
+                      <span className="pago-label">
+                        Mora ({cotizacion.dias_atraso} {cotizacion.dias_atraso === 1 ? 'día' : 'días'} de atraso):
+                      </span>
+                      <span className="pago-valor pago-valor-mora">${cotizacion.mora.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="pago-item">
+                    <span className="pago-label">IVA (16% sobre interés):</span>
+                    <span className="pago-valor">${cotizacion.iva_interes.toFixed(2)}</span>
+                  </div>
+                  <div className="pago-item pago-item-total">
+                    <span className="pago-label">
+                      {tipoAccion === "abono" ? "Saldo pendiente" : "Vencimiento actual"}:
+                    </span>
+                    <span className="pago-valor">
+                      {tipoAccion === "abono"
+                        ? `$${cotizacion.saldo_pendiente_con_mora.toFixed(2)}`
+                        : cotizacion.fecha_vencimiento_actual}
+                    </span>
+                  </div>
                 </div>
-                <div className="pago-item">
-                  <span className="pago-label">Vencimiento actual:</span>
-                  <span className="pago-valor">{empeñoSeleccionado.vencimiento}</span>
-                </div>
-              </div>
+              )}
 
               {tipoAccion === "abono" ? (
                 <div className="pago-input-group">
@@ -294,7 +339,8 @@ export default function MisEmpenos() {
                     onChange={handleMontoChange}
                   />
                   <small className="pago-ayuda">
-                    Puedes abonar cualquier monto hasta el saldo restante. El abono
+                    Puedes abonar cualquier monto hasta el saldo restante
+                    {cotizacion?.mora > 0 ? " (ya incluye la mora acumulada)" : ""}. El abono
                     reduce tu deuda pero <strong>no mueve tu fecha de vencimiento</strong>.
                     Se te redirigirá a la pasarela de pago segura para completarlo.
                   </small>
@@ -302,10 +348,12 @@ export default function MisEmpenos() {
               ) : (
                 <div className="pago-input-group">
                   <small className="pago-ayuda">
-                    La prórroga cobra los intereses (+ IVA) de tu cuota actual —el
-                    monto exacto se calcula y se te mostrará en la pasarela de pago—
-                    y <strong>extiende tu fecha de vencimiento 30 días</strong>. No
-                    abona capital.
+                    La prórroga cobra el interés{cotizacion?.mora > 0 ? " + la mora" : ""} de tu
+                    cuota actual, más IVA
+                    {cotizacion ? (
+                      <> — un total de <strong>${cotizacion.monto_prorroga.toFixed(2)}</strong></>
+                    ) : null}
+                    —, y <strong>extiende tu fecha de vencimiento 30 días</strong>. No abona capital.
                   </small>
                 </div>
               )}

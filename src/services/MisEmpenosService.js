@@ -26,6 +26,12 @@ const MisEmpenosService = {
     // backend ignora `monto` y calcula el cobro real (interés + IVA).
     // ✅ NUEVO: se agrega `tipo` al body para que el backend sepa si es
     // un abono normal o una prórroga.
+    // ✅ NUEVO: desglose (capital/interés/mora/IVA) antes de pagar
+    obtenerCotizacion: async (idEmpeno) => {
+        const response = await api.get(`/empenos/${idEmpeno}/cotizacion`);
+        return response.data;
+    },
+
     crearSesionAbono: async (idEmpeno, monto = null, tipo = 'abono') => {
         const body = { tipo };
         if (monto !== null) {

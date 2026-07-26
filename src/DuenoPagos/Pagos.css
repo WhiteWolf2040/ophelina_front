@@ -1716,3 +1716,74 @@ tbody tr:last-child td {
     padding: 15px;
   }
 }
+
+/* ✅ FIX: el recibo se veía cortado/apretado (columnas encimadas, la
+   referencia de Stripe desbordándose del contenedor). Causa típica: el
+   contenedor tiene un max-width angosto fijo y la tabla/textos largos no
+   hacen wrap. Agrega esto AL FINAL de tu Pagos.css para que sobreescriba
+   las reglas anteriores (el orden en el archivo importa en CSS). */
+
+.recibo-container {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+.recibo-tabla {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.recibo-tabla th,
+.recibo-tabla td {
+  word-break: break-word;
+  padding: 8px 6px;
+}
+
+/* La referencia de Stripe (cs_test_...) es un string largo sin espacios:
+   sin esto se desborda del contenedor en vez de hacer wrap. */
+.valor-referencia,
+.pago-info-item .valor {
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+.recibo-pago-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+
+@media (max-width: 480px) {
+  .recibo-pago-info {
+    grid-template-columns: 1fr;
+  }
+}
+
+.recibo-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.recibo-qr,
+.recibo-notas {
+  min-width: 200px;
+  flex: 1 1 240px;
+}
+
+.qr-folio {
+  word-break: break-all;
+}
+
+/* Si el recibo se muestra dentro de un modal (overlay con scroll), evita
+   que quede recortado por una altura fija. */
+.modal-overlay .recibo-container,
+.popup-content .recibo-container {
+  max-height: 85vh;
+  overflow-y: auto;
+}
