@@ -1,26 +1,69 @@
-import { useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Inventario.css";
+import inventarioService from "../services/inventarioService";
+
+// ✅ NUEVO: mismos datos de Cloudinary que ya usa TiendaOnline.jsx, para
+// que la subida de imágenes de inventario sea consistente con la de tienda.
+const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
+const CLOUDINARY_UPLOAD_PRESET = "ophelina_productos";
+
+const subirImagenACloudinary = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  // Carpeta separada de "productos" (tienda) para no mezclar ambos usos
+  // dentro de tu cuenta de Cloudinary.
+  formData.append("folder", "inventario");
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: "POST", body: formData }
+  );
+
+  if (!response.ok) {
+    throw new Error("Error al subir la imagen a Cloudinary");
+  }
+
+  const data = await response.json();
+  return data.secure_url;
+};
 
 const NuevoInventario = () => {
   const navigate = useNavigate();
-  const { agregarPrenda } = useOutletContext();
+  const inputImagenRef = useRef(null);
 
+  // ✅ CORREGIDO: los nombres de estos campos ahora son EXACTAMENTE los que
+  // espera PrendaController@store (descripcion, tipo, material, peso_gramos,
+  // valor_estimado, estado), para no tener que "traducir" nada antes de
+  // mandarlo al backend.
   const [form, setForm] = useState({
-    nombre: "",
-    categoria: "",
-    valor: "",
-    estado: "Disponible",
     descripcion: "",
-    material: "", // Cambié "cliente" por "material" para que tenga más sentido
+    tipo: "",
+    material: "",
+    peso_gramos: "",
+    valor_estimado: "",
+    estado: "Disponible",
   });
 
-  // Estados para la imagen
+  // ✅ CORREGIDO: ahora sí se sube a Cloudinary. Se guarda el File real
+  // (imagen) para subirlo en el submit, y previewImagen es solo para
+  // mostrarlo antes de guardar (URL temporal del navegador).
   const [imagen, setImagen] = useState(null);
   const [previewImagen, setPreviewImagen] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
 
-  const categorias = ["Joyería", "Electrónico", "Relojes", "Herramientas", "Otros"];
+  // ✅ CORREGIDO: estos valores deben coincidir letra por letra (con acentos)
+  // con el CHECK constraint "prendas_tipo_check" de tu tabla `prendas`:
+  //   ARRAY['Joyería','Electrónica','Relojes','Herramientas','Instrumentos','Otros']
+  // Antes decía "Electrónico" (sin acento en la "o" final) y le faltaba
+  // "Instrumentos" — cualquiera de las dos cosas hubiera hecho que Postgres
+  // rechazara el insert con un error de constraint.
+  const categorias = ["Joyería", "Electrónica", "Relojes", "Herramientas", "Instrumentos", "Otros"];
+
+  // ✅ Igual, deben coincidir con "prendas_estado_check". "Apartado" se deja
+  // fuera a propósito: no tiene sentido crear una prenda nueva ya apartada.
   const estados = ["Disponible", "En Empeño", "Vendido", "Vencido"];
 
   const handleChange = (e) => {
@@ -30,19 +73,16 @@ const NuevoInventario = () => {
     });
   };
 
-  // ✅ FUNCIÓN PARA MANEJAR LA SELECCIÓN DE IMAGEN
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validar tipo de archivo
       const tiposPermitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!tiposPermitidos.includes(file.type)) {
         alert('Solo se permiten imágenes (JPEG, PNG, GIF, WEBP)');
-        e.target.value = ''; // Limpiar el input
+        e.target.value = '';
         return;
       }
 
-      // Validar tamaño (máximo 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('La imagen no debe superar los 5MB');
         e.target.value = '';
@@ -50,8 +90,7 @@ const NuevoInventario = () => {
       }
 
       setImagen(file);
-      
-      // Crear preview
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImagen(reader.result);
@@ -60,51 +99,51 @@ const NuevoInventario = () => {
     }
   };
 
-  // ✅ FUNCIÓN PARA ELIMINAR LA IMAGEN SELECCIONADA
   const handleRemoveImage = () => {
     setImagen(null);
     setPreviewImagen("");
-    // Limpiar el input file
     const fileInput = document.querySelector('input[type="file"]');
     if (fileInput) fileInput.value = '';
   };
 
-  // ✅ HANDLE SUBMIT ACTUALIZADO PARA INCLUIR LA IMAGEN
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setUploading(true);
+    setGuardando(true);
+    setError("");
 
     try {
-      // Aquí puedes enviar los datos a tu backend
-      // Si tu backend espera FormData (para archivos):
-      const formData = new FormData();
-      formData.append('nombre', form.nombre);
-      formData.append('categoria', form.categoria);
-      formData.append('valor', form.valor);
-      formData.append('estado', form.estado);
-      formData.append('descripcion', form.descripcion);
-      formData.append('material', form.material);
-      
+      // ✅ NUEVO: si el usuario seleccionó una imagen, se sube primero a
+      // Cloudinary (igual que en TiendaOnline.jsx) y se manda la URL
+      // resultante al backend. La tabla `prendas` ya tiene su propia
+      // columna `imagen_url`, así que no se necesita nada como la tabla
+      // imagen_prenda que usa la tienda.
+      let imagenUrl = null;
       if (imagen) {
-        formData.append('imagen', imagen);
+        imagenUrl = await subirImagenACloudinary(imagen);
       }
 
-      // Simular envío (reemplaza con tu llamada real a la API)
-      console.log('Datos a guardar:', Object.fromEntries(formData));
-      
-      // Llamar a la función del contexto (si existe)
-      agregarPrenda({ 
-        ...form, 
-        material: form.material,
-        imagen: previewImagen // Guardar la preview o la URL de la imagen
-      });
-      
+      const datos = {
+        descripcion: form.descripcion,
+        tipo: form.tipo,
+        material: form.material || null,
+        peso_gramos: form.peso_gramos || null,
+        valor_estimado: form.valor_estimado,
+        estado: form.estado,
+      };
+
+      if (imagenUrl) {
+        datos.imagen_url = imagenUrl;
+      }
+
+      await inventarioService.crearPrenda(datos);
+
       navigate("/inventario");
-    } catch (error) {
-      console.error('Error al guardar:', error);
-      alert('Error al guardar la prenda');
+    } catch (err) {
+      console.error('Error al guardar:', err);
+      const mensaje = err.response?.data?.message || err.message || 'Error al guardar la prenda';
+      setError(mensaje);
     } finally {
-      setUploading(false);
+      setGuardando(false);
     }
   };
 
@@ -115,13 +154,19 @@ const NuevoInventario = () => {
       </div>
 
       <div className="form-card">
+        {error && (
+          <div className="error-message" style={{ marginBottom: '16px' }}>
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="form-grid">
           <div className="form-group">
             <label>Nombre de la prenda *</label>
             <input
-              name="nombre"
+              name="descripcion"
               placeholder="Ej: Anillo de oro 14k"
-              value={form.nombre}
+              value={form.descripcion}
               onChange={handleChange}
               required
             />
@@ -130,8 +175,8 @@ const NuevoInventario = () => {
           <div className="form-group">
             <label>Categoría *</label>
             <select
-              name="categoria"
-              value={form.categoria}
+              name="tipo"
+              value={form.tipo}
               onChange={handleChange}
               required
             >
@@ -145,10 +190,10 @@ const NuevoInventario = () => {
           <div className="form-group">
             <label>Valor estimado *</label>
             <input
-              name="valor"
+              name="valor_estimado"
               type="number"
               placeholder="Ej: 7000"
-              value={form.valor}
+              value={form.valor_estimado}
               onChange={handleChange}
               required
             />
@@ -169,16 +214,28 @@ const NuevoInventario = () => {
           </div>
 
           <div className="form-group">
+            <label>Peso en gramos (opcional)</label>
+            <input
+              name="peso_gramos"
+              type="number"
+              step="0.01"
+              placeholder="Ej: 15.5"
+              value={form.peso_gramos}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="form-group">
             <label>Material (opcional)</label>
             <input
-              name="material" // Cambié de "cliente" a "material"
+              name="material"
               placeholder="Ej: ORO, PLATA, ACERO, etc."
               value={form.material}
               onChange={handleChange}
             />
           </div>
 
-          {/* CAMPO DE IMAGEN MEJORADO */}
+          {/* CAMPO DE IMAGEN — ahora sí se sube a Cloudinary en el submit */}
           <div className="form-group full-width">
             <label>Imagen del producto</label>
             <input
@@ -187,21 +244,21 @@ const NuevoInventario = () => {
               accept="image/jpeg,image/png,image/gif,image/webp"
               onChange={handleFileChange}
               className="file-input"
+              ref={inputImagenRef}
             />
             <small className="file-hint">
               Formatos: JPG, PNG, GIF, WEBP | Máx: 5MB
             </small>
-            
-            {/* Vista previa */}
+
             {previewImagen && (
               <div className="image-preview-container">
-                <img 
-                  src={previewImagen} 
-                  alt="Vista previa" 
+                <img
+                  src={previewImagen}
+                  alt="Vista previa"
                   className="image-preview"
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={handleRemoveImage}
                   className="btn-remove-image"
                 >
@@ -211,32 +268,20 @@ const NuevoInventario = () => {
             )}
           </div>
 
-          <div className="form-group full-width">
-            <label>Descripción</label>
-            <textarea
-              name="descripcion"
-              placeholder="Describe la prenda, características, estado físico, etc."
-              value={form.descripcion}
-              onChange={handleChange}
-              rows="4"
-              className="textarea-input"
-            />
-          </div>
-
           <div className="form-buttons">
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn-gold"
-              disabled={uploading}
+              disabled={guardando}
             >
-              {uploading ? 'Guardando...' : 'Guardar Prenda'}
+              {guardando ? 'Guardando...' : 'Guardar Prenda'}
             </button>
 
             <button
               type="button"
               className="btn-cancel"
               onClick={() => navigate("/inventario")}
-              disabled={uploading}
+              disabled={guardando}
             >
               Cancelar
             </button>

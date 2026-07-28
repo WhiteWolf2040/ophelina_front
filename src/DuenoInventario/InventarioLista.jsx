@@ -1,6 +1,6 @@
-// InventarioLista.jsx - VERSIÓN CORREGIDA (usando campos reales)
+// InventarioLista.jsx - VERSIÓN CORREGIDA (usando campos reales + imagen vía Cloudinary)
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Inventario.css";
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -12,24 +12,49 @@ import AddIcon from '@mui/icons-material/Add';
 // 📌 Servicio de inventario
 import inventarioService from "../services/inventarioService";
 
+// ✅ NUEVO: mismos datos de Cloudinary que ya usa TiendaOnline.jsx / NuevoInventario.jsx
+const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
+const CLOUDINARY_UPLOAD_PRESET = "ophelina_productos";
+
+const subirImagenACloudinary = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  formData.append("folder", "inventario");
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: "POST", body: formData }
+  );
+
+  if (!response.ok) {
+    throw new Error("Error al subir la imagen a Cloudinary");
+  }
+
+  const data = await response.json();
+  return data.secure_url;
+};
+
 const InventarioLista = () => {
   const navigate = useNavigate();
-  
+
   // ✅ Estados reales
   const [prendas, setPrendas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Filtros
   const [busqueda, setBusqueda] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("");
-  
+
   // Modales
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [prendaSeleccionada, setPrendaSeleccionada] = useState(null);
   const [modalEliminar, setModalEliminar] = useState(false);
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [errorEdicion, setErrorEdicion] = useState("");
 
   // Estado para el formulario de edición (Mapeado a campos reales)
   const [formEditar, setFormEditar] = useState({
@@ -41,6 +66,11 @@ const InventarioLista = () => {
     estado: ""
   });
 
+  // ✅ NUEVO: estado para la imagen dentro del modal de edición
+  const [imagenEditar, setImagenEditar] = useState(null); // File real (si se elige una nueva)
+  const [previewImagenEditar, setPreviewImagenEditar] = useState(""); // preview (nueva o la ya existente)
+  const inputImagenEditarRef = useRef(null);
+
   // Categorías reales (de tu tabla)
   const categorias = ["Todas", "Joyería", "Electrónica", "Relojes", "Herramientas", "Instrumentos", "Otros"];
   const estados = ["Todos", "Disponible", "En Empeño", "Vendido", "Vencido", "Apartado"];
@@ -50,8 +80,7 @@ const InventarioLista = () => {
     cargarPrendas();
   }, []);
 
-  // Línea ~56
-const cargarPrendas = async () => {
+  const cargarPrendas = async () => {
     setLoading(true);
     try {
         const data = await inventarioService.getPrendas();
@@ -64,7 +93,6 @@ const cargarPrendas = async () => {
     } finally {
         setLoading(false);
     }
-
   };
 
   // ========== FILTRADO ==========
@@ -92,6 +120,17 @@ const cargarPrendas = async () => {
     setPrendaSeleccionada(null);
   };
 
+  const limpiarImagenEditar = () => {
+    setImagenEditar(null);
+    if (previewImagenEditar && previewImagenEditar.startsWith("blob:")) {
+      URL.revokeObjectURL(previewImagenEditar);
+    }
+    setPreviewImagenEditar("");
+    if (inputImagenEditarRef.current) {
+      inputImagenEditarRef.current.value = "";
+    }
+  };
+
   const abrirModalEditar = (prenda) => {
     setPrendaSeleccionada(prenda);
     setFormEditar({
@@ -102,6 +141,10 @@ const cargarPrendas = async () => {
       valor_estimado: prenda.valor_estimado || "",
       estado: prenda.estado || ""
     });
+    setErrorEdicion("");
+    setImagenEditar(null);
+    // ✅ NUEVO: si la prenda ya tiene imagen, se muestra como preview inicial
+    setPreviewImagenEditar(prenda.imagen_url || "");
     setModalEditarAbierto(true);
     setModalAbierto(false);
   };
@@ -109,17 +152,60 @@ const cargarPrendas = async () => {
   const cerrarModalEditar = () => {
     setModalEditarAbierto(false);
     setPrendaSeleccionada(null);
+    limpiarImagenEditar();
+  };
+
+  // ✅ NUEVO: selección de nueva imagen dentro del modal de edición
+  const handleFileChangeEditar = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!tiposPermitidos.includes(file.type)) {
+      alert('Solo se permiten imágenes (JPEG, PNG, GIF, WEBP)');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen no debe superar los 5MB');
+      e.target.value = '';
+      return;
+    }
+
+    if (previewImagenEditar && previewImagenEditar.startsWith("blob:")) {
+      URL.revokeObjectURL(previewImagenEditar);
+    }
+
+    setImagenEditar(file);
+    setPreviewImagenEditar(URL.createObjectURL(file));
   };
 
   const handleEditarSubmit = async (e) => {
     e.preventDefault();
+    setGuardandoEdicion(true);
+    setErrorEdicion("");
+
     try {
-      await inventarioService.actualizarPrenda(prendaSeleccionada.id_prenda, formEditar);
+      // ✅ NUEVO: si se eligió una imagen nueva, se sube primero a
+      // Cloudinary y se manda su URL junto con el resto de los datos.
+      // Si no se tocó la imagen, no se manda `imagen_url` y el backend
+      // conserva la que ya tenía la prenda.
+      const datos = { ...formEditar };
+
+      if (imagenEditar) {
+        datos.imagen_url = await subirImagenACloudinary(imagenEditar);
+      }
+
+      await inventarioService.actualizarPrenda(prendaSeleccionada.id_prenda, datos);
       await cargarPrendas();
       cerrarModalEditar();
     } catch (err) {
       console.error("Error actualizando:", err);
-      alert("Error al actualizar la prenda");
+      const mensaje = err.response?.data?.message || err.message || "Error al actualizar la prenda";
+      setErrorEdicion(mensaje);
+    } finally {
+      setGuardandoEdicion(false);
     }
   };
 
@@ -334,7 +420,7 @@ const cargarPrendas = async () => {
         </div>
       )}
 
-      {/* MODALES - Igual que antes pero con campos mapeados */}
+      {/* MODAL DETALLE */}
       {modalAbierto && prendaSeleccionada && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -345,6 +431,17 @@ const cargarPrendas = async () => {
             </div>
 
             <div className="modal-body">
+              {/* ✅ NUEVO: imagen de la prenda, si tiene */}
+              {prendaSeleccionada.imagen_url && (
+                <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                  <img
+                    src={prendaSeleccionada.imagen_url}
+                    alt={prendaSeleccionada.descripcion || 'Prenda'}
+                    style={{ maxWidth: '220px', maxHeight: '220px', borderRadius: '8px', objectFit: 'cover' }}
+                  />
+                </div>
+              )}
+
               <div className="info-grid">
                 <div className="info-item">
                   <span className="info-label">📦 Prenda</span>
@@ -407,7 +504,7 @@ const cargarPrendas = async () => {
         </div>
       )}
 
-      {/* MODAL EDITAR - Con campos mapeados */}
+      {/* MODAL EDITAR - Con campos mapeados + imagen */}
       {modalEditarAbierto && prendaSeleccionada && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
           <div className="modal-editar-prenda" onClick={(e) => e.stopPropagation()}>
@@ -420,6 +517,12 @@ const cargarPrendas = async () => {
 
             <form onSubmit={handleEditarSubmit}>
               <div className="modal-body">
+                {errorEdicion && (
+                  <div className="error-message" style={{ marginBottom: '16px' }}>
+                    {errorEdicion}
+                  </div>
+                )}
+
                 <div className="form-editar-grid">
                   <div className="form-group">
                     <label>Nombre de la prenda *</label>
@@ -495,14 +598,48 @@ const cargarPrendas = async () => {
                       ))}
                     </select>
                   </div>
+
+                  {/* ✅ NUEVO: subir/reemplazar imagen */}
+                  <div className="form-group full-width">
+                    <label>Imagen de la prenda</label>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleFileChangeEditar}
+                      ref={inputImagenEditarRef}
+                      className="file-input"
+                    />
+                    <small className="file-hint">
+                      Deja este campo vacío para conservar la imagen actual. Formatos: JPG, PNG, GIF, WEBP | Máx: 5MB
+                    </small>
+
+                    {previewImagenEditar && (
+                      <div className="image-preview-container">
+                        <img
+                          src={previewImagenEditar}
+                          alt="Vista previa"
+                          className="image-preview"
+                        />
+                        {imagenEditar && (
+                          <button
+                            type="button"
+                            onClick={limpiarImagenEditar}
+                            className="btn-remove-image"
+                          >
+                            Cancelar cambio de imagen
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
               <div className="modal-acciones-editar">
-                <button type="submit" className="btn-guardar">
-                  Guardar Cambios
+                <button type="submit" className="btn-guardar" disabled={guardandoEdicion}>
+                  {guardandoEdicion ? "Guardando..." : "Guardar Cambios"}
                 </button>
-                <button type="button" className="btn-cancelar" onClick={cerrarModalEditar}>
+                <button type="button" className="btn-cancelar" onClick={cerrarModalEditar} disabled={guardandoEdicion}>
                   Cancelar
                 </button>
               </div>
