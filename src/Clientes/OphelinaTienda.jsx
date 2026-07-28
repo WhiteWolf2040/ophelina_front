@@ -1,10 +1,12 @@
+// OphelinaTienda.js - Versión con publicación automática comentada y modal mejorado
+
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./OphelinaTienda.css";
 import Navbar from "../ClientesNav/Navbar";
 import { getProductosTienda, apartarProducto, getMisApartados } from "../config/auth";
 
-/* ================= MODAL ================= */
+/* ================= MODAL MEJORADO ================= */
 const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo, apartando }) => {
   if (!isOpen) return null;
 
@@ -26,24 +28,27 @@ const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo, apartando
             <h3 className="detalle-titulo">{producto?.nombre}</h3>
             <p className="detalle-descripcion">{producto?.descripcion}</p>
 
+            {/* Características mejoradas */}
             <div className="detalle-caracteristicas-vertical">
-              <p><strong>Material: {producto?.material || "N/A"}</strong></p>
+              <p><strong>Material:</strong> {producto?.material || "N/A"}</p>
+              <p><strong>Categoría:</strong> {producto?.categoria || "General"}</p>
+              <p><strong>Estado:</strong> {producto?.estado || "Disponible"}</p>
             </div>
 
             <div className="detalle-seccion">
               <h4>Información del Producto</h4>
               <div className="detalle-financiero">
                 <div className="financiero-item">
-                <span>Precio total:</span>
-                <span>
-                  {producto?.descuento > 0 && (
-                    <span style={{ textDecoration: "line-through", marginRight: "8px", color: "#999" }}>
-                      {producto?.precioOriginal}
-                    </span>
-                  )}
-                  {producto?.precio}
-                </span>
-                  </div>
+                  <span>Precio total:</span>
+                  <span>
+                    {producto?.descuento > 0 && (
+                      <span style={{ textDecoration: "line-through", marginRight: "8px", color: "#999" }}>
+                        {producto?.precioOriginal}
+                      </span>
+                    )}
+                    {producto?.precio}
+                  </span>
+                </div>
                 <div className="financiero-item">
                   <span>Anticipo para apartar (50%):</span>
                   <span>{producto?.anticipo}</span>
@@ -91,6 +96,13 @@ export default function OphelinaTienda() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
+  // 🔥 Estado para la publicación automática (simulada)
+  const [publicacionAuto, setPublicacionAuto] = useState({
+    ejecutando: false,
+    resultado: null,
+    empenosVencidos: []
+  });
+
   const categorias = [
     { id: "todas", nombre: "Todas las piezas" },
     { id: "oro", nombre: "Oro" },
@@ -127,16 +139,7 @@ export default function OphelinaTienda() {
     cargarDatos();
   }, []);
 
-  // 🔥 Detectar el regreso desde Stripe Checkout (success_url / cancel_url)
-  //
-  // NOTA IMPORTANTE: el success_url/cancel_url configurado en el backend
-  // (STRIPE_TIENDA_SUCCESS_URL / STRIPE_TIENDA_CANCEL_URL) ahora apunta
-  // directamente a /homecliente?pago=exitoso&tipo=apartado, así que en el
-  // flujo normal Stripe NUNCA vuelve a esta página. Este bloque se deja
-  // solo como respaldo (por si alguien llega aquí con esos query params
-  // por cualquier otro motivo) y NUNCA debe redirigir a "/tienda", porque
-  // esa ruta es exclusiva del dueño/admin (ver App.jsx) y manda al cliente
-  // a /home por error. La ruta real del cliente es "/ophelina".
+  // 🔥 Detectar el regreso desde Stripe Checkout
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const pago = params.get("pago");
@@ -145,9 +148,6 @@ export default function OphelinaTienda() {
       setCategoriaActiva("apartados");
       setMensajeApartado({ mostrar: true, producto: "tu producto" });
       setTimeout(() => setMensajeApartado({ mostrar: false, producto: "" }), 4000);
-
-      // ✅ CORREGIDO: antes decía navigate("/tienda", ...) que es la ruta
-      // de admin. Debe quedarse en "/ophelina", la ruta real del cliente.
       navigate("/ophelina", { replace: true });
     } else if (pago === "cancelado") {
       setError("El pago fue cancelado, tu producto no quedó apartado.");
@@ -167,15 +167,109 @@ export default function OphelinaTienda() {
     const result = await apartarProducto(productoSeleccionado.id);
 
     if (result.success && result.data?.checkout_url) {
-      // 🔥 Redirige a Stripe Checkout para pagar el 50% de anticipo
       window.location.href = result.data.checkout_url;
-      // No hace falta setApartando(false) aquí: la página está a punto de cambiar
     } else {
       setApartando(false);
       setError(result.message || "No se pudo iniciar el apartado");
       setModalAbierto(false);
     }
   };
+
+  // ================================================================
+  // 🔥 PUBLICACIÓN AUTOMÁTICA - SIMULADA (SOLO CONSOLA)
+  // La funcionalidad real está comentada, solo muestra en consola
+  // ================================================================
+  const ejecutarPublicacionAuto = async () => {
+    setPublicacionAuto({ ejecutando: true, resultado: null, empenosVencidos: [] });
+
+    // --- SIMULACIÓN: Mostrar en consola los empeños que se publicarían ---
+    console.log("=== PUBLICACIÓN AUTOMÁTICA (SIMULADA) ===");
+    console.log("📋 Buscando empeños vencidos con periodo de gracia cumplido...");
+    
+    // Simular empeños vencidos (esto normalmente vendría del backend)
+    const empenosSimulados = [
+      { id: 101, folio: "EMP-001", descripcion: "Anillo de oro 14k", valor: 4500, vencido_desde: "2026-07-15" },
+      { id: 102, folio: "EMP-002", descripcion: "Cadena de plata", valor: 2800, vencido_desde: "2026-07-20" },
+      { id: 103, folio: "EMP-003", descripcion: "Reloj de pulsera", valor: 12000, vencido_desde: "2026-07-25" },
+    ];
+
+    console.log(`🔍 Encontrados ${empenosSimulados.length} empeños elegibles:`);
+    empenosSimulados.forEach((e, i) => {
+      console.log(`  ${i+1}. Folio: ${e.folio} | ${e.descripcion} | $${e.valor} | Vencido: ${e.vencido_desde}`);
+    });
+
+    // Simular el proceso de publicación
+    console.log("📤 Publicando productos en la tienda...");
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simular delay
+
+    const productosPublicados = empenosSimulados.map(e => ({
+      id: `PUB-${e.id}`,
+      nombre: e.descripcion,
+      precio: e.valor,
+      categoria: "Joyas",
+      estado: "Buen estado",
+      publicacion_automatica: true,
+      fecha_publicacion: new Date().toISOString().split('T')[0]
+    }));
+
+    console.log(`✅ ${productosPublicados.length} producto(s) publicado(s) automáticamente:`);
+    productosPublicados.forEach((p, i) => {
+      console.log(`  ${i+1}. ${p.nombre} - $${p.precio} - ${p.estado}`);
+    });
+    console.log("=== FIN PUBLICACIÓN SIMULADA ===");
+
+    // Actualizar estado para mostrar en el modal
+    setPublicacionAuto({
+      ejecutando: false,
+      resultado: {
+        success: true,
+        message: `${productosPublicados.length} producto(s) publicado(s) automáticamente`,
+        productos: productosPublicados
+      },
+      empenosVencidos: empenosSimulados
+    });
+  };
+
+  // ================================================================
+  // FUNCIÓN REAL COMENTADA (para restaurar después)
+  // ================================================================
+  /*
+  const ejecutarPublicacionAuto = async () => {
+    setPublicacionAuto({ ejecutando: true, resultado: null, empenosVencidos: [] });
+    
+    try {
+      const response = await fetch('/api/tienda/publicacion-automatica', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dias_gracia: 0 })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setPublicacionAuto({
+          ejecutando: false,
+          resultado: data,
+          empenosVencidos: data.empenos || []
+        });
+        // Recargar productos
+        await cargarDatos();
+      } else {
+        setPublicacionAuto({
+          ejecutando: false,
+          resultado: { success: false, message: data.message },
+          empenosVencidos: []
+        });
+      }
+    } catch (error) {
+      setPublicacionAuto({
+        ejecutando: false,
+        resultado: { success: false, message: error.message },
+        empenosVencidos: []
+      });
+    }
+  };
+  */
 
   // 🔹 Fuente de datos según la pestaña activa
   const listaBase = categoriaActiva === "apartados" ? misApartados : productos;
@@ -355,6 +449,100 @@ export default function OphelinaTienda() {
               )}
             </>
           )}
+        </section>
+
+        {/* ============================================================ */}
+        {/* SECCIÓN DE PUBLICACIÓN AUTOMÁTICA - MODAL MEJORADO */}
+        {/* ============================================================ */}
+        <section className="publicacion-auto-section">
+          <div className="publicacion-auto-container">
+            <div className="publicacion-auto-header">
+              <h3 className="publicacion-auto-title">
+                <span className="icon-auto">⚡</span>
+                Publicación Automática
+              </h3>
+              <p className="publicacion-auto-desc">
+                Esta función buscará empeños vencidos y los publicará automáticamente en la tienda online.
+              </p>
+            </div>
+
+            <div className="publicacion-auto-config">
+              <div className="config-item">
+                <span className="config-label">Días de gracia después del vencimiento:</span>
+                <span className="config-value">0 días</span>
+              </div>
+              <p className="config-nota">
+                Los productos se publicarán después de 0 días de vencido el contrato.
+              </p>
+            </div>
+
+            <button
+              className={`btn-publicacion-auto ${publicacionAuto.ejecutando ? 'btn-ejecutando' : ''}`}
+              onClick={ejecutarPublicacionAuto}
+              disabled={publicacionAuto.ejecutando}
+            >
+              {publicacionAuto.ejecutando ? (
+                <>
+                  <span className="spinner"></span>
+                  Ejecutando...
+                </>
+              ) : (
+                'Ejecutar Publicación'
+              )}
+            </button>
+
+            {/* Modal de resultados mejorado */}
+            {publicacionAuto.resultado && (
+              <div className="resultado-modal">
+                <div className={`resultado-header ${publicacionAuto.resultado.success ? 'exito' : 'error'}`}>
+                  <span className="resultado-icono">
+                    {publicacionAuto.resultado.success ? '✅' : '❌'}
+                  </span>
+                  <span className="resultado-mensaje">
+                    {publicacionAuto.resultado.message}
+                  </span>
+                </div>
+
+                {publicacionAuto.empenosVencidos.length > 0 && (
+                  <div className="resultado-detalle">
+                    <h4>📋 Empeños encontrados para publicar:</h4>
+                    <div className="empenos-lista">
+                      {publicacionAuto.empenosVencidos.map((empeno, idx) => (
+                        <div key={idx} className="empeno-item">
+                          <span className="empeno-folio">{empeno.folio}</span>
+                          <span className="empeno-descripcion">{empeno.descripcion}</span>
+                          <span className="empeno-valor">${empeno.valor}</span>
+                          <span className="empeno-estado">📤 Publicado</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {publicacionAuto.resultado.productos && (
+                  <div className="resultado-productos">
+                    <h4>🛒 Productos creados en tienda:</h4>
+                    <div className="productos-creados-lista">
+                      {publicacionAuto.resultado.productos.map((p, idx) => (
+                        <div key={idx} className="producto-creado-item">
+                          <span className="producto-nombre">{p.nombre}</span>
+                          <span className="producto-precio">${p.precio}</span>
+                          <span className="producto-categoria">{p.categoria}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  className="btn-cerrar-resultado"
+                  onClick={() => setPublicacionAuto({ ejecutando: false, resultado: null, empenosVencidos: [] })}
+                >
+                  Cerrar
+                </button>
+              </div>
+            )}
+          </div>
         </section>
 
         <Modal
