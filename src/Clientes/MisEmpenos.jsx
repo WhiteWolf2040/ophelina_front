@@ -5,6 +5,11 @@ import { useMisEmpenos } from "../hooks/useMisEmpenos";
 
 const PLACEHOLDER_IMAGE = "/placeholder.png";
 
+// ✅ Formateo consistente con separador de miles, para que números grandes
+// nunca se vean truncados o ambiguos (ej: $5,000,000.00, no "$5.00")
+const formatMoney = (n) =>
+  Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 export default function MisEmpenos() {
   const {
     empenos,
@@ -20,15 +25,12 @@ export default function MisEmpenos() {
   } = useMisEmpenos();
 
   const [busqueda, setBusqueda] = useState("");
-  const [popupAbierto, setPopupAbierto] = useState(null); // 'pagar', 'detalles', o null
+  const [popupAbierto, setPopupAbierto] = useState(null);
   const [empeñoSeleccionado, setEmpeñoSeleccionado] = useState(null);
   const [montoPago, setMontoPago] = useState("");
   const [errorPago, setErrorPago] = useState(null);
+  const [tipoAccion, setTipoAccion] = useState("abono");
 
-  // qué acción está eligiendo el cliente dentro del popup de pago
-  const [tipoAccion, setTipoAccion] = useState("abono"); // 'abono' | 'prorroga'
-
-  // FILTRO DEL BUSCADOR (ya sobre datos reales)
   const empenosFiltrados = empenos.filter((empeño) =>
     (
       (empeño.nombre || "") +
@@ -47,8 +49,6 @@ export default function MisEmpenos() {
     setErrorPago(null);
     setTipoAccion("abono");
 
-    // al abrir el popup de pago, se pide el desglose real
-    // (capital/interés/mora/IVA) para mostrarlo antes de que el cliente pague.
     if (tipo === 'pagar') {
       cargarCotizacion(empeño.id);
     }
@@ -62,54 +62,12 @@ export default function MisEmpenos() {
     setTipoAccion("abono");
   };
 
-  // Procesa el pago: crea la sesión de Stripe y redirige al checkout real.
-  // Si tipoAccion === 'prorroga', el backend ignora el monto (cobra
-  // intereses + IVA automáticamente) y extiende el vencimiento 30 días.
-  const procesarPago = async () => {
-    if (!empeñoSeleccionado) return;
+  // ✅ Cálculo derivado una sola vez por render, reutilizado en todo el JSX.
+  const montoNum = parseFloat(montoPago);
+  const montoValido = !isNaN(montoNum) && montoNum > 0;
+  const saldoMaximo = cotizacion?.saldo_pendiente_con_mora ?? null;
+  const excedeSaldo = montoValido && saldoMaximo !== null && montoNum > saldoMaximo;
 
-    if (tipoAccion === "abono") {
-      const montoIngresado = parseFloat(montoPago.replace(/[^0-9.-]+/g, ""));
-
-      if (isNaN(montoIngresado) || montoIngresado <= 0) {
-        setErrorPago("Por favor ingresa un monto válido");
-        return;
-      }
-
-      try {
-        setErrorPago(null);
-        await iniciarAbono(empeñoSeleccionado.id, montoIngresado, "abono");
-      } catch (err) {
-        console.error("Error al iniciar el abono:", err);
-        setErrorPago(
-          err.response?.data?.message || err.message || "Error al iniciar el pago, intenta de nuevo"
-        );
-      }
-      return;
-    }
-
-    // tipoAccion === 'prorroga': no se manda monto, el backend lo calcula.
-    try {
-      setErrorPago(null);
-      await iniciarAbono(empeñoSeleccionado.id, null, "prorroga");
-    } catch (err) {
-      console.error("Error al iniciar la prórroga:", err);
-      setErrorPago(
-        err.response?.data?.message || err.message || "Error al iniciar la prórroga, intenta de nuevo"
-      );
-    }
-  };
-
-  const handleMontoChange = (e) => {
-    const valor = e.target.value;
-    if (valor === "" || /^\d*\.?\d*$/.test(valor)) {
-      setMontoPago(valor);
-    }
-  };
-
-  // ✅ Reparto en vivo, Opción C: IVA + interés primero (hasta donde alcance
-  // el abono), el sobrante -si lo hay- reduce el capital. Mismo orden que
-  // ahora aplica el backend (StripeWebhookController y PagoController).
   const calcularRepartoAbono = (monto, cotizacionData) => {
     if (!monto || !cotizacionData || monto <= 0) return null;
 
@@ -126,20 +84,64 @@ export default function MisEmpenos() {
     return { ivaPagado, interesPagado, capitalPagado };
   };
 
-  // ✅ Se calcula una sola vez por render y se reutiliza en todo el bloque
-  // del input, en vez de recalcular montoNum en cada lugar donde se usa.
-  const montoNum = parseFloat(montoPago);
-  const montoValido = !isNaN(montoNum) && montoNum > 0;
-  const repartoPreview = montoValido && cotizacion
+  const repartoPreview = montoValido && cotizacion && !excedeSaldo
     ? calcularRepartoAbono(montoNum, cotizacion)
     : null;
+
+  const procesarPago = async () => {
+    if (!empeñoSeleccionado) return;
+
+    if (tipoAccion === "abono") {
+      const montoIngresado = parseFloat(montoPago.replace(/[^0-9.-]+/g, ""));
+
+      if (isNaN(montoIngresado) || montoIngresado <= 0) {
+        setErrorPago("Por favor ingresa un monto válido");
+        return;
+      }
+
+      // ✅ Validación cliente-side, antes de golpear el backend.
+      // (El backend igual lo valida en AbonoController::crearSesionPago,
+      // esto solo evita el viaje redondo innecesario y da feedback inmediato)
+      if (saldoMaximo !== null && montoIngresado > saldoMaximo) {
+        setErrorPago(`El monto no puede exceder tu saldo pendiente de $${formatMoney(saldoMaximo)}`);
+        return;
+      }
+
+      try {
+        setErrorPago(null);
+        await iniciarAbono(empeñoSeleccionado.id, montoIngresado, "abono");
+      } catch (err) {
+        console.error("Error al iniciar el abono:", err);
+        setErrorPago(
+          err.response?.data?.message || err.message || "Error al iniciar el pago, intenta de nuevo"
+        );
+      }
+      return;
+    }
+
+    try {
+      setErrorPago(null);
+      await iniciarAbono(empeñoSeleccionado.id, null, "prorroga");
+    } catch (err) {
+      console.error("Error al iniciar la prórroga:", err);
+      setErrorPago(
+        err.response?.data?.message || err.message || "Error al iniciar la prórroga, intenta de nuevo"
+      );
+    }
+  };
+
+  const handleMontoChange = (e) => {
+    const valor = e.target.value;
+    if (valor === "" || /^\d*\.?\d*$/.test(valor)) {
+      setMontoPago(valor);
+      setErrorPago(null); // limpia error previo mientras el usuario corrige
+    }
+  };
 
   return (
     <>
       <Navbar />
       <div className="me-dashboard">
-
-        {/* Header */}
         <section className="me-page-header">
           <h1 className="me-page-title">
             Administra y consulta tus prendas empeñadas
@@ -157,12 +159,10 @@ export default function MisEmpenos() {
           </div>
         </section>
 
-        {/* LOADING */}
         {loading && (
           <p className="me-sin-resultados">Cargando tus empeños...</p>
         )}
 
-        {/* ERROR */}
         {error && !loading && (
           <div className="me-sin-resultados">
             <p>{error}</p>
@@ -170,7 +170,6 @@ export default function MisEmpenos() {
           </div>
         )}
 
-        {/* Lista */}
         {!loading && !error && (
           <section className="me-empenos-list">
             {empenosFiltrados.length > 0 ? (
@@ -217,18 +216,14 @@ export default function MisEmpenos() {
                         </div>
 
                         <div className="me-detalle-item">
-                          <span className="me-detalle-label">
-                            Total a pagar:
-                          </span>
+                          <span className="me-detalle-label">Total a pagar:</span>
                           <span className={`me-detalle-valor me-total ${empeño.pagadoCompleto ? 'pagado' : ''}`}>
                             {empeño.pagadoCompleto ? "Pagado" : empeño.totalPagar}
                           </span>
                         </div>
 
                         <div className="me-detalle-item">
-                          <span className="me-detalle-label">
-                            Vencimiento:
-                          </span>
+                          <span className="me-detalle-label">Vencimiento:</span>
                           <span className="me-detalle-valor">
                             {empeño.vencimiento || "N/A"}
                           </span>
@@ -237,7 +232,6 @@ export default function MisEmpenos() {
                     </div>
                   </div>
 
-                  {/* ACCIONES CON BOTONES CONDICIONALES */}
                   <div className="me-empeno-acciones">
                     {!empeño.pagadoCompleto ? (
                       <>
@@ -256,9 +250,7 @@ export default function MisEmpenos() {
                       </>
                     ) : (
                       <>
-                        <div className="me-btn-pagado">
-                          ✓ Pagado
-                        </div>
+                        <div className="me-btn-pagado">✓ Pagado</div>
                         <button
                           className="me-btn-ver-detalles"
                           onClick={() => abrirPopup('detalles', empeño)}
@@ -271,9 +263,7 @@ export default function MisEmpenos() {
                 </div>
               ))
             ) : (
-              <p className="me-sin-resultados">
-                No se encontraron empeños
-              </p>
+              <p className="me-sin-resultados">No se encontraron empeños</p>
             )}
           </section>
         )}
@@ -291,8 +281,6 @@ export default function MisEmpenos() {
             </div>
 
             <div className="popup-body">
-
-              {/* Selector Abonar vs Prorrogar */}
               <div className="pago-tabs" role="tablist">
                 <button
                   type="button"
@@ -310,7 +298,6 @@ export default function MisEmpenos() {
                 </button>
               </div>
 
-              {/* Desglose real de capital / interés / mora / IVA */}
               {cargandoCotizacion && (
                 <p className="pago-cotizacion-cargando">Calculando lo que debes...</p>
               )}
@@ -325,23 +312,23 @@ export default function MisEmpenos() {
                 <div className="pago-detalles pago-desglose">
                   <div className="pago-item">
                     <span className="pago-label">Capital:</span>
-                    <span className="pago-valor">${cotizacion.capital.toFixed(2)}</span>
+                    <span className="pago-valor">${formatMoney(cotizacion.capital)}</span>
                   </div>
                   <div className="pago-item">
                     <span className="pago-label">Interés:</span>
-                    <span className="pago-valor">${cotizacion.interes.toFixed(2)}</span>
+                    <span className="pago-valor">${formatMoney(cotizacion.interes)}</span>
                   </div>
                   {cotizacion.mora > 0 && (
                     <div className="pago-item pago-item-mora">
                       <span className="pago-label">
                         Mora ({cotizacion.dias_atraso} {cotizacion.dias_atraso === 1 ? 'día' : 'días'} de atraso):
                       </span>
-                      <span className="pago-valor pago-valor-mora">${cotizacion.mora.toFixed(2)}</span>
+                      <span className="pago-valor pago-valor-mora">${formatMoney(cotizacion.mora)}</span>
                     </div>
                   )}
                   <div className="pago-item">
                     <span className="pago-label">IVA (16% sobre interés):</span>
-                    <span className="pago-valor">${cotizacion.iva_interes.toFixed(2)}</span>
+                    <span className="pago-valor">${formatMoney(cotizacion.iva_interes)}</span>
                   </div>
                   <div className="pago-item pago-item-total">
                     <span className="pago-label">
@@ -349,7 +336,7 @@ export default function MisEmpenos() {
                     </span>
                     <span className="pago-valor">
                       {tipoAccion === "abono"
-                        ? `$${cotizacion.saldo_pendiente_con_mora.toFixed(2)}`
+                        ? `$${formatMoney(cotizacion.saldo_pendiente_con_mora)}`
                         : cotizacion.fecha_vencimiento_actual}
                     </span>
                   </div>
@@ -361,28 +348,35 @@ export default function MisEmpenos() {
                   <label>Monto a abonar:</label>
                   <input
                     type="text"
-                    className="pago-input"
+                    inputMode="decimal"
+                    className={`pago-input ${excedeSaldo ? 'pago-input-error' : ''}`}
                     placeholder="Ingresa el monto del abono"
                     value={montoPago}
                     onChange={handleMontoChange}
                   />
 
-                  {/* ✅ Vista previa del reparto, se actualiza en vivo */}
+                  {/* ✅ Aviso inmediato si el monto excede el saldo real */}
+                  {excedeSaldo && (
+                    <small className="pago-error" style={{ color: "#c0392b", display: "block", marginTop: "6px" }}>
+                      El monto máximo que puedes abonar es ${formatMoney(saldoMaximo)} (tu saldo pendiente).
+                    </small>
+                  )}
+
                   {repartoPreview ? (
                     <>
                       <div className="pago-reparto-preview">
                         <p className="pago-reparto-titulo">
-                          Así se aplicará tu abono de ${montoNum.toFixed(2)}:
+                          Así se aplicará tu abono de ${formatMoney(montoNum)}:
                         </p>
                         {(repartoPreview.interesPagado > 0 || repartoPreview.ivaPagado > 0) && (
                           <div className="pago-reparto-fila">
                             <span>Interés + IVA del periodo:</span>
-                            <span>${(repartoPreview.interesPagado + repartoPreview.ivaPagado).toFixed(2)}</span>
+                            <span>${formatMoney(repartoPreview.interesPagado + repartoPreview.ivaPagado)}</span>
                           </div>
                         )}
                         <div className="pago-reparto-fila pago-reparto-destacado">
                           <span>Reduce tu deuda (capital):</span>
-                          <span>${repartoPreview.capitalPagado.toFixed(2)}</span>
+                          <span>${formatMoney(repartoPreview.capitalPagado)}</span>
                         </div>
                         <small className="pago-reparto-nota">
                           El interés y el IVA son el costo del préstamo por el periodo ya
@@ -391,7 +385,7 @@ export default function MisEmpenos() {
                         </small>
                       </div>
                       <small className="pago-ayuda">
-                        Tu saldo total pendiente bajará ${montoNum.toFixed(2)} pesos completos,
+                        Tu saldo total pendiente bajará ${formatMoney(montoNum)} pesos completos,
                         sin importar cómo se reparta arriba.
                       </small>
                     </>
@@ -410,7 +404,7 @@ export default function MisEmpenos() {
                     La prórroga cobra el interés{cotizacion?.mora > 0 ? " + la mora" : ""} de tu
                     cuota actual, más IVA
                     {cotizacion ? (
-                      <> — un total de <strong>${cotizacion.monto_prorroga.toFixed(2)}</strong></>
+                      <> — un total de <strong>${formatMoney(cotizacion.monto_prorroga)}</strong></>
                     ) : null}
                     —, y <strong>extiende tu fecha de vencimiento 30 días</strong>. No abona capital.
                   </small>
@@ -436,7 +430,7 @@ export default function MisEmpenos() {
               <button
                 className="pago-confirmar-btn"
                 onClick={procesarPago}
-                disabled={redirigiendoPago}
+                disabled={redirigiendoPago || (tipoAccion === "abono" && excedeSaldo)}
               >
                 {redirigiendoPago
                   ? "Redirigiendo..."

@@ -1024,3 +1024,8 @@ body {
   border-top: 1px dashed #ccc; margin-top: 4px; padding-top: 6px;
 }
 .pago-reparto-nota { display: block; color: #777; margin-top: 6px; font-size: 11px; }
+
+.pago-input-error {
+  border-color: #c0392b !important;
+  background: #fdf1f0;
+}
