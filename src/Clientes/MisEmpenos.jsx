@@ -25,7 +25,7 @@ export default function MisEmpenos() {
   const [montoPago, setMontoPago] = useState("");
   const [errorPago, setErrorPago] = useState(null);
 
-  // ✅ NUEVO: qué acción está eligiendo el cliente dentro del popup de pago
+  // qué acción está eligiendo el cliente dentro del popup de pago
   const [tipoAccion, setTipoAccion] = useState("abono"); // 'abono' | 'prorroga'
 
   // FILTRO DEL BUSCADOR (ya sobre datos reales)
@@ -47,7 +47,7 @@ export default function MisEmpenos() {
     setErrorPago(null);
     setTipoAccion("abono");
 
-    // ✅ NUEVO: al abrir el popup de pago, se pide el desglose real
+    // al abrir el popup de pago, se pide el desglose real
     // (capital/interés/mora/IVA) para mostrarlo antes de que el cliente pague.
     if (tipo === 'pagar') {
       cargarCotizacion(empeño.id);
@@ -107,6 +107,33 @@ export default function MisEmpenos() {
     }
   };
 
+  // ✅ Reparto en vivo, Opción C: IVA + interés primero (hasta donde alcance
+  // el abono), el sobrante -si lo hay- reduce el capital. Mismo orden que
+  // ahora aplica el backend (StripeWebhookController y PagoController).
+  const calcularRepartoAbono = (monto, cotizacionData) => {
+    if (!monto || !cotizacionData || monto <= 0) return null;
+
+    let restante = monto;
+
+    const ivaPagado = Math.min(restante, cotizacionData.iva_interes);
+    restante = Math.max(0, restante - ivaPagado);
+
+    const interesPagado = Math.min(restante, cotizacionData.interes);
+    restante = Math.max(0, restante - interesPagado);
+
+    const capitalPagado = Math.min(restante, cotizacionData.capital);
+
+    return { ivaPagado, interesPagado, capitalPagado };
+  };
+
+  // ✅ Se calcula una sola vez por render y se reutiliza en todo el bloque
+  // del input, en vez de recalcular montoNum en cada lugar donde se usa.
+  const montoNum = parseFloat(montoPago);
+  const montoValido = !isNaN(montoNum) && montoNum > 0;
+  const repartoPreview = montoValido && cotizacion
+    ? calcularRepartoAbono(montoNum, cotizacion)
+    : null;
+
   return (
     <>
       <Navbar />
@@ -155,6 +182,7 @@ export default function MisEmpenos() {
                         src={empeño.imagen || PLACEHOLDER_IMAGE}
                         alt={empeño.nombre}
                         className="me-empeno-imagen"
+                        loading="lazy"
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = PLACEHOLDER_IMAGE;
@@ -264,7 +292,7 @@ export default function MisEmpenos() {
 
             <div className="popup-body">
 
-              {/* ✅ NUEVO: selector Abonar vs Prorrogar */}
+              {/* Selector Abonar vs Prorrogar */}
               <div className="pago-tabs" role="tablist">
                 <button
                   type="button"
@@ -282,7 +310,7 @@ export default function MisEmpenos() {
                 </button>
               </div>
 
-              {/* ✅ NUEVO: desglose real de capital / interés / mora / IVA */}
+              {/* Desglose real de capital / interés / mora / IVA */}
               {cargandoCotizacion && (
                 <p className="pago-cotizacion-cargando">Calculando lo que debes...</p>
               )}
@@ -338,12 +366,43 @@ export default function MisEmpenos() {
                     value={montoPago}
                     onChange={handleMontoChange}
                   />
-                  <small className="pago-ayuda">
-                    Puedes abonar cualquier monto hasta el saldo restante
-                    {cotizacion?.mora > 0 ? " (ya incluye la mora acumulada)" : ""}. El abono
-                    reduce tu deuda pero <strong>no mueve tu fecha de vencimiento</strong>.
-                    Se te redirigirá a la pasarela de pago segura para completarlo.
-                  </small>
+
+                  {/* ✅ Vista previa del reparto, se actualiza en vivo */}
+                  {repartoPreview ? (
+                    <>
+                      <div className="pago-reparto-preview">
+                        <p className="pago-reparto-titulo">
+                          Así se aplicará tu abono de ${montoNum.toFixed(2)}:
+                        </p>
+                        {(repartoPreview.interesPagado > 0 || repartoPreview.ivaPagado > 0) && (
+                          <div className="pago-reparto-fila">
+                            <span>Interés + IVA del periodo:</span>
+                            <span>${(repartoPreview.interesPagado + repartoPreview.ivaPagado).toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="pago-reparto-fila pago-reparto-destacado">
+                          <span>Reduce tu deuda (capital):</span>
+                          <span>${repartoPreview.capitalPagado.toFixed(2)}</span>
+                        </div>
+                        <small className="pago-reparto-nota">
+                          El interés y el IVA son el costo del préstamo por el periodo ya
+                          transcurrido, se cobran primero. El resto de tu abono
+                          reduce directamente lo que debes.
+                        </small>
+                      </div>
+                      <small className="pago-ayuda">
+                        Tu saldo total pendiente bajará ${montoNum.toFixed(2)} pesos completos,
+                        sin importar cómo se reparta arriba.
+                      </small>
+                    </>
+                  ) : (
+                    <small className="pago-ayuda">
+                      Puedes abonar cualquier monto hasta el saldo restante
+                      {cotizacion?.mora > 0 ? " (ya incluye la mora acumulada)" : ""}. El abono
+                      reduce tu deuda pero <strong>no mueve tu fecha de vencimiento</strong>.
+                      Se te redirigirá a la pasarela de pago segura para completarlo.
+                    </small>
+                  )}
                 </div>
               ) : (
                 <div className="pago-input-group">
@@ -433,6 +492,10 @@ export default function MisEmpenos() {
                     <div className="financiero-item">
                       <span>Intereses:</span>
                       <span>{empeñoSeleccionado.intereses}</span>
+                    </div>
+                    <div className="financiero-item">
+                      <span>Saldo pendiente (capital):</span>
+                      <span>{empeñoSeleccionado.saldoRestante}</span>
                     </div>
                     <div className="financiero-item">
                       <span>Total abonado:</span>

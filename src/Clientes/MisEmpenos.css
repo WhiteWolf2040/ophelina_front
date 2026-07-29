@@ -1009,3 +1009,18 @@ body {
   padding-top: 8px;
   font-weight: 700;
 }
+
+.pago-reparto-preview {
+  background: #f8f4ec;
+  border: 1px solid #e5d9c3;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 8px;
+}
+.pago-reparto-titulo { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+.pago-reparto-fila { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
+.pago-reparto-destacado {
+  font-weight: 700; color: #2e7d32;
+  border-top: 1px dashed #ccc; margin-top: 4px; padding-top: 6px;
+}
+.pago-reparto-nota { display: block; color: #777; margin-top: 6px; font-size: 11px; }
