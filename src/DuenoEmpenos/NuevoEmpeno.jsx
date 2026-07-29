@@ -6,8 +6,6 @@ import api from '../config/api';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import Select from 'react-select';
-import CalculateIcon from '@mui/icons-material/Calculate';
-
 import DateRangeIcon from '@mui/icons-material/DateRange';
 
 const NuevoEmpeno = () => {
@@ -15,25 +13,24 @@ const NuevoEmpeno = () => {
   const [loading, setLoading] = useState(false);
   const [clientes, setClientes] = useState([]);
   const [prendas, setPrendas] = useState([]);
-  
+
   // Estados para modales de creación
-  
   const [isCreatingPrenda, setIsCreatingPrenda] = useState(false);
-  
+
   // Estado para la prenda seleccionada (para mostrar valor)
   const [prendaSeleccionadaValor, setPrendaSeleccionadaValor] = useState(0);
-  
+
   // Estado para el select de cliente (react-select)
   const [selectedCliente, setSelectedCliente] = useState(null);
-  
+
   // Estado para el select de prenda (react-select)
   const [selectedPrenda, setSelectedPrenda] = useState(null);
-  
-  // Tasa fija de interés (5%)
-  const TASA_FIJA = 5;
 
+  // Tasa real, cargada desde /tasas-interes. Este objeto es la ÚNICA fuente
+  // de verdad para %, tanto en la simulación en pantalla como en lo que se
+  // envía al backend al guardar (ver handleSubmit).
+  const [tasaActual, setTasaActual] = useState({ id_tasa: 1, porcentaje: 15 }); // fallback mientras carga
 
-  
   // Estado para el cálculo de pagos
   const [simulacionPago, setSimulacionPago] = useState({
     capital: 0,
@@ -44,18 +41,10 @@ const NuevoEmpeno = () => {
     total_intereses: 0,
     monto_prestado: 0,
     plazo_meses: 1,
-    tasa_porcentaje: TASA_FIJA,
-  
+    tasa_porcentaje: 15, // se sincroniza con tasaActual.porcentaje en cuanto carga
     fecha_vencimiento: ""
   });
-  
-  const [nuevoCliente, setNuevoCliente] = useState({
-    nombre: "",
-    apellido: "",
-    telefono: "",
-    correo: ""
-  });
-  
+
   const [nuevaPrenda, setNuevaPrenda] = useState({
     descripcion: "",
     tipo: "",
@@ -63,12 +52,11 @@ const NuevoEmpeno = () => {
     peso_gramos: "",
     valor_estimado: ""
   });
-  
+
   const [form, setForm] = useState({
     cliente_id: "",
     prenda_id: "",
     monto_prestado: "",
-    tasa_id: 1,
     fecha_vencimiento: "",
     aval_id: "",
     plazo_meses: 1
@@ -141,25 +129,17 @@ const NuevoEmpeno = () => {
   const calcularSimulacion = () => {
     const monto = parseFloat(form.monto_prestado) || 0;
     const plazoMeses = parseInt(form.plazo_meses) || 1;
-    
+
     if (monto > 0) {
-      // Interés total sobre el plazo completo
-      const interesTotal = monto * (TASA_FIJA / 100) * plazoMeses;
-      
-      // IVA sobre el interés (16%)
+      const interesTotal = monto * (tasaActual.porcentaje / 100) * plazoMeses;
       const ivaInteres = interesTotal * 0.16;
-      
-      // Total a pagar (capital + intereses + IVA)
       const totalPagar = monto + interesTotal + ivaInteres;
-      
-      // Refrendo mensual (pago de intereses + IVA por mes, SIN capital)
       const refrendoMensual = (interesTotal + ivaInteres) / plazoMeses;
-      
-      // Fecha de vencimiento
+
       const fechaVencimiento = new Date();
       fechaVencimiento.setMonth(fechaVencimiento.getMonth() + plazoMeses);
       const fechaVencimientoStr = fechaVencimiento.toISOString().split('T')[0];
-      
+
       setSimulacionPago({
         capital: monto,
         interes: interesTotal,
@@ -169,27 +149,42 @@ const NuevoEmpeno = () => {
         total_intereses: interesTotal + ivaInteres,
         monto_prestado: monto,
         plazo_meses: plazoMeses,
-        tasa_porcentaje: TASA_FIJA,
-    
+        tasa_porcentaje: tasaActual.porcentaje,
         fecha_vencimiento: fechaVencimientoStr
       });
-      
+
       setForm(prev => ({ ...prev, fecha_vencimiento: fechaVencimientoStr }));
-      
     } else {
       setSimulacionPago({
-        capital: 0,
-        interes: 0,
-        iva: 0,
-        total: 0,
-        refrendo: 0,
-        total_intereses: 0,
-        monto_prestado: 0,
-        plazo_meses: 1,
-        tasa_porcentaje: TASA_FIJA,
-      
-        fecha_vencimiento: ""
+        capital: 0, interes: 0, iva: 0, total: 0, refrendo: 0,
+        total_intereses: 0, monto_prestado: 0, plazo_meses: 1,
+        tasa_porcentaje: tasaActual.porcentaje, fecha_vencimiento: ""
       });
+    }
+  };
+
+  // Único useEffect que recalcula la simulación. Se dispara con monto, plazo
+  // Y tasaActual — si no incluyéramos tasaActual aquí, la simulación mostrada
+  // se quedaría con el valor fallback (15%) hasta que el usuario tocara el
+  // monto o el plazo después de que la tasa real ya hubiera cargado.
+  useEffect(() => {
+    calcularSimulacion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.monto_prestado, form.plazo_meses, tasaActual]);
+
+  const cargarTasaActual = async () => {
+    try {
+      const response = await api.get('/tasas-interes');
+      const resultado = procesarRespuesta(response);
+      if (resultado.success && Array.isArray(resultado.data) && resultado.data.length > 0) {
+        // Toma la primera tasa activa como la tasa por defecto del sistema
+        setTasaActual({
+          id_tasa: resultado.data[0].id_tasa,
+          porcentaje: parseFloat(resultado.data[0].porcentaje),
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar tasa de interés, usando valor por defecto:', error);
     }
   };
 
@@ -197,12 +192,8 @@ const NuevoEmpeno = () => {
   useEffect(() => {
     cargarClientes();
     cargarPrendas();
+    cargarTasaActual();
   }, []);
-
-  // Recalcular cuando cambie el monto o el plazo
-  useEffect(() => {
-    calcularSimulacion();
-  }, [form.monto_prestado, form.plazo_meses]);
 
   const procesarRespuesta = (response) => {
     if (Array.isArray(response.data)) {
@@ -251,7 +242,7 @@ const NuevoEmpeno = () => {
   const handlePrendaChange = (selected) => {
     setSelectedPrenda(selected);
     setForm(prev => ({ ...prev, prenda_id: selected?.value || "" }));
-    
+
     if (selected) {
       const valor = selected.valor_estimado;
       setPrendaSeleccionadaValor(valor);
@@ -261,9 +252,6 @@ const NuevoEmpeno = () => {
       setPrendaSeleccionadaValor(0);
     }
   };
-
-  // Crear nuevo cliente
-
 
   // Crear nueva prenda
   const crearNuevaPrenda = async () => {
@@ -282,7 +270,7 @@ const NuevoEmpeno = () => {
           valor_estimado: nuevaPrenda.valor_estimado
         };
         setPrendas([...prendas, nuevaPrendaData]);
-        
+
         const newOption = {
           value: nuevaPrendaData.id_prenda,
           label: nuevaPrendaData.descripcion,
@@ -292,10 +280,10 @@ const NuevoEmpeno = () => {
         setSelectedPrenda(newOption);
         setForm(prev => ({ ...prev, prenda_id: nuevaPrendaData.id_prenda }));
         setPrendaSeleccionadaValor(nuevaPrendaData.valor_estimado);
-        
+
         const montoSugerido = Math.round(nuevaPrendaData.valor_estimado * 0.7);
         setForm(prev => ({ ...prev, monto_prestado: montoSugerido.toString() }));
-        
+
         setIsCreatingPrenda(false);
         setNuevaPrenda({ descripcion: "", tipo: "", material: "", peso_gramos: "", valor_estimado: "" });
         alert("Prenda creada correctamente");
@@ -316,31 +304,34 @@ const NuevoEmpeno = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!form.cliente_id) {
       alert("Por favor seleccione un cliente");
       return;
     }
-    
+
     if (!form.prenda_id) {
       alert("Por favor seleccione una prenda");
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
-      const tasaId = 1;
-      
+      // FIX: antes esto era "const tasaId = 1;" hardcodeado, así que el
+      // empeño SIEMPRE se guardaba con la tasa id=1 en la BD, sin importar
+      // qué tasa se hubiera mostrado en la simulación. Ahora usa la tasa
+      // real que cargó cargarTasaActual() — la misma que ve el usuario.
       const dataToSend = {
         cliente_id: form.cliente_id,
         prenda_id: form.prenda_id,
         monto_prestado: form.monto_prestado,
-        tasa_id: tasaId,
+        tasa_id: tasaActual.id_tasa,
         fecha_vencimiento: form.fecha_vencimiento,
-        aval_id: form.aval_id || null
+        aval_id: form.aval_id || null,
+        plazo_meses: form.plazo_meses
       };
-      
+
       const response = await api.post('/empenos', dataToSend);
       if (response.data.success) {
         alert('Empeño registrado correctamente');
@@ -386,8 +377,6 @@ const NuevoEmpeno = () => {
 
   return (
     <div className="dashboard">
-     
-
       <div className="content">
         <div className="tienda-header">
           <div>
@@ -398,7 +387,7 @@ const NuevoEmpeno = () => {
 
         <div className="form-card">
           <form onSubmit={handleSubmit} className="form-grid">
-            
+
             {/* CLIENTE */}
             <div className="form-group full-width" style={{ position: 'relative', zIndex: 1000 }}>
               <label>Cliente *</label>
@@ -424,7 +413,6 @@ const NuevoEmpeno = () => {
                   </div>
                 )}
               />
-                        
             </div>
 
             {/* PRENDA */}
@@ -449,9 +437,9 @@ const NuevoEmpeno = () => {
                       <div style={{ fontWeight: 'bold', color: '#0d1b3e' }}>{option.label}</div>
                       <div style={{ fontSize: '0.7rem', color: '#6c757d' }}>{option.tipo}</div>
                     </div>
-                    <div style={{ 
-                      fontSize: '0.85rem', 
-                      fontWeight: 'bold', 
+                    <div style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 'bold',
                       color: '#f59e0b',
                       backgroundColor: '#fef3c7',
                       padding: '2px 8px',
@@ -515,14 +503,13 @@ const NuevoEmpeno = () => {
               )}
             </div>
 
-            {/* Tasa fija (solo información) */}
+            {/* Tasa real (solo información) */}
             <div className="form-group">
               <label>Tasa de Interés</label>
               <div className="tasa-fija-info">
-                <span className="tasa-valor">{TASA_FIJA}% </span>
-                
+                <span className="tasa-valor">{tasaActual.porcentaje}% </span>
               </div>
-              <small>Tasa fija aplicable a todos los empeños</small>
+              <small>Tasa aplicable a este empeño</small>
             </div>
 
             {/* Plazo en meses */}
@@ -540,113 +527,115 @@ const NuevoEmpeno = () => {
               </select>
               <small>Selecciona el plazo de pago</small>
             </div>
-{/* TARJETA DE SIMULACIÓN - ESTILO TICKET */}
-{simulacionPago.monto_prestado > 0 && (
-  <div className="ticket-preview full-width">
-    <div className="ticket-preview-header">
-      <h2>OPHELINA</h2>
-      <p className="ticket-lema">La que brinda apoyo</p>
-      <p className="ticket-rfc">RFC: OPH123456789</p>
-      <p className="ticket-direccion">Calle 60 #123, Centro, Mérida, Yucatán</p>
-      <p className="ticket-tel">Tel: 999 123 4567</p>
-    </div>
 
-    <div className="ticket-preview-body">
-      {/* Folio y fechas */}
-      <div className="ticket-folio-section">
-        <div className="folio-group">
-          <span className="folio-label">FOLIO:</span>
-          <span className="folio-valor">PREVIEW-{Date.now().toString(36).toUpperCase()}</span>
-        </div>
-        <div className="fechas-group">
-          <p><span className="label">Emisión</span> {new Date().toLocaleDateString('es-MX')}</p>
-          <p><span className="label">Vencimiento</span> {simulacionPago.fecha_vencimiento ? new Date(simulacionPago.fecha_vencimiento).toLocaleDateString('es-MX') : '--/--/----'}</p>
-        </div>
-      </div>
+            {/* TARJETA DE SIMULACIÓN - ESTILO TICKET */}
+            {simulacionPago.monto_prestado > 0 && (
+              <div className="ticket-preview full-width">
+                <div className="ticket-preview-header">
+                  <h2>OPHELINA</h2>
+                  <p className="ticket-lema">La que brinda apoyo</p>
+                  <p className="ticket-rfc">RFC: OPH123456789</p>
+                  <p className="ticket-direccion">Calle 60 #123, Centro, Mérida, Yucatán</p>
+                  <p className="ticket-tel">Tel: 999 123 4567</p>
+                </div>
 
-      {/* Cliente */}
-      <div className="ticket-cliente-section">
-        <h3>CLIENTE</h3>
-        <div className="cliente-grid">
-          <p><span>Nombre</span> {selectedCliente?.label || 'Por seleccionar'}</p>
-          <p><span>RFC</span> XXXX010101000</p>
-          <p><span>Teléfono</span> {selectedCliente?.telefono || '--- --- ----'}</p>
-          <p><span>Email</span> {selectedCliente?.correo || 'cliente@email.com'}</p>
-        </div>
-      </div>
+                <div className="ticket-preview-body">
+                  {/* Folio y fechas */}
+                  <div className="ticket-folio-section">
+                    <div className="folio-group">
+                      <span className="folio-label">FOLIO:</span>
+                      <span className="folio-valor">PREVIEW-{Date.now().toString(36).toUpperCase()}</span>
+                    </div>
+                    <div className="fechas-group">
+                      <p><span className="label">Emisión</span> {new Date().toLocaleDateString('es-MX')}</p>
+                      <p><span className="label">Vencimiento</span> {simulacionPago.fecha_vencimiento ? new Date(simulacionPago.fecha_vencimiento).toLocaleDateString('es-MX') : '--/--/----'}</p>
+                    </div>
+                  </div>
 
-      {/* Detalle del empeño */}
-      <div className="ticket-articulo-section">
-        <h3>DETALLE DEL EMPEÑO</h3>
-        <table className="ticket-tabla">
-          <thead>
-            <tr>
-              <th>Descripción</th>
-              <th className="text-center">Cant.</th>
-              <th className="text-right">P.Unitario</th>
-              <th className="text-right">Importe</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{selectedPrenda?.label || 'Artículo pendiente'}</td>
-              <td className="text-center">1</td>
-              <td className="text-right">{formatMoney(simulacionPago.monto_prestado)}</td>
-              <td className="text-right">{formatMoney(simulacionPago.monto_prestado)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                  {/* Cliente */}
+                  <div className="ticket-cliente-section">
+                    <h3>CLIENTE</h3>
+                    <div className="cliente-grid">
+                      <p><span>Nombre</span> {selectedCliente?.label || 'Por seleccionar'}</p>
+                      <p><span>RFC</span> XXXX010101000</p>
+                      <p><span>Teléfono</span> {selectedCliente?.telefono || '--- --- ----'}</p>
+                      <p><span>Email</span> {selectedCliente?.correo || 'cliente@email.com'}</p>
+                    </div>
+                  </div>
 
-      {/* Desglose */}
-      <div className="ticket-desglose">
-        <div className="desglose-fila">
-          <span>Capital:</span>
-          <span>{formatMoney(simulacionPago.monto_prestado)}</span>
-        </div>
-        <div className="desglose-fila">
-          <span>Intereses:</span>
-          <span>{formatMoney(simulacionPago.interes)}</span>
-        </div>
-        <div className="desglose-fila">
-          <span>IVA (16% sobre intereses):</span>
-          <span>{formatMoney(simulacionPago.iva)}</span>
-        </div>
-        <div className="desglose-fila total">
-          <span>TOTAL A PAGAR:</span>
-          <span>{formatMoney(simulacionPago.total)}</span>
-        </div>
-      </div>
+                  {/* Detalle del empeño */}
+                  <div className="ticket-articulo-section">
+                    <h3>DETALLE DEL EMPEÑO</h3>
+                    <table className="ticket-tabla">
+                      <thead>
+                        <tr>
+                          <th>Descripción</th>
+                          <th className="text-center">Cant.</th>
+                          <th className="text-right">P.Unitario</th>
+                          <th className="text-right">Importe</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>{selectedPrenda?.label || 'Artículo pendiente'}</td>
+                          <td className="text-center">1</td>
+                          <td className="text-right">{formatMoney(simulacionPago.monto_prestado)}</td>
+                          <td className="text-right">{formatMoney(simulacionPago.monto_prestado)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
 
-      {/* Información de pago */}
-      <div className="ticket-pago-info">
-        <div className="pago-info-item">
-          <span className="label">Método de pago sugerido:</span>
-          <span className="valor">Efectivo / Transferencia</span>
-        </div>
-        <div className="pago-info-item">
-          <span className="label">Refrendo mensual:</span>
-          <span className="valor">{formatMoney(simulacionPago.refrendo)}</span>
-        </div>
-      </div>
+                  {/* Desglose */}
+                  <div className="ticket-desglose">
+                    <div className="desglose-fila">
+                      <span>Capital:</span>
+                      <span>{formatMoney(simulacionPago.monto_prestado)}</span>
+                    </div>
+                    <div className="desglose-fila">
+                      <span>Intereses:</span>
+                      <span>{formatMoney(simulacionPago.interes)}</span>
+                    </div>
+                    <div className="desglose-fila">
+                      <span>IVA (16% sobre intereses):</span>
+                      <span>{formatMoney(simulacionPago.iva)}</span>
+                    </div>
+                    <div className="desglose-fila total">
+                      <span>TOTAL A PAGAR:</span>
+                      <span>{formatMoney(simulacionPago.total)}</span>
+                    </div>
+                  </div>
 
-      {/* Footer */}
-      <div className="ticket-footer-preview">
-        <div className="ticket-notas">
-          <p><strong>Nota:</strong> Este es un preview del ticket que se generará al registrar el empeño.</p>
-          <p className="ticket-garantia">* Artículo en garantía hasta 30 días después del vencimiento</p>
-          <p className="ticket-refrendo">* El refrendo mensual cubre únicamente intereses + IVA. El capital se paga al recuperar la prenda.</p>
-        </div>
-      </div>
+                  {/* Información de pago */}
+                  <div className="ticket-pago-info">
+                    <div className="pago-info-item">
+                      <span className="label">Método de pago sugerido:</span>
+                      <span className="valor">Efectivo / Transferencia</span>
+                    </div>
+                    <div className="pago-info-item">
+                      <span className="label">Refrendo mensual:</span>
+                      <span className="valor">{formatMoney(simulacionPago.refrendo)}</span>
+                    </div>
+                  </div>
 
-      {/* Sello */}
-      <div className="ticket-sello">
-        <p>Sello digital: PREVIEW-{Date.now().toString(36).toUpperCase()}</p>
-        <p>www.ophelina.mx/verificar</p>
-      </div>
-    </div>
-  </div>
-)}
+                  {/* Footer */}
+                  <div className="ticket-footer-preview">
+                    <div className="ticket-notas">
+                      <p><strong>Nota:</strong> Este es un preview del ticket que se generará al registrar el empeño.</p>
+                      <p className="ticket-garantia">* Artículo en garantía hasta 30 días después del vencimiento</p>
+                      <p className="ticket-refrendo">* El refrendo mensual cubre únicamente intereses + IVA. El capital se paga al recuperar la prenda.</p>
+                    </div>
+                  </div>
+
+                  {/* Sello */}
+                  <div className="ticket-sello">
+                    <p>Sello digital: PREVIEW-{Date.now().toString(36).toUpperCase()}</p>
+                    <p>www.ophelina.mx/verificar</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Fecha de Vencimiento */}
             <div className="form-group">
               <label>

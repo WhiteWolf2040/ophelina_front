@@ -216,7 +216,7 @@ export default function Navbar() {
               <span>Empeños</span>
             </NavLink>
           </li>
-          <li>
+        {/*   <li>
             <NavLink
               to="/tarjetas"
               className={({ isActive }) =>
@@ -226,7 +226,7 @@ export default function Navbar() {
               <CreditCardIcon />
               <span>Tarjetas</span>
             </NavLink>
-          </li>
+          </li> */}
           <li>
             <NavLink
               to="/ophelina"

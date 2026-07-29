@@ -71,20 +71,17 @@ export default function MisEmpenos() {
   const calcularRepartoAbono = (monto, cotizacionData) => {
     if (!monto || !cotizacionData || monto <= 0) return null;
 
-    let restante = monto;
+    const deudaTotal = (cotizacionData.capital || 0) + (cotizacionData.interes || 0) + (cotizacionData.iva_interes || 0);
+    if (deudaTotal <= 0) return null;
 
-    const ivaPagado = Math.min(restante, cotizacionData.iva_interes);
-    restante = Math.max(0, restante - ivaPagado);
-
-    const interesPagado = Math.min(restante, cotizacionData.interes);
-    restante = Math.max(0, restante - interesPagado);
-
-    const capitalPagado = Math.min(restante, cotizacionData.capital);
+    const capitalPagado = Math.round(monto * (cotizacionData.capital / deudaTotal) * 100) / 100;
+    const ivaPagado = Math.round(monto * (cotizacionData.iva_interes / deudaTotal) * 100) / 100;
+    const interesPagado = Math.round((monto - capitalPagado - ivaPagado) * 100) / 100;
 
     return { ivaPagado, interesPagado, capitalPagado };
   };
 
-  const repartoPreview = montoValido && cotizacion && !excedeSaldo
+  const repartoPreview = tipoAccion === "abono" && montoValido && cotizacion && !excedeSaldo
     ? calcularRepartoAbono(montoNum, cotizacion)
     : null;
 
@@ -119,6 +116,20 @@ export default function MisEmpenos() {
       return;
     }
 
+    if (tipoAccion === "refrendo") {
+      try {
+        setErrorPago(null);
+        await iniciarAbono(empeñoSeleccionado.id, null, "refrendo");
+      } catch (err) {
+        console.error("Error al iniciar el refrendo:", err);
+        setErrorPago(
+          err.response?.data?.message || err.message || "Error al iniciar el refrendo, intenta de nuevo"
+        );
+      }
+      return;
+    }
+
+    // prórroga
     try {
       setErrorPago(null);
       await iniciarAbono(empeñoSeleccionado.id, null, "prorroga");
@@ -269,7 +280,7 @@ export default function MisEmpenos() {
         )}
       </div>
 
-      {/* POPUP DE PAGO (ABONO o PRÓRROGA) */}
+      {/* POPUP DE PAGO (ABONO, REFRENDO o PRÓRROGA) */}
       {popupAbierto === 'pagar' && empeñoSeleccionado && (
         <div className="popup-overlay" onClick={cerrarPopup}>
           <div className="popup-content" onClick={(e) => e.stopPropagation()}>
@@ -289,6 +300,18 @@ export default function MisEmpenos() {
                 >
                   Abonar
                 </button>
+
+                {/* ✅ Solo se muestra si el empeño admite refrendo (plazo > 1 mes y no vencido) */}
+                {cotizacion?.aplica_refrendo && (
+                  <button
+                    type="button"
+                    className={`pago-tab ${tipoAccion === "refrendo" ? "activo" : ""}`}
+                    onClick={() => { setTipoAccion("refrendo"); setErrorPago(null); }}
+                  >
+                    Refrendo mensual
+                  </button>
+                )}
+
                 <button
                   type="button"
                   className={`pago-tab ${tipoAccion === "prorroga" ? "activo" : ""}`}
@@ -343,6 +366,7 @@ export default function MisEmpenos() {
                 </div>
               )}
 
+              {/* ✅ 3 vías reales, ya no anidado dentro del bloque de abono */}
               {tipoAccion === "abono" ? (
                 <div className="pago-input-group">
                   <label>Monto a abonar:</label>
@@ -379,9 +403,10 @@ export default function MisEmpenos() {
                           <span>${formatMoney(repartoPreview.capitalPagado)}</span>
                         </div>
                         <small className="pago-reparto-nota">
-                          El interés y el IVA son el costo del préstamo por el periodo ya
-                          transcurrido, se cobran primero. El resto de tu abono
-                          reduce directamente lo que debes.
+                          Tu abono se reparte proporcionalmente entre capital e
+                          interés + IVA, según cuánto representa cada uno de tu
+                          deuda total — así siempre bajas tu capital, sin importar
+                          el monto que abones.
                         </small>
                       </div>
                       <small className="pago-ayuda">
@@ -397,6 +422,18 @@ export default function MisEmpenos() {
                       Se te redirigirá a la pasarela de pago segura para completarlo.
                     </small>
                   )}
+                </div>
+              ) : tipoAccion === "refrendo" ? (
+                <div className="pago-input-group">
+                  <small className="pago-ayuda">
+                    El refrendo cubre el interés{cotizacion?.mora > 0 ? " + la mora" : ""} de
+                    este mes, más IVA
+                    {cotizacion ? (
+                      <> — un total de <strong>${formatMoney(cotizacion.monto_refrendo)}</strong></>
+                    ) : null}
+                    —, y <strong>mantiene vivo tu préstamo sin mover tu fecha de vencimiento</strong>.
+                    No abona capital.
+                  </small>
                 </div>
               ) : (
                 <div className="pago-input-group">
@@ -436,7 +473,9 @@ export default function MisEmpenos() {
                   ? "Redirigiendo..."
                   : tipoAccion === "abono"
                     ? "Confirmar Abono"
-                    : "Confirmar Prórroga"}
+                    : tipoAccion === "refrendo"
+                      ? "Confirmar Refrendo"
+                      : "Confirmar Prórroga"}
               </button>
             </div>
           </div>
@@ -484,7 +523,10 @@ export default function MisEmpenos() {
                       <span>{empeñoSeleccionado.prestado}</span>
                     </div>
                     <div className="financiero-item">
-                      <span>Intereses:</span>
+                      <span>
+                        Intereses ({empeñoSeleccionado.tasaPorcentaje ?? '—'}% a {empeñoSeleccionado.plazoMeses}{' '}
+                        {empeñoSeleccionado.plazoMeses === 1 ? 'mes' : 'meses'}):
+                      </span>
                       <span>{empeñoSeleccionado.intereses}</span>
                     </div>
                     <div className="financiero-item">
