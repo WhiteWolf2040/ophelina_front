@@ -104,15 +104,6 @@ export default function MisEmpenos() {
       interesPagado,
       ivaPagado,
       interesMasIva: Math.round((interesPagado + ivaPagado) * 100) / 100,
-      // ✅ Para depuración (opcional, puedes eliminarlo en producción)
-      debug: {
-        monto,
-        deudaTotal,
-        porcentajeAbono: porcentajeAbono * 100,
-        capital: capital,
-        interes: interes,
-        iva: ivaInteres
-      }
     };
   };
 
@@ -161,7 +152,7 @@ export default function MisEmpenos() {
       return;
     }
 
-    // prórroga
+    // prórroga (se mantiene por compatibilidad)
     try {
       setErrorPago(null);
       await iniciarAbono(empeñoSeleccionado.id, null, "prorroga");
@@ -282,7 +273,7 @@ export default function MisEmpenos() {
                           className="me-btn-pagar"
                           onClick={() => abrirPopup('pagar', empeño)}
                         >
-                          Abonar / Prorrogar
+                          Abonar / Refrendar
                         </button>
                         <button
                           className="me-btn-ver-detalles"
@@ -339,7 +330,7 @@ export default function MisEmpenos() {
                     className={`pago-tab ${tipoAccion === "refrendo" ? "activo" : ""}`}
                     onClick={() => { setTipoAccion("refrendo"); setErrorPago(null); }}
                   >
-                    Refrendo mensual
+                    Refrendo ({cotizacion?.plazo_meses || 1} meses)
                   </button>
                 )}
 
@@ -348,7 +339,7 @@ export default function MisEmpenos() {
                   className={`pago-tab ${tipoAccion === "prorroga" ? "activo" : ""}`}
                   onClick={() => { setTipoAccion("prorroga"); setErrorPago(null); }}
                 >
-                  Prorrogar 30 días
+                  Prórroga 30 días
                 </button>
               </div>
 
@@ -394,6 +385,21 @@ export default function MisEmpenos() {
                         : cotizacion.fecha_vencimiento_actual}
                     </span>
                   </div>
+                  {/* ✅ MOSTRAR NUEVA FECHA PARA REFRENDO */}
+                  {tipoAccion === "refrendo" && cotizacion.nueva_fecha_vencimiento && (
+                    <div className="pago-item pago-item-destacado" style={{ 
+                      borderTop: '2px solid #27ae60', 
+                      paddingTop: '12px', 
+                      marginTop: '8px'
+                    }}>
+                      <span className="pago-label" style={{ color: '#27ae60', fontWeight: 'bold' }}>
+                        ✅ Nueva fecha de vencimiento:
+                      </span>
+                      <span className="pago-valor" style={{ color: '#27ae60', fontWeight: 'bold' }}>
+                        {cotizacion.nueva_fecha_vencimiento}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -454,14 +460,38 @@ export default function MisEmpenos() {
                 </div>
               ) : tipoAccion === "refrendo" ? (
                 <div className="pago-input-group">
-                  <small className="pago-ayuda">
-                    El refrendo cubre el interés{cotizacion?.mora > 0 ? " + la mora" : ""} de
-                    este mes, más IVA
+                  <small className="pago-ayuda" style={{ fontSize: '0.9rem', lineHeight: '1.6' }}>
+                    <strong>¿Qué es el refrendo?</strong><br />
+                    El refrendo paga los intereses del periodo completo 
+                    <strong> ({cotizacion?.plazo_meses || 1} meses)</strong> y 
+                    <strong style={{ color: '#27ae60' }}> extiende tu fecha de vencimiento 
+                    por {cotizacion?.plazo_meses || 1} meses más</strong>.
+                    <br /><br />
                     {cotizacion ? (
-                      <> — un total de <strong>${formatMoney(cotizacion.monto_refrendo)}</strong></>
+                      <>
+                        <span style={{ fontSize: '1.1rem' }}>
+                          Total a pagar: <strong>${formatMoney(cotizacion.monto_refrendo)}</strong>
+                        </span>
+                        <br />
+                        <span style={{ fontSize: '0.85rem', color: '#666' }}>
+                          (Interés: ${formatMoney(cotizacion.monto_refrendo / 1.16)} + IVA: ${formatMoney(cotizacion.monto_refrendo - (cotizacion.monto_refrendo / 1.16))})
+                        </span>
+                        {cotizacion.mora > 0 && (
+                          <span style={{ display: 'block', color: '#e74c3c', marginTop: '4px' }}>
+                            ⚠ Incluye mora: ${formatMoney(cotizacion.mora)}
+                          </span>
+                        )}
+                      </>
                     ) : null}
-                    —, y <strong>mantiene vivo tu préstamo sin mover tu fecha de vencimiento</strong>.
-                    No abona capital.
+                    <br />
+                    <span style={{ color: '#27ae60', fontWeight: 'bold', display: 'block', marginTop: '8px' }}>
+                      ✅ Nueva fecha de vencimiento: {cotizacion?.nueva_fecha_vencimiento || 'Calculando...'}
+                    </span>
+                    <br />
+                    <span style={{ fontSize: '0.85rem', color: '#666' }}>
+                      <strong>Importante:</strong> El refrendo <strong>no abona capital</strong>, solo paga intereses 
+                      y extiende el plazo. El capital se paga al recuperar la prenda.
+                    </span>
                   </small>
                 </div>
               ) : (
@@ -503,7 +533,7 @@ export default function MisEmpenos() {
                   : tipoAccion === "abono"
                     ? "Confirmar Abono"
                     : tipoAccion === "refrendo"
-                      ? "Confirmar Refrendo"
+                      ? `Confirmar Refrendo (${cotizacion?.plazo_meses || 1} meses)`
                       : "Confirmar Prórroga"}
               </button>
             </div>
