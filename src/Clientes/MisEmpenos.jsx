@@ -94,7 +94,7 @@ export default function MisEmpenos() {
     let totalCalculado = capitalPagado + interesPagado + ivaPagado;
     let diferencia = monto - totalCalculado;
     
-    // ✅ Aplicar la diferencia al capital (el componente más grande)
+    // ✅ Aplicar la diferencia al capital
     if (Math.abs(diferencia) > 0.001) {
       capitalPagado = Math.round((capitalPagado + diferencia) * 100) / 100;
     }
@@ -150,17 +150,6 @@ export default function MisEmpenos() {
         );
       }
       return;
-    }
-
-    // prórroga (se mantiene por compatibilidad)
-    try {
-      setErrorPago(null);
-      await iniciarAbono(empeñoSeleccionado.id, null, "prorroga");
-    } catch (err) {
-      console.error("Error al iniciar la prórroga:", err);
-      setErrorPago(
-        err.response?.data?.message || err.message || "Error al iniciar la prórroga, intenta de nuevo"
-      );
     }
   };
 
@@ -303,7 +292,7 @@ export default function MisEmpenos() {
         )}
       </div>
 
-      {/* POPUP DE PAGO (ABONO, REFRENDO o PRÓRROGA) */}
+      {/* POPUP DE PAGO (ABONO o REFRENDO) */}
       {popupAbierto === 'pagar' && empeñoSeleccionado && (
         <div className="popup-overlay" onClick={cerrarPopup}>
           <div className="popup-content" onClick={(e) => e.stopPropagation()}>
@@ -333,14 +322,6 @@ export default function MisEmpenos() {
                     Refrendo ({cotizacion?.plazo_meses || 1} meses)
                   </button>
                 )}
-
-                <button
-                  type="button"
-                  className={`pago-tab ${tipoAccion === "prorroga" ? "activo" : ""}`}
-                  onClick={() => { setTipoAccion("prorroga"); setErrorPago(null); }}
-                >
-                  Prórroga 30 días
-                </button>
               </div>
 
               {cargandoCotizacion && (
@@ -385,7 +366,7 @@ export default function MisEmpenos() {
                         : cotizacion.fecha_vencimiento_actual}
                     </span>
                   </div>
-                  {/* ✅ MOSTRAR NUEVA FECHA PARA REFRENDO */}
+                  {/*  MOSTRAR NUEVA FECHA PARA REFRENDO */}
                   {tipoAccion === "refrendo" && cotizacion.nueva_fecha_vencimiento && (
                     <div className="pago-item pago-item-destacado" style={{ 
                       borderTop: '2px solid #27ae60', 
@@ -445,7 +426,7 @@ export default function MisEmpenos() {
                         </small>
                       </div>
                       <small className="pago-ayuda">
-                        ✅ Tu saldo total pendiente bajará ${formatMoney(montoNum)} pesos completos,
+                        Tu saldo total pendiente bajará ${formatMoney(montoNum)} pesos completos,
                         sin importar cómo se reparta arriba.
                       </small>
                     </>
@@ -458,7 +439,8 @@ export default function MisEmpenos() {
                     </small>
                   )}
                 </div>
-              ) : tipoAccion === "refrendo" ? (
+              ) : (
+                // REFRENDO
                 <div className="pago-input-group">
                   <small className="pago-ayuda" style={{ fontSize: '0.9rem', lineHeight: '1.6' }}>
                     <strong>¿Qué es el refrendo?</strong><br />
@@ -494,17 +476,6 @@ export default function MisEmpenos() {
                     </span>
                   </small>
                 </div>
-              ) : (
-                <div className="pago-input-group">
-                  <small className="pago-ayuda">
-                    La prórroga cobra el interés{cotizacion?.mora > 0 ? " + la mora" : ""} de tu
-                    cuota actual, más IVA
-                    {cotizacion ? (
-                      <> — un total de <strong>${formatMoney(cotizacion.monto_prorroga)}</strong></>
-                    ) : null}
-                    —, y <strong>extiende tu fecha de vencimiento 30 días</strong>. No abona capital.
-                  </small>
-                </div>
               )}
 
               {errorPago && (
@@ -532,9 +503,7 @@ export default function MisEmpenos() {
                   ? "Redirigiendo..."
                   : tipoAccion === "abono"
                     ? "Confirmar Abono"
-                    : tipoAccion === "refrendo"
-                      ? `Confirmar Refrendo (${cotizacion?.plazo_meses || 1} meses)`
-                      : "Confirmar Prórroga"}
+                    : `Confirmar Refrendo (${cotizacion?.plazo_meses || 1} meses)`}
               </button>
             </div>
           </div>
