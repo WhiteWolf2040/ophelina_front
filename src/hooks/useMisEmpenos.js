@@ -9,7 +9,7 @@ export function useMisEmpenos() {
     const [error, setError] = useState(null);
     const [redirigiendoPago, setRedirigiendoPago] = useState(false);
 
-    // ✅ NUEVO: cotización (capital/interés/mora/IVA) del empeño que se está pagando
+    // ✅ Cotización (capital/interés/mora/IVA) del empeño que se está pagando
     const [cotizacion, setCotizacion] = useState(null);
     const [cargandoCotizacion, setCargandoCotizacion] = useState(false);
     const [errorCotizacion, setErrorCotizacion] = useState(null);

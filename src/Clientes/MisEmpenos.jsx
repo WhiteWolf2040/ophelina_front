@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./MisEmpenos.css";
 import Navbar from "../ClientesNav/Navbar";
 import { useMisEmpenos } from "../hooks/useMisEmpenos";
 
 const PLACEHOLDER_IMAGE = "/placeholder.png";
 
-//  Formateo consistente con separador de miles
+// Formateo consistente con separador de miles
 const formatMoney = (n) =>
   Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -29,6 +29,7 @@ export default function MisEmpenos() {
   const [montoPago, setMontoPago] = useState("");
   const [errorPago, setErrorPago] = useState(null);
   const [tipoAccion, setTipoAccion] = useState("abono");
+  const [repartoKey, setRepartoKey] = useState(0);
 
   const empenosFiltrados = empenos.filter((empeño) =>
     (
@@ -41,7 +42,7 @@ export default function MisEmpenos() {
       .includes(busqueda.toLowerCase())
   );
 
-const abrirPopup = async (tipo, empeño) => {
+  const abrirPopup = async (tipo, empeño) => {
     setEmpeñoSeleccionado(empeño);
     setPopupAbierto(tipo);
     setMontoPago("");
@@ -50,12 +51,12 @@ const abrirPopup = async (tipo, empeño) => {
     setRepartoKey(prev => prev + 1);
 
     if (tipo === 'pagar') {
-        // ✅ Forzar recarga de la cotización
-        await cargarCotizacion(empeño.id);
-        // ✅ Después de cargar, forzar recalculo del reparto
-        setRepartoKey(prev => prev + 1);
+      //  Forzar recarga de la cotización
+      await cargarCotizacion(empeño.id);
+      //  Después de cargar, forzar recalculo del reparto
+      setRepartoKey(prev => prev + 1);
     }
-};
+  };
 
   const cerrarPopup = () => {
     setPopupAbierto(null);
@@ -63,6 +64,7 @@ const abrirPopup = async (tipo, empeño) => {
     setMontoPago("");
     setErrorPago(null);
     setTipoAccion("abono");
+    setRepartoKey(0);
   };
 
   const montoNum = parseFloat(montoPago);
@@ -70,35 +72,35 @@ const abrirPopup = async (tipo, empeño) => {
   const saldoMaximo = cotizacion?.saldo_pendiente_con_mora ?? null;
   const excedeSaldo = montoValido && saldoMaximo !== null && montoNum > saldoMaximo;
 
-  //  FUNCIÓN CORREGIDA - Calcula el reparto del abono
+  // FUNCIÓN CORREGIDA - Calcula el reparto del abono
   const calcularRepartoAbono = (monto, cotizacionData) => {
     if (!monto || !cotizacionData || monto <= 0) return null;
 
-    const capital = cotizacionData.capital || 0;
-    const interes = cotizacionData.interes || 0;
-    const ivaInteres = cotizacionData.iva_interes || 0;
+    const capital = Number(cotizacionData.capital) || 0;
+    const interes = Number(cotizacionData.interes) || 0;
+    const ivaInteres = Number(cotizacionData.iva_interes) || 0;
     const deudaTotal = capital + interes + ivaInteres;
 
     if (deudaTotal <= 0) return null;
 
-    //  Calcular el porcentaje que representa el abono sobre la deuda total
+    // Calcular el porcentaje que representa el abono sobre la deuda total
     const porcentajeAbono = monto / deudaTotal;
 
-    //  Aplicar el mismo porcentaje a cada componente
+    // Aplicar el mismo porcentaje a cada componente
     let capitalPagado = capital * porcentajeAbono;
     let interesPagado = interes * porcentajeAbono;
     let ivaPagado = ivaInteres * porcentajeAbono;
 
-    //  Redondear a 2 decimales
+    // Redondear a 2 decimales
     capitalPagado = Math.round(capitalPagado * 100) / 100;
     interesPagado = Math.round(interesPagado * 100) / 100;
     ivaPagado = Math.round(ivaPagado * 100) / 100;
 
-    //  Ajustar por redondeo para que la suma sea exacta
+    // Ajustar por redondeo para que la suma sea exacta
     let totalCalculado = capitalPagado + interesPagado + ivaPagado;
     let diferencia = monto - totalCalculado;
     
-    //  Aplicar la diferencia al capital
+    // Aplicar la diferencia al capital
     if (Math.abs(diferencia) > 0.001) {
       capitalPagado = Math.round((capitalPagado + diferencia) * 100) / 100;
     }
@@ -110,6 +112,13 @@ const abrirPopup = async (tipo, empeño) => {
       interesMasIva: Math.round((interesPagado + ivaPagado) * 100) / 100,
     };
   };
+
+  //  Forzar recalculo cuando cambia tipoAccion
+  useEffect(() => {
+    if (tipoAccion === "abono" && montoValido && cotizacion) {
+      setRepartoKey(prev => prev + 1);
+    }
+  }, [tipoAccion, cotizacion?.capital, cotizacion?.interes, cotizacion?.iva_interes]);
 
   const repartoPreview = tipoAccion === "abono" && montoValido && cotizacion && !excedeSaldo
     ? calcularRepartoAbono(montoNum, cotizacion)
@@ -163,6 +172,12 @@ const abrirPopup = async (tipo, empeño) => {
       setMontoPago(valor);
       setErrorPago(null);
     }
+  };
+
+  const cambiarPestaña = (accion) => {
+    setTipoAccion(accion);
+    setErrorPago(null);
+    setRepartoKey(prev => prev + 1);
   };
 
   return (
@@ -312,7 +327,7 @@ const abrirPopup = async (tipo, empeño) => {
                 <button
                   type="button"
                   className={`pago-tab ${tipoAccion === "abono" ? "activo" : ""}`}
-                  onClick={() => { setTipoAccion("abono"); setErrorPago(null); }}
+                  onClick={() => cambiarPestaña("abono")}
                 >
                   Abonar
                 </button>
@@ -321,7 +336,7 @@ const abrirPopup = async (tipo, empeño) => {
                   <button
                     type="button"
                     className={`pago-tab ${tipoAccion === "refrendo" ? "activo" : ""}`}
-                    onClick={() => { setTipoAccion("refrendo"); setErrorPago(null); }}
+                    onClick={() => cambiarPestaña("refrendo")}
                   >
                     Refrendo ({cotizacion?.plazo_meses || 1} meses)
                   </button>
@@ -370,7 +385,7 @@ const abrirPopup = async (tipo, empeño) => {
                         : cotizacion.fecha_vencimiento_actual}
                     </span>
                   </div>
-                  {/*  MOSTRAR NUEVA FECHA PARA REFRENDO */}
+                  {/* MOSTRAR NUEVA FECHA PARA REFRENDO */}
                   {tipoAccion === "refrendo" && cotizacion.nueva_fecha_vencimiento && (
                     <div className="pago-item pago-item-destacado" style={{ 
                       borderTop: '2px solid #27ae60', 
@@ -407,7 +422,7 @@ const abrirPopup = async (tipo, empeño) => {
                   )}
 
                   {repartoPreview ? (
-                    <>
+                    <div key={repartoKey}>
                       <div className="pago-reparto-preview">
                         <p className="pago-reparto-titulo">
                           Así se aplicará tu abono de ${formatMoney(montoNum)}:
@@ -430,10 +445,10 @@ const abrirPopup = async (tipo, empeño) => {
                         </small>
                       </div>
                       <small className="pago-ayuda">
-                        Tu saldo total pendiente bajará ${formatMoney(montoNum)} pesos completos,
+                         Tu saldo total pendiente bajará ${formatMoney(montoNum)} pesos completos,
                         sin importar cómo se reparta arriba.
                       </small>
-                    </>
+                    </div>
                   ) : (
                     <small className="pago-ayuda">
                       Puedes abonar cualquier monto hasta el saldo restante

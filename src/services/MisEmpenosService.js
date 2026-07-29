@@ -5,7 +5,7 @@ const MisEmpenosService = {
     // Listado de empeños del cliente autenticado
     getMisEmpenos: async () => {
         try {
-            const response = await api.get('/mis-empenos');
+            const response = await api.get('/cliente/empenos');
             return response.data;
         } catch (error) {
             console.error('Error en getMisEmpenos:', error);
@@ -16,7 +16,7 @@ const MisEmpenosService = {
     // Resumen/estadísticas
     getResumen: async () => {
         try {
-            const response = await api.get('/mis-empenos/resumen');
+            const response = await api.get('/cliente/empenos/resumen');
             return response.data;
         } catch (error) {
             console.error('Error en getResumen:', error);
@@ -27,7 +27,7 @@ const MisEmpenosService = {
     // Detalle de un empeño específico
     getDetalle: async (id) => {
         try {
-            const response = await api.get(`/mis-empenos/${id}`);
+            const response = await api.get(`/cliente/empenos/${id}`);
             return response.data;
         } catch (error) {
             console.error('Error en getDetalle:', error);
@@ -38,7 +38,7 @@ const MisEmpenosService = {
     // ✅ Obtener cotización para un empeño específico (capital, interés, IVA, mora, refrendo)
     obtenerCotizacion: async (idEmpeno) => {
         try {
-            const response = await api.get(`/abonos/${idEmpeno}/cotizacion`);
+            const response = await api.get(`/empenos/${idEmpeno}/cotizacion`);
             return response.data;
         } catch (error) {
             console.error('Error en obtenerCotizacion:', error);
@@ -55,13 +55,34 @@ const MisEmpenosService = {
             if (tipo === 'abono' && monto !== null && monto !== undefined) {
                 body.monto = monto;
             }
-            const response = await api.post(`/abonos/${idEmpeno}/sesion-pago`, body);
+            const response = await api.post(`/empenos/${idEmpeno}/abono`, body);
             return response.data;
         } catch (error) {
             console.error('Error en crearSesionAbono:', error);
             throw error;
         }
     },
+
+    // ✅ Tickets del cliente
+    getTickets: async () => {
+        try {
+            const response = await api.get('/cliente/tickets');
+            return response.data;
+        } catch (error) {
+            console.error('Error en getTickets:', error);
+            throw error;
+        }
+    },
+
+    getTicketDetalle: async (id) => {
+        try {
+            const response = await api.get(`/cliente/tickets/${id}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error en getTicketDetalle:', error);
+            throw error;
+        }
+    }
 };
 
 export default MisEmpenosService;
