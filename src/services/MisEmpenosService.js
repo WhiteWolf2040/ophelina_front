@@ -4,41 +4,63 @@ import api from '../config/api';
 const MisEmpenosService = {
     // Listado de empeños del cliente autenticado
     getMisEmpenos: async () => {
-        const response = await api.get('/cliente/empenos');
-        return response.data;
+        try {
+            const response = await api.get('/mis-empenos');
+            return response.data;
+        } catch (error) {
+            console.error('Error en getMisEmpenos:', error);
+            throw error;
+        }
     },
 
     // Resumen/estadísticas
     getResumen: async () => {
-        const response = await api.get('/cliente/empenos/resumen');
-        return response.data;
+        try {
+            const response = await api.get('/mis-empenos/resumen');
+            return response.data;
+        } catch (error) {
+            console.error('Error en getResumen:', error);
+            throw error;
+        }
     },
 
     // Detalle de un empeño específico
     getDetalle: async (id) => {
-        const response = await api.get(`/cliente/empenos/${id}`);
-        return response.data;
-    },
-
-    // Crear sesión de pago en Stripe para abonar o prorrogar un empeño.
-    // monto es opcional (solo aplica para tipo='abono'; si no se manda,
-    // el backend sugiere el saldo pendiente). Para tipo='prorroga' el
-    // backend ignora `monto` y calcula el cobro real (interés + IVA).
-    // ✅ NUEVO: se agrega `tipo` al body para que el backend sepa si es
-    // un abono normal o una prórroga.
-    // ✅ NUEVO: desglose (capital/interés/mora/IVA) antes de pagar
-    obtenerCotizacion: async (idEmpeno) => {
-        const response = await api.get(`/empenos/${idEmpeno}/cotizacion`);
-        return response.data;
-    },
-
-    crearSesionAbono: async (idEmpeno, monto = null, tipo = 'abono') => {
-        const body = { tipo };
-        if (monto !== null) {
-            body.monto = monto;
+        try {
+            const response = await api.get(`/mis-empenos/${id}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error en getDetalle:', error);
+            throw error;
         }
-        const response = await api.post(`/empenos/${idEmpeno}/abono`, body);
-        return response.data;
+    },
+
+    // ✅ Obtener cotización para un empeño específico (capital, interés, IVA, mora, refrendo)
+    obtenerCotizacion: async (idEmpeno) => {
+        try {
+            const response = await api.get(`/abonos/${idEmpeno}/cotizacion`);
+            return response.data;
+        } catch (error) {
+            console.error('Error en obtenerCotizacion:', error);
+            throw error;
+        }
+    },
+
+    // ✅ Crear sesión de pago en Stripe para abonar o refrendar un empeño
+    // tipo: 'abono' (monto libre) o 'refrendo' (monto fijo = interés + IVA del periodo completo)
+    crearSesionAbono: async (idEmpeno, monto = null, tipo = 'abono') => {
+        try {
+            const body = { tipo };
+            // Solo enviar monto si es abono y se proporcionó
+            if (tipo === 'abono' && monto !== null && monto !== undefined) {
+                body.monto = monto;
+            }
+            const response = await api.post(`/abonos/${idEmpeno}/sesion-pago`, body);
+            return response.data;
+        } catch (error) {
+            console.error('Error en crearSesionAbono:', error);
+            throw error;
+        }
     },
 };
 

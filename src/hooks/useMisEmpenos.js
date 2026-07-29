@@ -21,11 +21,30 @@ export function useMisEmpenos() {
         try {
             const result = await MisEmpenosService.obtenerCotizacion(idEmpeno);
             if (result.success) {
-                setCotizacion(result.data);
+                // ✅ Asegurar que todos los valores numéricos vengan como números
+                const data = result.data;
+                setCotizacion({
+                    capital: Number(data.capital) || 0,
+                    interes: Number(data.interes) || 0,
+                    iva_interes: Number(data.iva_interes) || 0,
+                    mora: Number(data.mora) || 0,
+                    dias_atraso: Number(data.dias_atraso) || 0,
+                    saldo_pendiente: Number(data.saldo_pendiente) || 0,
+                    saldo_pendiente_con_mora: Number(data.saldo_pendiente_con_mora) || 0,
+                    plazo_meses: Number(data.plazo_meses) || 1,
+                    tasa_porcentaje: Number(data.tasa_porcentaje) || 15,
+                    aplica_refrendo: data.aplica_refrendo || false,
+                    monto_refrendo: Number(data.monto_refrendo) || 0,
+                    refrendos_pagados: Number(data.refrendos_pagados) || 0,
+                    refrendos_permitidos: Number(data.refrendos_permitidos) || 0,
+                    fecha_vencimiento_actual: data.fecha_vencimiento_actual || '',
+                    nueva_fecha_vencimiento: data.nueva_fecha_vencimiento || '',
+                });
             } else {
                 setErrorCotizacion(result.message || 'No se pudo calcular la cotización');
             }
         } catch (err) {
+            console.error('Error al cargar cotización:', err);
             setErrorCotizacion(err.response?.data?.message || err.message || 'No se pudo calcular la cotización');
         } finally {
             setCargandoCotizacion(false);
@@ -37,7 +56,18 @@ export function useMisEmpenos() {
             setLoading(true);
             setError(null);
             const data = await MisEmpenosService.getMisEmpenos();
-            setEmpenos(data.data || []);
+            // ✅ Asegurar que los empeños tengan valores numéricos
+            const empenosData = (data.data || []).map(emp => ({
+                ...emp,
+                prestadoNumerico: Number(emp.prestadoNumerico) || 0,
+                intereses: Number(emp.intereses) || 0,
+                totalPagarNumerico: Number(emp.totalPagarNumerico) || 0,
+                moraNumerica: Number(emp.moraNumerica) || 0,
+                saldoRestanteNumerico: Number(emp.saldoRestanteNumerico) || 0,
+                plazoMeses: Number(emp.plazoMeses) || 1,
+                tasaPorcentaje: Number(emp.tasaPorcentaje) || 15,
+            }));
+            setEmpenos(empenosData);
         } catch (err) {
             console.error('Error al cargar empeños:', err);
             setError(err.response?.data?.message || err.message || 'Error al cargar tus empeños');
@@ -60,11 +90,13 @@ export function useMisEmpenos() {
         cargarResumen();
     }, [cargarEmpenos, cargarResumen]);
 
-    // Inicia el abono O la prórroga: crea la sesión de Stripe y redirige al checkout.
-    // ✅ NUEVO parámetro `tipo`: 'abono' (default, monto libre elegido por el
-    // cliente) o 'prorroga' (monto fijo = intereses + IVA, extiende el
-    // vencimiento 30 días). Para 'prorroga' el monto se ignora: lo calcula
-    // y lo regresa el backend (ver AbonoController::crearSesionPago).
+    /**
+     * Inicia el pago (abono o refrendo) creando la sesión de Stripe y redirigiendo al checkout.
+     * 
+     * @param {number} idEmpeno - ID del empeño
+     * @param {number|null} monto - Monto a abonar (solo para 'abono')
+     * @param {string} tipo - 'abono' o 'refrendo'
+     */
     const iniciarAbono = async (idEmpeno, monto, tipo = 'abono') => {
         setRedirigiendoPago(true);
         try {

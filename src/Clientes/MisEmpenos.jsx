@@ -5,7 +5,7 @@ import { useMisEmpenos } from "../hooks/useMisEmpenos";
 
 const PLACEHOLDER_IMAGE = "/placeholder.png";
 
-// ✅ Formateo consistente con separador de miles
+//  Formateo consistente con separador de miles
 const formatMoney = (n) =>
   Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -41,17 +41,21 @@ export default function MisEmpenos() {
       .includes(busqueda.toLowerCase())
   );
 
-  const abrirPopup = (tipo, empeño) => {
+const abrirPopup = async (tipo, empeño) => {
     setEmpeñoSeleccionado(empeño);
     setPopupAbierto(tipo);
     setMontoPago("");
     setErrorPago(null);
     setTipoAccion("abono");
+    setRepartoKey(prev => prev + 1);
 
     if (tipo === 'pagar') {
-      cargarCotizacion(empeño.id);
+        // ✅ Forzar recarga de la cotización
+        await cargarCotizacion(empeño.id);
+        // ✅ Después de cargar, forzar recalculo del reparto
+        setRepartoKey(prev => prev + 1);
     }
-  };
+};
 
   const cerrarPopup = () => {
     setPopupAbierto(null);
@@ -66,7 +70,7 @@ export default function MisEmpenos() {
   const saldoMaximo = cotizacion?.saldo_pendiente_con_mora ?? null;
   const excedeSaldo = montoValido && saldoMaximo !== null && montoNum > saldoMaximo;
 
-  // ✅ FUNCIÓN CORREGIDA - Calcula el reparto del abono
+  //  FUNCIÓN CORREGIDA - Calcula el reparto del abono
   const calcularRepartoAbono = (monto, cotizacionData) => {
     if (!monto || !cotizacionData || monto <= 0) return null;
 
@@ -77,24 +81,24 @@ export default function MisEmpenos() {
 
     if (deudaTotal <= 0) return null;
 
-    // ✅ Calcular el porcentaje que representa el abono sobre la deuda total
+    //  Calcular el porcentaje que representa el abono sobre la deuda total
     const porcentajeAbono = monto / deudaTotal;
 
-    // ✅ Aplicar el mismo porcentaje a cada componente
+    //  Aplicar el mismo porcentaje a cada componente
     let capitalPagado = capital * porcentajeAbono;
     let interesPagado = interes * porcentajeAbono;
     let ivaPagado = ivaInteres * porcentajeAbono;
 
-    // ✅ Redondear a 2 decimales
+    //  Redondear a 2 decimales
     capitalPagado = Math.round(capitalPagado * 100) / 100;
     interesPagado = Math.round(interesPagado * 100) / 100;
     ivaPagado = Math.round(ivaPagado * 100) / 100;
 
-    // ✅ Ajustar por redondeo para que la suma sea exacta
+    //  Ajustar por redondeo para que la suma sea exacta
     let totalCalculado = capitalPagado + interesPagado + ivaPagado;
     let diferencia = monto - totalCalculado;
     
-    // ✅ Aplicar la diferencia al capital
+    //  Aplicar la diferencia al capital
     if (Math.abs(diferencia) > 0.001) {
       capitalPagado = Math.round((capitalPagado + diferencia) * 100) / 100;
     }
@@ -374,7 +378,7 @@ export default function MisEmpenos() {
                       marginTop: '8px'
                     }}>
                       <span className="pago-label" style={{ color: '#27ae60', fontWeight: 'bold' }}>
-                        ✅ Nueva fecha de vencimiento:
+                         Nueva fecha de vencimiento:
                       </span>
                       <span className="pago-valor" style={{ color: '#27ae60', fontWeight: 'bold' }}>
                         {cotizacion.nueva_fecha_vencimiento}
@@ -467,7 +471,7 @@ export default function MisEmpenos() {
                     ) : null}
                     <br />
                     <span style={{ color: '#27ae60', fontWeight: 'bold', display: 'block', marginTop: '8px' }}>
-                      ✅ Nueva fecha de vencimiento: {cotizacion?.nueva_fecha_vencimiento || 'Calculando...'}
+                       Nueva fecha de vencimiento: {cotizacion?.nueva_fecha_vencimiento || 'Calculando...'}
                     </span>
                     <br />
                     <span style={{ fontSize: '0.85rem', color: '#666' }}>
