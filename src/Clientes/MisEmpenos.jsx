@@ -5,7 +5,6 @@ import { useMisEmpenos } from "../hooks/useMisEmpenos";
 
 const PLACEHOLDER_IMAGE = "/placeholder.png";
 
-// Formateo consistente con separador de miles
 const formatMoney = (n) =>
   Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -29,7 +28,14 @@ export default function MisEmpenos() {
   const [montoPago, setMontoPago] = useState("");
   const [errorPago, setErrorPago] = useState(null);
   const [tipoAccion, setTipoAccion] = useState("abono");
-  const [repartoKey, setRepartoKey] = useState(0);
+
+  // ✅ NUEVO: reparto vive en su propio estado, actualizado por un efecto
+  // dedicado — ya NO se calcula "en línea" durante el render. Esto elimina
+  // la condición de carrera: sin importar en qué momento llegue la
+  // cotización de la red, este efecto se vuelve a ejecutar en cuanto
+  // CUALQUIERA de sus dependencias reales (montoPago, cotizacion,
+  // tipoAccion) cambie — nunca se queda "pegado" con un valor viejo.
+  const [repartoPreview, setRepartoPreview] = useState(null);
 
   const empenosFiltrados = empenos.filter((empeño) =>
     (
@@ -48,13 +54,10 @@ export default function MisEmpenos() {
     setMontoPago("");
     setErrorPago(null);
     setTipoAccion("abono");
-    setRepartoKey(prev => prev + 1);
+    setRepartoPreview(null);
 
     if (tipo === 'pagar') {
-      //  Forzar recarga de la cotización
       await cargarCotizacion(empeño.id);
-      //  Después de cargar, forzar recalculo del reparto
-      setRepartoKey(prev => prev + 1);
     }
   };
 
@@ -64,7 +67,7 @@ export default function MisEmpenos() {
     setMontoPago("");
     setErrorPago(null);
     setTipoAccion("abono");
-    setRepartoKey(0);
+    setRepartoPreview(null);
   };
 
   const montoNum = parseFloat(montoPago);
@@ -72,7 +75,6 @@ export default function MisEmpenos() {
   const saldoMaximo = cotizacion?.saldo_pendiente_con_mora ?? null;
   const excedeSaldo = montoValido && saldoMaximo !== null && montoNum > saldoMaximo;
 
-  // FUNCIÓN CORREGIDA - Calcula el reparto del abono
   const calcularRepartoAbono = (monto, cotizacionData) => {
     if (!monto || !cotizacionData || monto <= 0) return null;
 
@@ -83,24 +85,19 @@ export default function MisEmpenos() {
 
     if (deudaTotal <= 0) return null;
 
-    // Calcular el porcentaje que representa el abono sobre la deuda total
     const porcentajeAbono = monto / deudaTotal;
 
-    // Aplicar el mismo porcentaje a cada componente
     let capitalPagado = capital * porcentajeAbono;
     let interesPagado = interes * porcentajeAbono;
     let ivaPagado = ivaInteres * porcentajeAbono;
 
-    // Redondear a 2 decimales
     capitalPagado = Math.round(capitalPagado * 100) / 100;
     interesPagado = Math.round(interesPagado * 100) / 100;
     ivaPagado = Math.round(ivaPagado * 100) / 100;
 
-    // Ajustar por redondeo para que la suma sea exacta
-    let totalCalculado = capitalPagado + interesPagado + ivaPagado;
-    let diferencia = monto - totalCalculado;
-    
-    // Aplicar la diferencia al capital
+    const totalCalculado = capitalPagado + interesPagado + ivaPagado;
+    const diferencia = monto - totalCalculado;
+
     if (Math.abs(diferencia) > 0.001) {
       capitalPagado = Math.round((capitalPagado + diferencia) * 100) / 100;
     }
@@ -113,16 +110,25 @@ export default function MisEmpenos() {
     };
   };
 
-  //  Forzar recalculo cuando cambia tipoAccion
+  // ✅ EFECTO CLAVE — reemplaza el hack de "repartoKey" + cálculo en render.
+  // Se dispara SIEMPRE que montoPago cambia (cada tecla), o cuando la
+  // cotización termina de llegar de la red, o cuando cambias de pestaña.
+  // No hay forma de que quede "congelado" con un monto viejo: si el
+  // usuario sigue tecleando después de que la cotización llegó, este
+  // efecto vuelve a correr con el montoPago más reciente.
   useEffect(() => {
-    if (tipoAccion === "abono" && montoValido && cotizacion) {
-      setRepartoKey(prev => prev + 1);
+    if (tipoAccion !== "abono") {
+      setRepartoPreview(null);
+      return;
     }
-  }, [tipoAccion, cotizacion?.capital, cotizacion?.interes, cotizacion?.iva_interes]);
 
-  const repartoPreview = tipoAccion === "abono" && montoValido && cotizacion && !excedeSaldo
-    ? calcularRepartoAbono(montoNum, cotizacion)
-    : null;
+    if (!montoValido || !cotizacion || excedeSaldo) {
+      setRepartoPreview(null);
+      return;
+    }
+
+    setRepartoPreview(calcularRepartoAbono(montoNum, cotizacion));
+  }, [montoPago, cotizacion, tipoAccion, excedeSaldo]);
 
   const procesarPago = async () => {
     if (!empeñoSeleccionado) return;
@@ -177,7 +183,6 @@ export default function MisEmpenos() {
   const cambiarPestaña = (accion) => {
     setTipoAccion(accion);
     setErrorPago(null);
-    setRepartoKey(prev => prev + 1);
   };
 
   return (
@@ -385,15 +390,14 @@ export default function MisEmpenos() {
                         : cotizacion.fecha_vencimiento_actual}
                     </span>
                   </div>
-                  {/* MOSTRAR NUEVA FECHA PARA REFRENDO */}
                   {tipoAccion === "refrendo" && cotizacion.nueva_fecha_vencimiento && (
-                    <div className="pago-item pago-item-destacado" style={{ 
-                      borderTop: '2px solid #27ae60', 
-                      paddingTop: '12px', 
+                    <div className="pago-item pago-item-destacado" style={{
+                      borderTop: '2px solid #27ae60',
+                      paddingTop: '12px',
                       marginTop: '8px'
                     }}>
                       <span className="pago-label" style={{ color: '#27ae60', fontWeight: 'bold' }}>
-                         Nueva fecha de vencimiento:
+                        Nueva fecha de vencimiento:
                       </span>
                       <span className="pago-valor" style={{ color: '#27ae60', fontWeight: 'bold' }}>
                         {cotizacion.nueva_fecha_vencimiento}
@@ -422,12 +426,12 @@ export default function MisEmpenos() {
                   )}
 
                   {repartoPreview ? (
-                    <div key={repartoKey}>
+                    <>
                       <div className="pago-reparto-preview">
                         <p className="pago-reparto-titulo">
                           Así se aplicará tu abono de ${formatMoney(montoNum)}:
                         </p>
-                        {(repartoPreview.interesMasIva > 0) && (
+                        {repartoPreview.interesMasIva > 0 && (
                           <div className="pago-reparto-fila">
                             <span>Interés + IVA del periodo:</span>
                             <span>${formatMoney(repartoPreview.interesMasIva)}</span>
@@ -445,10 +449,10 @@ export default function MisEmpenos() {
                         </small>
                       </div>
                       <small className="pago-ayuda">
-                         Tu saldo total pendiente bajará ${formatMoney(montoNum)} pesos completos,
+                        Tu saldo total pendiente bajará ${formatMoney(montoNum)} pesos completos,
                         sin importar cómo se reparta arriba.
                       </small>
-                    </div>
+                    </>
                   ) : (
                     <small className="pago-ayuda">
                       Puedes abonar cualquier monto hasta el saldo restante
@@ -459,13 +463,12 @@ export default function MisEmpenos() {
                   )}
                 </div>
               ) : (
-                // REFRENDO
                 <div className="pago-input-group">
                   <small className="pago-ayuda" style={{ fontSize: '0.9rem', lineHeight: '1.6' }}>
                     <strong>¿Qué es el refrendo?</strong><br />
-                    El refrendo paga los intereses del periodo completo 
-                    <strong> ({cotizacion?.plazo_meses || 1} meses)</strong> y 
-                    <strong style={{ color: '#27ae60' }}> extiende tu fecha de vencimiento 
+                    El refrendo paga los intereses del periodo completo
+                    <strong> ({cotizacion?.plazo_meses || 1} meses)</strong> y
+                    <strong style={{ color: '#27ae60' }}> extiende tu fecha de vencimiento
                     por {cotizacion?.plazo_meses || 1} meses más</strong>.
                     <br /><br />
                     {cotizacion ? (
@@ -486,11 +489,11 @@ export default function MisEmpenos() {
                     ) : null}
                     <br />
                     <span style={{ color: '#27ae60', fontWeight: 'bold', display: 'block', marginTop: '8px' }}>
-                       Nueva fecha de vencimiento: {cotizacion?.nueva_fecha_vencimiento || 'Calculando...'}
+                      Nueva fecha de vencimiento: {cotizacion?.nueva_fecha_vencimiento || 'Calculando...'}
                     </span>
                     <br />
                     <span style={{ fontSize: '0.85rem', color: '#666' }}>
-                      <strong>Importante:</strong> El refrendo <strong>no abona capital</strong>, solo paga intereses 
+                      <strong>Importante:</strong> El refrendo <strong>no abona capital</strong>, solo paga intereses
                       y extiende el plazo. El capital se paga al recuperar la prenda.
                     </span>
                   </small>
