@@ -5,8 +5,7 @@ import { useMisEmpenos } from "../hooks/useMisEmpenos";
 
 const PLACEHOLDER_IMAGE = "/placeholder.png";
 
-// ✅ Formateo consistente con separador de miles, para que números grandes
-// nunca se vean truncados o ambiguos (ej: $5,000,000.00, no "$5.00")
+// ✅ Formateo consistente con separador de miles
 const formatMoney = (n) =>
   Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -62,23 +61,59 @@ export default function MisEmpenos() {
     setTipoAccion("abono");
   };
 
-  // ✅ Cálculo derivado una sola vez por render, reutilizado en todo el JSX.
   const montoNum = parseFloat(montoPago);
   const montoValido = !isNaN(montoNum) && montoNum > 0;
   const saldoMaximo = cotizacion?.saldo_pendiente_con_mora ?? null;
   const excedeSaldo = montoValido && saldoMaximo !== null && montoNum > saldoMaximo;
 
+  // ✅ FUNCIÓN CORREGIDA - Calcula el reparto del abono
   const calcularRepartoAbono = (monto, cotizacionData) => {
     if (!monto || !cotizacionData || monto <= 0) return null;
 
-    const deudaTotal = (cotizacionData.capital || 0) + (cotizacionData.interes || 0) + (cotizacionData.iva_interes || 0);
+    const capital = cotizacionData.capital || 0;
+    const interes = cotizacionData.interes || 0;
+    const ivaInteres = cotizacionData.iva_interes || 0;
+    const deudaTotal = capital + interes + ivaInteres;
+
     if (deudaTotal <= 0) return null;
 
-    const capitalPagado = Math.round(monto * (cotizacionData.capital / deudaTotal) * 100) / 100;
-    const ivaPagado = Math.round(monto * (cotizacionData.iva_interes / deudaTotal) * 100) / 100;
-    const interesPagado = Math.round((monto - capitalPagado - ivaPagado) * 100) / 100;
+    // ✅ Calcular el porcentaje que representa el abono sobre la deuda total
+    const porcentajeAbono = monto / deudaTotal;
 
-    return { ivaPagado, interesPagado, capitalPagado };
+    // ✅ Aplicar el mismo porcentaje a cada componente
+    let capitalPagado = capital * porcentajeAbono;
+    let interesPagado = interes * porcentajeAbono;
+    let ivaPagado = ivaInteres * porcentajeAbono;
+
+    // ✅ Redondear a 2 decimales
+    capitalPagado = Math.round(capitalPagado * 100) / 100;
+    interesPagado = Math.round(interesPagado * 100) / 100;
+    ivaPagado = Math.round(ivaPagado * 100) / 100;
+
+    // ✅ Ajustar por redondeo para que la suma sea exacta
+    let totalCalculado = capitalPagado + interesPagado + ivaPagado;
+    let diferencia = monto - totalCalculado;
+    
+    // ✅ Aplicar la diferencia al capital (el componente más grande)
+    if (Math.abs(diferencia) > 0.001) {
+      capitalPagado = Math.round((capitalPagado + diferencia) * 100) / 100;
+    }
+
+    return {
+      capitalPagado,
+      interesPagado,
+      ivaPagado,
+      interesMasIva: Math.round((interesPagado + ivaPagado) * 100) / 100,
+      // ✅ Para depuración (opcional, puedes eliminarlo en producción)
+      debug: {
+        monto,
+        deudaTotal,
+        porcentajeAbono: porcentajeAbono * 100,
+        capital: capital,
+        interes: interes,
+        iva: ivaInteres
+      }
+    };
   };
 
   const repartoPreview = tipoAccion === "abono" && montoValido && cotizacion && !excedeSaldo
@@ -96,9 +131,6 @@ export default function MisEmpenos() {
         return;
       }
 
-      // ✅ Validación cliente-side, antes de golpear el backend.
-      // (El backend igual lo valida en AbonoController::crearSesionPago,
-      // esto solo evita el viaje redondo innecesario y da feedback inmediato)
       if (saldoMaximo !== null && montoIngresado > saldoMaximo) {
         setErrorPago(`El monto no puede exceder tu saldo pendiente de $${formatMoney(saldoMaximo)}`);
         return;
@@ -145,7 +177,7 @@ export default function MisEmpenos() {
     const valor = e.target.value;
     if (valor === "" || /^\d*\.?\d*$/.test(valor)) {
       setMontoPago(valor);
-      setErrorPago(null); // limpia error previo mientras el usuario corrige
+      setErrorPago(null);
     }
   };
 
@@ -301,7 +333,6 @@ export default function MisEmpenos() {
                   Abonar
                 </button>
 
-                {/* ✅ Solo se muestra si el empeño admite refrendo (plazo > 1 mes y no vencido) */}
                 {cotizacion?.aplica_refrendo && (
                   <button
                     type="button"
@@ -366,7 +397,6 @@ export default function MisEmpenos() {
                 </div>
               )}
 
-              {/* ✅ 3 vías reales, ya no anidado dentro del bloque de abono */}
               {tipoAccion === "abono" ? (
                 <div className="pago-input-group">
                   <label>Monto a abonar:</label>
@@ -379,7 +409,6 @@ export default function MisEmpenos() {
                     onChange={handleMontoChange}
                   />
 
-                  {/* ✅ Aviso inmediato si el monto excede el saldo real */}
                   {excedeSaldo && (
                     <small className="pago-error" style={{ color: "#c0392b", display: "block", marginTop: "6px" }}>
                       El monto máximo que puedes abonar es ${formatMoney(saldoMaximo)} (tu saldo pendiente).
@@ -392,10 +421,10 @@ export default function MisEmpenos() {
                         <p className="pago-reparto-titulo">
                           Así se aplicará tu abono de ${formatMoney(montoNum)}:
                         </p>
-                        {(repartoPreview.interesPagado > 0 || repartoPreview.ivaPagado > 0) && (
+                        {(repartoPreview.interesMasIva > 0) && (
                           <div className="pago-reparto-fila">
                             <span>Interés + IVA del periodo:</span>
-                            <span>${formatMoney(repartoPreview.interesPagado + repartoPreview.ivaPagado)}</span>
+                            <span>${formatMoney(repartoPreview.interesMasIva)}</span>
                           </div>
                         )}
                         <div className="pago-reparto-fila pago-reparto-destacado">
@@ -410,7 +439,7 @@ export default function MisEmpenos() {
                         </small>
                       </div>
                       <small className="pago-ayuda">
-                        Tu saldo total pendiente bajará ${formatMoney(montoNum)} pesos completos,
+                        ✅ Tu saldo total pendiente bajará ${formatMoney(montoNum)} pesos completos,
                         sin importar cómo se reparta arriba.
                       </small>
                     </>

@@ -304,7 +304,7 @@ const EmpenosLista = () => {
                     </div>
                     <div className="tarjeta-fila">
                       <span className="tarjeta-label">Interés:</span>
-                      <span>{e.interes}%</span>
+                  <span>${e.interes?.toLocaleString()}</span>  // ✅ Muestra el monto en pesos
                     </div>
                     <div className="tarjeta-fila">
                       <span className="tarjeta-label">Vence:</span>
@@ -347,7 +347,7 @@ const EmpenosLista = () => {
                   <th>Objeto</th>
                   <th>Material</th>
                   <th>Monto</th>
-                  <th>Interés</th>
+                 <th>Interés (MXN)</th>
                   <th>Vencimiento</th>
                   <th>Estado</th>
                   <th>Saldo</th>
@@ -362,7 +362,7 @@ const EmpenosLista = () => {
                       <td>{e.objeto}</td>
                       <td>{e.material}</td>
                       <td>${e.monto}</td>
-                      <td>{e.interes}%</td>
+                     <td>${e.interes?.toLocaleString()}</td> 
                       <td>{e.vencimiento}</td>
                       <td>
                         <span
@@ -488,7 +488,7 @@ const EmpenosLista = () => {
                 </div>
                 <div className="info-item">
                   <span className="info-label"> Interés</span>
-                  <span className="info-value">{empenoSeleccionado.interes}%</span>
+                <span className="info-value">${empenoSeleccionado.interes?.toLocaleString()}</span>  // ✅
                 </div>
                 <div className="info-item">
                   <span className="info-label"> Fecha de inicio</span>
