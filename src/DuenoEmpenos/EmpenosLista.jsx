@@ -1,4 +1,4 @@
-// EmpenosLista.jsx - VERSIÓN MODIFICADA (Solo Ver + Editar Nombre en Modal)
+// EmpenosLista.jsx - VERSIÓN CORREGIDA
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,9 +18,12 @@ const EmpenosLista = () => {
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [empenoSeleccionado, setEmpenoSeleccionado] = useState(null);
-  const [modalEditarNombre, setModalEditarNombre] = useState(false);
-  const [nuevoNombre, setNuevoNombre] = useState("");
+  const [modalEditar, setModalEditar] = useState(false);
   const [editando, setEditando] = useState(false);
+  
+  // Estados para edición
+  const [nombreCliente, setNombreCliente] = useState("");
+  const [material, setMaterial] = useState("");
   
   // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1);
@@ -45,7 +48,8 @@ const EmpenosLista = () => {
           saldo_cuota: emp.saldo_pendiente_cuota || 0,
           total_pagado: emp.total_pagado || 0,
           dias_vencidos: emp.dias_vencidos || 0,
-          cliente_id: emp.id_cliente || null
+          cliente_id: emp.id_cliente || null,
+          material: emp.material || 'No especificado'
         }));
         setEmpenos(empenosFormateados);
       }
@@ -86,37 +90,43 @@ const EmpenosLista = () => {
     setEmpenoSeleccionado(null);
   };
 
-  // Abrir modal para editar nombre
-  const abrirEditarNombre = (empeno) => {
+  // Abrir modal de edición
+  const abrirEditar = (empeno) => {
     setEmpenoSeleccionado(empeno);
-    setNuevoNombre(empeno.cliente);
-    setModalEditarNombre(true);
-    setModalAbierto(false);
+    setNombreCliente(empeno.cliente);
+    setMaterial(empeno.material || '');
+    setModalEditar(true);
   };
 
-  const cerrarModalEditarNombre = () => {
-    setModalEditarNombre(false);
+  const cerrarModalEditar = () => {
+    setModalEditar(false);
     setEmpenoSeleccionado(null);
-    setNuevoNombre("");
+    setNombreCliente("");
+    setMaterial("");
     setEditando(false);
   };
 
-  // Guardar nuevo nombre del cliente
-  const guardarNombreCliente = async () => {
-    if (!nuevoNombre.trim() || !empenoSeleccionado) return;
+  // Guardar cambios (solo nombre y material)
+  const guardarCambios = async () => {
+    if (!nombreCliente.trim() || !empenoSeleccionado) return;
     
     try {
       setEditando(true);
       
-      // Aquí iría la llamada a la API para actualizar el nombre del cliente
-      // Como no tienes endpoint específico, simulamos la actualización
-      // En tu caso real, deberías tener un endpoint como:
-      // await api.put(`/clientes/${empenoSeleccionado.cliente_id}`, { nombre: nuevoNombre });
+      // Aquí iría la llamada a la API para actualizar
+      // await api.put(`/empenos/${empenoSeleccionado.id}`, {
+      //   nombre_cliente: nombreCliente,
+      //   material: material
+      // });
       
       // Simulación - actualizar localmente
       const empenosActualizados = empenos.map(emp => {
         if (emp.id === empenoSeleccionado.id) {
-          return { ...emp, cliente: nuevoNombre };
+          return { 
+            ...emp, 
+            cliente: nombreCliente,
+            material: material
+          };
         }
         return emp;
       });
@@ -126,16 +136,15 @@ const EmpenosLista = () => {
       // Actualizar el empeno seleccionado
       setEmpenoSeleccionado({
         ...empenoSeleccionado,
-        cliente: nuevoNombre
+        cliente: nombreCliente,
+        material: material
       });
       
-      // Cerrar modal de edición y abrir modal de detalles actualizado
-      cerrarModalEditarNombre();
-      setModalAbierto(true);
+      cerrarModalEditar();
       
     } catch (error) {
-      console.error('Error al actualizar nombre:', error);
-      alert('Error al actualizar el nombre del cliente');
+      console.error('Error al actualizar:', error);
+      alert('Error al actualizar los datos');
     } finally {
       setEditando(false);
     }
@@ -208,7 +217,7 @@ const EmpenosLista = () => {
     <div className="dashboard">
       <div className="content">
         {/* HEADER */}
-        <div className="">
+        <div className="header-container">
           <div>
             <h1>
               <DiamondIcon className="title-icon" />
@@ -216,6 +225,14 @@ const EmpenosLista = () => {
             </h1>
             <p className="header-sub">Gestiona y administra tus empeños</p>
           </div>
+          
+          {/* BOTÓN NUEVO EMPEÑO - RESTAURADO */}
+          <button
+            className="btn-nuevo"
+            onClick={() => navigate("/empenos/nuevo")}
+          >
+            <AddIcon fontSize="small" /> Nuevo Empeño
+          </button>
         </div>
 
         {/* FILTRO POR ESTADO */}
@@ -278,6 +295,10 @@ const EmpenosLista = () => {
                       <span>{e.objeto}</span>
                     </div>
                     <div className="tarjeta-fila">
+                      <span className="tarjeta-label">Material:</span>
+                      <span>{e.material}</span>
+                    </div>
+                    <div className="tarjeta-fila">
                       <span className="tarjeta-label">Monto:</span>
                       <span className="monto">${e.monto}</span>
                     </div>
@@ -324,6 +345,7 @@ const EmpenosLista = () => {
                 <tr>
                   <th>Cliente</th>
                   <th>Objeto</th>
+                  <th>Material</th>
                   <th>Monto</th>
                   <th>Interés</th>
                   <th>Vencimiento</th>
@@ -338,6 +360,7 @@ const EmpenosLista = () => {
                     <tr key={e.id}>
                       <td><strong>{e.cliente}</strong></td>
                       <td>{e.objeto}</td>
+                      <td>{e.material}</td>
                       <td>${e.monto}</td>
                       <td>{e.interes}%</td>
                       <td>{e.vencimiento}</td>
@@ -361,7 +384,7 @@ const EmpenosLista = () => {
                       </td>
                       <td>
                         <div className="acciones-container">
-                          {/* SOLO BOTÓN VER (OJO) */}
+                          {/* BOTÓN VER (OJO) */}
                           <button 
                             className="btn-accion ver"
                             onClick={() => abrirDetalle(e)}
@@ -369,13 +392,22 @@ const EmpenosLista = () => {
                           >
                             <VisibilityIcon fontSize="small" />
                           </button>
+                          
+                          {/* BOTÓN EDITAR (LÁPIZ) - Restaurado, solo nombre y material */}
+                          <button 
+                            className="btn-accion editar"
+                            onClick={() => abrirEditar(e)}
+                            title="Editar nombre y material"
+                          >
+                            <EditIcon fontSize="small" />
+                          </button>
                         </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="8" className="sin-resultados">
+                    <td colSpan="9" className="sin-resultados">
                       No se encontraron empeños {filtroEstado !== "todos" ? filtroEstado : ""}
                     </td>
                   </tr>
@@ -425,7 +457,7 @@ const EmpenosLista = () => {
       </div>
 
       {/* ============================================ */}
-      {/* MODAL DE DETALLE DEL EMPEÑO CON EDICIÓN DE NOMBRE */}
+      {/* MODAL DE DETALLE DEL EMPEÑO */}
       {/* ============================================ */}
       {modalAbierto && empenoSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModal}>
@@ -440,43 +472,38 @@ const EmpenosLista = () => {
               <div className="info-grid">
                 <div className="info-item">
                   <span className="info-label">👤 Cliente</span>
-                  <div className="info-value-cliente">
-                    <span className="info-value">{empenoSeleccionado.cliente}</span>
-                    <button 
-                      className="btn-editar-nombre"
-                      onClick={() => abrirEditarNombre(empenoSeleccionado)}
-                      title="Editar nombre del cliente"
-                    >
-                      <EditIcon fontSize="small" />
-                    </button>
-                  </div>
+                  <span className="info-value">{empenoSeleccionado.cliente}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">📦 Objeto</span>
+                  <span className="info-label"> Objeto</span>
                   <span className="info-value">{empenoSeleccionado.objeto}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">💰 Monto</span>
+                  <span className="info-label"> Material</span>
+                  <span className="info-value">{empenoSeleccionado.material}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label"> Monto</span>
                   <span className="info-value">${empenoSeleccionado.monto}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">📊 Interés</span>
+                  <span className="info-label"> Interés</span>
                   <span className="info-value">{empenoSeleccionado.interes}%</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">📅 Fecha de inicio</span>
+                  <span className="info-label"> Fecha de inicio</span>
                   <span className="info-value">{empenoSeleccionado.fecha_inicio}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">⏰ Vencimiento</span>
+                  <span className="info-label"> Vencimiento</span>
                   <span className="info-value">{empenoSeleccionado.vencimiento}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">💰 Saldo pendiente</span>
+                  <span className="info-label"> Saldo pendiente</span>
                   <span className="info-value saldo">${empenoSeleccionado.saldo_pendiente?.toLocaleString()}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">💵 Total pagado</span>
+                  <span className="info-label"> Total pagado</span>
                   <span className="info-value">${empenoSeleccionado.total_pagado?.toLocaleString()}</span>
                 </div>
               </div>
@@ -495,29 +522,45 @@ const EmpenosLista = () => {
       )}
 
       {/* ============================================ */}
-      {/* MODAL PARA EDITAR NOMBRE DEL CLIENTE */}
+      {/* MODAL DE EDICIÓN - SOLO NOMBRE Y MATERIAL */}
       {/* ============================================ */}
-      {modalEditarNombre && empenoSeleccionado && (
-        <div className="modal-overlay" onClick={cerrarModalEditarNombre}>
-          <div className="modal-editar-nombre" onClick={(e) => e.stopPropagation()}>
+      {modalEditar && empenoSeleccionado && (
+        <div className="modal-overlay" onClick={cerrarModalEditar}>
+          <div className="modal-editar" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header-editar">
-              <h3>Editar nombre del cliente</h3>
-              <button className="btn-cerrar-editar" onClick={cerrarModalEditarNombre}>
+              <h3>Editar datos del empeño</h3>
+              <button className="btn-cerrar-editar" onClick={cerrarModalEditar}>
                 <CloseIcon fontSize="small" />
               </button>
             </div>
             
             <div className="modal-body-editar">
-              <p>Empeño: <strong>{empenoSeleccionado.objeto}</strong></p>
+              <p className="info-editar">
+                Editando empeño: <strong>{empenoSeleccionado.objeto}</strong>
+              </p>
+              
               <div className="campo-editar">
                 <label htmlFor="nombreCliente">Nombre del cliente</label>
                 <input
                   id="nombreCliente"
                   type="text"
-                  value={nuevoNombre}
-                  onChange={(e) => setNuevoNombre(e.target.value)}
-                  placeholder="Ingresa el nuevo nombre"
-                  className="input-editar-nombre"
+                  value={nombreCliente}
+                  onChange={(e) => setNombreCliente(e.target.value)}
+                  placeholder="Ingresa el nombre del cliente"
+                  className="input-editar"
+                  disabled={editando}
+                />
+              </div>
+              
+              <div className="campo-editar">
+                <label htmlFor="material">Material</label>
+                <input
+                  id="material"
+                  type="text"
+                  value={material}
+                  onChange={(e) => setMaterial(e.target.value)}
+                  placeholder="Ingresa el material"
+                  className="input-editar"
                   disabled={editando}
                 />
               </div>
@@ -526,17 +569,17 @@ const EmpenosLista = () => {
             <div className="modal-acciones-editar">
               <button 
                 className="btn-cancelar-editar"
-                onClick={cerrarModalEditarNombre}
+                onClick={cerrarModalEditar}
                 disabled={editando}
               >
                 Cancelar
               </button>
               <button 
                 className="btn-guardar-editar"
-                onClick={guardarNombreCliente}
-                disabled={editando || !nuevoNombre.trim()}
+                onClick={guardarCambios}
+                disabled={editando || !nombreCliente.trim()}
               >
-                {editando ? 'Guardando...' : 'Guardar nombre'}
+                {editando ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </div>
           </div>

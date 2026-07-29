@@ -1306,13 +1306,13 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
-/* Estilos para el modal de edición de nombre */
-.modal-editar-nombre {
+/* Estilos para el modal de edición */
+.modal-editar {
   background: white;
   border-radius: 12px;
   padding: 24px;
   width: 90%;
-  max-width: 480px;
+  max-width: 500px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease;
 }
@@ -1353,9 +1353,9 @@
   margin-bottom: 24px;
 }
 
-.modal-body-editar p {
+.info-editar {
   color: #6b7280;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   font-size: 14px;
 }
 
@@ -1363,6 +1363,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 16px;
 }
 
 .campo-editar label {
@@ -1371,7 +1372,7 @@
   font-size: 14px;
 }
 
-.input-editar-nombre {
+.input-editar {
   padding: 10px 12px;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
@@ -1381,13 +1382,13 @@
   box-sizing: border-box;
 }
 
-.input-editar-nombre:focus {
+.input-editar:focus {
   outline: none;
   border-color: #1e3a8a;
   box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
 }
 
-.input-editar-nombre:disabled {
+.input-editar:disabled {
   background: #f3f4f6;
   cursor: not-allowed;
 }
@@ -1442,64 +1443,54 @@
   transform: none;
 }
 
-/* Estilos para el nombre del cliente en el modal de detalles */
-.info-value-cliente {
+/* Estilos para el header con botón */
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.header-container h1 {
+  margin-bottom: 4px;
+}
+
+.btn-nuevo {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.info-value-cliente .info-value {
-  flex: 1;
-}
-
-.btn-editar-nombre {
-  background: none;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #1e3a8a;
+  color: white;
   border: none;
-  cursor: pointer;
-  color: #6b7280;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.btn-editar-nombre:hover {
-  background: #f3f4f6;
-  color: #1e3a8a;
-}
-
-.btn-cerrar-modal {
-  padding: 8px 24px;
-  background: #f3f4f6;
-  border: none;
-  border-radius: 6px;
-  color: #374151;
+  border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.btn-cerrar-modal:hover {
-  background: #e5e7eb;
+.btn-nuevo:hover {
+  background: #1e40af;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
 }
 
-/* Animaciones */
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Responsive para el modal de edición */
+/* Responsive para el header */
 @media (max-width: 640px) {
-  .modal-editar-nombre {
+  .header-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .btn-nuevo {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-editar {
     width: 95%;
     padding: 16px;
   }
@@ -1526,94 +1517,5 @@
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-@media (max-width: 640px) {
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 8px;
-}
-
-.info-label {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.info-value {
-  font-size: 16px;
-  color: #1f2937;
-  font-weight: 500;
-}
-
-.info-value.saldo {
-  color: #dc2626;
-}
-
-.modal-acciones {
-  display: flex;
-  justify-content: flex-end;
-  border-top: 1px solid #e5e7eb;
-  padding-top: 16px;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-}
-
-.modal-cerrar {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  background: none;
-  border: none;
-  font-size: 28px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.modal-cerrar:hover {
-  color: #374151;
-  transform: rotate(90deg);
-}
-
-.modal-header {
-  margin-bottom: 20px;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 12px;
-}
-
-.modal-header h2 {
-  margin: 0;
-  color: #1f2937;
-  font-size: 20px;
+  position: relative;
 }
