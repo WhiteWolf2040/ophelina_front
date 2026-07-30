@@ -31,38 +31,47 @@ const EmpenosLista = () => {
   const empenosPorPagina = 8;
 
   // Cargar todos los empeños
-  const cargarTodosEmpenos = async () => {
+// EmpenosLista.jsx - Al cargar los empeños
+const cargarTodosEmpenos = async () => {
     try {
-      setLoading(true);
-      const response = await api.get('/empenos/todos');
-      if (response.data.success) {
-        const empenosFormateados = response.data.data.map(emp => ({
-          id: emp.id_empeno,
-          id_prenda: emp.id_prenda,        // ← NUEVO
-          imagen: emp.imagen_url || null,  // ← NUEVO
-          cliente: emp.cliente || 'Cliente no disponible',
-          objeto: emp.articulo || 'Sin artículo',
-          monto: emp.monto_prestado ? emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00',
-          interes: emp.intereses || 0,
-          fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
-          vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
-          estado: emp.estado || 'activo',
-          saldo_pendiente: emp.saldo_total_pendiente || 0,
-          saldo_cuota: emp.saldo_pendiente_cuota || 0,
-          total_pagado: emp.total_pagado || 0,
-          dias_vencidos: emp.dias_vencidos || 0,
-          cliente_id: emp.id_cliente || null,
-          material: emp.material || 'No especificado'
-        }));
-        setEmpenos(empenosFormateados);
-      }
+        setLoading(true);
+        const response = await api.get('/empenos/todos');
+        if (response.data.success) {
+            const empenosFormateados = response.data.data.map(emp => ({
+                id: emp.id_empeno,
+                id_prenda: emp.id_prenda,
+                imagen: emp.imagen_url || null,
+                cliente: emp.cliente || 'Cliente no disponible',
+                objeto: emp.articulo || 'Sin artículo',
+                monto: emp.monto_prestado ? emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00',
+                interes: emp.intereses || 0,
+                fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
+                vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
+                estado: emp.estado || 'activo',
+                saldo_pendiente: emp.saldo_total_pendiente || 0,
+                saldo_cuota: emp.saldo_pendiente_cuota || 0,
+                total_pagado: emp.total_pagado || 0,
+                dias_vencidos: emp.dias_vencidos || 0,
+                cliente_id: emp.id_cliente || null,
+                material: emp.material || 'No especificado',
+                //  Guardar timestamp para ordenar
+                timestamp: new Date(emp.fecha_empeno).getTime()
+            }));
+            
+            // ORDENAR POR TIMESTAMP DESCENDENTE (más reciente primero)
+            const empenosOrdenados = empenosFormateados.sort((a, b) => {
+                return (b.timestamp || 0) - (a.timestamp || 0);
+            });
+            
+            setEmpenos(empenosOrdenados);
+        }
     } catch (error) {
-      console.error('Error al cargar empeños:', error);
-      setError('No se pudieron cargar los empeños');
+        console.error('Error al cargar empeños:', error);
+        setError('No se pudieron cargar los empeños');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   useEffect(() => {
     cargarTodosEmpenos();
@@ -72,6 +81,8 @@ const EmpenosLista = () => {
   const actualizarImagenLocal = (idEmpeno, nuevaUrl) => {
     setEmpenos(prev => prev.map(e => e.id === idEmpeno ? { ...e, imagen: nuevaUrl } : e));
   };
+
+
 
   // Filtrar empeños por estado
   const empenosFiltrados = empenos.filter((e) => {

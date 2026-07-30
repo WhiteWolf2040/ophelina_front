@@ -764,7 +764,7 @@ const NuevoEmpeno = () => {
             {simulacionPago.monto_prestado > 0 && (
               <div className="ticket-preview full-width">
                 <div className="ticket-preview-header">
-                  <h2>OPHELINA</h2>
+                  <h2>OPHALINE</h2>
                   <p className="ticket-lema">La que brinda apoyo</p>
                   <p className="ticket-rfc">RFC: OPH123456789</p>
                   <p className="ticket-direccion">Calle 60 #123, Centro, Mérida, Yucatán</p>

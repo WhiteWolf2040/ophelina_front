@@ -47,6 +47,14 @@ export default function OphelinaHome() {
 
         if (response.data.success) {
           const { resumen, proximosVencer, deuda, actividadReciente } = response.data.data;
+
+              //  ORDENAR ACTIVIDAD RECIENTE POR FECHA DESCENDENTE
+            const actividadOrdenada = [...actividadReciente].sort((a, b) => {
+                // Asumimos que hay una propiedad 'fecha' o 'timestamp'
+                const fechaA = new Date(a.fecha || a.timestamp || 0);
+                const fechaB = new Date(b.fecha || b.timestamp || 0);
+                return fechaB - fechaA; // Descendente
+            });
           setResumen(resumen);
           setProximosVencer(proximosVencer);
           setDeuda(deuda);
