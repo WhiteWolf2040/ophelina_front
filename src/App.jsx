@@ -13,10 +13,10 @@ import OphelinaHome from "./Clientes/OphelinaHome";
 import MisEmpenos from "./Clientes/MisEmpenos";
 import OphelinaTienda from "./Clientes/OphelinaTienda";
 import Tarjetero from "./Clientes/Tarjetero";
-// ✅ NUEVO: módulo de tickets del cliente
+//  NUEVO: módulo de tickets del cliente
 import MisTickets from "./Clientes/MisTickets";
 import MisTicketDetalle from "./Clientes/MisTicketDetalle";
-
+import ApartadosAdmin from "./DuenoTienda/ApartadosAdmin"; 
 import Roles from "./Roles/Roles";
 import RolNuevo from "./Roles/RolNuevo";
 
@@ -198,6 +198,14 @@ function App() {
             <ProtectedRoute allowedRoles={['Administrador']}>
               <AppLayout>
                 <TiendaOnline />
+              </AppLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/tienda/apartados" element={
+            <ProtectedRoute allowedRoles={['Administrador']}>
+              <AppLayout>
+                <ApartadosAdmin />
               </AppLayout>
             </ProtectedRoute>
           } />

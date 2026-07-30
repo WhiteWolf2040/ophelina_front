@@ -308,9 +308,13 @@ export default function OphelinaTienda() {
                         {producto.exclusivo && (
                           <span className="exclusive-badge">Artículo exclusivo</span>
                         )}
-                        {categoriaActiva === "apartados" && (
+                       {categoriaActiva === "apartados" && (
                           <span className="apartado-badge">
-                            {producto.estadoPago === "pagado" ? "APARTADO" : "PAGO PENDIENTE"}
+                            {producto.entregado
+                              ? "✓ ENTREGADO"
+                              : producto.estadoPago === "pagado"
+                                ? "APARTADO"
+                                : "PAGO PENDIENTE"}
                           </span>
                         )}
                       </div>
@@ -318,8 +322,29 @@ export default function OphelinaTienda() {
 
                     <div className="card-content">
                       <div className="card-header">
-                        <h3 className="product-name">{producto.nombre}</h3>
-                        <p className="product-description">{producto.descripcion}</p>
+                       {categoriaActiva === "apartados" && producto.codigoEntrega && !producto.entregado && (
+                            <div style={{
+                              background: '#fef3c7',
+                              border: '1px dashed #f59e0b',
+                              borderRadius: '8px',
+                              padding: '10px',
+                              margin: '10px 0',
+                              textAlign: 'center'
+                            }}>
+                              <div style={{ fontSize: '11px', color: '#92400e', marginBottom: '4px' }}>
+                                Muestra este código al recoger tu producto:
+                              </div>
+                              <div style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '3px', color: '#0d1b3e' }}>
+                                {producto.codigoEntrega}
+                              </div>
+                            </div>
+                          )}
+
+                          {categoriaActiva === "apartados" && producto.entregado && (
+                            <div style={{ color: '#27ae60', fontSize: '13px', margin: '8px 0' }}>
+                              ✓ Entregado el {producto.fechaEntrega}
+                            </div>
+                          )}
                       </div>
 
                       <div className="card-footer">
