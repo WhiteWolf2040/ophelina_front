@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import "./Empenos.css";
@@ -7,6 +7,32 @@ import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import Select from 'react-select';
 import DateRangeIcon from '@mui/icons-material/DateRange';
+import ImageIcon from '@mui/icons-material/Image';
+import DeleteIcon from '@mui/icons-material/Delete';
+
+// ✅ Configuración de Cloudinary
+const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
+const CLOUDINARY_UPLOAD_PRESET = "ophelina_productos";
+
+// ✅ Función para subir imagen a Cloudinary
+const subirImagenACloudinary = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  formData.append("folder", "empenos");
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: "POST", body: formData }
+  );
+
+  if (!response.ok) {
+    throw new Error("Error al subir la imagen a Cloudinary");
+  }
+
+  const data = await response.json();
+  return data.secure_url;
+};
 
 const NuevoEmpeno = () => {
   const navigate = useNavigate();
@@ -25,6 +51,12 @@ const NuevoEmpeno = () => {
 
   // Estado para el select de prenda (react-select)
   const [selectedPrenda, setSelectedPrenda] = useState(null);
+
+  // ✅ Estados para imagen
+  const [imagenPrenda, setImagenPrenda] = useState(null);
+  const [previewImagen, setPreviewImagen] = useState("");
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const inputImagenRef = useRef(null);
 
   // Tasa real, cargada desde /tasas-interes. Este objeto es la ÚNICA fuente
   // de verdad para %, tanto en la simulación en pantalla como en lo que se
@@ -123,6 +155,47 @@ const NuevoEmpeno = () => {
       color: '#6c757d',
       cursor: 'pointer'
     })
+  };
+
+  // ✅ Manejar selección de imagen
+  const handleImagenChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!tiposPermitidos.includes(file.type)) {
+      alert('Solo se permiten imágenes (JPEG, PNG, GIF, WEBP)');
+      e.target.value = '';
+      return;
+    }
+
+    // Validar tamaño (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen no debe superar los 5MB');
+      e.target.value = '';
+      return;
+    }
+
+    // Limpiar preview anterior
+    if (previewImagen && previewImagen.startsWith("blob:")) {
+      URL.revokeObjectURL(previewImagen);
+    }
+
+    setImagenPrenda(file);
+    setPreviewImagen(URL.createObjectURL(file));
+  };
+
+  // ✅ Quitar imagen
+  const quitarImagen = () => {
+    if (previewImagen && previewImagen.startsWith("blob:")) {
+      URL.revokeObjectURL(previewImagen);
+    }
+    setImagenPrenda(null);
+    setPreviewImagen("");
+    if (inputImagenRef.current) {
+      inputImagenRef.current.value = "";
+    }
   };
 
   // Calcular simulación de pago
@@ -261,13 +334,35 @@ const NuevoEmpeno = () => {
     }
 
     try {
-      const response = await api.post('/prendas', nuevaPrenda);
+      let imagenUrl = null;
+      
+      // ✅ Si hay imagen, subirla primero a Cloudinary
+      if (imagenPrenda) {
+        try {
+          setSubiendoImagen(true);
+          imagenUrl = await subirImagenACloudinary(imagenPrenda);
+        } catch (error) {
+          alert("Error al subir la imagen: " + error.message);
+          return;
+        } finally {
+          setSubiendoImagen(false);
+        }
+      }
+
+      // ✅ Incluir imagen_url en los datos
+      const datosPrenda = {
+        ...nuevaPrenda,
+        imagen_url: imagenUrl
+      };
+
+      const response = await api.post('/prendas', datosPrenda);
       if (response.data.success) {
         const nuevaPrendaData = {
           id_prenda: response.data.data.id_prenda,
           descripcion: nuevaPrenda.descripcion,
           tipo: nuevaPrenda.tipo,
-          valor_estimado: nuevaPrenda.valor_estimado
+          valor_estimado: nuevaPrenda.valor_estimado,
+          imagen_url: imagenUrl
         };
         setPrendas([...prendas, nuevaPrendaData]);
 
@@ -284,9 +379,11 @@ const NuevoEmpeno = () => {
         const montoSugerido = Math.round(nuevaPrendaData.valor_estimado * 0.7);
         setForm(prev => ({ ...prev, monto_prestado: montoSugerido.toString() }));
 
+        // ✅ Limpiar imagen
+        quitarImagen();
         setIsCreatingPrenda(false);
         setNuevaPrenda({ descripcion: "", tipo: "", material: "", peso_gramos: "", valor_estimado: "" });
-        alert("Prenda creada correctamente");
+        alert("Prenda creada correctamente" + (imagenUrl ? " con imagen" : ""));
       }
     } catch (error) {
       console.error('Error al crear prenda:', error);
@@ -318,10 +415,6 @@ const NuevoEmpeno = () => {
     setLoading(true);
 
     try {
-      // FIX: antes esto era "const tasaId = 1;" hardcodeado, así que el
-      // empeño SIEMPRE se guardaba con la tasa id=1 en la BD, sin importar
-      // qué tasa se hubiera mostrado en la simulación. Ahora usa la tasa
-      // real que cargó cargarTasaActual() — la misma que ve el usuario.
       const dataToSend = {
         cliente_id: form.cliente_id,
         prenda_id: form.prenda_id,
@@ -683,7 +776,8 @@ const NuevoEmpeno = () => {
           </form>
         </div>
       </div>
-      {/* MODAL PRENDA */}
+
+      {/* MODAL PRENDA - CON IMAGEN */}
       {isCreatingPrenda && (
         <div className="modal-overlay" onClick={() => setIsCreatingPrenda(false)}>
           <div className="modal-crear-prenda" onClick={(e) => e.stopPropagation()}>
@@ -746,10 +840,69 @@ const NuevoEmpeno = () => {
                   placeholder="Ej: 5000"
                 />
               </div>
+
+              {/* ✅ CAMPO PARA SUBIR IMAGEN */}
+              <div className="form-group">
+                <label>Imagen de la prenda</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleImagenChange}
+                    ref={inputImagenRef}
+                    style={{ flex: 1 }}
+                  />
+                  {previewImagen && (
+                    <button
+                      type="button"
+                      onClick={quitarImagen}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#dc3545',
+                        cursor: 'pointer',
+                        padding: '4px'
+                      }}
+                      title="Quitar imagen"
+                    >
+                      <DeleteIcon />
+                    </button>
+                  )}
+                </div>
+                <small style={{ color: '#6c757d', fontSize: '11px' }}>
+                  Formatos: JPG, PNG, GIF, WEBP | Máx: 5MB
+                </small>
+
+                {/* Preview de la imagen */}
+                {previewImagen && (
+                  <div style={{ marginTop: '10px', position: 'relative' }}>
+                    <img
+                      src={previewImagen}
+                      alt="Preview de la prenda"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '200px',
+                        borderRadius: '8px',
+                        objectFit: 'cover',
+                        border: '1px solid #e9ecef'
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Indicador de subida */}
+                {subiendoImagen && (
+                  <div style={{ marginTop: '8px', color: '#f59e0b', fontSize: '13px' }}>
+                    ⏳ Subiendo imagen...
+                  </div>
+                )}
+              </div>
             </div>
             <div className="modal-footer">
               <button className="btn-cancel" onClick={() => setIsCreatingPrenda(false)}>Cancelar</button>
-              <button className="btn-gold" onClick={crearNuevaPrenda}>Crear Prenda</button>
+              <button className="btn-gold" onClick={crearNuevaPrenda} disabled={subiendoImagen}>
+                {subiendoImagen ? "Subiendo imagen..." : "Crear Prenda"}
+              </button>
             </div>
           </div>
         </div>

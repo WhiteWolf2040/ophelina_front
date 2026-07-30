@@ -49,7 +49,7 @@ import Reporte from "./DuenoReporte/Reporte";
 import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
-import AsignarImagenes from "./DuenoInventario/AsignarImagenes";
+
 
 //  AppLayout: SOLO para rutas de administrador/empleados (incluye Sidebar)
 const AppLayout = ({ children }) => {
@@ -87,7 +87,6 @@ function App() {
             </ProtectedRoute>
           } />
 
-            <Route path="/inventario/asignar-imagenes" element={<AsignarImagenes />} />
 
           <Route path="/misempenos" element={
             <ProtectedRoute allowedRoles={['Cliente']}>

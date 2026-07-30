@@ -4,7 +4,10 @@ import "./OphelinaTienda.css";
 import Navbar from "../ClientesNav/Navbar";
 import { getProductosTienda, apartarProducto, getMisApartados } from "../config/auth";
 
-/* ================= MODAL ================= */
+// ================ PAGINACIÓN ================
+const ITEMS_PER_PAGE = 8;
+
+// ================ MODAL ================
 const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo, apartando }) => {
   if (!isOpen) return null;
 
@@ -34,16 +37,16 @@ const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo, apartando
               <h4>Información del Producto</h4>
               <div className="detalle-financiero">
                 <div className="financiero-item">
-                <span>Precio total:</span>
-                <span>
-                  {producto?.descuento > 0 && (
-                    <span style={{ textDecoration: "line-through", marginRight: "8px", color: "#999" }}>
-                      {producto?.precioOriginal}
-                    </span>
-                  )}
-                  {producto?.precio}
-                </span>
-                  </div>
+                  <span>Precio total:</span>
+                  <span>
+                    {producto?.descuento > 0 && (
+                      <span style={{ textDecoration: "line-through", marginRight: "8px", color: "#999" }}>
+                        {producto?.precioOriginal}
+                      </span>
+                    )}
+                    {producto?.precio}
+                  </span>
+                </div>
                 <div className="financiero-item">
                   <span>Anticipo para apartar (50%):</span>
                   <span>{producto?.anticipo}</span>
@@ -74,7 +77,7 @@ const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo, apartando
   );
 };
 
-/* ================= TIENDA ================= */
+// ================ TIENDA ================
 export default function OphelinaTienda() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -85,7 +88,10 @@ export default function OphelinaTienda() {
   const [mensajeApartado, setMensajeApartado] = useState({ mostrar: false, producto: "" });
   const [apartando, setApartando] = useState(false);
 
-  //  Datos reales del backend
+  // Paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+
+  // Datos reales del backend
   const [productos, setProductos] = useState([]);
   const [misApartados, setMisApartados] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -100,7 +106,7 @@ export default function OphelinaTienda() {
     { id: "apartados", nombre: "Mis apartados" },
   ];
 
-  //  Cargar productos de la tienda y mis apartados al montar
+  // Cargar productos
   const cargarDatos = async () => {
     setCargando(true);
     setError("");
@@ -127,16 +133,7 @@ export default function OphelinaTienda() {
     cargarDatos();
   }, []);
 
-  //  Detectar el regreso desde Stripe Checkout (success_url / cancel_url)
-  //
-  // NOTA IMPORTANTE: el success_url/cancel_url configurado en el backend
-  // (STRIPE_TIENDA_SUCCESS_URL / STRIPE_TIENDA_CANCEL_URL) ahora apunta
-  // directamente a /homecliente?pago=exitoso&tipo=apartado, así que en el
-  // flujo normal Stripe NUNCA vuelve a esta página. Este bloque se deja
-  // solo como respaldo (por si alguien llega aquí con esos query params
-  // por cualquier otro motivo) y NUNCA debe redirigir a "/tienda", porque
-  // esa ruta es exclusiva del dueño/admin (ver App.jsx) y manda al cliente
-  // a /home por error. La ruta real del cliente es "/ophelina".
+  // Detectar regreso de Stripe
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const pago = params.get("pago");
@@ -145,9 +142,6 @@ export default function OphelinaTienda() {
       setCategoriaActiva("apartados");
       setMensajeApartado({ mostrar: true, producto: "tu producto" });
       setTimeout(() => setMensajeApartado({ mostrar: false, producto: "" }), 4000);
-
-      // ✅ CORREGIDO: antes decía navigate("/tienda", ...) que es la ruta
-      // de admin. Debe quedarse en "/ophelina", la ruta real del cliente.
       navigate("/ophelina", { replace: true });
     } else if (pago === "cancelado") {
       setError("El pago fue cancelado, tu producto no quedó apartado.");
@@ -167,9 +161,7 @@ export default function OphelinaTienda() {
     const result = await apartarProducto(productoSeleccionado.id);
 
     if (result.success && result.data?.checkout_url) {
-      //   Redirige a Stripe Checkout para pagar el 50% de anticipo
       window.location.href = result.data.checkout_url;
-      // No hace falta setApartando(false) aquí: la página está a punto de cambiar
     } else {
       setApartando(false);
       setError(result.message || "No se pudo iniciar el apartado");
@@ -177,7 +169,7 @@ export default function OphelinaTienda() {
     }
   };
 
-  // 🔹 Fuente de datos según la pestaña activa
+  // Fuente de datos
   const listaBase = categoriaActiva === "apartados" ? misApartados : productos;
 
   const productosFiltrados = listaBase.filter((producto) => {
@@ -194,6 +186,43 @@ export default function OphelinaTienda() {
     }
     return producto.categoria === categoriaActiva && matchesBusqueda;
   });
+
+  // ================ PAGINACIÓN ================
+  const totalItems = productosFiltrados.length;
+  const totalPaginas = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  // Reiniciar página al cambiar filtros
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [busqueda, categoriaActiva]);
+
+  const inicio = (paginaActual - 1) * ITEMS_PER_PAGE;
+  const fin = inicio + ITEMS_PER_PAGE;
+  const itemsPagina = productosFiltrados.slice(inicio, fin);
+
+  const cambiarPagina = (numero) => {
+    if (numero >= 1 && numero <= totalPaginas) {
+      setPaginaActual(numero);
+      // Scroll al inicio de la sección
+      document.querySelector('.products-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const obtenerNumerosPagina = () => {
+    const numeros = [];
+    const maxPaginasVisibles = 5;
+    let inicioNum = Math.max(1, paginaActual - Math.floor(maxPaginasVisibles / 2));
+    let finNum = Math.min(totalPaginas, inicioNum + maxPaginasVisibles - 1);
+    
+    if (finNum - inicioNum + 1 < maxPaginasVisibles) {
+      inicioNum = Math.max(1, finNum - maxPaginasVisibles + 1);
+    }
+    
+    for (let i = inicioNum; i <= finNum; i++) {
+      numeros.push(i);
+    }
+    return numeros;
+  };
 
   return (
     <>
@@ -251,7 +280,7 @@ export default function OphelinaTienda() {
             <span className="products-count">
               {categoriaActiva === "apartados"
                 ? `${misApartados.length} artículos apartados`
-                : `${productosFiltrados.length} artículos`}
+                : `${totalItems} artículos`}
             </span>
           </div>
 
@@ -262,7 +291,7 @@ export default function OphelinaTienda() {
           ) : (
             <>
               <div className="products-grid-luxury">
-                {productosFiltrados.map((producto) => (
+                {itemsPagina.map((producto) => (
                   <article
                     key={producto.id}
                     className={`product-card-luxury ${
@@ -295,13 +324,13 @@ export default function OphelinaTienda() {
 
                       <div className="card-footer">
                         {producto.descuento > 0 ? (
-                            <div className="product-price-wrapper">
-                              <span className="product-price-original">{producto.precioOriginal}</span>
-                              <span className="product-price">{producto.precio}</span>
-                            </div>
-                          ) : (
+                          <div className="product-price-wrapper">
+                            <span className="product-price-original">{producto.precioOriginal}</span>
                             <span className="product-price">{producto.precio}</span>
-                          )}
+                          </div>
+                        ) : (
+                          <span className="product-price">{producto.precio}</span>
+                        )}
 
                         <div className="product-actions">
                           {categoriaActiva === "apartados" ? (
@@ -325,7 +354,7 @@ export default function OphelinaTienda() {
                 ))}
               </div>
 
-              {productosFiltrados.length === 0 && (
+              {itemsPagina.length === 0 && (
                 <div className="no-results">
                   {categoriaActiva === "apartados" ? (
                     <>
@@ -353,6 +382,44 @@ export default function OphelinaTienda() {
                   )}
                 </div>
               )}
+
+              {/* ================ PAGINACIÓN ================ */}
+              {totalPaginas > 1 && (
+                <div className="paginacion-wrapper">
+                  <div className="paginacion-container">
+                    <button
+                      className="btn-paginacion"
+                      onClick={() => cambiarPagina(paginaActual - 1)}
+                      disabled={paginaActual === 1}
+                    >
+                      ←
+                    </button>
+
+                    <div className="paginacion-numeros">
+                      {obtenerNumerosPagina().map((numero) => (
+                        <button
+                          key={numero}
+                          className={`btn-pagina ${paginaActual === numero ? "activo" : ""}`}
+                          onClick={() => cambiarPagina(numero)}
+                        >
+                          {numero}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      className="btn-paginacion"
+                      onClick={() => cambiarPagina(paginaActual + 1)}
+                      disabled={paginaActual === totalPaginas}
+                    >
+                      →
+                    </button>
+                  </div>
+                  <div className="paginacion-info">
+                    Mostrando {inicio + 1} - {Math.min(fin, totalItems)} de {totalItems} artículos
+                  </div>
+                </div>
+              )}
             </>
           )}
         </section>
@@ -366,7 +433,6 @@ export default function OphelinaTienda() {
           apartando={apartando}
         />
 
-        {/* Toast de "¡Apartado exitoso!" al volver de Stripe */}
         {mensajeApartado.mostrar && (
           <div className="mensaje-apartado">
             <div className="mensaje-contenido">
