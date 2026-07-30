@@ -20,6 +20,10 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SecurityIcon from '@mui/icons-material/Security';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
+// ✅ IMPORTAR CORRECTAMENTE
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+// O si prefieres usar el carrito:
+// import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
 // Menús por defecto
 const DEFAULT_MENUS = [
