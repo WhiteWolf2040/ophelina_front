@@ -9,6 +9,8 @@ import Select from 'react-select';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import ImageIcon from '@mui/icons-material/Image';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
 
 // ✅ Configuración de Cloudinary
 const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
@@ -34,6 +36,96 @@ const subirImagenACloudinary = async (file) => {
   return data.secure_url;
 };
 
+//  NUEVO: Modal de mensaje (éxito / error) — reemplaza los alert() nativos.
+// Se usa para TODOS los mensajes del formulario: validaciones, errores de
+// red, y la confirmación final de "Empeño registrado".
+const ModalMensaje = ({ visible, tipo, titulo, texto, textoBoton, onCerrar }) => {
+  if (!visible) return null;
+
+  const esExito = tipo === "success";
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(13, 27, 62, 0.55)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 10000,
+        padding: "16px"
+      }}
+      onClick={onCerrar}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "white",
+          borderRadius: "16px",
+          padding: "32px 28px",
+          maxWidth: "380px",
+          width: "100%",
+          textAlign: "center",
+          boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+          animation: "modalMensajeAparecer 0.18s ease-out"
+        }}
+      >
+        <div
+          style={{
+            width: "64px",
+            height: "64px",
+            borderRadius: "50%",
+            backgroundColor: esExito ? "#e8f8ee" : "#fdecea",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 16px"
+          }}
+        >
+          {esExito ? (
+            <CheckCircleIcon style={{ fontSize: "36px", color: "#27ae60" }} />
+          ) : (
+            <ErrorIcon style={{ fontSize: "36px", color: "#e74c3c" }} />
+          )}
+        </div>
+
+        <h3 style={{ margin: "0 0 8px", color: "#0d1b3e", fontSize: "1.15rem" }}>
+          {titulo}
+        </h3>
+        <p style={{ margin: "0 0 24px", color: "#555", fontSize: "0.92rem", lineHeight: 1.5 }}>
+          {texto}
+        </p>
+
+        <button
+          type="button"
+          onClick={onCerrar}
+          style={{
+            background: esExito ? "#0d1b3e" : "#e74c3c",
+            color: "white",
+            border: "none",
+            borderRadius: "10px",
+            padding: "12px 28px",
+            fontSize: "0.95rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            width: "100%"
+          }}
+        >
+          {textoBoton || (esExito ? "Entendido" : "Cerrar")}
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes modalMensajeAparecer {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 const NuevoEmpeno = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -57,6 +149,32 @@ const NuevoEmpeno = () => {
   const [previewImagen, setPreviewImagen] = useState("");
   const [subiendoImagen, setSubiendoImagen] = useState(false);
   const inputImagenRef = useRef(null);
+
+  // ✅ NUEVO: estado del modal de mensaje (éxito/error) que reemplaza los alert().
+  // onAceptar es opcional: si se define, se ejecuta al cerrar el modal
+  // (por ejemplo, navegar a /empenos tras registrar el empeño).
+  const [modalMensaje, setModalMensaje] = useState({
+    visible: false,
+    tipo: "success",
+    titulo: "",
+    texto: "",
+    textoBoton: "",
+    onAceptar: null
+  });
+
+  const mostrarExito = (titulo, texto, onAceptar = null, textoBoton = null) => {
+    setModalMensaje({ visible: true, tipo: "success", titulo, texto, textoBoton, onAceptar });
+  };
+
+  const mostrarError = (titulo, texto) => {
+    setModalMensaje({ visible: true, tipo: "error", titulo, texto, textoBoton: null, onAceptar: null });
+  };
+
+  const cerrarModalMensaje = () => {
+    const { onAceptar } = modalMensaje;
+    setModalMensaje((prev) => ({ ...prev, visible: false }));
+    if (onAceptar) onAceptar();
+  };
 
   // Tasa real, cargada desde /tasas-interes. Este objeto es la ÚNICA fuente
   // de verdad para %, tanto en la simulación en pantalla como en lo que se
@@ -165,14 +283,14 @@ const NuevoEmpeno = () => {
     // Validar tipo
     const tiposPermitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!tiposPermitidos.includes(file.type)) {
-      alert('Solo se permiten imágenes (JPEG, PNG, GIF, WEBP)');
+      mostrarError("Formato no permitido", "Solo se permiten imágenes JPEG, PNG, GIF o WEBP.");
       e.target.value = '';
       return;
     }
 
     // Validar tamaño (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no debe superar los 5MB');
+      mostrarError("Imagen muy pesada", "La imagen no debe superar los 5MB.");
       e.target.value = '';
       return;
     }
@@ -329,20 +447,23 @@ const NuevoEmpeno = () => {
   // Crear nueva prenda
   const crearNuevaPrenda = async () => {
     if (!nuevaPrenda.descripcion || !nuevaPrenda.tipo || !nuevaPrenda.valor_estimado) {
-      alert("Por favor complete los campos obligatorios: Descripción, Tipo y Valor Estimado");
+      mostrarError(
+        "Faltan datos",
+        "Por favor completa los campos obligatorios: Descripción, Tipo y Valor Estimado."
+      );
       return;
     }
 
     try {
       let imagenUrl = null;
-      
+
       // ✅ Si hay imagen, subirla primero a Cloudinary
       if (imagenPrenda) {
         try {
           setSubiendoImagen(true);
           imagenUrl = await subirImagenACloudinary(imagenPrenda);
         } catch (error) {
-          alert("Error al subir la imagen: " + error.message);
+          mostrarError("Error al subir la imagen", error.message);
           return;
         } finally {
           setSubiendoImagen(false);
@@ -383,11 +504,18 @@ const NuevoEmpeno = () => {
         quitarImagen();
         setIsCreatingPrenda(false);
         setNuevaPrenda({ descripcion: "", tipo: "", material: "", peso_gramos: "", valor_estimado: "" });
-        alert("Prenda creada correctamente" + (imagenUrl ? " con imagen" : ""));
+
+        mostrarExito(
+          "Prenda creada",
+          `La prenda se registró correctamente${imagenUrl ? " con su imagen" : ""}.`
+        );
       }
     } catch (error) {
       console.error('Error al crear prenda:', error);
-      alert("Error al crear la prenda: " + (error.response?.data?.message || error.message));
+      mostrarError(
+        "No se pudo crear la prenda",
+        error.response?.data?.message || error.message
+      );
     }
   };
 
@@ -403,12 +531,12 @@ const NuevoEmpeno = () => {
     e.preventDefault();
 
     if (!form.cliente_id) {
-      alert("Por favor seleccione un cliente");
+      mostrarError("Falta el cliente", "Por favor selecciona un cliente para continuar.");
       return;
     }
 
     if (!form.prenda_id) {
-      alert("Por favor seleccione una prenda");
+      mostrarError("Falta la prenda", "Por favor selecciona una prenda para continuar.");
       return;
     }
 
@@ -427,14 +555,25 @@ const NuevoEmpeno = () => {
 
       const response = await api.post('/empenos', dataToSend);
       if (response.data.success) {
-        alert('Empeño registrado correctamente');
-        navigate("/empenos");
+        // ✅ Modal de éxito en vez de alert(). Al darle "Ver mis empeños"
+        // (onAceptar) es cuando navega — así el usuario alcanza a leer
+        // el mensaje con calma, en vez de un alert() bloqueante seguido
+        // de un redirect inmediato.
+        mostrarExito(
+          "¡Empeño registrado!",
+          "El empeño se guardó correctamente y ya está disponible en tu lista.",
+          () => navigate("/empenos"),
+          "Ver mis empeños"
+        );
       } else {
-        alert('Error: ' + response.data.message);
+        mostrarError("No se pudo registrar", response.data.message);
       }
     } catch (error) {
       console.error('Error al guardar:', error);
-      alert('Error al registrar el empeño: ' + (error.response?.data?.message || error.message));
+      mostrarError(
+        "No se pudo registrar el empeño",
+        error.response?.data?.message || error.message
+      );
     } finally {
       setLoading(false);
     }
@@ -907,6 +1046,16 @@ const NuevoEmpeno = () => {
           </div>
         </div>
       )}
+
+      {/*  NUEVO: Modal de mensaje (éxito/error) — reemplaza todos los alert() */}
+      <ModalMensaje
+        visible={modalMensaje.visible}
+        tipo={modalMensaje.tipo}
+        titulo={modalMensaje.titulo}
+        texto={modalMensaje.texto}
+        textoBoton={modalMensaje.textoBoton}
+        onCerrar={cerrarModalMensaje}
+      />
     </div>
   );
 };

@@ -246,7 +246,6 @@ const handleGuardarProducto = async (e) => {
   setGuardando(true);
 
   try {
-    // ✅ Si hay imagen nueva, primero se sube a Cloudinary y se obtiene la URL
     let imagenUrl = null;
     if (archivoImagen) {
       imagenUrl = await subirImagenACloudinary(archivoImagen);
@@ -263,7 +262,6 @@ const handleGuardarProducto = async (e) => {
     formData.append("visible", formProducto.visible ? "1" : "0");
     formData.append("destacado", formProducto.destacado ? "1" : "0");
 
-    // ✅ Ya no se manda el archivo, se manda la URL como texto
     if (imagenUrl) {
       formData.append("imagen_url", imagenUrl);
     }
@@ -276,8 +274,8 @@ const handleGuardarProducto = async (e) => {
 
     setModalProductoAbierto(false);
     limpiarImagenSeleccionada();
-    await cargarProductos();
-    await cargarEstadisticas();
+    // ✅ QUITADO: await cargarProductos(); await cargarEstadisticas();
+    // El hook useTienda ya las recarga dentro de crearProducto/actualizarProducto
   } catch (err) {
     console.error("Error guardando producto:", err);
     alert("Error al guardar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
@@ -286,38 +284,38 @@ const handleGuardarProducto = async (e) => {
   }
 };
 
-  const handleEliminarProducto = async () => {
-    try {
-      await eliminarProducto(productoSeleccionado.id_producto);
-      setModalEliminarAbierto(false);
-      setProductoSeleccionado(null);
-      await cargarProductos();
-      await cargarEstadisticas();
-    } catch (err) {
-      console.error("Error eliminando producto:", err);
-      alert("Error al eliminar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-    }
-  };
+const handleEliminarProducto = async () => {
+  try {
+    await eliminarProducto(productoSeleccionado.id_producto);
+    setModalEliminarAbierto(false);
+    setProductoSeleccionado(null);
+    // ✅ QUITADO: await cargarProductos(); await cargarEstadisticas();
+  } catch (err) {
+    console.error("Error eliminando producto:", err);
+    alert("Error al eliminar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
+  }
+};
 
-  const handleToggleVisible = async (id) => {
-    try {
-      await toggleVisibilidad(id);
-      await cargarProductos();
-    } catch (err) {
-      console.error("Error cambiando visibilidad:", err);
-      alert("Error al cambiar visibilidad: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-    }
-  };
 
-  const handleToggleDestacado = async (id) => {
-    try {
-      await toggleDestacado(id);
-      await cargarProductos();
-    } catch (err) {
-      console.error("Error cambiando destacado:", err);
-      alert("Error al cambiar destacado: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-    }
-  };
+const handleToggleVisible = async (id) => {
+  try {
+    await toggleVisibilidad(id);
+    // ✅ QUITADO: await cargarProductos();
+  } catch (err) {
+    console.error("Error cambiando visibilidad:", err);
+    alert("Error al cambiar visibilidad: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
+  }
+};
+
+ const handleToggleDestacado = async (id) => {
+  try {
+    await toggleDestacado(id);
+    // ✅ QUITADO: await cargarProductos();
+  } catch (err) {
+    console.error("Error cambiando destacado:", err);
+    alert("Error al cambiar destacado: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
+  }
+};
 
   const handlePublicacionAutomatica = async () => {
     setPublicando(true);
