@@ -353,3 +353,283 @@ td {
 .btn-remove-image:hover {
   background: #fecaca;
 }
+
+.btn-accion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 0 2px;
+}
+
+.btn-accion.ver {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.btn-accion.ver:hover {
+  background: #1976d2;
+  color: white;
+}
+
+.btn-accion.editar {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.btn-accion.editar:hover {
+  background: #f57c00;
+  color: white;
+}
+
+.btn-accion.eliminar {
+  background: #fbe9e7;
+  color: #d32f2f;
+}
+
+.btn-accion.eliminar:hover {
+  background: #d32f2f;
+  color: white;
+}
+
+/* ✅ ESTILOS PARA LA TABLA DE INVENTARIO */
+.tabla-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-top: 20px;
+}
+
+.tabla-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-card th {
+  text-align: left;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #0d1b3e;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.tabla-card td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.tabla-card tr:hover {
+  background: #f8f9fa;
+}
+
+/* ✅ ESTADOS BADGE */
+.estado-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.estado-disponible {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.estado-en-empeño {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.estado-vencido {
+  background: #fbe9e7;
+  color: #c62828;
+}
+
+.estado-vendido {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+
+.estado-apartado {
+  background: #f3e5f5;
+  color: #6a1b9a;
+}
+
+/* ✅ VISTA MÓVIL */
+.vista-movil {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .vista-desktop {
+    display: none;
+  }
+  
+  .vista-movil {
+    display: block;
+  }
+  
+  .inventario-tarjeta {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #e9ecef;
+  }
+  
+  .tarjeta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .tarjeta-cuerpo {
+    font-size: 14px;
+  }
+  
+  .tarjeta-fila {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  
+  .tarjeta-label {
+    color: #6c757d;
+  }
+}
+
+/* ✅ FILTROS */
+.filtros-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0 20px;
+  align-items: center;
+}
+
+.buscador {
+  flex: 1;
+  min-width: 200px;
+}
+
+.buscador-input {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.buscador-input:focus {
+  outline: none;
+  border-color: #0d1b3e;
+  box-shadow: 0 0 0 3px rgba(13, 27, 62, 0.1);
+}
+
+.filtros-selectores {
+  display: flex;
+  gap: 8px;
+}
+
+.filtro-select {
+  padding: 10px 16px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-limpiar {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+.btn-limpiar:hover {
+  color: #dc3545;
+}
+
+/* ✅ HEADER */
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.tienda-header {
+  display: flex;
+  align-items: center;
+}
+
+.tienda-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 24px;
+  color: #0d1b3e;
+}
+
+.tienda-header h1 p {
+  font-size: 14px;
+  font-weight: normal;
+  color: #6c757d;
+  margin: 0;
+}
+
+.btn-nuevo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #0d1b3e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-nuevo:hover {
+  background: #1a2a5e;
+}
+
+/* ✅ LOADING */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #6c757d;
+}
+
+/* ✅ ERROR */
+.error-message {
+  background: #fbe9e7;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+/* ✅ SIN RESULTADOS */
+.sin-resultados {
+  text-align: center;
+  padding: 40px;
+  color: #6c757d;
+}
