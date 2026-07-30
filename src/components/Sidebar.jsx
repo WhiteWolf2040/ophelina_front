@@ -28,6 +28,7 @@ const DEFAULT_MENUS = [
   { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
   { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
   { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+   { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
   { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
   { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
   { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
@@ -67,10 +68,11 @@ const Sidebar = () => {
         'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'empenos' },
         'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
         'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+        'apartados': { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados Cliente' },
         'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
         'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
         'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
-        'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
+        'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' },
       };
       return map[normalized] || { path: `/${normalized}`, icon: <HomeIcon />, text: name };
     });
