@@ -20,24 +20,28 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SecurityIcon from '@mui/icons-material/Security';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
-// ✅ IMPORTAR CORRECTAMENTE
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-// O si prefieres usar el carrito:
-// import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
-// Menús por defecto
+// Menús por defecto (orden correcto)
 const DEFAULT_MENUS = [
   { path: '/home', icon: <HomeIcon />, text: 'Home' },
   { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
   { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
   { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
   { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
-   { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
+  { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
   { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
   { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
   { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
   { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
   { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
+];
+
+// ✅ ORDEN CORRECTO DE LOS MÓDULOS
+const ORDEN_MODULOS = [
+  'home', 'clientes', 'pagos', 'empenos', 
+  'tienda', 'apartados', 'inventario', 
+  'reportes', 'roles', 'permisos', 'configuracion'
 ];
 
 const Sidebar = () => {
@@ -61,28 +65,47 @@ const Sidebar = () => {
     if (modules[0]?.path) return modules;
     
     // Si son strings, mapearlos
-    return modules.map(mod => {
+    const map = {
+      'home': { path: '/home', icon: <HomeIcon />, text: 'Home' },
+      'dashboard': { path: '/home', icon: <HomeIcon />, text: 'Home' },
+      'clientes': { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
+      'pagos': { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
+      'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
+      'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
+      'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+      'apartados': { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
+      'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
+      'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
+      'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
+      'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
+    };
+    
+    // ✅ Mapear todos los módulos
+    const menus = modules.map(mod => {
       const name = typeof mod === 'string' ? mod : mod.modulo || mod.nombre || '';
       const normalized = String(name).toLowerCase().trim();
-      const map = {
-        'home': { path: '/home', icon: <HomeIcon />, text: 'Home' },
-        'dashboard': { path: '/home', icon: <HomeIcon />, text: 'Home' },
-        'clientes': { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
-        'pagos': { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
-        'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'empenos' },
-        'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
-        'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
-        'apartados': { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados Cliente' },
-        'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
-        'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
-        'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
-        'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' },
-      };
       return map[normalized] || { path: `/${normalized}`, icon: <HomeIcon />, text: name };
+    });
+
+    // ✅ ORDENAR según el orden definido
+    return menus.sort((a, b) => {
+      const pathA = a.path.replace('/', '');
+      const pathB = b.path.replace('/', '');
+      const indexA = ORDEN_MODULOS.indexOf(pathA);
+      const indexB = ORDEN_MODULOS.indexOf(pathB);
+      
+      // Si no está en el orden, ponerlo al final
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
     });
   };
 
   const menuItems = getMenus();
+
+  // ✅ DEBUG: Ver qué menús se están renderizando
+  console.log('📋 Menús a renderizar:', menuItems.map(m => m.text));
 
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => setIsOpen(false);
@@ -110,7 +133,7 @@ const Sidebar = () => {
         {isOpen ? <CloseIcon /> : <MenuIcon />}
       </button>
 
-   {isOpen && <div className="sidebar-overlay visible" onClick={closeSidebar}></div>}
+      {isOpen && <div className="sidebar-overlay visible" onClick={closeSidebar}></div>}
 
       <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
@@ -129,7 +152,7 @@ const Sidebar = () => {
               onClick={closeSidebar}
             >
               {item.icon}
-             <span className="link-text">{item.text}</span>
+              <span className="link-text">{item.text}</span>
             </NavLink>
           ))}
 
