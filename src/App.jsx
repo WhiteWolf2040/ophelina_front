@@ -49,7 +49,7 @@ import Reporte from "./DuenoReporte/Reporte";
 import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
-import AsignarImagenes from "./pages/AsignarImagenes";
+import AsignarImagenes from "./DuenoInventario/AsignarImagenes";
 
 //  AppLayout: SOLO para rutas de administrador/empleados (incluye Sidebar)
 const AppLayout = ({ children }) => {
