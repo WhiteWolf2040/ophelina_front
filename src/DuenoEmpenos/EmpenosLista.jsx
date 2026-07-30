@@ -32,6 +32,7 @@ const EmpenosLista = () => {
 
   // Cargar todos los empeños
 // EmpenosLista.jsx - Al cargar los empeños
+// EmpenosLista.jsx - cargarTodosEmpenos
 const cargarTodosEmpenos = async () => {
     try {
         setLoading(true);
@@ -53,17 +54,11 @@ const cargarTodosEmpenos = async () => {
                 total_pagado: emp.total_pagado || 0,
                 dias_vencidos: emp.dias_vencidos || 0,
                 cliente_id: emp.id_cliente || null,
-                material: emp.material || 'No especificado',
-                //  Guardar timestamp para ordenar
-                timestamp: new Date(emp.fecha_empeno).getTime()
+                material: emp.material || 'No especificado'
             }));
             
-            // ORDENAR POR TIMESTAMP DESCENDENTE (más reciente primero)
-            const empenosOrdenados = empenosFormateados.sort((a, b) => {
-                return (b.timestamp || 0) - (a.timestamp || 0);
-            });
-            
-            setEmpenos(empenosOrdenados);
+            // ✅ EL BACKEND YA ESTÁ ORDENADO, NO HACER SORT MANUAL
+            setEmpenos(empenosFormateados);
         }
     } catch (error) {
         console.error('Error al cargar empeños:', error);
