@@ -11,6 +11,7 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SecurityIcon from '@mui/icons-material/Security';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag'; // ✅ NUEVO: icono para Apartados
 
 const UserContext = createContext();
 
@@ -42,6 +43,7 @@ const modulesByPlan = {
       { path: "/pagos", icon: <PaymentsIcon />, text: "Pagos", modulo: "pagos" },
       { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" },
       { path: "/tienda", icon: <StorefrontIcon />, text: "Tienda en línea", modulo: "tienda" },
+      { path: "/tienda/apartados", icon: <ShoppingBagIcon />, text: "Apartados de clientes", modulo: "apartados" }, // ✅ NUEVO
       { path: "/reportes", icon: <BarChartIcon />, text: "Reportes", modulo: "reportes" },
       { path: "/roles", icon: <SecurityIcon />, text: "Roles", modulo: "roles" },
       { path: "/permisos", icon: <VpnKeyIcon />, text: "Permisos", modulo: "permisos" },
@@ -80,6 +82,7 @@ export const UserProvider = ({ children }) => {
       'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
       'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
       'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+      'apartados': { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' }, // ✅ NUEVO
       'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
       'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
       'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
