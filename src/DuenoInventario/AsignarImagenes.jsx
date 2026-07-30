@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../config/api";
-import "./DuenoInventario/Inventario.css";
+import "./Inventario.css";
 
 const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
 const CLOUDINARY_UPLOAD_PRESET = "ophelina_productos";
