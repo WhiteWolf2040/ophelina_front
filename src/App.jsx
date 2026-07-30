@@ -49,6 +49,8 @@ import Reporte from "./DuenoReporte/Reporte";
 import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
+import AsignarImagenes from "./pages/AsignarImagenes";
+
 //  AppLayout: SOLO para rutas de administrador/empleados (incluye Sidebar)
 const AppLayout = ({ children }) => {
   return (
@@ -71,6 +73,8 @@ function App() {
           <Route path="/login" element={<OpheliaLogin />} />
           <Route path="/register" element={<OpheliaRegister />} />
 
+        
+
           {/* ========================================== */}
           {/* 👤 RUTAS DE CLIENTES (SIN AppLayout/Sidebar)  */}
           {/* Cada página de cliente ya trae su propio      */}
@@ -82,6 +86,8 @@ function App() {
               <OphelinaHome />
             </ProtectedRoute>
           } />
+
+            <Route path="/inventario/asignar-imagenes" element={<AsignarImagenes />} />
 
           <Route path="/misempenos" element={
             <ProtectedRoute allowedRoles={['Cliente']}>

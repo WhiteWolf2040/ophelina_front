@@ -491,13 +491,17 @@ const InventarioLista = () => {
                 className="btn-editar"
                 onClick={() => abrirModalEditar(prendaSeleccionada)}
               >
-                ✏️ Editar
+                 Editar
+              </button>
+
+              <button className="btn-nuevo" onClick={() => navigate("/inventario/asignar-imagenes")} style={{ marginLeft: "8px" }}>
+                 Asignar imágenes masivamente
               </button>
               <button 
                 className="btn-eliminar"
                 onClick={() => confirmarEliminar(prendaSeleccionada)}
               >
-                🗑️ Eliminar
+                 Eliminar
               </button>
             </div>
           </div>
