@@ -1,7 +1,7 @@
 // src/services/stripeService.js
 import api from '../config/api';  // ← IMPORTAR LA INSTANCIA CON INTERCEPTOR
 
-// URL de tu backend (Render) - YA NO ES NECESARIA porque api ya tiene la baseURL
+// URL de tu backend (Render) - YAStripe.js NO ES NECESARIA porque api ya tiene la baseURL
 // const API_URL = import.meta.env.VITE_API_URL || 'https://ophelina-back-v1.onrender.com/api';
 
 export const stripeService = {

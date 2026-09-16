@@ -39,33 +39,38 @@ const ApartadosAdmin = () => {
     setMensajeError(prev => ({ ...prev, [idApartado]: null }));
   };
 
-  const handleConfirmarEntrega = async (idApartado) => {
-    const codigo = (codigoInputs[idApartado] || "").trim();
+ const handleConfirmarEntrega = async (idApartado) => {
+  const codigo = (codigoInputs[idApartado] || "").trim();
 
-    if (!codigo) {
-      setMensajeError(prev => ({ ...prev, [idApartado]: "Ingresa el código que te dio el cliente" }));
-      return;
+  if (!codigo) {
+    setMensajeError(prev => ({ ...prev, [idApartado]: "Ingresa el código que te dio el cliente" }));
+    return;
+  }
+
+  try {
+    setProcesando(idApartado);
+    const result = await ApartadosAdminService.marcarEntregado(idApartado, codigo);
+
+    if (result.success) {
+      // en vez de volver a pedir todo con cargarApartados():
+      setApartados(prev => prev.map(a =>
+        a.id_apartado === idApartado
+          ? { ...a, entregado: true, fecha_entrega: result.data.fecha_entrega }
+          : a
+      ));
+      setCodigoInputs(prev => ({ ...prev, [idApartado]: "" }));
+    } else {
+      setMensajeError(prev => ({ ...prev, [idApartado]: result.message }));
     }
-
-    try {
-      setProcesando(idApartado);
-      const result = await ApartadosAdminService.marcarEntregado(idApartado, codigo);
-
-      if (result.success) {
-        await cargarApartados();
-        setCodigoInputs(prev => ({ ...prev, [idApartado]: "" }));
-      } else {
-        setMensajeError(prev => ({ ...prev, [idApartado]: result.message }));
-      }
-    } catch (err) {
-      setMensajeError(prev => ({
-        ...prev,
-        [idApartado]: err.response?.data?.message || "Error al confirmar la entrega"
-      }));
-    } finally {
-      setProcesando(null);
-    }
-  };
+  } catch (err) {
+    setMensajeError(prev => ({
+      ...prev,
+      [idApartado]: err.response?.data?.message || "Error al confirmar la entrega"
+    }));
+  } finally {
+    setProcesando(null);
+  }
+};
 
   const pendientes = apartados.filter(a => !a.entregado);
   const entregados = apartados.filter(a => a.entregado);

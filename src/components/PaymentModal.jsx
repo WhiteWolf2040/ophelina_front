@@ -1,5 +1,5 @@
 // components/PaymentModal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../config/api';  // ← IMPORTAR api
 import './PaymentModal.css';
 
@@ -7,13 +7,15 @@ const PaymentModal = ({ isOpen, onClose, sessionId, planName, planId, onSuccess 
     const [verifying, setVerifying] = useState(false);
     const [verified, setVerified] = useState(false);
     const [error, setError] = useState(null);
+    const yaVerificado = useRef(false);
 
     useEffect(() => {
-        if (isOpen && sessionId && !verified && !verifying) {
-            console.log('🔍 Modal abierto - Verificando pago...');
-            verifyPayment();
-        }
-    }, [isOpen, sessionId]);
+    if (isOpen && sessionId && !verified && !verifying && !yaVerificado.current) {
+        yaVerificado.current = true;
+        console.log('🔍 Modal abierto - Verificando pago...');
+        verifyPayment();
+    }
+}, [isOpen, sessionId]);
 
     const verifyPayment = async () => {
         try {

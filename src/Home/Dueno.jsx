@@ -1,4 +1,4 @@
-// Home/Dueno.jsx - VERSIÓN FUSIONADA (Docker Base + Mejoras Local)
+// Home/Dueno.jsx - VERSIÓN FUSIONADA (Docker Base + Mejoras Local) + Endpoint consolidado
 import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
 import "./dueno.css";
@@ -29,7 +29,7 @@ import AreaChartIcon from '@mui/icons-material/AreaChart';
 
 const Dueno = () => {
   // ============================================
-  // 🆕 DETECCIÓN DE TAMAÑO DE PANTALLA (DESDE LOCAL)
+  // DETECCIÓN DE TAMAÑO DE PANTALLA (DESDE LOCAL)
   // ============================================
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -42,7 +42,7 @@ const Dueno = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 🆕 Alturas de gráficas según el tamaño de pantalla (DESDE LOCAL)
+  // Alturas de gráficas según el tamaño de pantalla (DESDE LOCAL)
   const chartHeight = windowWidth < 480 ? 250 : windowWidth < 768 ? 300 : 380;
   const smallChartHeight = windowWidth < 480 ? 200 : windowWidth < 768 ? 250 : 300;
 
@@ -56,70 +56,68 @@ const Dueno = () => {
   const [paymentPlanId, setPaymentPlanId] = useState(null);
 
   // Detectar pago exitoso
- // Detectar pago exitoso - en Dueno.jsx
-useEffect(() => {
+  useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const paymentStatus = searchParams.get('payment');
-    
+
     console.log('🔍 Parámetros URL:', { sessionId, paymentStatus });
-    
+
     if (sessionId && paymentStatus === 'success') {
-        console.log('✅ Pago detectado, abriendo modal...');
-        console.log('📌 session_id:', sessionId);
-        console.log('📌 plan_name:', localStorage.getItem('pending_plan_name'));
-        console.log('📌 plan_id:', localStorage.getItem('pending_plan_id'));
-        
-        setPaymentSessionId(sessionId);
-        setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
-        setPaymentPlanId(localStorage.getItem('pending_plan_id'));
-        setShowPaymentModal(true);
-        
-        // Limpiar la URL
-        window.history.replaceState({}, document.title, '/home');
+      console.log(' Pago detectado, abriendo modal...');
+      console.log(' session_id:', sessionId);
+      console.log(' plan_name:', localStorage.getItem('pending_plan_name'));
+      console.log(' plan_id:', localStorage.getItem('pending_plan_id'));
+
+      setPaymentSessionId(sessionId);
+      setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
+      setPaymentPlanId(localStorage.getItem('pending_plan_id'));
+      setShowPaymentModal(true);
+
+      // Limpiar la URL
+      window.history.replaceState({}, document.title, '/home');
     }
-}, [searchParams]);
+  }, [searchParams]);
 
-  // Verificar suscripción al cargar
-// Home/Dueno.jsx - Actualizar la verificación de suscripción
+  // ============================================
+  // SUSCRIPCIÓN
+  // ============================================
+  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
 
-// Verificar suscripción al cargar
-useEffect(() => {
-    const verificarSuscripcion = async () => {
-        const empresaId = localStorage.getItem('empresa_id');
-        if (!empresaId) {
-            console.warn('⚠️ No hay empresa_id en localStorage');
-            return;
-        }
-        
-        try {
-            console.log('🔍 Verificando suscripción para empresa:', empresaId);
-            const response = await stripeService.checkSubscription(empresaId);
-            console.log('📊 Estado suscripción:', response);
-            
-            // ✅ Si la suscripción es indefinida (sin fecha) y está activa
-            if (response.fecha_fin_plan === null && response.plan_activo === 1) {
-                console.log('✅ Suscripción activa sin fecha de vencimiento');
-                return;
-            }
-            
-            // ✅ Si tiene fecha y está activa
-            if (response.activo) {
-                console.log('✅ Suscripción activa. Días restantes:', response.dias_restantes);
-                return;
-            }
-            
-            // ❌ Si está inactiva o vencida
-            console.warn('⚠️ Suscripción inactiva o vencida');
-            alert('Tu suscripción ha vencido. Por favor, renueva.');
-            window.location.href = '/planes';
-            
-        } catch (error) {
-            console.error('❌ Error al verificar suscripción:', error);
-            // No redirigir si hay error, dejar que el usuario vea el dashboard
-        }
-    };
+  const verificarSuscripcion = async () => {
+    const empresaId = localStorage.getItem('empresa_id');
+    if (!empresaId) {
+      console.warn(' No hay empresa_id en localStorage');
+      return;
+    }
+
+    try {
+      console.log(' Verificando suscripción para empresa:', empresaId);
+      const response = await stripeService.checkSubscription(empresaId);
+      console.log(' Estado suscripción:', response);
+      setSubscriptionInfo(response);
+
+      if (response.fecha_fin_plan === null && response.plan_activo === 1) {
+        console.log(' Suscripción activa sin fecha de vencimiento');
+        return;
+      }
+
+      if (response.activo) {
+        console.log(' Suscripción activa. Días restantes:', response.dias_restantes);
+        return;
+      }
+
+      console.warn(' Suscripción inactiva o vencida');
+      alert('Tu suscripción ha vencido. Por favor, renueva.');
+      window.location.href = '/planes';
+
+    } catch (error) {
+      console.error(' Error al verificar suscripción:', error);
+    }
+  };
+
+  useEffect(() => {
     verificarSuscripcion();
-}, []);
+  }, []);
 
   // ============================================
   // ESTADOS (DESDE DOCKER)
@@ -152,7 +150,7 @@ useEffect(() => {
     precio_10k: 0,
     ultima_actualizacion: null
   });
-  
+
   // Estados para datos del dashboard
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -285,13 +283,13 @@ useEffect(() => {
   const [trendChartData, setTrendChartData] = useState({
     series: [{ name: "Retorno Total", data: [] }],
     options: {
-      chart: { 
-        type: "line", 
+      chart: {
+        type: "line",
         height: 300,
         toolbar: { show: false }
       },
       xaxis: { categories: [], title: { text: 'Mes' } },
-      yaxis: { 
+      yaxis: {
         title: { text: '$ (pesos)' },
         labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k` }
       },
@@ -317,8 +315,8 @@ useEffect(() => {
               total: {
                 show: true,
                 label: "Total",
-                formatter: function(w) {
-                  return w.globals.seriesTotals.reduce((a,b) => a+b, 0) + " artículos";
+                formatter: function (w) {
+                  return w.globals.seriesTotals.reduce((a, b) => a + b, 0) + " artículos";
                 }
               }
             }
@@ -383,9 +381,75 @@ useEffect(() => {
   };
 
   // ============================================
-  // FUNCIONES DE CARGA DE DATOS (DESDE DOCKER)
+  //  CARGA CONSOLIDADA: dashboard + morosidad +
+  // distribución + amortizaciones en UNA sola petición
   // ============================================
-  
+  const cargarTodo = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await api.get('/home/completo');
+
+      if (response.data.success) {
+        const { dashboard, morosidad: morosidadData, distribucion, amortizaciones } = response.data.data;
+
+        // --- Dashboard principal ---
+        setDashboardData(dashboard);
+
+        const capitalRetorno = dashboard.capital_retorno || [];
+        const capitalAcumulado = capitalRetorno.map(i => Number(i.capital)) || [];
+        const retornoAcumulado = capitalRetorno.map(i => Number(i.retorno)) || [];
+        const gananciaAcumulada = capitalRetorno.map(i => Number(i.ganancia)) || [];
+        const meses = capitalRetorno.map(i => i.mes) || [];
+
+        setAreaChartData(prev => ({
+          series: [
+            { name: "Capital Prestado (Acumulado)", data: capitalAcumulado },
+            { name: "Retorno (Pagos Acumulados)", data: retornoAcumulado },
+            { name: "Ganancia (Acumulada)", data: gananciaAcumulada }
+          ],
+          options: {
+            ...prev.options,
+            xaxis: { ...prev.options.xaxis, categories: meses }
+          }
+        }));
+
+        setTrendChartData(prev => ({
+          series: [{ name: "Retorno Total", data: retornoAcumulado }],
+          options: {
+            ...prev.options,
+            xaxis: { ...prev.options.xaxis, categories: meses }
+          }
+        }));
+
+        // --- Morosidad ---
+        setMorosidad(morosidadData || []);
+
+        // --- Distribución por categoría ---
+        const series = (distribucion || []).map(item => item.total);
+        const labels = (distribucion || []).map(item => item.categoria);
+        setCategoriaDistribucion(prev => ({
+          ...prev,
+          series,
+          options: { ...prev.options, labels }
+        }));
+
+        // --- Amortizaciones pendientes ---
+        setAmortizacionesPendientes(amortizaciones || []);
+      }
+    } catch (error) {
+      console.error('Error al cargar dashboard:', error);
+      setError('No se pudo conectar con el servidor.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ============================================
+  // FUNCIONES DE CARGA SECUNDARIAS (no bloquean el loading principal)
+  // ============================================
+
   const cargarUsuarioActual = async () => {
     try {
       const userStr = localStorage.getItem('user');
@@ -438,94 +502,6 @@ useEffect(() => {
       }
     } catch (error) {
       console.error('Error cargando módulos:', error);
-    }
-  };
-
-  const cargarMorosidad = async () => {
-    try {
-      const response = await api.get('/home/morosidad');
-      if (response.data.success) {
-        setMorosidad(response.data.data);
-      } else {
-        console.error('Error en respuesta:', response.data.message);
-        setMorosidad([]);
-      }
-    } catch (error) {
-      console.error('Error al cargar morosidad:', error);
-      setMorosidad([]);
-    }
-  };
-
-  const cargarDistribucionCategorias = async () => {
-    try {
-      const response = await api.get('/home/distribucion-categorias');
-      if (response.data.success) {
-        const data = response.data.data;
-        const series = data.map(item => item.total);
-        const labels = data.map(item => item.categoria);
-        setCategoriaDistribucion(prev => ({ ...prev, series, options: { ...prev.options, labels } }));
-      }
-    } catch (error) {
-      console.error('Error al cargar distribución de categorías:', error);
-    }
-  };
-
-  const cargarDashboard = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await api.get('/home');
-      
-      if (response.data.success) {
-        const data = response.data.data;
-        setDashboardData(data);
-        
-        const capitalRetorno = data.capital_retorno || [];
-        const capitalAcumulado = capitalRetorno.map(i => Number(i.capital)) || [];
-        const retornoAcumulado = capitalRetorno.map(i => Number(i.retorno)) || [];
-        const gananciaAcumulada = capitalRetorno.map(i => Number(i.ganancia)) || [];
-        const meses = capitalRetorno.map(i => i.mes) || [];
-
-        setAreaChartData({
-          series: [
-            { name: "Capital Prestado (Acumulado)", data: capitalAcumulado },
-            { name: "Retorno (Pagos Acumulados)", data: retornoAcumulado },
-            { name: "Ganancia (Acumulada)", data: gananciaAcumulada }
-          ],
-          options: {
-            ...areaChartData.options,
-            xaxis: { ...areaChartData.options.xaxis, categories: meses }
-          }
-        });
-
-        setTrendChartData({
-          series: [{ name: "Retorno Total", data: retornoAcumulado }],
-          options: {
-            ...trendChartData.options,
-            xaxis: { ...trendChartData.options.xaxis, categories: meses }
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error al cargar dashboard:', error);
-      setError('No se pudo conectar con el servidor.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const cargarAmortizacionesPendientes = async () => {
-    try {
-      setLoadingAmortizaciones(true);
-      const response = await api.get('/home/amortizaciones-pendientes');
-      if (response.data.success) {
-        setAmortizacionesPendientes(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error al cargar amortizaciones:', error);
-    } finally {
-      setLoadingAmortizaciones(false);
     }
   };
 
@@ -596,19 +572,20 @@ useEffect(() => {
   // EFECTO PRINCIPAL DE CARGA
   // ============================================
   useEffect(() => {
-    cargarDashboard();
-    cargarMorosidad();
-    cargarDistribucionCategorias();
+    // Carga crítica: controla el spinner de la pantalla
+    cargarTodo();
+
+    // Cargas secundarias: no bloquean la vista, entran cuando terminan
     cargarUsuarioActual();
     cargarPreciosQuilates();
     cargarModulosPorPlan();
-    cargarAmortizacionesPendientes();
   }, []);
 
   // Manejadores del modal de pago
   const handlePaymentSuccess = (data) => {
     console.log('Pago exitoso:', data);
-    cargarDashboard();
+    cargarTodo();
+    verificarSuscripcion(); // 🔑 refresca días restantes / fecha_fin_plan
     setTimeout(() => {
       setShowPaymentModal(false);
       localStorage.removeItem('pending_plan_id');
@@ -625,7 +602,7 @@ useEffect(() => {
   };
 
   // ============================================
-  // 🆕 LOADING STATE - CON SPINNER PEQUEÑO (DESDE LOCAL)
+  //  LOADING STATE - CON SPINNER PEQUEÑO (DESDE LOCAL)
   // ============================================
   if (loading) {
     return (
@@ -649,7 +626,7 @@ useEffect(() => {
             <WarningIcon className="error-icon" />
             <h3>Error de conexión</h3>
             <p>{error}</p>
-            <button onClick={cargarDashboard} className="btn-reintentar">
+            <button onClick={cargarTodo} className="btn-reintentar">
               Reintentar
             </button>
           </div>
@@ -659,9 +636,9 @@ useEffect(() => {
   }
 
   // ============================================
-  // ✅ RENDER - CON ESTRUCTURA DOCKER (SIN SIDEBAR)
+  //  RENDER - CON ESTRUCTURA DOCKER (SIN SIDEBAR)
   // ============================================
-  return ( 
+  return (
     <div className="dashboard">
       <div className="content">
         {/* HEADER */}
@@ -671,7 +648,7 @@ useEffect(() => {
               Hola, {datosPerfil.nombre.split(' ')[0] || 'Dueño'}
               <p className="header-sub">Conoce el estado de tu casa de empeño</p>
             </h1>
-          
+
             <div className="header-botones">
               <button className="btn-perfil" onClick={() => setShowPerfil(true)} title="Mi Perfil">
                 <img src={datosPerfil.fotoPerfil} alt="Perfil" className="perfil-foto" />
@@ -733,7 +710,7 @@ useEffect(() => {
         {/* ============================================ */}
         {/* GRÁFICAS - SEGÚN ROL DEL USUARIO */}
         {/* ============================================ */}
-        
+
         {/* 🆕 GRÁFICA PRINCIPAL - CON chartHeight DINÁMICO (DESDE LOCAL) */}
         {puedeVerEvolucionAcumulada() && (
           <div className="chart-section">
@@ -755,7 +732,7 @@ useEffect(() => {
           </div>
         )}
 
-        {/* 🆕 GRÁFICAS ADICIONALES - CON smallChartHeight DINÁMICO (DESDE LOCAL) */}
+        {/* GRÁFICAS ADICIONALES - CON smallChartHeight DINÁMICO */}
         {puedeVerGraficasBasicas() && (
           <div className="nuevas-graficas-grid">
             <div className="grafica-nueva-card">
@@ -852,10 +829,11 @@ useEffect(() => {
                 {morosidad.map((item, index) => {
                   let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
                   if (porcentaje > 100) porcentaje = 100;
-                  
+
                   return (
                     <tr key={index}>
-                      <td><strong>{item.cliente}</strong></td>
+                      {/* ✅ CORREGIDO: item.nombre en vez de item.cliente (esa clave no existía) */}
+                      <td><strong>{item.nombre}</strong></td>
                       <td>{formatearMoneda(item.total_prestado)}</td>
                       <td className="loss-text">{formatearMoneda(item.deuda)}</td>
                       <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
@@ -865,8 +843,8 @@ useEffect(() => {
                         </span>
                       </td>
                       <td><span className="badge-danger">{item.pagos_atrasados || item.dias_mora} días</span></td>
-                      <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' 
-                        ? formatFecha(item.ultimo_pago) 
+                      <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date'
+                        ? formatFecha(item.ultimo_pago)
                         : 'Sin registro'}</td>
                     </tr>
                   );

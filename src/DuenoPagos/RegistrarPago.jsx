@@ -1,7 +1,7 @@
 // RegistrarPago.jsx - Versión con React-Select
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+
 import api from "../config/api";
 import "./Pagos.css";
 import Select from 'react-select';
@@ -314,7 +314,7 @@ const cargarEmpenosActivos = async () => {
   
   return (
     <div className="dashboard">
-      <Sidebar />
+  
       
       <div className="content">
         <div className="header-container">

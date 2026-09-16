@@ -1,5 +1,5 @@
 /* PaymentModal.css */
-.modal-overlay {
+.payment-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -13,7 +13,8 @@
   animation: fadeIn 0.3s ease;
 }
 
-.modal-container {
+.payment-modal-container {
+  position: relative;
   background: white;
   border-radius: 16px;
   padding: 32px;
@@ -24,50 +25,149 @@
   animation: slideUp 0.3s ease;
 }
 
-.modal-icon {
-  margin-bottom: 20px;
-}
-
-.spinner {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto;
-  border: 4px solid #e0e0e0;
-  border-top: 4px solid #2563eb;
+.payment-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #9ca3af;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  transition: all 0.2s ease;
 }
 
-.success-icon,
-.error-icon {
-  font-size: 60px;
-  animation: bounce 0.5s ease;
+.payment-modal-close:hover {
+  background: #f3f4f6;
+  color: #374151;
 }
 
-.modal-title {
-  font-size: 24px;
+.payment-modal-content h2 {
+  font-size: 22px;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 24px;
   color: #1f2937;
 }
 
-.modal-message {
-  font-size: 16px;
-  color: #6b7280;
-  margin-bottom: 24px;
-  line-height: 1.5;
+/* ---- LOADER MEJORADO ---- */
+.payment-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
 }
 
-.modal-buttons {
+.spinner {
+  width: 64px;
+  height: 64px;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.spinner::before,
+.spinner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid transparent;
+}
+
+.spinner::before {
+  border-top-color: #2563eb;
+  border-right-color: #2563eb;
+  animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.spinner::after {
+  border: 4px solid #e5e7eb;
+  opacity: 0.5;
+}
+
+.payment-loading p {
+  font-size: 16px;
+  color: #1f2937;
+  margin: 0 0 6px;
+}
+
+.payment-subtext {
+  font-size: 13px !important;
+  color: #6b7280 !important;
+}
+
+/* ---- ÉXITO ---- */
+.payment-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.success-icon {
+  font-size: 52px;
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ecfdf5;
+  border-radius: 50%;
+  margin-bottom: 16px;
+  animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.payment-success h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.payment-success p {
+  color: #4b5563;
+  margin: 0 0 4px;
+}
+
+/* ---- ERROR ---- */
+.payment-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.error-icon {
+  font-size: 52px;
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef2f2;
+  border-radius: 50%;
+  margin-bottom: 16px;
+  animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.payment-error h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.payment-actions {
   display: flex;
   gap: 12px;
   justify-content: center;
+  margin-top: 16px;
 }
 
-.btn-success,
+/* ---- BOTONES ---- */
 .btn-primary,
 .btn-secondary,
-.btn-disabled {
+.btn-retry {
   padding: 12px 24px;
   border-radius: 8px;
   font-weight: 500;
@@ -75,15 +175,6 @@
   transition: all 0.2s ease;
   border: none;
   font-size: 14px;
-}
-
-.btn-success {
-  background: #10b981;
-  color: white;
-}
-
-.btn-success:hover {
-  background: #059669;
 }
 
 .btn-primary {
@@ -104,13 +195,16 @@
   background: #d1d5db;
 }
 
-.btn-disabled {
-  background: #9ca3af;
+.btn-retry {
+  background: #10b981;
   color: white;
-  cursor: not-allowed;
 }
 
-/* Animaciones */
+.btn-retry:hover {
+  background: #059669;
+}
+
+/* ---- ANIMACIONES ---- */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -128,20 +222,10 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
-@keyframes bounce {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
