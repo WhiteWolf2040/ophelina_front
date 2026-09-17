@@ -85,7 +85,7 @@ export default function OphelinaTienda() {
   const [categoriaActiva, setCategoriaActiva] = useState("todas");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
-  const [mensajeApartado, setMensajeApartado] = useState({ mostrar: false, producto: "" });
+  const [mensajeApartado, setMensajeApartado] = useState({ mostrar: false, producto: "", codigo: "" });
   const [apartando, setApartando] = useState(false);
 
   // Paginación
@@ -106,7 +106,9 @@ export default function OphelinaTienda() {
     { id: "apartados", nombre: "Mis apartados" },
   ];
 
-  // Cargar productos
+  // Cargar productos.
+  // Devuelve los datos además de guardarlos en el estado, para poder
+  // usarlos de inmediato al volver de Stripe sin esperar al re-render.
   const cargarDatos = async () => {
     setCargando(true);
     setError("");
@@ -127,6 +129,11 @@ export default function OphelinaTienda() {
     }
 
     setCargando(false);
+
+    return {
+      productosData: resProductos.success ? resProductos.data : [],
+      apartadosData: resApartados.success ? resApartados.data : [],
+    };
   };
 
   useEffect(() => {
@@ -140,9 +147,26 @@ export default function OphelinaTienda() {
 
     if (pago === "exitoso") {
       setCategoriaActiva("apartados");
-      setMensajeApartado({ mostrar: true, producto: "tu producto" });
-      setTimeout(() => setMensajeApartado({ mostrar: false, producto: "" }), 4000);
       navigate("/ophelina", { replace: true });
+
+      // Refrescamos porque el webhook de Stripe ya pudo haber marcado
+      // el apartado como "pagado", y así conseguimos el código real.
+      cargarDatos().then(({ apartadosData }) => {
+        // Ordenamos por id_apartado (no por fecha: el backend la manda
+        // como "dd/mm/aaaa", formato que Date() no interpreta bien).
+        const pagados = apartadosData
+          .filter((a) => a.estadoPago === "pagado" && !a.entregado)
+          .sort((a, b) => b.id_apartado - a.id_apartado);
+
+        const apartadoReciente = pagados[0];
+
+        setMensajeApartado({
+          mostrar: true,
+          producto: apartadoReciente?.nombre || "tu producto",
+          codigo: apartadoReciente?.codigoEntrega || "",
+        });
+        setTimeout(() => setMensajeApartado({ mostrar: false, producto: "", codigo: "" }), 6000);
+      });
     } else if (pago === "cancelado") {
       setError("El pago fue cancelado, tu producto no quedó apartado.");
       navigate("/ophelina", { replace: true });
@@ -203,7 +227,6 @@ export default function OphelinaTienda() {
   const cambiarPagina = (numero) => {
     if (numero >= 1 && numero <= totalPaginas) {
       setPaginaActual(numero);
-      // Scroll al inicio de la sección
       document.querySelector('.products-section')?.scrollIntoView({ behavior: 'smooth' });
     }
   };
@@ -213,11 +236,11 @@ export default function OphelinaTienda() {
     const maxPaginasVisibles = 5;
     let inicioNum = Math.max(1, paginaActual - Math.floor(maxPaginasVisibles / 2));
     let finNum = Math.min(totalPaginas, inicioNum + maxPaginasVisibles - 1);
-    
+
     if (finNum - inicioNum + 1 < maxPaginasVisibles) {
       inicioNum = Math.max(1, finNum - maxPaginasVisibles + 1);
     }
-    
+
     for (let i = inicioNum; i <= finNum; i++) {
       numeros.push(i);
     }
@@ -464,6 +487,11 @@ export default function OphelinaTienda() {
               <span className="mensaje-icono">✓</span>
               <span>
                 ¡Apartado exitoso! Has apartado: <strong>{mensajeApartado.producto}</strong>
+                {mensajeApartado.codigo && (
+                  <>
+                    {" "}— tu código de entrega es: <strong>{mensajeApartado.codigo}</strong>
+                  </>
+                )}
               </span>
             </div>
           </div>

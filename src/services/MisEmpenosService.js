@@ -35,7 +35,7 @@ const MisEmpenosService = {
         }
     },
 
-    // ✅ Obtener cotización para un empeño específico (capital, interés, IVA, mora, refrendo)
+    //  Obtener cotización para un empeño específico (capital, interés, IVA, mora, refrendo)
     obtenerCotizacion: async (idEmpeno) => {
         try {
             const response = await api.get(`/empenos/${idEmpeno}/cotizacion`);
@@ -46,7 +46,7 @@ const MisEmpenosService = {
         }
     },
 
-    // ✅ Crear sesión de pago en Stripe para abonar o refrendar un empeño
+    //  Crear sesión de pago en Stripe para abonar o refrendar un empeño
     // tipo: 'abono' (monto libre) o 'refrendo' (monto fijo = interés + IVA del periodo completo)
     crearSesionAbono: async (idEmpeno, monto = null, tipo = 'abono') => {
         try {
@@ -63,7 +63,7 @@ const MisEmpenosService = {
         }
     },
 
-    // ✅ Tickets del cliente
+    //  Tickets del cliente
     getTickets: async () => {
         try {
             const response = await api.get('/cliente/tickets');
