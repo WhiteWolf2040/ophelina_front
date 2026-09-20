@@ -608,8 +608,8 @@ const Dueno = () => {
     return (
       <div className="dashboard">
         <div className="content">
-          <div className="dueno-loader">
-            <span className="dueno-loader-spinner"></span>
+          <div className="loading-container">
+            <span className="spinner"></span>
             <span>Cargando...</span>
           </div>
         </div>

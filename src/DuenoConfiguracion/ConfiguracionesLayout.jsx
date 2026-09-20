@@ -85,7 +85,7 @@ const ConfiguracionesLayout = () => {
 
   return (
     <div className="dashboard">
-      <Sidebar />
+   
       <div className="content">
         <Outlet context={{ 
           empresa,
