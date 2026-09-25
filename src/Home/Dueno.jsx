@@ -1,5 +1,11 @@
 // Home/Dueno.jsx - VERSIÓN FUSIONADA (Docker Base + Mejoras Local) + Endpoint consolidado
-import React, { useState, useEffect } from "react";
+// ============================================
+// FIX: evitar que una respuesta tardía/duplicada de /home/completo
+// (por ejemplo por React.StrictMode disparando el useEffect dos veces
+// en desarrollo) tape con una pantalla de error un dashboard que ya
+// se había cargado y mostrado correctamente.
+// ============================================
+import React, { useState, useEffect, useRef } from "react";
 import Chart from "react-apexcharts";
 import "./dueno.css";
 import api from '../config/api';
@@ -37,7 +43,7 @@ const Dueno = () => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -384,12 +390,30 @@ const Dueno = () => {
   //  CARGA CONSOLIDADA: dashboard + morosidad +
   // distribución + amortizaciones en UNA sola petición
   // ============================================
+
+  // --- FIX de la carrera de peticiones ---
+  // requestIdRef: identifica cuál es la petición "vigente". Si una
+  // respuesta (éxito o error) llega y ya no corresponde a la petición
+  // vigente, se ignora por completo: ni pinta datos ni muestra error.
+  // huboCargaExitosaRef: si ya mostramos el dashboard una vez con éxito,
+  // un error posterior (de una petición vieja/duplicada) ya NO debe
+  // tapar la pantalla con el mensaje de error.
+  const requestIdRef = useRef(0);
+  const huboCargaExitosaRef = useRef(false);
+
   const cargarTodo = async () => {
+    const miPeticion = ++requestIdRef.current;
+
     try {
       setLoading(true);
       setError(null);
 
       const response = await api.get('/home/completo');
+
+      // Si mientras esperábamos se disparó una petición más nueva
+      // (por ejemplo por doble montaje en desarrollo), esta respuesta
+      // ya está obsoleta: la ignoramos para no pisar datos más frescos.
+      if (miPeticion !== requestIdRef.current) return;
 
       if (response.data.success) {
         const { dashboard, morosidad: morosidadData, distribucion, amortizaciones } = response.data.data;
@@ -437,12 +461,25 @@ const Dueno = () => {
 
         // --- Amortizaciones pendientes ---
         setAmortizacionesPendientes(amortizaciones || []);
+
+        huboCargaExitosaRef.current = true;
       }
     } catch (error) {
+      // Ignorar respuestas obsoletas (de una petición vieja/duplicada)
+      if (miPeticion !== requestIdRef.current) return;
+
       console.error('Error al cargar dashboard:', error);
-      setError('No se pudo conectar con el servidor.');
+
+      // Si ya habíamos mostrado el dashboard con éxito antes, no lo
+      // tapamos con la pantalla de error por un timeout tardío de una
+      // petición duplicada: solo lo registramos en consola.
+      if (!huboCargaExitosaRef.current) {
+        setError('No se pudo conectar con el servidor.');
+      }
     } finally {
-      setLoading(false);
+      if (miPeticion === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -579,6 +616,14 @@ const Dueno = () => {
     cargarUsuarioActual();
     cargarPreciosQuilates();
     cargarModulosPorPlan();
+
+    // Si el componente se desmonta/remonta (p. ej. doble montaje de
+    // React.StrictMode en desarrollo), invalidamos cualquier petición
+    // que haya quedado en vuelo para que su respuesta, al llegar, se
+    // ignore en vez de pisar el estado de la instancia nueva.
+    return () => {
+      requestIdRef.current++;
+    };
   }, []);
 
   // Manejadores del modal de pago
