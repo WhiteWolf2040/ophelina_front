@@ -4,6 +4,8 @@ import "./OpheliaRegister.css";
 import logo from "../assets/ophelina_logo-sinFondo.png";
 import { Link } from "react-router-dom";
 import { buscarCodigoPostal } from "../services/postalCodeService";
+import api from "../config/api"; //  NUEVO IMPORT
+import { setAuthData } from "../config/auth";
 
 export default function OpheliaRegister() {
   const [formData, setFormData] = useState({
@@ -66,7 +68,6 @@ export default function OpheliaRegister() {
           ...prev,
           ciudad: resultado.ciudad,
           estado: resultado.estado,
-          // si solo hay una opción, la ponemos directo; si hay varias, que elija
           colonia: resultado.colonias.length === 1
             ? resultado.colonias[0].colonia
             : ""
@@ -85,56 +86,61 @@ export default function OpheliaRegister() {
     }
   };
 
+  //  handleSubmit ACTUALIZADO: ahora usa axios (api) en vez de fetch nativo
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (
-      !formData.nombre ||
-      !formData.correo ||
-      !formData.password ||
-      !formData.negocio_nombre ||
-      !formData.rfc
-    ) {
-      setError("Por favor completa los campos obligatorios");
-      return;
-    }
+  if (
+    !formData.nombre ||
+    !formData.correo ||
+    !formData.password ||
+    !formData.negocio_nombre ||
+    !formData.rfc
+  ) {
+    setError("Por favor completa los campos obligatorios");
+    return;
+  }
 
-    setError("");
+  setError("");
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: formData.nombre,
-          apellido: formData.apellido,
-          telefono: formData.telefono,
-          negocio_nombre: formData.negocio_nombre,
-          correo: formData.correo,
-          password: formData.password,
-          rfc: formData.rfc,
-          codigo_postal: formData.codigo_postal,
-          ciudad: formData.ciudad,
-          estado: formData.estado,
-          direccion: formData.direccion,
-          colonia: formData.colonia
-        }),
-      });
+  try {
+    // 1. Registrar la empresa y usuario
+    const response = await api.post("/register", {
+      nombre: formData.nombre,
+      apellido: formData.apellido,
+      telefono: formData.telefono,
+      negocio_nombre: formData.negocio_nombre,
+      correo: formData.correo,
+      password: formData.password,
+      rfc: formData.rfc,
+      codigo_postal: formData.codigo_postal,
+      ciudad: formData.ciudad,
+      estado: formData.estado,
+      direccion: formData.direccion,
+      colonia: formData.colonia
+    });
 
-      const data = await response.json();
+    const { token } = response.data;
 
-      if (!response.ok) {
-        setError(data.message || "Error al registrar");
-        return;
-      }
+    // 2. Guarda el token temporalmente para que el interceptor de axios lo mande en la siguiente petición
+    localStorage.setItem("token", token);
 
-      localStorage.setItem("token", data.token);
-      window.location.href = "/planes";
-    } catch (err) {
-      setError("Error de conexión con el servidor");
-    }
-  };
+    // 3. Trae los datos completos del usuario (rol, permisos, módulos) igual que en login
+    const userResponse = await api.get("/user");
+    const usuario = userResponse.data.data.usuario;
 
+    // 4. Guarda todo con la misma función que usa el login
+    setAuthData(token, usuario);
+
+    // 5. Ahora sí manda al dashboard, ya con rol/módulos cargados
+    window.location.href = "/home";
+
+  } catch (err) {
+    console.error("Error en registro:", err);
+    console.error("Detalles de validación:", err.response?.data);
+    setError(err.response?.data?.message || "Error de conexión con el servidor");
+  }
+};
   return (
     <div className="login-container">
       <div className="overlay-pattern"></div>
@@ -201,7 +207,6 @@ export default function OpheliaRegister() {
             />
           </div>
 
-          {/* ========== SECCIÓN DE CÓDIGO POSTAL Y COLONIA ========== */}
           <div className="form-row form-row-cp">
             <div className="cp-field">
               <input
@@ -238,8 +243,6 @@ export default function OpheliaRegister() {
             />
           </div>
 
-          {/* ========== SELECCIÓN DE COLONIA (AQUÍ VA) ========== */}
-          {/* Si hay más de una colonia, mostrar select */}
           {opcionesColonia.length > 1 && (
             <div className="form-row">
               <select
@@ -258,7 +261,6 @@ export default function OpheliaRegister() {
             </div>
           )}
 
-          {/* Si solo hay una colonia, mostrarla deshabilitada */}
           {opcionesColonia.length === 1 && (
             <div className="form-row">
               <input
@@ -271,8 +273,6 @@ export default function OpheliaRegister() {
               />
             </div>
           )}
-
-          {/* Fin de la sección de colonia ========== */}
 
           <input
             type="email"
