@@ -842,7 +842,7 @@ const Dueno = () => {
                           -{porcentaje.toFixed(2)}%
                         </span>
                       </td>
-                      <td><span className="badge-danger">{item.pagos_atrasados || item.dias_mora} días</span></td>
+                      <td><span className="badge-danger">{Math.floor(item.dias_mora)} días</span></td>
                       <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date'
                         ? formatFecha(item.ultimo_pago)
                         : 'Sin registro'}</td>
