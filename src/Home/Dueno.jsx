@@ -1,4 +1,4 @@
-// src/Home/Dueno.jsx - VERSIÓN COMPLETA CON TOOLBAR REFRESCAR
+// src/Home/Dueno.jsx - VERSIÓN HARDCODEADA CON MÉTRICAS NUEVAS
 import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
 import "./dueno.css";
@@ -7,6 +7,10 @@ import { useSearchParams } from 'react-router-dom';
 import { stripeService } from '../services/stripeService';
 import PaymentModal from '../components/PaymentModal';
 import { useDashboard } from '../contexts/DashboardContext';
+// Al inicio de Dueno.jsx, importar:
+import { calcularHealthScore } from '../utils/healthScore';
+import { calcularProyeccionCobranza } from '../utils/proyeccionCobranza';
+
 
 // Iconos
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -15,6 +19,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import HistoryIcon from '@mui/icons-material/History';
 import CloseIcon from '@mui/icons-material/Close';
 import PieChartIcon from '@mui/icons-material/PieChart';
@@ -23,41 +28,41 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import AreaChartIcon from '@mui/icons-material/AreaChart';
-import RefreshIcon from '@mui/icons-material/Refresh'; // ✅ NUEVO
+import RefreshIcon from '@mui/icons-material/Refresh';
+
+// ✅ NUEVOS iconos
+import SpeedIcon from '@mui/icons-material/Speed';
+import StoreIcon from '@mui/icons-material/Store';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import FlagIcon from '@mui/icons-material/Flag';
+import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
+import ShieldIcon from '@mui/icons-material/Shield';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import CategoryIcon from '@mui/icons-material/Category';
+import TimelineIcon from '@mui/icons-material/Timeline';
 
 const Dueno = () => {
   // ============================================
-  // CONTEXTO COMPARTIDO
+  // CONTEXTO
   // ============================================
   const {
-    data,
-    cargando,
-    error,
-    cargar,
-    refrescar,           // ✅ NUEVO
-    edadCache,           // ✅ NUEVO
-    cacheEsValido,       // ✅ NUEVO
-    invalidado,          // ✅ NUEVO
-    ultimaActualizacion  // ✅ NUEVO
+    data, cargando, error, cargar, refrescar, edadCache
   } = useDashboard();
 
   // ============================================
-  // ✅ NUEVO: ESTADOS LOCALES DEL TOOLBAR
+  // ESTADOS LOCALES
   // ============================================
   const [refrescandoManual, setRefrescandoManual] = useState(false);
-
-  // Tick para forzar re-render cada 60s (para "hace X min")
   const [, setTick] = useState(0);
+
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 60000);
     return () => clearInterval(id);
   }, []);
 
-  // Minutos desde la última actualización
-  const minutosDesde =
-    edadCache !== null ? Math.floor(edadCache / 60000) : null;
+  const minutosDesde = edadCache !== null ? Math.floor(edadCache / 60000) : null;
 
-  // Handler del botón refrescar
   const handleRefrescarManual = async () => {
     setRefrescandoManual(true);
     try {
@@ -67,12 +72,84 @@ const Dueno = () => {
     }
   };
 
+  useEffect(() => { cargar(); }, [cargar]);
+
   // ============================================
-  // CARGA INICIAL (solo si el caché no es válido)
+  // ✅ NUEVO: DATOS HARDCODEADOS DE EJEMPLO
   // ============================================
-  useEffect(() => {
-    cargar();
-  }, [cargar]);
+  
+  // Comparación vs mes anterior (para las cards)
+  const deltas = {
+    empenos_activos: { actual: 9, anterior: 6, cambio: 3 },
+    empenos_vencidos: { actual: 33, anterior: 28, cambio: 5 },
+    proximos_vencer: { actual: 3, anterior: 5, cambio: -2 },
+    ingresos_recientes: { actual: 0, anterior: 12500, cambio: -12500 },
+  };
+
+  // Rentabilidad
+  const rentabilidad = {
+    capital: 528964,
+    ganancia: 13000.21,
+    perdida: 320236.33,
+    rentabilidad_mensual: 2.45,
+    rentabilidad_anualizada: 29.4,
+    margen_neto: -57.5, // si es negativo porque la pérdida supera la ganancia
+  };
+
+
+
+  // Por sucursal
+  const sucursales = [
+    { nombre: "Casa Matriz - Centro", activos: 5, vencidos: 20, capital: 320000, ganancia: 8500 },
+    { nombre: "Sucursal Norte", activos: 4, vencidos: 13, capital: 208964, ganancia: 4500 },
+  ];
+
+  // Cohortes de antigüedad
+  const cohortes = [
+    { rango: "0-30 días", cantidad: 12, monto: 45000, color: "#10b981" },
+    { rango: "31-60 días", cantidad: 15, monto: 128000, color: "#f59e0b" },
+    { rango: "61-90 días", cantidad: 6, monto: 85600, color: "#e67e22" },
+    { rango: "+90 días", cantidad: 9, monto: 270364, color: "#dc2626" },
+  ];
+
+  // Actividad reciente mejorada (múltiples tipos)
+  const actividadMejorada = [
+    { tipo: "pago", descripcion: "Pago recibido de Hank Kilback", fecha: "hoy, 14:32", monto: 700 },
+    { tipo: "empeno", descripcion: "Nuevo empeño: Anillo de oro 14k", fecha: "hoy, 12:15", monto: 8500, cliente: "María García" },
+    { tipo: "vencido", descripcion: "Empeño vencido hoy", fecha: "hoy, 09:00", monto: 3200, cliente: "Juan Pérez" },
+    { tipo: "cliente", descripcion: "Nuevo cliente registrado", fecha: "hoy, 08:45", cliente: "Ana López" },
+    { tipo: "pago", descripcion: "Pago recibido de Lisa Tromp", fecha: "ayer, 16:20", monto: 1200 },
+    { tipo: "empeno", descripcion: "Nuevo empeño: Reloj Rolex vintage", fecha: "ayer, 11:00", monto: 15000, cliente: "Carlos Ruiz" },
+  ];
+
+  // Análisis por categoría
+  const analisisCategorias = [
+    { categoria: "Joyería", cantidad: 10, ganancia_promedio: 1850, tasa_mora: 20, rentabilidad: "Alta" },
+    { categoria: "Relojes", cantidad: 12, ganancia_promedio: 2200, tasa_mora: 33, rentabilidad: "Alta" },
+    { categoria: "Electrónica", cantidad: 12, ganancia_promedio: 950, tasa_mora: 50, rentabilidad: "Media" },
+    { categoria: "Herramientas", cantidad: 16, ganancia_promedio: 620, tasa_mora: 62, rentabilidad: "Baja" },
+    { categoria: "Instrumentos", cantidad: 3, ganancia_promedio: 1400, tasa_mora: 33, rentabilidad: "Media" },
+  ];
+
+  // Health Score
+  // Health Score (calculado con datos reales)
+const healthScore = calcularHealthScore(data);
+
+  // Clientes en riesgo
+  const clientesEnRiesgo = [
+    { nombre: "Ephraim Ledner", dias_sin_pagar: 42, deuda: 69400, alerta: "alto" },
+    { nombre: "Hank Kilback", dias_sin_pagar: 38, deuda: 53506, alerta: "alto" },
+    { nombre: "Lacey Spencer", dias_sin_pagar: 35, deuda: 32068, alerta: "medio" },
+  ];
+
+  // Meta del mes
+  const meta = {
+    objetivo: 100000,
+    actual: 45000,
+    dias_transcurridos: 15,
+    dias_totales: 30,
+    proyeccion: 90000,
+  };
 
   // ============================================
   // EXTRAER DATOS DEL CONTEXTO
@@ -89,9 +166,10 @@ const Dueno = () => {
   const morosidad = data?.morosidad || [];
   const distribucion = data?.distribucion || [];
   const amortizacionesPendientes = data?.amortizaciones || [];
+  const proyeccion = calcularProyeccionCobranza(amortizacionesPendientes);
 
   // ============================================
-  // GRÁFICAS: construir series desde capital_retorno
+  // GRÁFICAS
   // ============================================
   const capitalRetorno = dashboardData.capital_retorno || [];
   const capitalAcumulado = capitalRetorno.map(i => Number(i.capital));
@@ -99,9 +177,6 @@ const Dueno = () => {
   const gananciaAcumulada = capitalRetorno.map(i => Number(i.ganancia));
   const meses = capitalRetorno.map(i => i.mes);
 
-  // ============================================
-  // DETECCIÓN DE PANTALLA
-  // ============================================
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -150,9 +225,7 @@ const Dueno = () => {
     }
   };
 
-  useEffect(() => {
-    verificarSuscripcion();
-  }, []);
+  useEffect(() => { verificarSuscripcion(); }, []);
 
   // ============================================
   // ESTADOS
@@ -176,7 +249,7 @@ const Dueno = () => {
   const [ingresosRecientes, setIngresosRecientes] = useState([]);
 
   // ============================================
-  // GRÁFICAS (configuración estática)
+  // CONFIGURACIÓN DE GRÁFICAS
   // ============================================
   const areaChartOptions = {
     chart: {
@@ -270,6 +343,44 @@ const Dueno = () => {
     }
   };
 
+  // ✅ NUEVO: gráfica de cohortes (barras horizontales)
+  const cohortesChartOptions = {
+    chart: { type: "bar", toolbar: { show: false } },
+    plotOptions: {
+      bar: {
+        horizontal: true,
+        distributed: true,
+        borderRadius: 6,
+        barHeight: '70%'
+      }
+    },
+    colors: cohortes.map(c => c.color),
+    dataLabels: {
+      enabled: true,
+      formatter: (val) => `${val} empeños`,
+      style: { fontSize: '12px', fontWeight: 600, colors: ['#fff'] }
+    },
+    xaxis: {
+      categories: cohortes.map(c => c.rango),
+      labels: { style: { fontSize: '12px' } }
+    },
+    legend: { show: false },
+    tooltip: {
+      y: {
+        formatter: (val, opts) => {
+          const item = cohortes[opts.dataPointIndex];
+          return `${val} empeños · $${item.monto.toLocaleString()}`;
+        }
+      }
+    },
+    grid: { borderColor: '#e5e7eb', strokeDashArray: 5 }
+  };
+
+  const cohortesChartSeries = [{
+    name: "Empeños",
+    data: cohortes.map(c => c.cantidad)
+  }];
+
   // ============================================
   // FUNCIONES AUXILIARES
   // ============================================
@@ -297,16 +408,13 @@ const Dueno = () => {
     }
   };
 
-  // ============================================
-  // ROLES
-  // ============================================
   const esAdmin = () => userRole === 'Administrador' || userRole === 'Dueño' || userRole === 'Admin';
   const esGerente = () => userRole === 'Gerente' || userRole === 'gerente' || userRole === 'GERENTE';
   const puedeVerEvolucionAcumulada = () => esAdmin();
   const puedeVerGraficasBasicas = () => esAdmin() || esGerente();
 
   // ============================================
-  // CARGA SECUNDARIA (rol + precios)
+  // CARGA SECUNDARIA
   // ============================================
   const cargarRolUsuario = async () => {
     try {
@@ -352,7 +460,6 @@ const Dueno = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al cargar empeños activos');
     }
   };
 
@@ -365,7 +472,6 @@ const Dueno = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al cargar empeños vencidos');
     }
   };
 
@@ -378,27 +484,21 @@ const Dueno = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al cargar próximos a vencer');
     }
   };
 
   const cargarIngresos = async () => {
-    try {
-      setIngresosRecientes([
-        { id: 1, concepto: "Pago de Juan Pérez", monto: 5000, fecha: "10/03/2024" },
-        { id: 2, concepto: "Pago de María García", monto: 3500, fecha: "09/03/2024" }
-      ]);
-      setShowIngresos(true);
-    } catch (error) {
-      console.error('Error:', error);
-    }
+    setIngresosRecientes([
+      { id: 1, concepto: "Pago de Juan Pérez", monto: 5000, fecha: "10/03/2024" },
+      { id: 2, concepto: "Pago de María García", monto: 3500, fecha: "09/03/2024" }
+    ]);
+    setShowIngresos(true);
   };
 
   // ============================================
   // MODAL DE PAGO
   // ============================================
   const handlePaymentSuccess = (data) => {
-    console.log('Pago exitoso:', data);
     verificarSuscripcion();
     setTimeout(() => {
       setShowPaymentModal(false);
@@ -439,9 +539,7 @@ const Dueno = () => {
             <WarningIcon className="error-icon" />
             <h3>Error de conexión</h3>
             <p>{error}</p>
-            <button onClick={() => cargar(true)} className="btn-reintentar">
-              Reintentar
-            </button>
+            <button onClick={() => cargar(true)} className="btn-reintentar">Reintentar</button>
           </div>
         </div>
       </div>
@@ -455,7 +553,7 @@ const Dueno = () => {
     <div className="dashboard">
       <div className="content">
 
-        {/* ✅ NUEVO: TOOLBAR CON REFRESH 
+        {/* TOOLBAR */}
         <div className="dashboard-toolbar">
           <span className="dashboard-freshness">
             {minutosDesde === null
@@ -463,9 +561,7 @@ const Dueno = () => {
               : minutosDesde < 1
               ? 'Actualizado ahora mismo'
               : `Actualizado hace ${minutosDesde} min`}
-            {invalidado && ' ⚠️'}
           </span>
-
           <button
             type="button"
             className={`dashboard-btn-refresh ${refrescandoManual ? 'girando' : ''}`}
@@ -475,50 +571,269 @@ const Dueno = () => {
           >
             <RefreshIcon />
           </button>
+        </div>
+
+      {/* ✅ NUEVO: HEALTH SCORE + META DEL MES */}
+<div className="hero-grid">
+  {/* Health Score */}
+  <div className="hero-card health-score-card">
+    <div className="hero-card-header">
+      <ShieldIcon />
+      <span>Salud del Negocio</span>
+    </div>
+    <div className="health-score-content">
+      <div className="health-score-circle">
+        <svg viewBox="0 0 100 100" className="health-score-svg">
+          <circle cx="50" cy="50" r="42" className="health-score-track" />
+          <circle
+            cx="50" cy="50" r="42"
+            className="health-score-fill"
+            strokeDasharray={`${(healthScore.total / 100) * 264} 264`}
+            stroke={healthScore.color}
+          />
+        </svg>
+        <div className="health-score-number">
+          <strong style={{ color: healthScore.color }}>{healthScore.total}</strong>
+          <small>/ 100</small>
+        </div>
+      </div>
+
+      <div className="health-score-info">
+        <span className="health-score-label" style={{ color: healthScore.color }}>
+          {healthScore.nivel}
+        </span>
+
+        <div className="health-score-factores">
+          {/* Cartera sana */}
+          <div className="factor">
+            <span title={
+              healthScore.detalles
+                ? `${healthScore.detalles.activos} activos de ${healthScore.detalles.activos + healthScore.detalles.vencidos} empeños`
+                : 'Cargando datos...'
+            }>
+              Cartera sana
+            </span>
+            <div className="factor-bar">
+              <div className="factor-fill" style={{ width: `${healthScore.factores.cartera_sana}%` }}></div>
+            </div>
+            <span>{healthScore.factores.cartera_sana}</span>
+          </div>
+
+          {/* Morosidad */}
+          <div className="factor">
+            <span title={
+              healthScore.detalles
+                ? `Pérdida: $${Number(healthScore.detalles.perdida_total).toLocaleString()} (${healthScore.detalles.tasa_perdida}% del capital)`
+                : 'Cargando datos...'
+            }>
+              Morosidad
+            </span>
+            <div className="factor-bar">
+              <div className="factor-fill warning" style={{ width: `${healthScore.factores.morosidad}%` }}></div>
+            </div>
+            <span>{healthScore.factores.morosidad}</span>
+          </div>
+
+          {/* Liquidez */}
+          <div className="factor">
+            <span title={
+              healthScore.detalles
+                ? `Por cobrar en 30 días: $${Number(healthScore.detalles.proximos_30d).toLocaleString()}`
+                : 'Cargando datos...'
+            }>
+              Liquidez
+            </span>
+            <div className="factor-bar">
+              <div className="factor-fill success" style={{ width: `${healthScore.factores.liquidez}%` }}></div>
+            </div>
+            <span>{healthScore.factores.liquidez}</span>
+          </div>
+
+          {/* Tendencia */}
+          <div className="factor">
+            <span title="Comparación de ganancia mes actual vs mes anterior">
+              Tendencia
+            </span>
+            <div className="factor-bar">
+              <div className="factor-fill" style={{ width: `${healthScore.factores.tendencia}%` }}></div>
+            </div>
+            <span>{healthScore.factores.tendencia}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Meta del Mes */}
+  <div className="hero-card meta-card">
+    <div className="hero-card-header">
+      <FlagIcon />
+      <span>Meta del Mes</span>
+    </div>
+    <div className="meta-content">
+      <div className="meta-amount">
+        <span className="meta-actual">${meta.actual.toLocaleString()}</span>
+        <span className="meta-objetivo">de ${meta.objetivo.toLocaleString()}</span>
+      </div>
+      <div className="meta-progress">
+        <div className="meta-progress-bar">
+          <div
+            className="meta-progress-fill"
+            style={{ width: `${(meta.actual / meta.objetivo) * 100}%` }}
+          ></div>
+        </div>
+        <span className="meta-progress-percent">
+          {((meta.actual / meta.objetivo) * 100).toFixed(0)}%
+        </span>
+      </div>
+      <div className="meta-info">
+        <div className="meta-info-item">
+          <span>Días transcurridos</span>
+          <strong>{meta.dias_transcurridos} / {meta.dias_totales}</strong>
+        </div>
+        <div className="meta-info-item">
+          <span>Proyección al cierre</span>
+          <strong className={meta.proyeccion < meta.objetivo ? 'danger' : 'success'}>
+            ${meta.proyeccion.toLocaleString()}
+          </strong>
+        </div>
+      </div>
+      {meta.proyeccion < meta.objetivo && (
+        <div className="meta-warning">
+          <TrendingDownIcon />
+          <span>Vas por debajo de la meta. Necesitas ${(meta.objetivo - meta.proyeccion).toLocaleString()} más.</span>
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
+        {/* ✅ NUEVO: RENTABILIDAD (destacado) 
+        <div className="rentabilidad-card">
+          <div className="rentabilidad-header">
+            <SpeedIcon />
+            <span>Rentabilidad del Negocio</span>
+          </div>
+          <div className="rentabilidad-grid">
+            <div className="rentabilidad-item">
+              <span className="rentabilidad-label">Capital prestado</span>
+              <span className="rentabilidad-valor">${rentabilidad.capital.toLocaleString()}</span>
+            </div>
+            <div className="rentabilidad-item">
+              <span className="rentabilidad-label">Ganancia total</span>
+              <span className="rentabilidad-valor success">${rentabilidad.ganancia.toLocaleString()}</span>
+            </div>
+            <div className="rentabilidad-item">
+              <span className="rentabilidad-label">Pérdida total</span>
+              <span className="rentabilidad-valor danger">-${rentabilidad.perdida.toLocaleString()}</span>
+            </div>
+            <div className="rentabilidad-item destacado">
+              <span className="rentabilidad-label">Rentabilidad mensual</span>
+              <span className="rentabilidad-valor-big">{rentabilidad.rentabilidad_mensual}%</span>
+              <span className="rentabilidad-sub">≈ {rentabilidad.rentabilidad_anualizada}% anualizado</span>
+            </div>
+          </div>
         </div> */}
 
-        {/* CARDS */}
+        {/* CARDS CON DELTAS */}
         <div className="cards-grid">
           <div className="stat-card" onClick={cargarActivos}>
             <AssignmentIcon className="card-icon" />
             <h3>Empeños Activos</h3>
             <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
+            {deltas.empenos_activos && (
+              <span className={`stat-delta ${deltas.empenos_activos.cambio >= 0 ? 'up' : 'down'}`}>
+                {deltas.empenos_activos.cambio >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
+                {deltas.empenos_activos.cambio >= 0 ? '+' : ''}{deltas.empenos_activos.cambio} vs mes ant.
+              </span>
+            )}
           </div>
 
           <div className="stat-card" onClick={cargarVencidos}>
             <WarningIcon className="card-icon" />
             <h3>Empeños Vencidos</h3>
             <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
+            {deltas.empenos_vencidos && (
+              <span className={`stat-delta ${deltas.empenos_vencidos.cambio <= 0 ? 'up' : 'down'}`}>
+                {deltas.empenos_vencidos.cambio <= 0 ? <TrendingDownIcon /> : <TrendingUpIcon />}
+                {deltas.empenos_vencidos.cambio >= 0 ? '+' : ''}{deltas.empenos_vencidos.cambio} vs mes ant.
+              </span>
+            )}
           </div>
 
           <div className="stat-card" onClick={cargarProximos}>
             <AccessTimeIcon className="card-icon" />
             <h3>Próximos a Vencer</h3>
             <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
+            {deltas.proximos_vencer && (
+              <span className={`stat-delta ${deltas.proximos_vencer.cambio <= 0 ? 'up' : 'down'}`}>
+                {deltas.proximos_vencer.cambio <= 0 ? <TrendingDownIcon /> : <TrendingUpIcon />}
+                {deltas.proximos_vencer.cambio >= 0 ? '+' : ''}{deltas.proximos_vencer.cambio} vs mes ant.
+              </span>
+            )}
           </div>
 
           <div className="stat-card" onClick={cargarIngresos}>
             <AttachMoneyIcon className="card-icon" />
-            <h3>Ingresos Recientes</h3>
-            <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
+            <h3>Ingresos del Mes</h3>
+            <p className="stat-number">
+              ${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}
+            </p>
+            {(dashboardData.resumen?.ingresos_recientes === 0) && (
+              <span className="stat-hint-muted">
+                Sin ingresos este mes
+              </span>
+            )}
           </div>
 
           <div className="stat-card gold-card" onClick={() => setShowPrecioOroModal(true)}>
             <MonetizationOnIcon className="card-icon" />
             <h3>Precio del Oro</h3>
-            <p className="stat-number">${dashboardData.resumen?.precio_oro || 850} / gramo</p>
-            {dashboardData.resumen?.ultima_actualizacion_oro && (
-              <small style={{ fontSize: '10px', color: '#666', display: 'block', marginTop: '5px' }}>
-                Actualizado: {new Date(dashboardData.resumen.ultima_actualizacion_oro).toLocaleDateString('es-MX')}
-              </small>
-            )}
+            <p className="stat-number">${dashboardData.resumen?.precio_oro || 850} / g</p>
           </div>
         </div>
 
-        {/* GRÁFICAS */}
+        
+
+        {/* ✅ NUEVO: DESGLOSE POR SUCURSAL 
+        {sucursales.length > 1 && (
+          <div className="nueva-seccion">
+            <h2><StoreIcon /> Desglose por Sucursal</h2>
+            <div className="sucursales-grid-dashboard">
+              {sucursales.map((s, i) => (
+                <div key={i} className="sucursal-dashboard-card">
+                  <div className="sucursal-dashboard-header">
+                    <StoreIcon />
+                    <strong>{s.nombre}</strong>
+                  </div>
+                  <div className="sucursal-dashboard-stats">
+                    <div className="sucursal-stat">
+                      <span>Activos</span>
+                      <strong className="success">{s.activos}</strong>
+                    </div>
+                    <div className="sucursal-stat">
+                      <span>Vencidos</span>
+                      <strong className="danger">{s.vencidos}</strong>
+                    </div>
+                    <div className="sucursal-stat">
+                      <span>Capital</span>
+                      <strong>${(s.capital / 1000).toFixed(0)}k</strong>
+                    </div>
+                    <div className="sucursal-stat">
+                      <span>Ganancia</span>
+                      <strong className="success">${s.ganancia.toLocaleString()}</strong>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )} */}
+
+        {/* GRÁFICAS EXISTENTES */}
         {puedeVerEvolucionAcumulada() && (
           <div className="chart-section">
-            <h2><AreaChartIcon /> Evolución Acumulada (Capital vs Retorno vs Ganancia)</h2>
+            <h2><AreaChartIcon /> Rentabilidad del negocio</h2>
             <p className="chart-subtitle">
               El área muestra el crecimiento total del negocio - La diferencia entre Capital y Retorno es la ganancia acumulada
             </p>
@@ -541,6 +856,84 @@ const Dueno = () => {
             </div>
           </div>
         )}
+{/* ✅ NUEVO: PROYECCIÓN DE COBRANZA */}
+        <div className="proyeccion-card">
+  <h2>
+    <EventNoteIcon />
+    Proyección de Cobranza (Próximos 30 días)
+  </h2>
+  <div className="proyeccion-grid">
+    <div className="proyeccion-item">
+      <span className="proyeccion-label">Por cobrar</span>
+      <span className="proyeccion-valor success">
+        ${proyeccion.por_cobrar_30d.toLocaleString()}
+      </span>
+    </div>
+    <div className="proyeccion-item">
+      <span className="proyeccion-label">Cuotas que vencen</span>
+      <span className="proyeccion-valor">{proyeccion.cuotas_vencen_30d}</span>
+    </div>
+    <div className="proyeccion-item">
+      <span className="proyeccion-label">En riesgo</span>
+      <span className="proyeccion-valor warning">
+        ${proyeccion.en_riesgo.toLocaleString()}
+      </span>
+    </div>
+    <div className="proyeccion-item">
+      <span className="proyeccion-label">Ya atrasado</span>
+      <span className="proyeccion-valor danger">
+        ${proyeccion.ya_atrasado.toLocaleString()}
+      </span>
+    </div>
+    
+  </div>
+</div>
+
+        {/* ✅ NUEVO: COHORTES DE ANTIGÜEDAD */}
+        <div className="nueva-seccion">
+          <h2>
+            <TimelineIcon />
+            Antigüedad de la Cartera
+            <span className="seccion-badge">Riesgo por tiempo</span>
+          </h2>
+          <p className="chart-subtitle">
+            Distribución de empeños según hace cuánto tiempo se otorgaron. Los de mayor antigüedad son los más riesgosos.
+          </p>
+          <Chart
+            options={cohortesChartOptions}
+            series={cohortesChartSeries}
+            type="bar"
+            height={220}
+          />
+        </div>
+
+        {/* ✅ NUEVO: CLIENTES EN RIESGO */}
+        <div className="nueva-seccion">
+          <h2>
+            <NotificationsActiveIcon />
+            Clientes en Riesgo
+            <span className="seccion-badge warning">
+              {clientesEnRiesgo.length} requieren atención
+            </span>
+          </h2>
+          <div className="clientes-riesgo-lista">
+            {clientesEnRiesgo.map((c, i) => (
+              <div key={i} className={`cliente-riesgo-item ${c.alerta}`}>
+                <div className="cliente-riesgo-info">
+                  <strong>{c.nombre}</strong>
+                  <span className="cliente-riesgo-dias">
+                    {c.dias_sin_pagar} días sin pagar
+                  </span>
+                </div>
+                <div className="cliente-riesgo-deuda">
+                  <span>Deuda:</span>
+                  <strong>${c.deuda.toLocaleString()}</strong>
+                </div>
+                <button className="btn-contactar">Contactar</button>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* TOP CLIENTES */}
         <div className="nueva-seccion">
@@ -627,7 +1020,7 @@ const Dueno = () => {
                   {amortizacionesPendientes.length === 0 ? (
                     <tr><td colSpan="9" style={{ textAlign: 'center' }}>No hay amortizaciones pendientes</td></tr>
                   ) : (
-                    amortizacionesPendientes.map((item) => (
+                    amortizacionesPendientes.slice(0, 10).map((item) => (
                       <tr key={item.id_amortizacion} className={item.dias_atraso > 0 ? 'fila-atrasada' : ''}>
                         <td><strong>{item.cliente_nombre}</strong></td>
                         <td>{item.articulo}</td>
@@ -652,6 +1045,47 @@ const Dueno = () => {
             </div>
           </div>
         )}
+
+        {/* ✅ NUEVO: ANÁLISIS POR CATEGORÍA */}
+        <div className="nueva-seccion">
+          <h2>
+            <CategoryIcon />
+            Análisis por Categoría
+            <span className="seccion-badge">Rentabilidad y riesgo</span>
+          </h2>
+          <div className="tabla-container">
+            <table className="tabla-moderna">
+              <thead>
+                <tr>
+                  <th>Categoría</th>
+                  <th>Cantidad</th>
+                  <th>Ganancia Promedio</th>
+                  <th>Tasa de Mora</th>
+                  <th>Rentabilidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analisisCategorias.map((cat, i) => (
+                  <tr key={i}>
+                    <td><strong>{cat.categoria}</strong></td>
+                    <td>{cat.cantidad}</td>
+                    <td className="profit-text">${cat.ganancia_promedio.toLocaleString()}</td>
+                    <td>
+                      <span className={cat.tasa_mora > 50 ? 'badge-danger' : cat.tasa_mora > 30 ? 'badge-warning' : 'profit-badge'}>
+                        {cat.tasa_mora}%
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`rentabilidad-tag ${cat.rentabilidad.toLowerCase()}`}>
+                        {cat.rentabilidad}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         {/* ARTÍCULOS */}
         <div className="nueva-seccion">
@@ -678,35 +1112,40 @@ const Dueno = () => {
           </div>
         </div>
 
-        {/* ACTIVIDAD RECIENTE */}
+        {/* ✅ MEJORADO: ACTIVIDAD RECIENTE con múltiples tipos */}
         <div className="nueva-seccion">
           <h2><HistoryIcon /> Actividad Reciente</h2>
           <div className="actividad-lista">
-            {dashboardData.actividad_reciente?.map((actividad, index) => (
-              <div key={index} className="actividad-item">
-                {actividad.tipo === 'pago' ? (
-                  <CheckCircleIcon className="actividad-icon success" />
-                ) : (
-                  <CelebrationIcon className="actividad-icon info" />
-                )}
-                <div className="actividad-detalle">
-                  <p><strong>{actividad.descripcion}</strong></p>
-                  <small>{formatFecha(actividad.fecha)}</small>
+            {actividadMejorada.map((actividad, index) => {
+              const iconos = {
+                pago: { Icon: CheckCircleIcon, clase: 'success' },
+                empeno: { Icon: CelebrationIcon, clase: 'info' },
+                vencido: { Icon: WarningIcon, clase: 'warning' },
+                cliente: { Icon: PersonAddIcon, clase: 'primary' },
+              };
+              const { Icon, clase } = iconos[actividad.tipo] || iconos.pago;
+
+              return (
+                <div key={index} className="actividad-item">
+                  <Icon className={`actividad-icon ${clase}`} />
+                  <div className="actividad-detalle">
+                    <p>
+                      <strong>{actividad.descripcion}</strong>
+                      {actividad.cliente && <span className="actividad-cliente"> · {actividad.cliente}</span>}
+                    </p>
+                    <small>{actividad.fecha}</small>
+                  </div>
+                  {actividad.monto && (
+                    <div className="actividad-monto">{formatearMoneda(actividad.monto)}</div>
+                  )}
                 </div>
-                {actividad.monto && (
-                  <div className="actividad-monto">{formatearMoneda(actividad.monto)}</div>
-                )}
-              </div>
-            ))}
-            {dashboardData.actividad_reciente?.length === 0 && (
-              <div style={{ textAlign: 'center', padding: 20 }}>No hay actividad reciente</div>
-            )}
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* MODALES */}
-
+      {/* MODALES (los mismos de antes) */}
       {showActivos && (
         <div className="modal-overlay" onClick={() => setShowActivos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -819,30 +1258,21 @@ const Dueno = () => {
             </div>
             <div className="modal-body">
               <div className="quilates-grid">
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 24k</h3><p>99.9% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_24k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 22k</h3><p>91.7% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_22k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 21k</h3><p>87.5% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_21k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 18k</h3><p>75.0% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_18k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 14k</h3><p>58.5% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_14k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 10k</h3><p>41.7% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_10k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
+                {[
+                  { k: 24, p: 99.9 }, { k: 22, p: 91.7 }, { k: 21, p: 87.5 },
+                  { k: 18, p: 75.0 }, { k: 14, p: 58.5 }, { k: 10, p: 41.7 }
+                ].map(({ k, p }) => (
+                  <div key={k} className="quilate-card">
+                    <div className="quilate-info">
+                      <h3>Oro {k}k</h3>
+                      <p>{p}% pureza</p>
+                    </div>
+                    <div className="quilate-precio">
+                      <span className="precio">${preciosQuilates[`precio_${k}k`]?.toLocaleString()}</span>
+                      <span className="unidad">/ gramo</span>
+                    </div>
+                  </div>
+                ))}
               </div>
               <div className="oro-nota">
                 <small>ℹ️ Los precios son referenciales basados en el precio del oro de 24k.</small>
