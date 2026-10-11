@@ -15,7 +15,7 @@ export default function TerminosModal({ onClose, onAccept }) {
           ×
         </button>
 
-        <h2 className="terminos-modal-titulo">Documentos Legales</h2>
+        <h2 className="terminos-modal-titulo">Contrato de Servicio</h2>
 
         {/* Tabs */}
         <div className="terminos-tabs">
@@ -47,13 +47,7 @@ export default function TerminosModal({ onClose, onAccept }) {
           >
             Acepto los términos
           </button>
-          <button
-            className="terminos-modal-btn-cerrar"
-            onClick={onClose}
-            type="button"
-          >
-            Cerrar
-          </button>
+          
         </div>
       </div>
     </div>
