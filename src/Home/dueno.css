@@ -1254,3 +1254,85 @@
   font-weight: 600;
 }
 
+/* ============================================
+   DASHBOARD TOOLBAR (frescura + refrescar)
+   ============================================ */
+.dashboard-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+.dashboard-freshness {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.dashboard-btn-refresh {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #e5e0d8;
+  color: #1e3a8a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(30, 58, 138, 0.05);
+  padding: 0;
+}
+
+.dashboard-btn-refresh:hover:not(:disabled) {
+  background: #1e3a8a;
+  color: #ffffff;
+  border-color: #1e3a8a;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(30, 58, 138, 0.2);
+}
+
+.dashboard-btn-refresh:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.dashboard-btn-refresh svg {
+  font-size: 20px !important;
+  transition: transform 0.3s ease;
+}
+
+.dashboard-btn-refresh.girando svg {
+  animation: dashboardRefreshSpin 0.6s ease;
+}
+
+@keyframes dashboardRefreshSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .dashboard-toolbar {
+    margin-bottom: 12px;
+  }
+
+  .dashboard-freshness {
+    font-size: 11px;
+  }
+
+  .dashboard-btn-refresh {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dashboard-btn-refresh svg {
+    font-size: 18px !important;
+  }
+}

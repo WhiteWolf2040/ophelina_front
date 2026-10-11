@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../config/api";
 import "./Pagos.css";
 import Select from 'react-select';
+import { useDashboard } from "../contexts/DashboardContext";
 
 // Iconos MUI
 import WarningIcon from '@mui/icons-material/Warning';
@@ -17,6 +18,7 @@ import HistoryIcon from '@mui/icons-material/History';
 
 const RegistrarPago = () => {
   const navigate = useNavigate();
+  const { invalidar } = useDashboard();
   
   // Estados
   const [loading, setLoading] = useState(false);
@@ -257,60 +259,81 @@ const cargarEmpenosActivos = async () => {
   const montoSugerido = getMontoSugerido();
   
   // Submit del formulario
+  
+  // Submit del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!form.id_empeno) {
       alert("Selecciona un empeño");
       return;
     }
-    
-    if (!form.monto || form.monto <= 0) {
+
+    if (!form.monto || Number(form.monto) <= 0) {
       alert("Ingresa un monto válido");
       return;
     }
-    
+
     if (!form.metodo_pago) {
       alert("Selecciona un método de pago");
       return;
     }
-    
+
     if (!form.tipo_pago) {
       alert("Selecciona un tipo de pago");
       return;
     }
-    
+
     try {
       setLoading(true);
-      
-      const response = await api.post('/pagos', {
+
+      const response = await api.post("/pagos", {
         id_empeno: form.id_empeno,
         monto: parseFloat(form.monto),
         fecha_pago: form.fecha_pago,
         metodo_pago: form.metodo_pago,
         tipo_pago: form.tipo_pago,
-        referencia: form.referencia || null
+        referencia: form.referencia || null,
       });
-      
+
       if (response.data.success) {
-        const saldoPendiente = response.data.data.amortizacion?.saldo_pendiente;
-        if (saldoPendiente > 0) {
-          alert(`✅ Pago registrado exitosamente\nSaldo pendiente de esta cuota: $${formatNumber(saldoPendiente)}`);
+        // Invalidar el caché para actualizar los datos del dashboard
+        invalidar();
+
+        const saldoPendiente =
+          response.data.data?.amortizacion?.saldo_pendiente;
+
+        if (saldoPendiente != null && saldoPendiente > 0) {
+          alert(
+            `✅ Pago registrado exitosamente\nSaldo pendiente de esta cuota: $${formatNumber(
+              saldoPendiente
+            )}`
+          );
         } else {
-          alert(`✅ Pago registrado exitosamente\n¡Cuota liquidada!`);
+          alert(
+            "✅ Pago registrado exitosamente\n¡Cuota liquidada!"
+          );
         }
+
         navigate("/pagos");
       } else {
-        alert("❌ Error: " + response.data.message);
+        alert(
+          "❌ Error: " +
+            (response.data.message || "No se pudo registrar el pago")
+        );
       }
-      
     } catch (error) {
-      console.error('Error al registrar pago:', error);
-      alert("❌ Error al registrar pago: " + (error.response?.data?.message || error.message));
+      console.error("Error al registrar pago:", error);
+
+      alert(
+        "❌ Error al registrar pago: " +
+          (error.response?.data?.message || error.message)
+      );
     } finally {
       setLoading(false);
     }
   };
+
   
   return (
     <div className="dashboard">

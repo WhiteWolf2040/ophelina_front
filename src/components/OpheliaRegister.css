@@ -81,51 +81,6 @@ body {
 }
 
 /* El campo de código postal necesita espacio abajo para el chip de ciudad/estado */
-.cp-field {
-  display: flex;
-  flex-direction: column;
-}
-
-.cp-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  width: fit-content;
-  margin-top: 8px;
-  margin-left: 15px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  font-family: "Georgia", serif;
-  letter-spacing: 0.2px;
-  line-height: 1.4;
-}
-
-.cp-hint-loading {
-  color: #94a3b8;
-  background-color: rgba(148, 163, 184, 0.12);
-}
-
-.cp-hint-success {
-  color: #1e3a8a;
-  background-color: rgba(107, 132, 180, 0.16);
-  border: 1px solid rgba(107, 132, 180, 0.35);
-}
-
-.cp-hint-success svg {
-  flex-shrink: 0;
-  color: #1e3a8a;
-}
-
-.cp-colonia-select {
-  margin-top: 8px;
-  font-size: 13px;
-  font-family: "Georgia", serif;
-  color: #1e3a8a;
-  padding: 10px 15px;
-  cursor: pointer;
-}
 
 .input {
   width: 100%;
@@ -266,6 +221,332 @@ body {
   background-color: #f4f1ea;
 }
 
+/* ============================================
+   TÉRMINOS Y CONDICIONES — CHECKBOX
+   ============================================ */
+.terminos-container {
+  margin: 4px 0 2px;
+  padding: 0 4px;
+}
+
+.terminos-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-family: "Georgia", serif;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #475569;
+  user-select: none;
+}
+
+.terminos-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin-top: 1px;
+  border: 2px solid #cbd5e1;
+  border-radius: 5px;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.terminos-checkbox:hover {
+  border-color: #6b84b4;
+}
+
+.terminos-checkbox:checked {
+  background-color: #1e3a8a;
+  border-color: #1e3a8a;
+}
+
+.terminos-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.terminos-checkbox:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(107, 132, 180, 0.25);
+}
+
+.terminos-texto {
+  flex: 1;
+  padding-top: 1px;
+}
+
+.terminos-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: #1e3a8a;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgba(30, 58, 138, 0.4);
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.terminos-link:hover {
+  color: #162c6b;
+  text-decoration-color: #162c6b;
+}
+
+/* ============================================
+   TÉRMINOS Y CONDICIONES — MODAL
+   ============================================ */
+.terminos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(30, 58, 138, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: terminosFadeIn 0.2s ease;
+}
+
+.terminos-modal {
+  background-color: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px rgba(13, 27, 62, 0.25);
+  animation: terminosSlideUp 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  font-family: "Georgia", serif;
+}
+
+.terminos-modal-cerrar {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 26px;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.terminos-modal-cerrar:hover {
+  background-color: #f1f5f9;
+  color: #1e3a8a;
+  transform: rotate(90deg);
+}
+
+.terminos-modal-titulo {
+  font-family: "Georgia", serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin: 0;
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-right: 56px;
+}
+
+.terminos-modal-contenido {
+  padding: 20px 28px;
+  overflow-y: auto;
+  flex: 1;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.terminos-modal-contenido p {
+  margin: 0 0 12px 0;
+}
+
+.terminos-modal-contenido h3 {
+  font-family: "Georgia", serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 18px 0 6px 0;
+}
+
+.terminos-modal-contenido h3:first-of-type {
+  margin-top: 6px;
+}
+
+.terminos-modal-contenido strong {
+  color: #1e3a8a;
+}
+
+/* Scrollbar del modal */
+.terminos-modal-contenido::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terminos-modal-contenido::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.terminos-modal-contenido::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.terminos-modal-contenido::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.terminos-modal-acciones {
+  display: flex;
+  gap: 10px;
+  padding: 16px 28px 22px;
+  border-top: 1px solid #e2e8f0;
+  background-color: #fafbfc;
+}
+
+.terminos-modal-btn-aceptar {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 20px;
+  border: 0;
+  background: #1e3a8a;
+  color: white;
+  font-family: "Georgia", serif;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: rgba(30, 58, 138, 0.25) 0px 5px 15px;
+}
+
+.terminos-modal-btn-aceptar:hover {
+  background: #162c6b;
+  transform: translateY(-1px);
+  box-shadow: rgba(30, 58, 138, 0.35) 0px 8px 20px;
+}
+
+.terminos-modal-btn-aceptar:active {
+  transform: translateY(0);
+  box-shadow: rgba(30, 58, 138, 0.2) 0px 3px 10px;
+}
+
+.terminos-modal-btn-cerrar {
+  padding: 12px 20px;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  font-family: "Georgia", serif;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.terminos-modal-btn-cerrar:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+/* ============================================
+   ANIMACIONES DEL MODAL
+   ============================================ */
+@keyframes terminosFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes terminosSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ============================================
+   RESPONSIVE — CHECKBOX Y MODAL
+   ============================================ */
+@media (max-width: 520px) {
+  .terminos-label {
+    font-size: 11.5px;
+  }
+
+  .terminos-modal {
+    max-height: 90vh;
+    border-radius: 16px;
+  }
+
+  .terminos-modal-titulo {
+    font-size: 18px;
+    padding: 20px 20px 14px;
+    padding-right: 48px;
+  }
+
+  .terminos-modal-contenido {
+    padding: 16px 20px;
+    font-size: 12.5px;
+  }
+
+  .terminos-modal-acciones {
+    flex-direction: column;
+    padding: 14px 20px 18px;
+  }
+
+  .terminos-modal-btn-aceptar,
+  .terminos-modal-btn-cerrar {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   ACCESIBILIDAD
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .terminos-checkbox,
+  .terminos-link,
+  .terminos-modal,
+  .terminos-modal-overlay,
+  .terminos-modal-cerrar,
+  .terminos-modal-btn-aceptar,
+  .terminos-modal-btn-cerrar {
+    transition: none;
+    animation: none;
+  }
+}
 /* ================= RESPONSIVE ================= */
 
 @media (max-width: 1000px) {
@@ -307,48 +588,120 @@ body {
 
 /* OpheliaRegister.css */
 
-.cp-field {
-  position: relative;
-  flex: 1;
-}
-
-.cp-hint {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.cp-hint-loading {
-  color: #666;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.cp-hint-success {
-  color: #22c55e;
-}
 
 @keyframes pulse {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
-
+/* ============================================
+   FILA CP + DIRECCIÓN + COLONIA
+   ============================================ */
 .form-row-cp {
+  display: grid;
+  grid-template-columns: 1fr 1fr;   /* dos columnas iguales */
+  gap: 16px;
+  align-items: start;                /* ✅ NO estirar hijos */
+}
+
+/* Columna izquierda: CP + hint */
+.cp-field {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;                      /* evita overflow en grid */
 }
 
-.form-row-cp .cp-field {
-  flex: 2;
-  min-width: 150px;
+/* Columna derecha: dirección + colonia */
+.direccion-colonia-field {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;                         /* separación entre dirección y colonia */
+  width: 100%;
+  min-width: 0;
 }
 
-.form-row-cp input[name="direccion"] {
-  flex: 3;
-  min-width: 200px;
+/* ============================================
+   HINT DEL CP (se ve como input)
+   ============================================ */
+.cp-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 15px;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  background-color: #f8fafc;
+  color: #1e3a8a;
+  font-family: "Georgia", serif;
+  font-size: 14px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  transition: all 0.25s ease;
+}
+
+.cp-hint-loading {
+  color: #94a3b8;
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  font-style: italic;
+  animation: cpPulse 1.4s ease-in-out infinite;
+}
+
+.cp-hint-success {
+  color: #1e3a8a;
+  background-color: rgba(107, 132, 180, 0.08);
+  border-color: rgba(107, 132, 180, 0.45);
+  font-weight: 600;
+}
+
+.cp-hint-success svg {
+  flex-shrink: 0;
+  color: #1e3a8a;
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes cpPulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+/* ============================================
+   SELECT DE COLONIA — mismo look que input
+   ============================================ */
+.direccion-colonia-field select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  padding-right: 42px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e3a8a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 14px;
+}
+
+/* Input disabled (colonia única) */
+.input-readonly,
+.direccion-colonia-field .input:disabled {
+  background-color: #f1f5f9;
+  color: #1e3a8a;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 520px) {
+  .form-row-cp {
+    grid-template-columns: 1fr;       /* se apila todo en 1 columna */
+  }
+}
+
+@keyframes cpPulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
 }

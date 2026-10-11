@@ -39,15 +39,19 @@ const DEFAULT_MENUS = [
 
 // ✅ ORDEN CORRECTO DE LOS MÓDULOS
 const ORDEN_MODULOS = [
-  'home', 'clientes', 'pagos', 'empenos', 
-  'tienda', 'apartados', 'inventario', 
+  'home', 'clientes', 'pagos', 'empenos',
+  'tienda', 'apartados', 'inventario',
   'reportes', 'roles', 'permisos', 'configuracion'
 ];
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
+
+  // ✅ AGREGADO #1: estado para colapsar
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   const navigate = useNavigate();
-  
+
   let userContext;
   try {
     userContext = useUser();
@@ -60,11 +64,9 @@ const Sidebar = () => {
   // Obtener menús de forma segura
   const getMenus = () => {
     if (!modules || modules.length === 0) return DEFAULT_MENUS;
-    
-    // Si los módulos ya tienen path e icon, usarlos
+
     if (modules[0]?.path) return modules;
-    
-    // Si son strings, mapearlos
+
     const map = {
       'home': { path: '/home', icon: <HomeIcon />, text: 'Home' },
       'dashboard': { path: '/home', icon: <HomeIcon />, text: 'Home' },
@@ -79,22 +81,19 @@ const Sidebar = () => {
       'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
       'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
     };
-    
-    // ✅ Mapear todos los módulos
+
     const menus = modules.map(mod => {
       const name = typeof mod === 'string' ? mod : mod.modulo || mod.nombre || '';
       const normalized = String(name).toLowerCase().trim();
       return map[normalized] || { path: `/${normalized}`, icon: <HomeIcon />, text: name };
     });
 
-    // ✅ ORDENAR según el orden definido
     return menus.sort((a, b) => {
       const pathA = a.path.replace('/', '');
       const pathB = b.path.replace('/', '');
       const indexA = ORDEN_MODULOS.indexOf(pathA);
       const indexB = ORDEN_MODULOS.indexOf(pathB);
-      
-      // Si no está en el orden, ponerlo al final
+
       if (indexA === -1 && indexB === -1) return 0;
       if (indexA === -1) return 1;
       if (indexB === -1) return -1;
@@ -104,11 +103,13 @@ const Sidebar = () => {
 
   const menuItems = getMenus();
 
-  // ✅ DEBUG: Ver qué menús se están renderizando
   console.log('📋 Menús a renderizar:', menuItems.map(m => m.text));
 
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => setIsOpen(false);
+
+  // ✅ AGREGADO #2: función para alternar colapso
+  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
   const handleLogout = async () => {
     await logout();
@@ -118,7 +119,8 @@ const Sidebar = () => {
 
   if (loading) {
     return (
-      <div className="sidebar">
+      // ✅ AGREGADO #3: clase collapsed también en loading
+      <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
           <img src={logo} alt="Logo" className="log-image" />
         </div>
@@ -129,15 +131,25 @@ const Sidebar = () => {
 
   return (
     <>
-      <button className="mobile-menu-btn" onClick={toggleSidebar}>
-        {isOpen ? <CloseIcon /> : <MenuIcon />}
-      </button>
-
+      {!isOpen && (
+  <button className="mobile-menu-btn" onClick={toggleSidebar}>
+    <MenuIcon />
+  </button>
+)}
       {isOpen && <div className="sidebar-overlay visible" onClick={closeSidebar}></div>}
 
-      <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+      {/* ✅ AGREGADO #4: clase collapsed en el aside */}
+      <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
-          <img src={logo} alt="Ophelia Logo" className="log-image" />
+          <div className="sidebar-log">
+            <img src={logo} alt="Ophelia Logo" className="log-image" />
+          </div>
+
+          {/* ✅ AGREGADO #5: botón de colapsar */}
+          <button className="collapse-btn" onClick={toggleCollapse}>
+            <MenuIcon className="collapse-icon" />
+          </button>
+
           <button className="close-btn" onClick={closeSidebar}>
             <CloseIcon />
           </button>
@@ -145,26 +157,31 @@ const Sidebar = () => {
 
         <nav className="sidebar-menu">
           {menuItems.map((item) => (
-            <NavLink 
+            <NavLink
               key={item.path}
-              to={item.path} 
+              to={item.path}
               className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
               onClick={closeSidebar}
             >
               {item.icon}
-              <span className="link-text">{item.text}</span>
+              {/* ✅ AGREGADO #6: ocultar texto cuando colapsado */}
+              {!isCollapsed && <span className="link-text">{item.text}</span>}
             </NavLink>
           ))}
 
           <NavLink to="#" className="sidebar-link cerrar-sesion" onClick={handleLogout}>
             <LogoutIcon />
-            <span>Cerrar sesión</span>
+            {/* ✅ AGREGADO #7: ocultar texto cuando colapsado */}
+            {!isCollapsed && <span>Cerrar sesión</span>}
           </NavLink>
         </nav>
 
-        <div className="sidebar-footer">
-          <p>Versión 2.0.0</p>
-        </div>
+        {/* ✅ AGREGADO #8: ocultar footer cuando colapsado */}
+        {!isCollapsed && (
+          <div className="sidebar-footer">
+            <p>Versión 2.0.0</p>
+          </div>
+        )}
       </aside>
     </>
   );
