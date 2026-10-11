@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDashboard } from "../contexts/DashboardContext";
 
 import "./Empenos.css";
 import api from '../config/api';
@@ -128,6 +129,7 @@ const ModalMensaje = ({ visible, tipo, titulo, texto, textoBoton, onCerrar }) =>
 
 const NuevoEmpeno = () => {
   const navigate = useNavigate();
+  const { invalidar } = useDashboard();
   const [loading, setLoading] = useState(false);
   const [clientes, setClientes] = useState([]);
   const [prendas, setPrendas] = useState([]);
@@ -555,6 +557,7 @@ const NuevoEmpeno = () => {
 
       const response = await api.post('/empenos', dataToSend);
       if (response.data.success) {
+        invalidar();
         // ✅ Modal de éxito en vez de alert(). Al darle "Ver mis empeños"
         // (onAceptar) es cuando navega — así el usuario alcanza a leer
         // el mensaje con calma, en vez de un alert() bloqueante seguido

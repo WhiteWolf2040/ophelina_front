@@ -1,6 +1,7 @@
 // ClientesLista.jsx - VERSIÓN FUSIONADA (Docker Base + Sistema de Permisos Local)
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDashboard } from "../contexts/DashboardContext";
 
 import "./Clientes.css";
 import clientesService from "../services/clientesService";
@@ -320,8 +321,7 @@ const ClientesLista = () => {
 
   return (
     <div className="dashboard">
-      <div className="content2 owner-header">
-        {/* HEADER */}
+      <div className="content2 owner-header"> 
         <div className="header-container">
           <div className="">
             <h1>

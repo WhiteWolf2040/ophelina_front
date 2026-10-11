@@ -1,59 +1,119 @@
-// Home/Dueno.jsx - VERSIÓN FUSIONADA (Docker Base + Mejoras Local) + Endpoint consolidado
-// ============================================
-// FIX: evitar que una respuesta tardía/duplicada de /home/completo
-// (por ejemplo por React.StrictMode disparando el useEffect dos veces
-// en desarrollo) tape con una pantalla de error un dashboard que ya
-// se había cargado y mostrado correctamente.
-// ============================================
-import React, { useState, useEffect, useRef } from "react";
+// src/Home/Dueno.jsx - VERSIÓN COMPLETA CON TOOLBAR REFRESCAR
+import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
 import "./dueno.css";
 import api from '../config/api';
 import { useSearchParams } from 'react-router-dom';
 import { stripeService } from '../services/stripeService';
 import PaymentModal from '../components/PaymentModal';
+import { useDashboard } from '../contexts/DashboardContext';
 
-// Importar iconos de MUI
-import NotificationsIcon from '@mui/icons-material/Notifications';
+// Iconos
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import WarningIcon from '@mui/icons-material/Warning';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import HistoryIcon from '@mui/icons-material/History';
 import CloseIcon from '@mui/icons-material/Close';
-import BarChartIcon from '@mui/icons-material/BarChart';
 import PieChartIcon from '@mui/icons-material/PieChart';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import AreaChartIcon from '@mui/icons-material/AreaChart';
+import RefreshIcon from '@mui/icons-material/Refresh'; // ✅ NUEVO
 
 const Dueno = () => {
   // ============================================
-  // DETECCIÓN DE TAMAÑO DE PANTALLA (DESDE LOCAL)
+  // CONTEXTO COMPARTIDO
+  // ============================================
+  const {
+    data,
+    cargando,
+    error,
+    cargar,
+    refrescar,           // ✅ NUEVO
+    edadCache,           // ✅ NUEVO
+    cacheEsValido,       // ✅ NUEVO
+    invalidado,          // ✅ NUEVO
+    ultimaActualizacion  // ✅ NUEVO
+  } = useDashboard();
+
+  // ============================================
+  // ✅ NUEVO: ESTADOS LOCALES DEL TOOLBAR
+  // ============================================
+  const [refrescandoManual, setRefrescandoManual] = useState(false);
+
+  // Tick para forzar re-render cada 60s (para "hace X min")
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Minutos desde la última actualización
+  const minutosDesde =
+    edadCache !== null ? Math.floor(edadCache / 60000) : null;
+
+  // Handler del botón refrescar
+  const handleRefrescarManual = async () => {
+    setRefrescandoManual(true);
+    try {
+      await refrescar();
+    } finally {
+      setTimeout(() => setRefrescandoManual(false), 600);
+    }
+  };
+
+  // ============================================
+  // CARGA INICIAL (solo si el caché no es válido)
+  // ============================================
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  // ============================================
+  // EXTRAER DATOS DEL CONTEXTO
+  // ============================================
+  const dashboardData = data?.dashboard || {
+    resumen: {
+      empenos_activos: 0, empenos_vencidos: 0, proximos_vencer: 0,
+      ingresos_recientes: 0, precio_oro: 850,
+      total_clientes: 0, prendas_disponibles: 0
+    },
+    top_clientes: [], top_articulos: [],
+    actividad_reciente: [], capital_retorno: []
+  };
+  const morosidad = data?.morosidad || [];
+  const distribucion = data?.distribucion || [];
+  const amortizacionesPendientes = data?.amortizaciones || [];
+
+  // ============================================
+  // GRÁFICAS: construir series desde capital_retorno
+  // ============================================
+  const capitalRetorno = dashboardData.capital_retorno || [];
+  const capitalAcumulado = capitalRetorno.map(i => Number(i.capital));
+  const retornoAcumulado = capitalRetorno.map(i => Number(i.retorno));
+  const gananciaAcumulada = capitalRetorno.map(i => Number(i.ganancia));
+  const meses = capitalRetorno.map(i => i.mes);
+
+  // ============================================
+  // DETECCIÓN DE PANTALLA
   // ============================================
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
   useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
+    const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Alturas de gráficas según el tamaño de pantalla (DESDE LOCAL)
   const chartHeight = windowWidth < 480 ? 250 : windowWidth < 768 ? 300 : 380;
   const smallChartHeight = windowWidth < 480 ? 200 : windowWidth < 768 ? 250 : 300;
 
   // ============================================
-  // HOOKS DE PAGO (DESDE DOCKER)
+  // HOOKS DE PAGO
   // ============================================
   const [searchParams] = useSearchParams();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -61,25 +121,14 @@ const Dueno = () => {
   const [paymentPlanName, setPaymentPlanName] = useState('');
   const [paymentPlanId, setPaymentPlanId] = useState(null);
 
-  // Detectar pago exitoso
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const paymentStatus = searchParams.get('payment');
-
-    console.log('🔍 Parámetros URL:', { sessionId, paymentStatus });
-
     if (sessionId && paymentStatus === 'success') {
-      console.log(' Pago detectado, abriendo modal...');
-      console.log(' session_id:', sessionId);
-      console.log(' plan_name:', localStorage.getItem('pending_plan_name'));
-      console.log(' plan_id:', localStorage.getItem('pending_plan_id'));
-
       setPaymentSessionId(sessionId);
       setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
       setPaymentPlanId(localStorage.getItem('pending_plan_id'));
       setShowPaymentModal(true);
-
-      // Limpiar la URL
       window.history.replaceState({}, document.title, '/home');
     }
   }, [searchParams]);
@@ -87,37 +136,17 @@ const Dueno = () => {
   // ============================================
   // SUSCRIPCIÓN
   // ============================================
-  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
-
   const verificarSuscripcion = async () => {
     const empresaId = localStorage.getItem('empresa_id');
-    if (!empresaId) {
-      console.warn(' No hay empresa_id en localStorage');
-      return;
-    }
-
+    if (!empresaId) return;
     try {
-      console.log(' Verificando suscripción para empresa:', empresaId);
       const response = await stripeService.checkSubscription(empresaId);
-      console.log(' Estado suscripción:', response);
-      setSubscriptionInfo(response);
-
-      if (response.fecha_fin_plan === null && response.plan_activo === 1) {
-        console.log(' Suscripción activa sin fecha de vencimiento');
-        return;
-      }
-
-      if (response.activo) {
-        console.log(' Suscripción activa. Días restantes:', response.dias_restantes);
-        return;
-      }
-
-      console.warn(' Suscripción inactiva o vencida');
+      if (response.fecha_fin_plan === null && response.plan_activo === 1) return;
+      if (response.activo) return;
       alert('Tu suscripción ha vencido. Por favor, renueva.');
       window.location.href = '/planes';
-
     } catch (error) {
-      console.error(' Error al verificar suscripción:', error);
+      console.error('Error al verificar suscripción:', error);
     }
   };
 
@@ -126,239 +155,140 @@ const Dueno = () => {
   }, []);
 
   // ============================================
-  // ESTADOS (DESDE DOCKER)
+  // ESTADOS
   // ============================================
   const [showActivos, setShowActivos] = useState(false);
   const [showVencidos, setShowVencidos] = useState(false);
   const [showProximos, setShowProximos] = useState(false);
   const [showIngresos, setShowIngresos] = useState(false);
-  const [showAlertas, setShowAlertas] = useState(false);
-  const [showPerfil, setShowPerfil] = useState(false);
-  const [morosidad, setMorosidad] = useState([]);
-  const [distribucionCategorias, setDistribucionCategorias] = useState({
-    series: [],
-    labels: []
-  });
-  const [userRole, setUserRole] = useState('');
-  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
-  const [modulosPermitidos, setModulosPermitidos] = useState([]);
-  const [planInfo, setPlanInfo] = useState({ plan_id: null, plan_nombre: '' });
-  const [amortizacionesPendientes, setAmortizacionesPendientes] = useState([]);
-  const [loadingAmortizaciones, setLoadingAmortizaciones] = useState(false);
-
   const [showPrecioOroModal, setShowPrecioOroModal] = useState(false);
+  const [userRole, setUserRole] = useState('');
+
   const [preciosQuilates, setPreciosQuilates] = useState({
-    precio_24k: 0,
-    precio_22k: 0,
-    precio_21k: 0,
-    precio_18k: 0,
-    precio_14k: 0,
-    precio_10k: 0,
+    precio_24k: 0, precio_22k: 0, precio_21k: 0,
+    precio_18k: 0, precio_14k: 0, precio_10k: 0,
     ultima_actualizacion: null
   });
 
-  // Estados para datos del dashboard
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [dashboardData, setDashboardData] = useState({
-    resumen: {
-      empenos_activos: 0,
-      empenos_vencidos: 0,
-      proximos_vencer: 0,
-      ingresos_recientes: 0,
-      precio_oro: 850,
-      total_clientes: 0,
-      prendas_disponibles: 0
-    },
-    top_clientes: [],
-    top_articulos: [],
-    actividad_reciente: [],
-    ingresos_mensuales: []
-  });
-
-  // DATOS DEL PERFIL - DESDE BD
-  const [datosPerfil, setDatosPerfil] = useState({
-    nombre: "Cargando...",
-    email: "cargando...",
-    telefono: "cargando...",
-    rol: "cargando...",
-    fechaRegistro: "cargando...",
-    sucursal: "Casa Matriz - Mérida",
-    fotoPerfil: "https://ui-avatars.com/api/?name=Usuario&size=128&background=1e3a8a&color=fff&bold=true"
-  });
-
-  // Estados para datos de modales
   const [empenosActivos, setEmpenosActivos] = useState([]);
   const [empenosVencidos, setEmpenosVencidos] = useState([]);
   const [proximosVencer, setProximosVencer] = useState([]);
   const [ingresosRecientes, setIngresosRecientes] = useState([]);
 
-  // Configuración de GRÁFICA DE ÁREA APILADA
-  const [areaChartData, setAreaChartData] = useState({
-    series: [
-      { name: "Capital Prestado (Acumulado)", data: [] },
-      { name: "Retorno (Pagos Acumulados)", data: [] },
-      { name: "Ganancia (Acumulada)", data: [] }
-    ],
-    options: {
-      chart: {
-        type: 'area',
-        height: 380,
-        stacked: true,
-        toolbar: {
-          show: true,
-          tools: {
-            download: true,
-            selection: false,
-            zoom: false,
-            zoomin: false,
-            zoomout: false,
-            pan: false,
-            reset: false
-          }
-        },
-        zoom: { enabled: false }
-      },
-      dataLabels: { enabled: false },
-      stroke: {
-        curve: 'smooth',
-        width: 2
-      },
-      fill: {
-        type: 'gradient',
-        gradient: {
-          shadeIntensity: 1,
-          opacityFrom: 0.7,
-          opacityTo: 0.3,
-          stops: [0, 90, 100]
+  // ============================================
+  // GRÁFICAS (configuración estática)
+  // ============================================
+  const areaChartOptions = {
+    chart: {
+      type: 'area', stacked: true,
+      toolbar: {
+        show: true,
+        tools: {
+          download: true, selection: false, zoom: false,
+          zoomin: false, zoomout: false, pan: false, reset: false
         }
       },
-      xaxis: {
-        categories: [],
-        title: {
-          text: 'Mes',
-          style: { fontSize: '11px', fontWeight: 500 }
-        },
-        labels: {
-          rotate: -45,
-          style: { fontSize: '10px' },
-          hideOverlappingLabels: true
-        },
-        tickAmount: 5
+      zoom: { enabled: false }
+    },
+    dataLabels: { enabled: false },
+    stroke: { curve: 'smooth', width: 2 },
+    fill: {
+      type: 'gradient',
+      gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3, stops: [0, 90, 100] }
+    },
+    xaxis: {
+      categories: meses,
+      title: { text: 'Mes', style: { fontSize: '11px', fontWeight: 500 } },
+      labels: { rotate: -45, style: { fontSize: '10px' }, hideOverlappingLabels: true },
+      tickAmount: 5
+    },
+    yaxis: {
+      title: { text: '$ (pesos acumulados)', style: { fontSize: '11px', fontWeight: 500 } },
+      labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k`, style: { fontSize: '10px' } }
+    },
+    colors: ["#1e3a8a", "#10b981", "#f59e0b"],
+    tooltip: {
+      y: {
+        formatter: (val) => new Intl.NumberFormat('es-MX', {
+          style: 'currency', currency: 'MXN', minimumFractionDigits: 0
+        }).format(val)
       },
-      yaxis: {
-        title: {
-          text: '$ (pesos acumulados)',
-          style: { fontSize: '11px', fontWeight: 500 }
-        },
-        labels: {
-          formatter: (val) => `$${(val / 1000).toFixed(0)}k`,
-          style: { fontSize: '10px' }
-        }
-      },
-      colors: ["#1e3a8a", "#10b981", "#f59e0b"],
-      tooltip: {
-        y: {
-          formatter: function (val) {
-            return new Intl.NumberFormat('es-MX', {
-              style: 'currency',
-              currency: 'MXN',
-              minimumFractionDigits: 0
-            }).format(val);
-          }
-        },
-        shared: true,
-        intersect: false
-      },
-      legend: {
-        position: 'top',
-        horizontalAlign: 'center',
-        offsetY: 0,
-        fontSize: '11px',
-        itemMargin: { horizontal: 8, vertical: 4 }
-      },
-      grid: {
-        borderColor: '#e5e7eb',
-        strokeDashArray: 5,
-        padding: { left: 5, right: 5 }
-      }
+      shared: true, intersect: false
+    },
+    legend: {
+      position: 'top', horizontalAlign: 'center', offsetY: 0,
+      fontSize: '11px', itemMargin: { horizontal: 8, vertical: 4 }
+    },
+    grid: {
+      borderColor: '#e5e7eb', strokeDashArray: 5,
+      padding: { left: 5, right: 5 }
     }
-  });
+  };
 
-  // Configuración de gráfica de TENDENCIA
-  const [trendChartData, setTrendChartData] = useState({
-    series: [{ name: "Retorno Total", data: [] }],
-    options: {
-      chart: {
-        type: "line",
-        height: 300,
-        toolbar: { show: false }
-      },
-      xaxis: { categories: [], title: { text: 'Mes' } },
-      yaxis: {
-        title: { text: '$ (pesos)' },
-        labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k` }
-      },
-      colors: ["#10b981"],
-      stroke: { width: 3, curve: 'smooth' },
-      tooltip: { y: { formatter: (val) => `$${val.toLocaleString()}` } }
-    }
-  });
+  const areaChartSeries = [
+    { name: "Capital Prestado (Acumulado)", data: capitalAcumulado },
+    { name: "Retorno (Pagos Acumulados)", data: retornoAcumulado },
+    { name: "Ganancia (Acumulada)", data: gananciaAcumulada }
+  ];
 
-  const [categoriaDistribucion, setCategoriaDistribucion] = useState({
-    series: [],
-    options: {
-      chart: { type: "donut", height: 300 },
-      labels: [],
-      colors: ["#1e3a8a", "#3b82f6", "#10b981", "#f59e0b", "#6b7280", "#6366f1"],
-      legend: { position: "bottom" },
-      plotOptions: {
-        pie: {
-          donut: {
-            size: "65%",
-            labels: {
+  const trendChartOptions = {
+    chart: { type: "line", toolbar: { show: false } },
+    xaxis: { categories: meses, title: { text: 'Mes' } },
+    yaxis: {
+      title: { text: '$ (pesos)' },
+      labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k` }
+    },
+    colors: ["#10b981"],
+    stroke: { width: 3, curve: 'smooth' },
+    tooltip: { y: { formatter: (val) => `$${val.toLocaleString()}` } }
+  };
+
+  const trendChartSeries = [{ name: "Retorno Total", data: retornoAcumulado }];
+
+  const distribucionSeries = distribucion.map(item => item.total);
+  const distribucionLabels = distribucion.map(item => item.categoria);
+
+  const categoriaDistribucionOptions = {
+    chart: { type: "donut" },
+    labels: distribucionLabels,
+    colors: ["#1e3a8a", "#3b82f6", "#10b981", "#f59e0b", "#6b7280", "#6366f1"],
+    legend: { position: "bottom" },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: "65%",
+          labels: {
+            show: true,
+            total: {
               show: true,
-              total: {
-                show: true,
-                label: "Total",
-                formatter: function (w) {
-                  return w.globals.seriesTotals.reduce((a, b) => a + b, 0) + " artículos";
-                }
-              }
+              label: "Total",
+              formatter: (w) => w.globals.seriesTotals.reduce((a, b) => a + b, 0) + " artículos"
             }
           }
         }
       }
     }
-  });
-
-  // ============================================
-  // FUNCIONES AUXILIARES (DESDE DOCKER)
-  // ============================================
-  const formatearFecha = (fecha) => {
-    if (!fecha) return "Fecha no disponible";
-    try {
-      const date = new Date(fecha);
-      return date.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    } catch (e) {
-      return fecha;
-    }
   };
 
+  // ============================================
+  // FUNCIONES AUXILIARES
+  // ============================================
   const formatearMoneda = (monto) => {
-    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 }).format(monto || 0);
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency', currency: 'MXN', minimumFractionDigits: 2
+    }).format(monto || 0);
   };
 
   const formatearPorcentaje = (valor) => {
-    return new Intl.NumberFormat('es-MX', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((valor || 0) / 100);
+    return new Intl.NumberFormat('es-MX', {
+      style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2
+    }).format((valor || 0) / 100);
   };
 
   const formatFecha = (fecha) => {
     if (!fecha || fecha === '' || fecha === 'Invalid Date') return 'Sin pagos';
     try {
-      if (typeof fecha === 'string' && fecha.includes('/')) {
-        return fecha;
-      }
+      if (typeof fecha === 'string' && fecha.includes('/')) return fecha;
       const date = new Date(fecha);
       if (isNaN(date.getTime())) return 'Sin pagos';
       return date.toLocaleDateString('es-MX');
@@ -368,192 +298,51 @@ const Dueno = () => {
   };
 
   // ============================================
-  // FUNCIONES DE ROLES (DESDE DOCKER)
+  // ROLES
   // ============================================
-  const esAdmin = () => {
-    return userRole === 'Administrador' || userRole === 'Dueño' || userRole === 'Admin';
-  };
-
-  const esGerente = () => {
-    return userRole === 'Gerente' || userRole === 'gerente' || userRole === 'GERENTE';
-  };
-
-  const puedeVerEvolucionAcumulada = () => {
-    return esAdmin();
-  };
-
-  const puedeVerGraficasBasicas = () => {
-    return esAdmin() || esGerente();
-  };
+  const esAdmin = () => userRole === 'Administrador' || userRole === 'Dueño' || userRole === 'Admin';
+  const esGerente = () => userRole === 'Gerente' || userRole === 'gerente' || userRole === 'GERENTE';
+  const puedeVerEvolucionAcumulada = () => esAdmin();
+  const puedeVerGraficasBasicas = () => esAdmin() || esGerente();
 
   // ============================================
-  //  CARGA CONSOLIDADA: dashboard + morosidad +
-  // distribución + amortizaciones en UNA sola petición
+  // CARGA SECUNDARIA (rol + precios)
   // ============================================
-
-  // --- FIX de la carrera de peticiones ---
-  // requestIdRef: identifica cuál es la petición "vigente". Si una
-  // respuesta (éxito o error) llega y ya no corresponde a la petición
-  // vigente, se ignora por completo: ni pinta datos ni muestra error.
-  // huboCargaExitosaRef: si ya mostramos el dashboard una vez con éxito,
-  // un error posterior (de una petición vieja/duplicada) ya NO debe
-  // tapar la pantalla con el mensaje de error.
-  const requestIdRef = useRef(0);
-  const huboCargaExitosaRef = useRef(false);
-
-  const cargarTodo = async () => {
-    const miPeticion = ++requestIdRef.current;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await api.get('/home/completo');
-
-      // Si mientras esperábamos se disparó una petición más nueva
-      // (por ejemplo por doble montaje en desarrollo), esta respuesta
-      // ya está obsoleta: la ignoramos para no pisar datos más frescos.
-      if (miPeticion !== requestIdRef.current) return;
-
-      if (response.data.success) {
-        const { dashboard, morosidad: morosidadData, distribucion, amortizaciones } = response.data.data;
-
-        // --- Dashboard principal ---
-        setDashboardData(dashboard);
-
-        const capitalRetorno = dashboard.capital_retorno || [];
-        const capitalAcumulado = capitalRetorno.map(i => Number(i.capital)) || [];
-        const retornoAcumulado = capitalRetorno.map(i => Number(i.retorno)) || [];
-        const gananciaAcumulada = capitalRetorno.map(i => Number(i.ganancia)) || [];
-        const meses = capitalRetorno.map(i => i.mes) || [];
-
-        setAreaChartData(prev => ({
-          series: [
-            { name: "Capital Prestado (Acumulado)", data: capitalAcumulado },
-            { name: "Retorno (Pagos Acumulados)", data: retornoAcumulado },
-            { name: "Ganancia (Acumulada)", data: gananciaAcumulada }
-          ],
-          options: {
-            ...prev.options,
-            xaxis: { ...prev.options.xaxis, categories: meses }
-          }
-        }));
-
-        setTrendChartData(prev => ({
-          series: [{ name: "Retorno Total", data: retornoAcumulado }],
-          options: {
-            ...prev.options,
-            xaxis: { ...prev.options.xaxis, categories: meses }
-          }
-        }));
-
-        // --- Morosidad ---
-        setMorosidad(morosidadData || []);
-
-        // --- Distribución por categoría ---
-        const series = (distribucion || []).map(item => item.total);
-        const labels = (distribucion || []).map(item => item.categoria);
-        setCategoriaDistribucion(prev => ({
-          ...prev,
-          series,
-          options: { ...prev.options, labels }
-        }));
-
-        // --- Amortizaciones pendientes ---
-        setAmortizacionesPendientes(amortizaciones || []);
-
-        huboCargaExitosaRef.current = true;
-      }
-    } catch (error) {
-      // Ignorar respuestas obsoletas (de una petición vieja/duplicada)
-      if (miPeticion !== requestIdRef.current) return;
-
-      console.error('Error al cargar dashboard:', error);
-
-      // Si ya habíamos mostrado el dashboard con éxito antes, no lo
-      // tapamos con la pantalla de error por un timeout tardío de una
-      // petición duplicada: solo lo registramos en consola.
-      if (!huboCargaExitosaRef.current) {
-        setError('No se pudo conectar con el servidor.');
-      }
-    } finally {
-      if (miPeticion === requestIdRef.current) {
-        setLoading(false);
-      }
-    }
-  };
-
-  // ============================================
-  // FUNCIONES DE CARGA SECUNDARIAS (no bloquean el loading principal)
-  // ============================================
-
-  const cargarUsuarioActual = async () => {
+  const cargarRolUsuario = async () => {
     try {
       const userStr = localStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
-        setDatosPerfil(prev => ({
-          ...prev,
-          nombre: user.nombre || "Usuario",
-          email: user.correo || "",
-          telefono: user.telefono || "Sin teléfono",
-          rol: user.rol || "Usuario",
-          fechaRegistro: formatearFecha(user.fecha_registro) || "Fecha no disponible",
-          fotoPerfil: user.foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&size=128&background=1e3a8a&color=fff&bold=true`
-        }));
         setUserRole(user.rol || 'Empleado');
       }
-
       const response = await api.get('/user');
       if (response.data.success) {
         const user = response.data.data.usuario;
-        setDatosPerfil(prev => ({
-          ...prev,
-          nombre: user.nombre || "Usuario",
-          email: user.correo || "",
-          telefono: user.telefono || "Sin teléfono",
-          rol: user.rol || "Usuario",
-          fechaRegistro: formatearFecha(user.fecha_registro),
-          fotoPerfil: user.foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&size=128&background=1e3a8a&color=fff&bold=true`
-        }));
         localStorage.setItem('user', JSON.stringify(user));
         setUserRole(user.rol || 'Empleado');
       }
     } catch (error) {
-      console.error('Error cargando usuario:', error);
-    }
-  };
-
-  const cargarModulosPorPlan = async () => {
-    try {
-      const response = await api.get('/user');
-      if (response.data.success) {
-        const usuario = response.data.data.usuario;
-        setModulosPermitidos(usuario.modulos || []);
-        setPlanInfo({
-          plan_id: usuario.plan_id,
-          plan_nombre: usuario.plan_nombre
-        });
-        console.log('Módulos permitidos:', usuario.modulos);
-        console.log('Plan:', usuario.plan_nombre);
-      }
-    } catch (error) {
-      console.error('Error cargando módulos:', error);
+      console.error('Error cargando rol:', error);
     }
   };
 
   const cargarPreciosQuilates = async () => {
     try {
       const response = await api.get('/precio-oro/quilates');
-      if (response.data.success) {
-        setPreciosQuilates(response.data.data);
-      }
+      if (response.data.success) setPreciosQuilates(response.data.data);
     } catch (error) {
       console.error('Error al cargar precios por quilate:', error);
     }
   };
 
-  // Funciones para cargar datos específicos de modales
+  useEffect(() => {
+    cargarRolUsuario();
+    cargarPreciosQuilates();
+  }, []);
+
+  // ============================================
+  // CARGAS DE MODALES
+  // ============================================
   const cargarActivos = async () => {
     try {
       const response = await api.get('/home/activos');
@@ -562,7 +351,7 @@ const Dueno = () => {
         setShowActivos(true);
       }
     } catch (error) {
-      console.error('Error al cargar activos:', error);
+      console.error('Error:', error);
       alert('Error al cargar empeños activos');
     }
   };
@@ -575,7 +364,7 @@ const Dueno = () => {
         setShowVencidos(true);
       }
     } catch (error) {
-      console.error('Error al cargar vencidos:', error);
+      console.error('Error:', error);
       alert('Error al cargar empeños vencidos');
     }
   };
@@ -588,7 +377,7 @@ const Dueno = () => {
         setShowProximos(true);
       }
     } catch (error) {
-      console.error('Error al cargar próximos:', error);
+      console.error('Error:', error);
       alert('Error al cargar próximos a vencer');
     }
   };
@@ -597,7 +386,7 @@ const Dueno = () => {
     try {
       setIngresosRecientes([
         { id: 1, concepto: "Pago de Juan Pérez", monto: 5000, fecha: "10/03/2024" },
-        { id: 2, concepto: "Pago de María García", monto: 3500, fecha: "09/03/2024" },
+        { id: 2, concepto: "Pago de María García", monto: 3500, fecha: "09/03/2024" }
       ]);
       setShowIngresos(true);
     } catch (error) {
@@ -606,31 +395,11 @@ const Dueno = () => {
   };
 
   // ============================================
-  // EFECTO PRINCIPAL DE CARGA
+  // MODAL DE PAGO
   // ============================================
-  useEffect(() => {
-    // Carga crítica: controla el spinner de la pantalla
-    cargarTodo();
-
-    // Cargas secundarias: no bloquean la vista, entran cuando terminan
-    cargarUsuarioActual();
-    cargarPreciosQuilates();
-    cargarModulosPorPlan();
-
-    // Si el componente se desmonta/remonta (p. ej. doble montaje de
-    // React.StrictMode en desarrollo), invalidamos cualquier petición
-    // que haya quedado en vuelo para que su respuesta, al llegar, se
-    // ignore en vez de pisar el estado de la instancia nueva.
-    return () => {
-      requestIdRef.current++;
-    };
-  }, []);
-
-  // Manejadores del modal de pago
   const handlePaymentSuccess = (data) => {
     console.log('Pago exitoso:', data);
-    cargarTodo();
-    verificarSuscripcion(); // 🔑 refresca días restantes / fecha_fin_plan
+    verificarSuscripcion();
     setTimeout(() => {
       setShowPaymentModal(false);
       localStorage.removeItem('pending_plan_id');
@@ -647,9 +416,9 @@ const Dueno = () => {
   };
 
   // ============================================
-  //  LOADING STATE - CON SPINNER PEQUEÑO (DESDE LOCAL)
+  // LOADING
   // ============================================
-  if (loading) {
+  if (cargando && !data) {
     return (
       <div className="dashboard">
         <div className="content">
@@ -662,8 +431,7 @@ const Dueno = () => {
     );
   }
 
-  // Error state
-  if (error) {
+  if (error && !data) {
     return (
       <div className="dashboard">
         <div className="content">
@@ -671,7 +439,7 @@ const Dueno = () => {
             <WarningIcon className="error-icon" />
             <h3>Error de conexión</h3>
             <p>{error}</p>
-            <button onClick={cargarTodo} className="btn-reintentar">
+            <button onClick={() => cargar(true)} className="btn-reintentar">
               Reintentar
             </button>
           </div>
@@ -681,37 +449,35 @@ const Dueno = () => {
   }
 
   // ============================================
-  //  RENDER - CON ESTRUCTURA DOCKER (SIN SIDEBAR)
+  // RENDER
   // ============================================
   return (
     <div className="dashboard">
       <div className="content">
-        {/* HEADER */}
-        <div className="owner-header">
-          <div className="header-top">
-            <h1>
-              Hola, {datosPerfil.nombre.split(' ')[0] || 'Dueño'}
-              <p className="header-sub">Conoce el estado de tu casa de empeño</p>
-            </h1>
 
-            <div className="header-botones">
-              <button className="btn-perfil" onClick={() => setShowPerfil(true)} title="Mi Perfil">
-                <img src={datosPerfil.fotoPerfil} alt="Perfil" className="perfil-foto" />
-              </button>
+        {/* ✅ NUEVO: TOOLBAR CON REFRESH 
+        <div className="dashboard-toolbar">
+          <span className="dashboard-freshness">
+            {minutosDesde === null
+              ? 'Cargando...'
+              : minutosDesde < 1
+              ? 'Actualizado ahora mismo'
+              : `Actualizado hace ${minutosDesde} min`}
+            {invalidado && ' ⚠️'}
+          </span>
 
-              <button className="btn-alertas" onClick={() => setShowAlertas(true)} title="Alertas">
-                <NotificationsIcon className="alerta-icon" />
-                {(dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos) > 0 && (
-                  <span className="alerta-badge">
-                    {dashboardData.resumen?.proximos_vencer + dashboardData.resumen?.empenos_vencidos}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+          <button
+            type="button"
+            className={`dashboard-btn-refresh ${refrescandoManual ? 'girando' : ''}`}
+            onClick={handleRefrescarManual}
+            disabled={cargando || refrescandoManual}
+            title="Actualizar datos del dashboard"
+          >
+            <RefreshIcon />
+          </button>
+        </div> */}
 
-        {/* CARDS - Visibles para todos */}
+        {/* CARDS */}
         <div className="cards-grid">
           <div className="stat-card" onClick={cargarActivos}>
             <AssignmentIcon className="card-icon" />
@@ -737,7 +503,7 @@ const Dueno = () => {
             <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
           </div>
 
-          <div className="stat-card gold-card" onClick={() => setShowPrecioOroModal(true)} style={{ cursor: 'pointer' }}>
+          <div className="stat-card gold-card" onClick={() => setShowPrecioOroModal(true)}>
             <MonetizationOnIcon className="card-icon" />
             <h3>Precio del Oro</h3>
             <p className="stat-number">${dashboardData.resumen?.precio_oro || 850} / gramo</p>
@@ -746,84 +512,45 @@ const Dueno = () => {
                 Actualizado: {new Date(dashboardData.resumen.ultima_actualizacion_oro).toLocaleDateString('es-MX')}
               </small>
             )}
-            <small style={{ fontSize: '9px', color: '#000000', display: 'block', marginTop: '3px' }}>
-              Haz clic para ver precios por quilate
-            </small>
           </div>
         </div>
 
-        {/* ============================================ */}
-        {/* GRÁFICAS - SEGÚN ROL DEL USUARIO */}
-        {/* ============================================ */}
-
-        {/* 🆕 GRÁFICA PRINCIPAL - CON chartHeight DINÁMICO (DESDE LOCAL) */}
+        {/* GRÁFICAS */}
         {puedeVerEvolucionAcumulada() && (
           <div className="chart-section">
-            <h2>
-              <AreaChartIcon />
-              Evolución Acumulada (Capital vs Retorno vs Ganancia)
-            </h2>
+            <h2><AreaChartIcon /> Evolución Acumulada (Capital vs Retorno vs Ganancia)</h2>
             <p className="chart-subtitle">
               El área muestra el crecimiento total del negocio - La diferencia entre Capital y Retorno es la ganancia acumulada
             </p>
             <div className="chart-wrapper">
-              <Chart
-                options={areaChartData.options}
-                series={areaChartData.series}
-                type="area"
-                height={chartHeight}
-              />
+              <Chart options={areaChartOptions} series={areaChartSeries} type="area" height={chartHeight} />
             </div>
           </div>
         )}
 
-        {/* GRÁFICAS ADICIONALES - CON smallChartHeight DINÁMICO */}
         {puedeVerGraficasBasicas() && (
           <div className="nuevas-graficas-grid">
             <div className="grafica-nueva-card">
-              <h2>
-                <TrendingUpIcon />
-                Tendencia de Ingresos
-              </h2>
-              <Chart
-                options={trendChartData.options}
-                series={trendChartData.series}
-                type="line"
-                height={smallChartHeight}
-              />
+              <h2><TrendingUpIcon /> Tendencia de Ingresos</h2>
+              <Chart options={trendChartOptions} series={trendChartSeries} type="line" height={smallChartHeight} />
             </div>
 
             <div className="grafica-nueva-card">
-              <h2>
-                <PieChartIcon />
-                Distribución por Categoría
-              </h2>
-              <Chart
-                options={categoriaDistribucion.options}
-                series={categoriaDistribucion.series}
-                type="donut"
-                height={smallChartHeight}
-              />
+              <h2><PieChartIcon /> Distribución por Categoría</h2>
+              <Chart options={categoriaDistribucionOptions} series={distribucionSeries} type="donut" height={smallChartHeight} />
             </div>
           </div>
         )}
 
-        {/* Top Clientes - Visible para todos */}
+        {/* TOP CLIENTES */}
         <div className="nueva-seccion">
-          <h2>
-            <EmojiEventsIcon />
-            Top 5 Clientes (Mayores Ganancias)
-          </h2>
+          <h2><EmojiEventsIcon /> Top 5 Clientes (Mayores Ganancias)</h2>
           <div className="tabla-container">
             <table className="tabla-moderna">
               <thead>
                 <tr>
-                  <th>Cliente</th>
-                  <th>Empeños</th>
-                  <th>Monto Prestado</th>
-                  <th>Ganancia Generada</th>
-                  <th>% Ganancia</th>
-                  <th>Último Empeño</th>
+                  <th>Cliente</th><th>Empeños</th><th>Monto Prestado</th>
+                  <th>Ganancia Generada</th><th>% Ganancia</th><th>Último Empeño</th>
                 </tr>
               </thead>
               <tbody>
@@ -833,106 +560,71 @@ const Dueno = () => {
                     <td>{cliente.empenos}</td>
                     <td>{formatearMoneda(cliente.monto_total)}</td>
                     <td className="profit-text">{formatearMoneda(cliente.ganancia_generada || (cliente.monto_total * 0.15))}</td>
-                    <td>
-                      <span className="profit-badge">
-                        +{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}
-                      </span>
-                    </td>
+                    <td><span className="profit-badge">+{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}</span></td>
                     <td>{formatFecha(cliente.ultimo_empeno)}</td>
                   </tr>
                 ))}
                 {dashboardData.top_clientes?.length === 0 && (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td>
-                  </tr>
+                  <tr><td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* SECCIÓN DE MOROSIDAD - Visible para todos */}
+        {/* MOROSIDAD */}
         <div className="nueva-seccion">
-          <h2>
-            <WarningIcon />
-            Morosidad - Clientes con Mayor Pérdida
-          </h2>
+          <h2><WarningIcon /> Morosidad - Clientes con Mayor Pérdida</h2>
           <div className="tabla-container">
             <table className="tabla-moderna">
               <thead>
                 <tr>
-                  <th>Cliente</th>
-                  <th>Total Prestado</th>
-                  <th>Deuda Vencida</th>
-                  <th>Pérdida Proyectada</th>
-                  <th>% Pérdida</th>
-                  <th>Días en Mora</th>
-                  <th>Último Pago</th>
+                  <th>Cliente</th><th>Total Prestado</th><th>Deuda Vencida</th>
+                  <th>Pérdida Proyectada</th><th>% Pérdida</th><th>Días en Mora</th><th>Último Pago</th>
                 </tr>
               </thead>
               <tbody>
                 {morosidad.map((item, index) => {
                   let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
                   if (porcentaje > 100) porcentaje = 100;
-
                   return (
                     <tr key={index}>
-                      {/* ✅ CORREGIDO: item.nombre en vez de item.cliente (esa clave no existía) */}
                       <td><strong>{item.nombre}</strong></td>
                       <td>{formatearMoneda(item.total_prestado)}</td>
                       <td className="loss-text">{formatearMoneda(item.deuda)}</td>
                       <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
-                      <td>
-                        <span className="loss-badge">
-                          -{porcentaje.toFixed(2)}%
-                        </span>
-                      </td>
+                      <td><span className="loss-badge">-{porcentaje.toFixed(2)}%</span></td>
                       <td><span className="badge-danger">{Math.floor(item.dias_mora)} días</span></td>
-                      <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date'
-                        ? formatFecha(item.ultimo_pago)
-                        : 'Sin registro'}</td>
+                      <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' ? formatFecha(item.ultimo_pago) : 'Sin registro'}</td>
                     </tr>
                   );
                 })}
                 {morosidad.length === 0 && (
-                  <tr>
-                    <td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td>
-                  </tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* AMORTIZACIONES PENDIENTES - Solo para Administradores */}
+        {/* AMORTIZACIONES */}
         {puedeVerEvolucionAcumulada() && (
           <div className="nueva-seccion">
             <h2>
-              <AssignmentIcon />
-              Amortizaciones Pendientes
-              <span className="seccion-badge">
-                {amortizacionesPendientes.length} registros
-              </span>
+              <AssignmentIcon /> Amortizaciones Pendientes
+              <span className="seccion-badge">{amortizacionesPendientes.length} registros</span>
             </h2>
             <div className="tabla-container">
               <table className="tabla-moderna">
                 <thead>
                   <tr>
-                    <th>Cliente</th>
-                    <th>Artículo</th>
-                    <th>Folio</th>
-                    <th>N° Pago</th>
-                    <th>Fecha Programada</th>
-                    <th>Monto Total</th>
-                    <th>Pagado</th>
-                    <th>Saldo Restante</th>
-                    <th>Estado</th>
+                    <th>Cliente</th><th>Artículo</th><th>Folio</th><th>N° Pago</th>
+                    <th>Fecha Programada</th><th>Monto Total</th><th>Pagado</th>
+                    <th>Saldo Restante</th><th>Estado</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {loadingAmortizaciones ? (
-                    <tr><td colSpan="9" style={{ textAlign: 'center' }}>Cargando...</td></tr>
-                  ) : amortizacionesPendientes.length === 0 ? (
+                  {amortizacionesPendientes.length === 0 ? (
                     <tr><td colSpan="9" style={{ textAlign: 'center' }}>No hay amortizaciones pendientes</td></tr>
                   ) : (
                     amortizacionesPendientes.map((item) => (
@@ -961,21 +653,13 @@ const Dueno = () => {
           </div>
         )}
 
-        {/* Artículos más empeñados - Visible para todos */}
+        {/* ARTÍCULOS */}
         <div className="nueva-seccion">
-          <h2>
-            <LocalOfferIcon />
-            Artículos Más Empeñados
-          </h2>
+          <h2><LocalOfferIcon /> Artículos Más Empeñados</h2>
           <div className="tabla-container">
             <table className="tabla-moderna">
               <thead>
-                <tr>
-                  <th>Artículo</th>
-                  <th>Categoría</th>
-                  <th>Cantidad</th>
-                  <th>Monto Promedio</th>
-                </tr>
+                <tr><th>Artículo</th><th>Categoría</th><th>Cantidad</th><th>Monto Promedio</th></tr>
               </thead>
               <tbody>
                 {dashboardData.top_articulos?.map((articulo, index) => (
@@ -987,21 +671,16 @@ const Dueno = () => {
                   </tr>
                 ))}
                 {dashboardData.top_articulos?.length === 0 && (
-                  <tr>
-                    <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
-                  </tr>
+                  <tr><td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Actividad Reciente - Visible para todos */}
+        {/* ACTIVIDAD RECIENTE */}
         <div className="nueva-seccion">
-          <h2>
-            <HistoryIcon />
-            Actividad Reciente
-          </h2>
+          <h2><HistoryIcon /> Actividad Reciente</h2>
           <div className="actividad-lista">
             {dashboardData.actividad_reciente?.map((actividad, index) => (
               <div key={index} className="actividad-item">
@@ -1015,9 +694,7 @@ const Dueno = () => {
                   <small>{formatFecha(actividad.fecha)}</small>
                 </div>
                 {actividad.monto && (
-                  <div className="actividad-monto">
-                    {formatearMoneda(actividad.monto)}
-                  </div>
+                  <div className="actividad-monto">{formatearMoneda(actividad.monto)}</div>
                 )}
               </div>
             ))}
@@ -1028,57 +705,8 @@ const Dueno = () => {
         </div>
       </div>
 
-      {/* ============================================ */}
-      {/* MODALES (TODOS IGUALES QUE EN DOCKER) */}
-      {/* ============================================ */}
+      {/* MODALES */}
 
-      {/* MODAL DE PERFIL */}
-      {showPerfil && (
-        <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
-          <div className="modal-detalle modal-perfil" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowPerfil(false)}><CloseIcon /></button>
-            <div className="modal-header perfil-header">
-              <h2>Mi Perfil</h2>
-              <span className="cliente-id">Información personal</span>
-            </div>
-            <div className="modal-body">
-              <div className="perfil-container">
-                <div className="perfil-avatar">
-                  <img src={datosPerfil.fotoPerfil} alt={datosPerfil.nombre} />
-                </div>
-                <div className="perfil-info-grid">
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Nombre completo</span>
-                    <span className="perfil-valor">{datosPerfil.nombre}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Email</span>
-                    <span className="perfil-valor">{datosPerfil.email}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Teléfono</span>
-                    <span className="perfil-valor">{datosPerfil.telefono}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Rol</span>
-                    <span className="perfil-valor">{datosPerfil.rol}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Sucursal</span>
-                    <span className="perfil-valor">{datosPerfil.sucursal}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Miembro desde</span>
-                    <span className="perfil-valor">{datosPerfil.fechaRegistro}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DE EMPEÑOS ACTIVOS */}
       {showActivos && (
         <div className="modal-overlay" onClick={() => setShowActivos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -1111,7 +739,6 @@ const Dueno = () => {
         </div>
       )}
 
-      {/* MODAL DE EMPEÑOS VENCIDOS */}
       {showVencidos && (
         <div className="modal-overlay" onClick={() => setShowVencidos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -1145,7 +772,6 @@ const Dueno = () => {
         </div>
       )}
 
-      {/* MODAL DE PRÓXIMOS A VENCER */}
       {showProximos && (
         <div className="modal-overlay" onClick={() => setShowProximos(false)}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -1179,13 +805,10 @@ const Dueno = () => {
         </div>
       )}
 
-      {/* MODAL DE PRECIOS DEL ORO POR QUILATE */}
       {showPrecioOroModal && (
         <div className="modal-overlay" onClick={() => setShowPrecioOroModal(false)}>
           <div className="modal-detalle modal-oro" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowPrecioOroModal(false)}>
-              <CloseIcon />
-            </button>
+            <button className="modal-cerrar" onClick={() => setShowPrecioOroModal(false)}><CloseIcon /></button>
             <div className="modal-header oro-header">
               <h2><MonetizationOnIcon /> Precios del Oro por Quilate</h2>
               {preciosQuilates.ultima_actualizacion && (
@@ -1196,33 +819,33 @@ const Dueno = () => {
             </div>
             <div className="modal-body">
               <div className="quilates-grid">
-                <div className="quilate-card quilate-24k">
+                <div className="quilate-card">
                   <div className="quilate-info"><h3>Oro 24k</h3><p>99.9% pureza</p></div>
                   <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_24k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
-                <div className="quilate-card quilate-22k">
+                <div className="quilate-card">
                   <div className="quilate-info"><h3>Oro 22k</h3><p>91.7% pureza</p></div>
                   <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_22k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
-                <div className="quilate-card quilate-21k">
+                <div className="quilate-card">
                   <div className="quilate-info"><h3>Oro 21k</h3><p>87.5% pureza</p></div>
                   <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_21k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
-                <div className="quilate-card quilate-18k">
+                <div className="quilate-card">
                   <div className="quilate-info"><h3>Oro 18k</h3><p>75.0% pureza</p></div>
                   <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_18k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
-                <div className="quilate-card quilate-14k">
+                <div className="quilate-card">
                   <div className="quilate-info"><h3>Oro 14k</h3><p>58.5% pureza</p></div>
                   <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_14k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
-                <div className="quilate-card quilate-10k">
+                <div className="quilate-card">
                   <div className="quilate-info"><h3>Oro 10k</h3><p>41.7% pureza</p></div>
                   <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_10k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
                 </div>
               </div>
               <div className="oro-nota">
-                <small>ℹ️ Los precios son referenciales basados en el precio del oro de 24k. El precio final puede variar según la joyería y el mercado.</small>
+                <small>ℹ️ Los precios son referenciales basados en el precio del oro de 24k.</small>
               </div>
             </div>
             <div className="modal-acciones">
@@ -1232,53 +855,6 @@ const Dueno = () => {
         </div>
       )}
 
-      {/* MODAL DE ALERTAS */}
-      {showAlertas && (
-        <div className="modal-overlay" onClick={() => setShowAlertas(false)}>
-          <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowAlertas(false)}><CloseIcon /></button>
-            <div className="modal-header">
-              <h2><NotificationsIcon /> Alertas y Notificaciones</h2>
-              <span className="cliente-id">Actualizadas hoy</span>
-            </div>
-            <div className="modal-body">
-              <div className="alertas-modal-lista">
-                <div className="alerta-modal-item warning">
-                  <WarningIcon className="alerta-modal-icon" />
-                  <div className="alerta-modal-contenido">
-                    <h4>{dashboardData.resumen?.proximos_vencer} empeños por vencer esta semana</h4>
-                    <p>Próximos a vencer: Revisa el detalle</p>
-                    <small>Vencen en los próximos 7 días</small>
-                  </div>
-                </div>
-                <div className="alerta-modal-item danger">
-                  <ErrorIcon className="alerta-modal-icon" />
-                  <div className="alerta-modal-contenido">
-                    <h4>{dashboardData.resumen?.empenos_vencidos} empeños vencidos requieren atención</h4>
-                    <p>Monto total vencido: {formatearMoneda(dashboardData.resumen?.perdida_total)}</p>
-                    <small>Requieren acción inmediata</small>
-                  </div>
-                </div>
-                <div className="alerta-modal-item info">
-                  <AttachMoneyIcon className="alerta-modal-icon" />
-                  <div className="alerta-modal-contenido">
-                    <h4>Ingresos del mes: {formatearMoneda(dashboardData.resumen?.ingresos_mes_actual || 0)}</h4>
-                    <p>Meta mensual: $100,000</p>
-                    <div className="progreso-barra">
-                      <div className="progreso-lleno" style={{ width: `${(dashboardData.resumen?.ingresos_mes_actual / 100000 * 100) || 0}%` }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowAlertas(false)}>Cerrar</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DE PAGO */}
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={handleClosePaymentModal}

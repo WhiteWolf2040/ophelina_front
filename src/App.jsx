@@ -3,6 +3,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./contexts/UserContext";
 import Sidebar from "./components/Sidebar";
+import { DashboardProvider } from "./contexts/DashboardContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import OpheliaLogin from "./components/OpheliaLogin";
@@ -49,6 +50,8 @@ import Reporte from "./DuenoReporte/Reporte";
 import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
+import TopBar from "./components/Topbar";
+// ...
 
 
 //  AppLayout: SOLO para rutas de administrador/empleados (incluye Sidebar)
@@ -57,6 +60,7 @@ const AppLayout = ({ children }) => {
     <div className="app-layout">
       <Sidebar />
       <div className="main-content-wrapper">
+        <TopBar />           {/* ← AQUÍ, dentro del wrapper */}
         {children}
       </div>
     </div>
@@ -66,6 +70,7 @@ const AppLayout = ({ children }) => {
 function App() {
   return (
     <UserProvider>
+       <DashboardProvider>  
       <Router>
         <Routes>
           {/* RUTAS PÚBLICAS (SIN SIDEBAR) */}
@@ -274,6 +279,7 @@ function App() {
 
         </Routes>
       </Router>
+    </DashboardProvider>  
     </UserProvider>
   );
 }
