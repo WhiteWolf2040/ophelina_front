@@ -4,8 +4,9 @@ import "./OpheliaRegister.css";
 import logo from "../assets/ophelina_logo-sinFondo.png";
 import { Link } from "react-router-dom";
 import { buscarCodigoPostal } from "../services/postalCodeService";
-import api from "../config/api"; //  NUEVO IMPORT
+import api from "../config/api";
 import { setAuthData } from "../config/auth";
+import TerminosModal from "../components/TerminosModal";
 
 export default function OpheliaRegister() {
   const [formData, setFormData] = useState({
@@ -28,6 +29,10 @@ export default function OpheliaRegister() {
   const [buscandoCP, setBuscandoCP] = useState(false);
   const [cpEncontrado, setCpEncontrado] = useState(false);
 
+  // ✅ Estados para términos y condiciones
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [showTerminos, setShowTerminos] = useState(false);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -45,9 +50,9 @@ export default function OpheliaRegister() {
       if (cpLimpio.length === 5) {
         buscarCodigoPostalHandler(cpLimpio);
       } else {
-        setFormData(prev => ({ 
-          ...prev, 
-          ciudad: "", 
+        setFormData(prev => ({
+          ...prev,
+          ciudad: "",
           estado: "",
           colonia: ""
         }));
@@ -86,61 +91,67 @@ export default function OpheliaRegister() {
     }
   };
 
-  //  handleSubmit ACTUALIZADO: ahora usa axios (api) en vez de fetch nativo
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (
-    !formData.nombre ||
-    !formData.correo ||
-    !formData.password ||
-    !formData.negocio_nombre ||
-    !formData.rfc
-  ) {
-    setError("Por favor completa los campos obligatorios");
-    return;
-  }
+    if (
+      !formData.nombre ||
+      !formData.correo ||
+      !formData.password ||
+      !formData.negocio_nombre ||
+      !formData.rfc
+    ) {
+      setError("Por favor completa los campos obligatorios");
+      return;
+    }
 
-  setError("");
+    // ✅ Validar aceptación de términos
+    if (!aceptaTerminos) {
+      setError("Debes aceptar los Términos y Condiciones para continuar");
+      return;
+    }
 
-  try {
-    // 1. Registrar la empresa y usuario
-    const response = await api.post("/register", {
-      nombre: formData.nombre,
-      apellido: formData.apellido,
-      telefono: formData.telefono,
-      negocio_nombre: formData.negocio_nombre,
-      correo: formData.correo,
-      password: formData.password,
-      rfc: formData.rfc,
-      codigo_postal: formData.codigo_postal,
-      ciudad: formData.ciudad,
-      estado: formData.estado,
-      direccion: formData.direccion,
-      colonia: formData.colonia
-    });
+    setError("");
 
-    const { token } = response.data;
+    try {
+      // 1. Registrar la empresa y usuario
+      const response = await api.post("/register", {
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        telefono: formData.telefono,
+        negocio_nombre: formData.negocio_nombre,
+        correo: formData.correo,
+        password: formData.password,
+        rfc: formData.rfc,
+        codigo_postal: formData.codigo_postal,
+        ciudad: formData.ciudad,
+        estado: formData.estado,
+        direccion: formData.direccion,
+        colonia: formData.colonia
+      });
 
-    // 2. Guarda el token temporalmente para que el interceptor de axios lo mande en la siguiente petición
-    localStorage.setItem("token", token);
+      const { token } = response.data;
 
-    // 3. Trae los datos completos del usuario (rol, permisos, módulos) igual que en login
-    const userResponse = await api.get("/user");
-    const usuario = userResponse.data.data.usuario;
+      // 2. Guarda el token temporalmente para que el interceptor de axios lo mande en la siguiente petición
+      localStorage.setItem("token", token);
 
-    // 4. Guarda todo con la misma función que usa el login
-    setAuthData(token, usuario);
+      // 3. Trae los datos completos del usuario (rol, permisos, módulos) igual que en login
+      const userResponse = await api.get("/user");
+      const usuario = userResponse.data.data.usuario;
 
-    // 5. Ahora sí manda al dashboard, ya con rol/módulos cargados
-    window.location.href = "/home";
+      // 4. Guarda todo con la misma función que usa el login
+      setAuthData(token, usuario);
 
-  } catch (err) {
-    console.error("Error en registro:", err);
-    console.error("Detalles de validación:", err.response?.data);
-    setError(err.response?.data?.message || "Error de conexión con el servidor");
-  }
-};
+      // 5. Ahora sí manda al dashboard, ya con rol/módulos cargados
+      window.location.href = "/home";
+
+    } catch (err) {
+      console.error("Error en registro:", err);
+      console.error("Detalles de validación:", err.response?.data);
+      setError(err.response?.data?.message || "Error de conexión con el servidor");
+    }
+  };
+
   return (
     <div className="login-container">
       <div className="overlay-pattern"></div>
@@ -208,71 +219,72 @@ export default function OpheliaRegister() {
           </div>
 
           <div className="form-row form-row-cp">
-            <div className="cp-field">
-              <input
-                type="text"
-                name="codigo_postal"
-                placeholder="Código postal *"
-                className="input"
-                maxLength={5}
-                value={formData.codigo_postal}
-                onChange={handleChange}
-              />
+  {/* COLUMNA IZQUIERDA: CP + hint */}
+  <div className="cp-field">
+    <input
+      type="text"
+      name="codigo_postal"
+      placeholder="Código postal *"
+      className="input"
+      maxLength={5}
+      value={formData.codigo_postal}
+      onChange={handleChange}
+    />
 
-              {buscandoCP && (
-                <span className="cp-hint cp-hint-loading">Buscando…</span>
-              )}
+    {buscandoCP && (
+      <span className="cp-hint cp-hint-loading">Buscando…</span>
+    )}
 
-              {cpEncontrado && (
-                <span className="cp-hint cp-hint-success">
-                  <svg viewBox="0 0 20 20" width="12" height="12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 10.5L8 14.5L16 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  {formData.estado}
-                </span>
-              )}
-            </div>
+    {cpEncontrado && (
+      <span className="cp-hint cp-hint-success">
+        <svg viewBox="0 0 20 20" width="12" height="12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 10.5L8 14.5L16 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        {formData.estado}
+      </span>
+    )}
+  </div>
 
-            <input
-              type="text"
-              name="direccion"
-              placeholder="Calle y número"
-              className="input"
-              value={formData.direccion}
-              onChange={handleChange}
-            />
-          </div>
+  {/* COLUMNA DERECHA: dirección + colonia */}
+  <div className="direccion-colonia-field">
+    <input
+      type="text"
+      name="direccion"
+      placeholder="Calle y número"
+      className="input"
+      value={formData.direccion}
+      onChange={handleChange}
+    />
 
-          {opcionesColonia.length > 1 && (
-            <div className="form-row">
-              <select
-                name="colonia"
-                className="input"
-                value={formData.colonia}
-                onChange={handleChange}
-              >
-                <option value="">Selecciona tu colonia *</option>
-                {opcionesColonia.map((c, index) => (
-                  <option key={index} value={c.colonia}>
-                    {c.colonia}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+    {opcionesColonia.length > 1 && (
+      <select
+        name="colonia"
+        className="input"
+        value={formData.colonia}
+        onChange={handleChange}
+      >
+        <option value="">Selecciona tu colonia *</option>
+        {opcionesColonia.map((c, index) => (
+          <option key={index} value={c.colonia}>
+            {c.colonia}
+          </option>
+        ))}
+      </select>
+    )}
 
-          {opcionesColonia.length === 1 && (
-            <div className="form-row">
-              <input
-                type="text"
-                name="colonia"
-                className="input"
-                value={formData.colonia}
-                disabled
-                style={{ backgroundColor: '#f5f5f5' }}
-              />
-            </div>
-          )}
+    {opcionesColonia.length === 1 && (
+      <input
+        type="text"
+        name="colonia"
+        className="input input-readonly"
+        value={formData.colonia}
+        disabled
+      />
+    )}
+  </div>
+</div>
+
+          
 
           <input
             type="email"
@@ -291,6 +303,35 @@ export default function OpheliaRegister() {
             value={formData.password}
             onChange={handleChange}
           />
+
+          {/* Checkbox de Términos y Condiciones */}
+          <div className="terminos-container">
+            <label className="terminos-label">
+              <input
+                type="checkbox"
+                className="terminos-checkbox"
+                checked={aceptaTerminos}
+                onChange={(e) => {
+                  setAceptaTerminos(e.target.checked);
+                  if (e.target.checked) setError("");
+                }}
+              />
+              <span className="terminos-texto">
+                Acepto los{" "}
+                <button
+                  type="button"
+                  className="terminos-link"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowTerminos(true);
+                  }}
+                >
+                  Términos y Condiciones | Aviso de Privacidad
+                </button>
+                
+              </span>
+            </label>
+          </div>
 
           {error && (
             <p style={{ color: "red", fontSize: "12px", textAlign: "center" }}>
@@ -312,6 +353,18 @@ export default function OpheliaRegister() {
           </p>
         </form>
       </div>
+
+      {/* Modal de Términos y Condiciones (componente reutilizable) */}
+      {showTerminos && (
+        <TerminosModal
+          onClose={() => setShowTerminos(false)}
+          onAccept={() => {
+            setAceptaTerminos(true);
+            setShowTerminos(false);
+            setError("");
+          }}
+        />
+      )}
     </div>
   );
 }

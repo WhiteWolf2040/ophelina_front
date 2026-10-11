@@ -228,13 +228,17 @@ const Navbar = memo(({ isLoggedIn, userNombre, onLogout }) => (
       {isLoggedIn ? (
         <div className="user-menu">
           <Link to="/home" style={{ textDecoration: 'none' }}>
-            <button className="btn-dashboard" aria-label="Ir al dashboard">
-              <img src={IconDashboard} alt="" aria-hidden="true" style={{ width: 16, height: 16, marginRight: 6, verticalAlign: 'middle' }} /> Dashboard
+            <button className="btn-loginn" aria-label="Ir al dashboard">
+               Home
             </button>
-          </Link>
-          <button className="btn-logout" onClick={onLogout} aria-label="Cerrar sesión">
-            <img src={IconLogout} alt="" aria-hidden="true" style={{ width: 16, height: 16, marginRight: 6, verticalAlign: 'middle' }} /> {userNombre?.split(' ')[0] || 'Usuario'} | Salir
+          </Link>   
+            <Link onClick={onLogout} style={{ textDecoration: 'none' }}>
+            <button className="btn-logout" aria-label="Cerrar sesión">
+            <img src={IconLogout} alt="Cerrar sesión" width="20" height="23" />
           </button>
+          </Link>
+         
+          
         </div>
       ) : (
         <Link to="/login" style={{ textDecoration: 'none' }}>
@@ -1079,7 +1083,7 @@ const Landing = () => {
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d119468.70462467618!2d-89.67155106367189!3d20.967370199999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8f5671b7d5a8f5b5%3A0x8f5a9c8f5b5b5b5b!2sM%C3%A9rida%2C%20Yuc.!5e0!3m2!1ses!2smx!4v1234567890"
               width="100%"
               height="450"
-              style={{ border: 0, borderRadius: '15px' }}
+            
               allowFullScreen=""
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
