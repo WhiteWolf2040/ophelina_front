@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
+import api from "../config/api";
 import "./Configuraciones.css";
 
 // Iconos
@@ -39,6 +40,7 @@ const Configuraciones = () => {
     empresa,
     usuarios,
     interes,
+    suscripcion: suscripcionContext,
     actualizarEmpresa,
     actualizarInteres,
     setModalUsuarioAbierto,
@@ -53,6 +55,32 @@ const Configuraciones = () => {
 
   // ✅ Estado de tab activo
   const [tabActiva, setTabActiva] = useState("general");
+
+  // ✅ Suscripción: usa la del layout si existe; si no, la pide directo a /user
+  const [suscripcion, setSuscripcion] = useState(suscripcionContext || null);
+  const [cargandoSusc, setCargandoSusc] = useState(false);
+
+  useEffect(() => {
+    if (tabActiva !== "plan" || suscripcion) return;
+
+    let cancelado = false;
+    const cargarSuscripcion = async () => {
+      setCargandoSusc(true);
+      try {
+        const response = await api.get("/user");
+        console.log("📦 /user respuesta:", response.data);
+        const susc = response.data?.data?.usuario?.suscripcion;
+        if (!cancelado && susc) setSuscripcion(susc);
+      } catch (error) {
+        console.error("Error cargando suscripción", error);
+      } finally {
+        if (!cancelado) setCargandoSusc(false);
+      }
+    };
+    cargarSuscripcion();
+
+    return () => { cancelado = true; };
+  }, [tabActiva, suscripcion]);
 
   // Estados para paginación de usuarios
   const [paginaActual, setPaginaActual] = useState(1);
@@ -92,6 +120,46 @@ const Configuraciones = () => {
     for (let i = inicio; i <= fin; i++) numeros.push(i);
     return numeros;
   };
+
+  // ============================================
+  // ✅ SUSCRIPCIÓN: helpers para el tab "Plan"
+  // ============================================
+  const formatearFecha = (fecha) => {
+    if (!fecha) return "—";
+    // fecha viene como "2026-10-21"; se separa para evitar desfase de zona horaria
+    const [anio, mes, dia] = fecha.split("-").map(Number);
+    return new Date(anio, mes - 1, dia).toLocaleDateString("es-MX", {
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+  };
+
+  const textoEstado = () => {
+    if (!suscripcion) {
+      return cargandoSusc ? "Cargando..." : "No se pudo obtener la suscripción";
+    }
+    const d = suscripcion.dias_restantes;
+    switch (suscripcion.estado) {
+      case "activa":
+        return `Activo · ${d} días restantes`;
+      case "por_vencer":
+        return d === 0
+          ? "Por vencer · vence hoy"
+          : `Por vencer · ${d} ${d === 1 ? "día restante" : "días restantes"}`;
+      case "vencida":
+        return `Vencida · hace ${Math.abs(d)} ${Math.abs(d) === 1 ? "día" : "días"}`;
+      default:
+        return "Sin plan activo";
+    }
+  };
+
+  const colorEstado = {
+    activa: "#2e7d32",
+    por_vencer: "#ed9c00",
+    vencida: "#d32f2f",
+    sin_plan: "#9e9e9e"
+  }[suscripcion?.estado] || "#9e9e9e";
 
   // ✅ Datos hardcodeados para las nuevas secciones (solo maqueta)
   const sucursalesHardcoded = [
@@ -625,7 +693,7 @@ const Configuraciones = () => {
       )}
 
       {/* ============================================ */}
-      {/* TAB: PLAN Y SUSCRIPCIÓN */}
+      {/* TAB: PLAN Y SUSCRIPCIÓN (datos reales del back) */}
       {/* ============================================ */}
       {tabActiva === "plan" && (
         <div className="config-section">
@@ -636,11 +704,23 @@ const Configuraciones = () => {
             </h3>
           </div>
           <div className="plan-actual-card">
-            <div className="plan-badge">PREMIUM</div>
-            <h4>Plan Premium (Empresarial)</h4>
-            <p className="plan-precio">$1,499 <span>/ mes</span></p>
-            <p className="plan-fecha">Próximo cobro: 15 de mayo de 2026</p>
-            <p className="plan-estado"><strong>Estado:</strong> Activo · 32 días restantes</p>
+            <div className="plan-badge">
+              {(suscripcion?.plan_nombre || "—").toUpperCase()}
+            </div>
+            <h4>Plan {suscripcion?.plan_nombre || "—"}</h4>
+            <p className="plan-precio">
+              ${Number(suscripcion?.precio_mensual || 0).toLocaleString("es-MX")} <span>/ mes</span>
+            </p>
+            <p className="plan-fecha">
+              Vigente desde: {formatearFecha(suscripcion?.fecha_inicio)}
+            </p>
+            <p className="plan-fecha">
+              Vence el: {formatearFecha(suscripcion?.fecha_fin)}
+            </p>
+            <p className="plan-estado">
+              <strong>Estado:</strong>{" "}
+              <span style={{ color: colorEstado, fontWeight: 600 }}>{textoEstado()}</span>
+            </p>
           </div>
           <div className="info-grid">
             <div className="info-item">
