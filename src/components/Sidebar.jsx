@@ -21,6 +21,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import SecurityIcon from '@mui/icons-material/Security';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import InsightsIcon from '@mui/icons-material/Insights';
 
 // Menús por defecto (orden correcto)
 const DEFAULT_MENUS = [
@@ -101,7 +102,18 @@ const Sidebar = () => {
     });
   };
 
-  const menuItems = getMenus();
+const metabaseItem = { path: '/metabase', icon: <InsightsIcon />, text: 'Dashboard' };
+const baseMenus = getMenus();
+
+// Lo inserta después de "Reportes" (o al final si no existe) sin duplicarlo
+const menuItems = baseMenus.some(m => m.path === '/metabase')
+  ? baseMenus
+  : (() => {
+      const i = baseMenus.findIndex(m => m.path === '/reportes');
+      const copia = [...baseMenus];
+      copia.splice(i === -1 ? copia.length : i + 1, 0, metabaseItem);
+      return copia;
+    })();
 
   console.log('📋 Menús a renderizar:', menuItems.map(m => m.text));
 
@@ -149,6 +161,8 @@ const Sidebar = () => {
           <button className="collapse-btn" onClick={toggleCollapse}>
             <MenuIcon className="collapse-icon" />
           </button>
+
+          
 
           <button className="close-btn" onClick={closeSidebar}>
             <CloseIcon />

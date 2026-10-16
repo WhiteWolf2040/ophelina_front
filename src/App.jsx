@@ -51,6 +51,7 @@ import ConfiguracionesLayout from "./DuenoConfiguracion/ConfiguracionesLayout";
 import Configuraciones from "./DuenoConfiguracion/Configuraciones";
 
 import TopBar from "./components/Topbar";
+import MetabaseDashboard from "./modules/metabase/MetabaseDashboard";
 // ...
 
 
@@ -263,6 +264,8 @@ function App() {
               </AppLayout>
             </ProtectedRoute>
           } />
+
+          <Route path="/metabase" element={<MetabaseDashboard />} />
 
           {/* ========================================== */}
           {/* CONFIGURACIÓN */}
