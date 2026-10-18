@@ -881,3 +881,49 @@
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+.plan-vacio { text-align: center; padding: 16px; color: #777; }
+
+.plan-aviso { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+.plan-aviso-por_vencer, .plan-aviso-en_gracia { background: #fff4e0; color: #8a5a00; }
+.plan-aviso-vencida { background: #fdecea; color: #a12622; }
+
+.link-recibo { color: #1a73e8; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 2px; }
+
+.plan-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;
+}
+.plan-modal {
+  background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 640px;
+  max-height: 85vh; overflow-y: auto;
+}
+.plan-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.plan-modal-header h3 { display: flex; align-items: center; gap: 8px; margin: 0; }
+.plan-modal-nota { font-size: 13px; color: #666; margin-bottom: 16px; }
+
+.tabla-facturas-wrapper { overflow-x: auto; }
+.tabla-facturas { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 460px; }
+.tabla-facturas th, .tabla-facturas td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; }
+
+.chip-factura { padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #eee; }
+.chip-paid { background: #e3f5e6; color: #2e7d32; }
+.chip-open { background: #fff4e0; color: #8a5a00; }
+.chip-uncollectible, .chip-void { background: #fdecea; color: #a12622; }
+
+.planes-opciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.plan-opcion { border: 1px solid #ddd; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.plan-opcion.actual { border-color: #2e7d32; background: #f3fbf4; }
+.plan-opcion-precio { font-size: 22px; font-weight: 700; }
+.plan-opcion-precio small { font-size: 13px; font-weight: 400; color: #777; }
+.plan-error { color: #d32f2f; margin-top: 12px; font-size: 14px; }
+
+@media (max-width: 768px) {
+  .config-tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .config-tab { flex: 0 0 auto; white-space: nowrap; }
+  .plan-modal { padding: 16px; }
+}
+@media (max-width: 480px) {
+  .form-buttons { flex-direction: column; }
+  .form-buttons button { width: 100%; }
+}

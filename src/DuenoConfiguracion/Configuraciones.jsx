@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import api from "../config/api";
 import "./Configuraciones.css";
+import { useFacturacion, useSuscripcionFallback } from "../hooks/useCargaUnaVez";
 
 // Iconos
 import BusinessIcon from '@mui/icons-material/Business';
@@ -34,6 +35,9 @@ import CategoryIcon from '@mui/icons-material/Category';
 import SecurityIcon from '@mui/icons-material/Security';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import PublicIcon from '@mui/icons-material/Public';
+import CloseIcon from '@mui/icons-material/Close';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 const Configuraciones = () => {
   const {
@@ -56,31 +60,60 @@ const Configuraciones = () => {
   // ✅ Estado de tab activo
   const [tabActiva, setTabActiva] = useState("general");
 
-  // ✅ Suscripción: usa la del layout si existe; si no, la pide directo a /user
-  const [suscripcion, setSuscripcion] = useState(suscripcionContext || null);
-  const [cargandoSusc, setCargandoSusc] = useState(false);
+  // ===== SUSCRIPCIÓN Y FACTURACIÓN: se cargan una sola vez (caché compartido) =====
+  const {
+    datos: suscripcionLocal,
+    cargando: cargandoSusc,
+    cargar: cargarSuscripcion,
+    refrescar: refrescarSuscripcion,
+  } = useSuscripcionFallback();
+  const suscripcion = suscripcionContext || suscripcionLocal;
 
+  const {
+    datos: facturacion,
+    listo: facturacionLista,
+    cargando: cargandoFact,
+    error: errorFact,
+    cargadoEn: facturacionCargadaEn,
+    cargar: cargarFacturacion,
+    refrescar: refrescarFacturacion,
+  } = useFacturacion();
+
+  // Al entrar al tab Plan: si ya está en caché, no hace ninguna petición
   useEffect(() => {
-    if (tabActiva !== "plan" || suscripcion) return;
+    if (tabActiva !== "plan") return;
+    if (!suscripcionContext) cargarSuscripcion();
+    cargarFacturacion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabActiva]);
 
-    let cancelado = false;
-    const cargarSuscripcion = async () => {
-      setCargandoSusc(true);
-      try {
-        const response = await api.get("/user");
-        console.log("📦 /user respuesta:", response.data);
-        const susc = response.data?.data?.usuario?.suscripcion;
-        if (!cancelado && susc) setSuscripcion(susc);
-      } catch (error) {
-        console.error("Error cargando suscripción", error);
-      } finally {
-        if (!cancelado) setCargandoSusc(false);
-      }
-    };
-    cargarSuscripcion();
+  const minutosDesdeCarga = facturacionCargadaEn
+    ? Math.floor((Date.now() - facturacionCargadaEn) / 60000)
+    : null;
 
-    return () => { cancelado = true; };
-  }, [tabActiva, suscripcion]);
+  const refrescarPlan = () => {
+    refrescarFacturacion();
+    if (!suscripcionContext) refrescarSuscripcion();
+  };
+
+  // ===== MODALES =====
+  const [modalHistorial, setModalHistorial] = useState(false);
+  const [modalPlanes, setModalPlanes] = useState(false);
+  const [procesandoPlan, setProcesandoPlan] = useState(null);
+  const [errorPlan, setErrorPlan] = useState("");
+
+  const elegirPlan = async (planId) => {
+    setProcesandoPlan(planId);
+    setErrorPlan("");
+    try {
+      const { data } = await api.post("/stripe/cambiar-plan", { plan_id: planId });
+      if (!data?.url) throw new Error("Sin URL");
+      window.location.href = data.url;
+    } catch (error) {
+      setErrorPlan(error.response?.data?.error || "No se pudo iniciar el cambio de plan. Intenta de nuevo.");
+      setProcesandoPlan(null);
+    }
+  };
 
   // Estados para paginación de usuarios
   const [paginaActual, setPaginaActual] = useState(1);
@@ -142,13 +175,17 @@ const Configuraciones = () => {
     const d = suscripcion.dias_restantes;
     switch (suscripcion.estado) {
       case "activa":
-        return `Activo · ${d} días restantes`;
+        return d === null || d === undefined ? "Activo" : `Activo · ${d} días restantes`;
       case "por_vencer":
         return d === 0
           ? "Por vencer · vence hoy"
           : `Por vencer · ${d} ${d === 1 ? "día restante" : "días restantes"}`;
+      case "en_gracia":
+        return "Pago pendiente · tu acceso sigue activo unos días más";
       case "vencida":
-        return `Vencida · hace ${Math.abs(d)} ${Math.abs(d) === 1 ? "día" : "días"}`;
+        return d < 0
+          ? `Vencida · hace ${Math.abs(d)} ${Math.abs(d) === 1 ? "día" : "días"}`
+          : "Suscripción cancelada o inactiva";
       default:
         return "Sin plan activo";
     }
@@ -157,9 +194,46 @@ const Configuraciones = () => {
   const colorEstado = {
     activa: "#2e7d32",
     por_vencer: "#ed9c00",
+    en_gracia: "#ed9c00",
     vencida: "#d32f2f",
     sin_plan: "#9e9e9e"
   }[suscripcion?.estado] || "#9e9e9e";
+
+  const formatearFechaISO = (iso) =>
+    iso ? new Date(iso).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" }) : "—";
+
+  const formatearMoneda = (monto, moneda = "MXN") =>
+    new Intl.NumberFormat("es-MX", { style: "currency", currency: moneda }).format(monto || 0);
+
+  const MARCAS = { visa: "Visa", mastercard: "Mastercard", amex: "American Express" };
+
+  const esGratis = Number(suscripcion?.precio_mensual || 0) === 0;
+  const facturas = facturacion?.facturas || [];
+  const ultimaFactura = facturas.find((f) => f.estado === "paid") || facturas[0];
+  const planesDisponibles = facturacion?.planes || [];
+
+  const textoMetodoPago = () => {
+    if (errorFact) return "No se pudo cargar";
+    if (!facturacionLista) return "Cargando...";
+    if (esGratis || !facturacion?.tiene_stripe) return "No requerido (plan gratuito)";
+    const mp = facturacion?.metodo_pago;
+    if (!mp) return "Sin método de pago registrado";
+    const marca = MARCAS[mp.marca] || mp.marca;
+    return `${marca} •••• ${mp.ultimos4} · vence ${String(mp.exp_mes).padStart(2, "0")}/${String(mp.exp_anio).slice(-2)}`;
+  };
+
+  const textoUltimaFactura = () => {
+    if (errorFact) return "No se pudo cargar";
+    if (!facturacionLista) return "Cargando...";
+    if (!ultimaFactura) return "Aún no hay facturas";
+    return `${ultimaFactura.numero || "Factura"} · ${formatearMoneda(ultimaFactura.monto, ultimaFactura.moneda)}`;
+  };
+
+  const avisoEstado = {
+    por_vencer: "Tu plan está por vencer. Se renovará automáticamente con tu tarjeta.",
+    en_gracia: "No pudimos confirmar tu pago. Conservas el acceso unos días más; revisa tu método de pago.",
+    vencida: "Tu plan no está activo. Elige un plan para recuperar el acceso.",
+  }[suscripcion?.estado];
 
   // ✅ Datos hardcodeados para las nuevas secciones (solo maqueta)
   const sucursalesHardcoded = [
@@ -702,44 +776,104 @@ const Configuraciones = () => {
               <CreditCardIcon className="section-icon" />
               Plan y Suscripción
             </h3>
-          </div>
-          <div className="plan-actual-card">
-            <div className="plan-badge">
-              {(suscripcion?.plan_nombre || "—").toUpperCase()}
-            </div>
-            <h4>Plan {suscripcion?.plan_nombre || "—"}</h4>
-            <p className="plan-precio">
-              ${Number(suscripcion?.precio_mensual || 0).toLocaleString("es-MX")} <span>/ mes</span>
-            </p>
-            <p className="plan-fecha">
-              Vigente desde: {formatearFecha(suscripcion?.fecha_inicio)}
-            </p>
-            <p className="plan-fecha">
-              Vence el: {formatearFecha(suscripcion?.fecha_fin)}
-            </p>
-            <p className="plan-estado">
-              <strong>Estado:</strong>{" "}
-              <span style={{ color: colorEstado, fontWeight: 600 }}>{textoEstado()}</span>
-            </p>
-          </div>
-          <div className="info-grid">
-            <div className="info-item">
-              <span className="info-label"><CreditCardIcon fontSize="small" /> Método de pago:</span>
-              <span className="info-value">Visa •••• 4242</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label"><ReceiptLongIcon fontSize="small" /> Última factura:</span>
-              <span className="info-value">F-2026-0089 · $1,499.00</span>
-            </div>
-          </div>
-          <div className="form-buttons">
-            <button className="btn-gold" type="button">
-              Cambiar de plan
-            </button>
-            <button className="btn-cancel" type="button">
-              Historial de pagos
+            <button
+              className="btn-editar-small"
+              type="button"
+              onClick={refrescarPlan}
+              disabled={cargandoFact || cargandoSusc}
+              title="Actualizar datos del plan"
+            >
+              <RefreshIcon fontSize="small" />
+              {minutosDesdeCarga === null
+                ? "Actualizar"
+                : minutosDesdeCarga < 1
+                ? "Actualizado ahora"
+                : `Hace ${minutosDesdeCarga} min`}
             </button>
           </div>
+
+          {!suscripcion ? (
+            <div className="plan-vacio">
+              {cargandoSusc ? (
+                <p>Cargando suscripción...</p>
+              ) : (
+                <>
+                  <p>No se pudo obtener la suscripción.</p>
+                  <button className="btn-cancel" type="button" onClick={() => cargarSuscripcion(true)}>
+                    Reintentar
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <>
+              {avisoEstado && (
+                <div className={`plan-aviso plan-aviso-${suscripcion.estado}`}>{avisoEstado}</div>
+              )}
+
+              <div className="plan-actual-card">
+                <div className="plan-badge">
+                  {(suscripcion.plan_nombre || "—").toUpperCase()}
+                </div>
+                <h4>Plan {suscripcion.plan_nombre || "—"}</h4>
+                <p className="plan-precio">
+                  {esGratis ? "Gratis" : (
+                    <>
+                      ${Number(suscripcion.precio_mensual).toLocaleString("es-MX")} <span>/ mes</span>
+                    </>
+                  )}
+                </p>
+                <p className="plan-fecha">Vigente desde: {formatearFecha(suscripcion.fecha_inicio)}</p>
+                <p className="plan-fecha">Vence el: {formatearFecha(suscripcion.fecha_fin)}</p>
+                <p className="plan-estado">
+                  <strong>Estado:</strong>{" "}
+                  <span style={{ color: colorEstado, fontWeight: 600 }}>{textoEstado()}</span>
+                </p>
+              </div>
+
+              <div className="info-grid">
+                <div className="info-item">
+                  <span className="info-label"><CreditCardIcon fontSize="small" /> Método de pago:</span>
+                  <span className="info-value">{textoMetodoPago()}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label"><ReceiptLongIcon fontSize="small" /> Última factura:</span>
+                  <span className="info-value">
+                    {textoUltimaFactura()}
+                    {ultimaFactura?.url && (
+                      <>
+                        {" "}
+                        <a href={ultimaFactura.url} target="_blank" rel="noopener noreferrer" className="link-recibo">
+                          Ver recibo <OpenInNewIcon style={{ fontSize: 14 }} />
+                        </a>
+                      </>
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {errorFact && (
+                <div className="plan-vacio">
+                  <button className="btn-cancel" type="button" onClick={() => cargarFacturacion(true)}>
+                    Reintentar datos de facturación
+                  </button>
+                </div>
+              )}
+
+              <div className="form-buttons">
+                <button
+                  className="btn-gold"
+                  type="button"
+                  onClick={() => { setErrorPlan(""); setModalPlanes(true); }}
+                >
+                  {esGratis ? "Mejorar plan" : "Cambiar de plan"}
+                </button>
+                <button className="btn-cancel" type="button" onClick={() => setModalHistorial(true)}>
+                  Historial de pagos
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -900,6 +1034,109 @@ const Configuraciones = () => {
           </div>
         )}
       </div>
+
+      {/* MODAL: HISTORIAL DE PAGOS */}
+      {modalHistorial && (
+        <div className="plan-modal-overlay" onClick={() => setModalHistorial(false)}>
+          <div className="plan-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="plan-modal-header">
+              <h3><ReceiptLongIcon className="section-icon" /> Historial de pagos</h3>
+              <button className="btn-icono" type="button" onClick={() => setModalHistorial(false)}>
+                <CloseIcon fontSize="small" />
+              </button>
+            </div>
+
+            {errorFact ? (
+              <p className="plan-vacio">No se pudo cargar el historial.</p>
+            ) : !facturacionLista ? (
+              <p className="plan-vacio">Cargando...</p>
+            ) : facturas.length === 0 ? (
+              <p className="plan-vacio">Aún no hay pagos registrados.</p>
+            ) : (
+              <div className="tabla-facturas-wrapper">
+                <table className="tabla-facturas">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Factura</th>
+                      <th>Monto</th>
+                      <th>Estado</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {facturas.map((f) => (
+                      <tr key={f.id}>
+                        <td>{formatearFechaISO(f.fecha)}</td>
+                        <td>{f.numero || "—"}</td>
+                        <td>{formatearMoneda(f.monto, f.moneda)}</td>
+                        <td>
+                          <span className={`chip-factura chip-${f.estado}`}>
+                            {{ paid: "Pagada", open: "Pendiente", uncollectible: "Incobrable", void: "Anulada" }[f.estado] || f.estado}
+                          </span>
+                        </td>
+                        <td>
+                          {f.url && (
+                            <a href={f.url} target="_blank" rel="noopener noreferrer" className="link-recibo">
+                              Ver
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CAMBIAR DE PLAN */}
+      {modalPlanes && (
+        <div className="plan-modal-overlay" onClick={() => !procesandoPlan && setModalPlanes(false)}>
+          <div className="plan-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="plan-modal-header">
+              <h3><CreditCardIcon className="section-icon" /> Elige tu plan</h3>
+              <button className="btn-icono" type="button" onClick={() => setModalPlanes(false)} disabled={!!procesandoPlan}>
+                <CloseIcon fontSize="small" />
+              </button>
+            </div>
+
+            <p className="plan-modal-nota">
+              Pagarás en Stripe. El nuevo plan se cobra completo hoy y tu plan anterior se cancela automáticamente.
+            </p>
+
+            {planesDisponibles.length === 0 ? (
+              <p className="plan-vacio">No hay planes disponibles por ahora.</p>
+            ) : (
+              <div className="planes-opciones">
+                {planesDisponibles.map((p) => {
+                  const esActual = p.id_plan === suscripcion?.plan_id && facturacion?.tiene_stripe && suscripcion?.estado !== "vencida";
+                  return (
+                    <div key={p.id_plan} className={`plan-opcion ${esActual ? "actual" : ""}`}>
+                      <strong>{p.nombre}</strong>
+                      <span className="plan-opcion-precio">
+                        ${Number(p.precio_mensual).toLocaleString("es-MX")} <small>/ mes</small>
+                      </span>
+                      <button
+                        className="btn-gold"
+                        type="button"
+                        disabled={esActual || !!procesandoPlan}
+                        onClick={() => elegirPlan(p.id_plan)}
+                      >
+                        {esActual ? "Plan actual" : procesandoPlan === p.id_plan ? "Redirigiendo..." : "Elegir"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {errorPlan && <p className="plan-error">{errorPlan}</p>}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
