@@ -1,5 +1,5 @@
 // components/Topbar.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import "./Topbar.css";
 import { useDashboard } from "../contexts/DashboardContext";
@@ -10,7 +10,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import CloseIcon from '@mui/icons-material/Close';
 import ErrorIcon from '@mui/icons-material/Error';
-import RefreshIcon from '@mui/icons-material/Refresh';   // ✅ Nuevo: para el modal de alertas
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 const Topbar = () => {
   // ============================================
@@ -29,7 +29,35 @@ const Topbar = () => {
   // Estados de UI
   const [showPerfil, setShowPerfil] = useState(false);
   const [showAlertas, setShowAlertas] = useState(false);
-  const [refrescandoAlertas, setRefrescandoAlertas] = useState(false);
+  const [refrescandoManual, setRefrescandoManual] = useState(false);
+
+  // ============================================
+  // ✅ DETECTAR SI ESTAMOS EN EL DASHBOARD
+  // ============================================
+  const esDashboard = location.pathname === '/home';
+
+  // ============================================
+  // ✅ TICK PARA ACTUALIZAR "HACE X MIN"
+  // ============================================
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  const minutosDesde = edadCache !== null ? Math.floor(edadCache / 60000) : null;
+
+  // ============================================
+  // ✅ REFRESCAR MANUAL
+  // ============================================
+  const handleRefrescarManual = async () => {
+    setRefrescandoManual(true);
+    try {
+      await refrescar();
+    } finally {
+      setTimeout(() => setRefrescandoManual(false), 600);
+    }
+  };
 
   // ============================================
   // DATOS DEL USUARIO
@@ -83,7 +111,7 @@ const Topbar = () => {
   // SUBTÍTULOS POR RUTA
   // ============================================
   const subtitulosPorRuta = {
-    '/home': 'Estado general de tu casa de empeño',
+    '/home': 'Estado general de tu casa de empeño' ,
     '/clientes': 'Gestiona tus clientes',
     '/clientes/nuevo': 'Registra un nuevo cliente',
     '/pagos': 'Registra y consulta pagos',
@@ -111,18 +139,6 @@ const Topbar = () => {
     return match ? subtitulosPorRuta[match] : 'Bienvenido a Ophelina';
   };
 
-  // ============================================
-  // REFRESCAR DESDE EL MODAL DE ALERTAS
-  // ============================================
-  const handleRefrescarAlertas = async () => {
-    setRefrescandoAlertas(true);
-    try {
-      await refrescar();
-    } finally {
-      setTimeout(() => setRefrescandoAlertas(false), 600);
-    }
-  };
-
   const totalAlertas = contadores.vencidos + contadores.proximos;
 
   return (
@@ -130,14 +146,37 @@ const Topbar = () => {
       <header className="topbar">
         <div className="topbar-left">
           <h1 className="topbar-saludo">
-             {getSubtitulo()}
-           
+            {getSubtitulo()}
           </h1>
-           <span className="topbar-subtitulo">Bienvenido, {datosPerfil.nombre.split(' ')[0] || 'Usuario'}</span>
+          <span className="topbar-subtitulo">
+            Bienvenido, {datosPerfil.nombre.split(' ')[0] || 'Usuario'} | 
+            <span className="topbar-freshness-text">
+          {minutosDesde === null
+            ? 'Cargando...'
+            : minutosDesde < 1
+            ? ' Dashboard actualizado ahora mismo'
+            : `Actualizado hace ${minutosDesde} min`}
+        </span>
+          </span>
         </div>
 
         <div className="topbar-actions">
-          {/* ✅ Ya NO hay botón de refrescar aquí */}
+
+          {/* ✅ NUEVO: TOOLBAR SOLO EN /home */}
+          {esDashboard && (
+            <div className="dashboard-toolbar-inline">
+              
+              <button
+                type="button"
+                className={`dashboard-btn-refresh ${refrescandoManual ? 'girando' : ''}`}
+                onClick={handleRefrescarManual}
+                disabled={cargando || refrescandoManual}
+                title="Actualizar datos del dashboard"
+              >
+                <RefreshIcon />
+              </button>
+            </div>
+          )}
 
           <button
             className="topbar-btn-alertas"
@@ -160,7 +199,7 @@ const Topbar = () => {
         </div>
       </header>
 
-      {/* MODAL DE PERFIL (igual que antes) */}
+      {/* MODAL DE PERFIL */}
       {showPerfil && (
         <div className="topbar-modal-overlay" onClick={() => setShowPerfil(false)}>
           <div className="topbar-modal" onClick={(e) => e.stopPropagation()}>
@@ -206,23 +245,13 @@ const Topbar = () => {
         </div>
       )}
 
-      {/* MODAL DE ALERTAS (con botón de refrescar dentro) */}
+      {/* MODAL DE ALERTAS */}
       {showAlertas && (
         <div className="topbar-modal-overlay" onClick={() => setShowAlertas(false)}>
           <div className="topbar-modal topbar-modal-alertas" onClick={(e) => e.stopPropagation()}>
             <button className="topbar-modal-cerrar" onClick={() => setShowAlertas(false)}>
               <CloseIcon />
             </button>
-            
-          <button
-                className={`topbar-btn-refresh ${refrescandoAlertas ? 'girando' : ''}`}
-                onClick={handleRefrescarAlertas}
-                disabled={cargando || refrescandoAlertas}
-                title="Actualizar alertas"
-              >
-                <RefreshIcon />
-              </button>
-            
             <div className="topbar-modal-header">
               <h2><NotificationsIcon /> Alertas y Notificaciones</h2>
               <span className="topbar-modal-badge">Actualizadas hoy</span>
@@ -262,7 +291,22 @@ const Topbar = () => {
                 </div>
               </div>
             </div>
-           
+            <div className="topbar-modal-acciones">
+              <button
+                className={`topbar-btn-refresh-alertas ${refrescandoManual ? 'girando' : ''}`}
+                onClick={handleRefrescarManual}
+                disabled={cargando || refrescandoManual}
+                title="Actualizar alertas"
+              >
+                <RefreshIcon />
+              </button>
+              <button
+                className="topbar-btn-cerrar"
+                onClick={() => setShowAlertas(false)}
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

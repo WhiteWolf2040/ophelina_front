@@ -551,27 +551,12 @@ const healthScore = calcularHealthScore(data);
   // ============================================
   return (
     <div className="dashboard">
+     
+      
       <div className="content">
 
         {/* TOOLBAR */}
-        <div className="dashboard-toolbar">
-          <span className="dashboard-freshness">
-            {minutosDesde === null
-              ? 'Cargando...'
-              : minutosDesde < 1
-              ? 'Actualizado ahora mismo'
-              : `Actualizado hace ${minutosDesde} min`}
-          </span>
-          <button
-            type="button"
-            className={`dashboard-btn-refresh ${refrescandoManual ? 'girando' : ''}`}
-            onClick={handleRefrescarManual}
-            disabled={cargando || refrescandoManual}
-            title="Actualizar datos del dashboard"
-          >
-            <RefreshIcon />
-          </button>
-        </div>
+        
 
       {/* ✅ NUEVO: HEALTH SCORE + META DEL MES */}
 <div className="hero-grid">
