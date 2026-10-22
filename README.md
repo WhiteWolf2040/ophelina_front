@@ -14,15 +14,11 @@ CONSOLA:
 
 2️⃣ Traer lo nuevo de equipo
 
-- git pull origin equipo
-  
-(Si hay conflictos, los resuelves )
-
-3️⃣ Ahora subir tu rama actualizada
-
-- git add .
-- git commit -m "Resolviendo conflictos con equipo"
-- git push origin rama-(suemy o jeni) 
+- git checkout rama-su2
+git pull origin rama-su2              # trae los commits de Diego en tu rama
+git merge ophelina_10cuatri          # fusiona la rama principal
+# resolver conflictos si hay
+git push origin rama-su2
 
 4️⃣ Hacer merge a equipo
 
