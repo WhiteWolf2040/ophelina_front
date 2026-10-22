@@ -1,4 +1,4 @@
-// TiendaOnline.jsx - Versión con subida de imagen como archivo real (FormData)
+// TiendaOnline.jsx - Subida de imagen a Cloudinary + gestión de productos de la tienda
 
 import React, { useState, useEffect, useRef } from "react";
 
@@ -37,34 +37,15 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 // Placeholder para imágenes
 const PLACEHOLDER_IMAGE = '/placeholder.png';
 
-const TiendaOnline = () => {
-  // ========== HOOK DE TIENDA ==========
-  const {
-    productos,
-    estadisticas,
-    loading,
-    error,
-    filtros,
-    setFiltros,
-    cargarProductos,
-    cargarEstadisticas,
-    crearProducto,
-    actualizarProducto,
-    toggleVisibilidad,
-    toggleDestacado,
-    eliminarProducto,
-    ejecutarPublicacionAutomatica,
-    configurarDiasGracia
-  } = useTienda();
-
- const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
+// Cloudinary
+const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
 const CLOUDINARY_UPLOAD_PRESET = "ophelina_productos";
 
 const subirImagenACloudinary = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-  formData.append("folder", "productos"); // ← aquí va el folder
+  formData.append("folder", "productos");
 
   const response = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -79,12 +60,56 @@ const subirImagenACloudinary = async (file) => {
   return data.secure_url;
 };
 
+// Formatear precio de forma segura
+const formatPrice = (price) => {
+  if (price === null || price === undefined || isNaN(price)) return '0';
+  return Number(price).toLocaleString();
+};
+
+// Extrae un mensaje legible de un error de axios (incluye errores 422 de validación)
+const mensajeError = (err) => {
+  const data = err.response?.data;
+  if (data?.errors) return Object.values(data.errors).flat().join("\n");
+  return data?.message || err.message || "Intenta de nuevo";
+};
+
+const FORM_INICIAL = {
+  id_prenda: "",
+  nombre: "",
+  categoria: "Joyería",
+  precio: "",
+  descuento: "0",
+  stock: "1",
+  descripcion: "",
+  estado: "Buen estado",
+  visible: true,
+  destacado: false
+};
+
+const TiendaOnline = () => {
+  // ========== HOOK DE TIENDA ==========
+  const {
+    productos,
+    estadisticas,
+    loading,
+    error,
+    setFiltros,
+    cargarProductos,
+    cargarEstadisticas,
+    crearProducto,
+    actualizarProducto,
+    toggleVisibilidad,
+    toggleDestacado,
+    eliminarProducto,
+    ejecutarPublicacionAutomatica,
+    configurarDiasGracia
+  } = useTienda();
+
   // ========== ESTADOS LOCALES ==========
   const [busqueda, setBusqueda] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
   const [verSoloVisibles, setVerSoloVisibles] = useState(false);
-  const [mostrarConfiguracion, setMostrarConfiguracion] = useState(false);
   const [diasGracia, setDiasGracia] = useState(5);
   const [publicando, setPublicando] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -98,35 +123,24 @@ const subirImagenACloudinary = async (file) => {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [resultadoPublicacion, setResultadoPublicacion] = useState(null);
 
-  // ✅ Referencia al input de archivo (para poder limpiarlo o abrirlo por código si se quiere)
+  // Referencia al input de archivo (para poder limpiarlo por código)
   const inputImagenRef = useRef(null);
 
-  // ✅ Estado para el archivo de imagen seleccionado (objeto File real)
+  // Archivo de imagen seleccionado (objeto File real) y su vista previa local
   const [archivoImagen, setArchivoImagen] = useState(null);
-  // ✅ Vista previa local de la imagen (antes de subirla)
   const [previewImagen, setPreviewImagen] = useState(null);
 
-  // Estado para el formulario de producto (ya sin el campo "imagen" como texto)
-  const [formProducto, setFormProducto] = useState({
-    id_prenda: "",
-    nombre: "",
-    categoria: "Joyería",
-    precio: "",
-    descuento: "0",
-    stock: "1",
-    descripcion: "",
-    estado: "Buen estado",
-    visible: true,
-    destacado: false
-  });
+  // Formulario de producto
+  const [formProducto, setFormProducto] = useState(FORM_INICIAL);
 
   // Categorías disponibles
   const categorias = ["Todas", "Joyería", "Electrónica", "Herramientas", "Relojes", "Instrumentos", "Otros"];
   const estados = ["Todos", "Nuevo", "Como nuevo", "Buen estado", "Aceptable"];
 
   // ========== EFECTOS ==========
+  // Los productos los carga el propio hook (se recargan cuando cambian los filtros);
+  // aquí solo hace falta cargar las estadísticas una vez.
   useEffect(() => {
-    cargarProductos();
     cargarEstadisticas();
   }, []);
 
@@ -140,11 +154,17 @@ const subirImagenACloudinary = async (file) => {
     });
   }, [busqueda, categoriaFiltro, estadoFiltro, verSoloVisibles]);
 
-  // ✅ Limpiar el object URL de la vista previa cuando cambie o se cierre el modal,
-  // para no acumular memoria del navegador
+  // Cargar los días de gracia guardados (si el backend los manda en estadísticas)
+  useEffect(() => {
+    if (estadisticas?.dias_gracia !== undefined && estadisticas?.dias_gracia !== null) {
+      setDiasGracia(Number(estadisticas.dias_gracia));
+    }
+  }, [estadisticas?.dias_gracia]);
+
+  // Liberar el object URL de la vista previa cuando cambie o el componente se desmonte
   useEffect(() => {
     return () => {
-      if (previewImagen) {
+      if (previewImagen && previewImagen.startsWith("blob:")) {
         URL.revokeObjectURL(previewImagen);
       }
     };
@@ -153,10 +173,7 @@ const subirImagenACloudinary = async (file) => {
   // ========== MANEJADORES ==========
   const limpiarImagenSeleccionada = () => {
     setArchivoImagen(null);
-    if (previewImagen) {
-      URL.revokeObjectURL(previewImagen);
-    }
-    setPreviewImagen(null);
+    setPreviewImagen(null); // el efecto de arriba libera el object URL
     if (inputImagenRef.current) {
       inputImagenRef.current.value = "";
     }
@@ -165,18 +182,7 @@ const subirImagenACloudinary = async (file) => {
   const abrirNuevoProducto = () => {
     setModoEdicion(false);
     setProductoSeleccionado(null);
-    setFormProducto({
-      id_prenda: "",
-      nombre: "",
-      categoria: "Joyería",
-      precio: "",
-      descuento: "0",
-      stock: "1",
-      descripcion: "",
-      estado: "Buen estado",
-      visible: true,
-      destacado: false
-    });
+    setFormProducto(FORM_INICIAL);
     limpiarImagenSeleccionada();
     setModalProductoAbierto(true);
   };
@@ -193,7 +199,7 @@ const subirImagenACloudinary = async (file) => {
       categoria: producto.categoria || "Joyería",
       precio: producto.precio || "",
       descuento: producto.descuento || 0,
-      stock: producto.stock || 1,
+      stock: producto.stock ?? 1,
       descripcion: producto.descripcion || "",
       estado: producto.estado_producto || producto.estado || "Buen estado",
       visible: producto.visible !== undefined ? producto.visible : true,
@@ -216,10 +222,11 @@ const subirImagenACloudinary = async (file) => {
   };
 
   const abrirModalPublicacion = () => {
+    setResultadoPublicacion(null);
     setModalPublicacionAbierto(true);
   };
 
-  // ✅ Cuando el usuario selecciona un archivo en el input type="file"
+  // Cuando el usuario selecciona un archivo en el input type="file"
   const handleImagenSeleccionada = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -234,103 +241,94 @@ const subirImagenACloudinary = async (file) => {
       return;
     }
 
-    if (previewImagen) {
-      URL.revokeObjectURL(previewImagen);
-    }
-
     setArchivoImagen(file);
     setPreviewImagen(URL.createObjectURL(file));
   };
-const handleGuardarProducto = async (e) => {
-  e.preventDefault();
-  setGuardando(true);
 
-  try {
-    let imagenUrl = null;
-    if (archivoImagen) {
-      imagenUrl = await subirImagenACloudinary(archivoImagen);
+  const handleGuardarProducto = async (e) => {
+    e.preventDefault();
+    setGuardando(true);
+
+    try {
+      let imagenUrl = null;
+      if (archivoImagen) {
+        imagenUrl = await subirImagenACloudinary(archivoImagen);
+      }
+
+      const formData = new FormData();
+      formData.append("nombre", formProducto.nombre);
+      formData.append("categoria", formProducto.categoria);
+      formData.append("precio", Number(formProducto.precio));
+      formData.append("descuento", Number(formProducto.descuento));
+      formData.append("stock", Number(formProducto.stock));
+      formData.append("descripcion", formProducto.descripcion || "");
+      formData.append("estado", formProducto.estado);
+      formData.append("visible", formProducto.visible ? "1" : "0");
+      formData.append("destacado", formProducto.destacado ? "1" : "0");
+
+      if (imagenUrl) {
+        formData.append("imagen_url", imagenUrl);
+      }
+
+      // El hook useTienda ya recarga productos y estadísticas después de guardar
+      if (modoEdicion && productoSeleccionado) {
+        await actualizarProducto(productoSeleccionado.id_producto, formData);
+      } else {
+        await crearProducto(formData);
+      }
+
+      setModalProductoAbierto(false);
+      limpiarImagenSeleccionada();
+    } catch (err) {
+      console.error("Error guardando producto:", err);
+      alert("Error al guardar el producto: " + mensajeError(err));
+    } finally {
+      setGuardando(false);
     }
+  };
 
-    const formData = new FormData();
-    formData.append("nombre", formProducto.nombre);
-    formData.append("categoria", formProducto.categoria);
-    formData.append("precio", Number(formProducto.precio));
-    formData.append("descuento", Number(formProducto.descuento));
-    formData.append("stock", Number(formProducto.stock));
-    formData.append("descripcion", formProducto.descripcion || "");
-    formData.append("estado", formProducto.estado);
-    formData.append("visible", formProducto.visible ? "1" : "0");
-    formData.append("destacado", formProducto.destacado ? "1" : "0");
-
-    if (imagenUrl) {
-      formData.append("imagen_url", imagenUrl);
+  const handleEliminarProducto = async () => {
+    try {
+      await eliminarProducto(productoSeleccionado.id_producto);
+      setModalEliminarAbierto(false);
+      setProductoSeleccionado(null);
+    } catch (err) {
+      console.error("Error eliminando producto:", err);
+      alert("Error al eliminar el producto: " + mensajeError(err));
     }
+  };
 
-    if (modoEdicion && productoSeleccionado) {
-      await actualizarProducto(productoSeleccionado.id_producto, formData);
-    } else {
-      await crearProducto(formData);
+  const handleToggleVisible = async (id) => {
+    try {
+      await toggleVisibilidad(id);
+    } catch (err) {
+      console.error("Error cambiando visibilidad:", err);
+      alert("Error al cambiar visibilidad: " + mensajeError(err));
     }
+  };
 
-    setModalProductoAbierto(false);
-    limpiarImagenSeleccionada();
-    // ✅ QUITADO: await cargarProductos(); await cargarEstadisticas();
-    // El hook useTienda ya las recarga dentro de crearProducto/actualizarProducto
-  } catch (err) {
-    console.error("Error guardando producto:", err);
-    alert("Error al guardar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-  } finally {
-    setGuardando(false);
-  }
-};
-
-const handleEliminarProducto = async () => {
-  try {
-    await eliminarProducto(productoSeleccionado.id_producto);
-    setModalEliminarAbierto(false);
-    setProductoSeleccionado(null);
-    // ✅ QUITADO: await cargarProductos(); await cargarEstadisticas();
-  } catch (err) {
-    console.error("Error eliminando producto:", err);
-    alert("Error al eliminar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-  }
-};
-
-
-const handleToggleVisible = async (id) => {
-  try {
-    await toggleVisibilidad(id);
-    // ✅ QUITADO: await cargarProductos();
-  } catch (err) {
-    console.error("Error cambiando visibilidad:", err);
-    alert("Error al cambiar visibilidad: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-  }
-};
-
- const handleToggleDestacado = async (id) => {
-  try {
-    await toggleDestacado(id);
-    // ✅ QUITADO: await cargarProductos();
-  } catch (err) {
-    console.error("Error cambiando destacado:", err);
-    alert("Error al cambiar destacado: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-  }
-};
+  const handleToggleDestacado = async (id) => {
+    try {
+      await toggleDestacado(id);
+    } catch (err) {
+      console.error("Error cambiando destacado:", err);
+      alert("Error al cambiar destacado: " + mensajeError(err));
+    }
+  };
 
   const handlePublicacionAutomatica = async () => {
     setPublicando(true);
     setResultadoPublicacion(null);
 
     try {
+      // El hook ya recarga productos y estadísticas
       const resultado = await ejecutarPublicacionAutomatica(diasGracia);
       setResultadoPublicacion(resultado);
-      await cargarProductos();
-      await cargarEstadisticas();
     } catch (err) {
       console.error("Error en publicación automática:", err);
       setResultadoPublicacion({
         error: true,
-        message: err.response?.data?.message || err.message || "Error al publicar productos"
+        message: mensajeError(err)
       });
     } finally {
       setPublicando(false);
@@ -341,25 +339,18 @@ const handleToggleVisible = async (id) => {
     try {
       await configurarDiasGracia(diasGracia);
       alert(`✅ Días de gracia configurados a ${diasGracia} días`);
-      setMostrarConfiguracion(false);
     } catch (err) {
       console.error("Error configurando días de gracia:", err);
-      alert("Error al configurar días de gracia: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
+      alert("Error al configurar días de gracia: " + mensajeError(err));
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormProducto({
-      ...formProducto,
+    setFormProducto((prev) => ({
+      ...prev,
       [name]: type === "checkbox" ? checked : value
-    });
-  };
-
-  // Formatear precio de forma segura
-  const formatPrice = (price) => {
-    if (price === null || price === undefined || isNaN(price)) return '0';
-    return Number(price).toLocaleString();
+    }));
   };
 
   // ========== RENDER ==========
@@ -423,7 +414,7 @@ const handleToggleVisible = async (id) => {
             <div className="stat-icon"><AttachMoneyIcon /></div>
             <div className="stat-info">
               <span className="stat-label">Valor Total</span>
-              <span className="stat-value">${estadisticas?.valor_total || 0}</span>
+              <span className="stat-value">${formatPrice(estadisticas?.valor_total)}</span>
             </div>
           </div>
 
@@ -836,7 +827,7 @@ const handleToggleVisible = async (id) => {
                       </select>
                     </div>
 
-                    {/* ✅ NUEVO: subida de archivo real en vez de input de texto con URL */}
+                    {/* Subida de archivo real (se sube a Cloudinary al guardar) */}
                     <div className="form-group full-width">
                       <label><ImageIcon fontSize="small" />Imagen del producto</label>
 
