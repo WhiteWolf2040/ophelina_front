@@ -1,14 +1,13 @@
-// ClientesLista.jsx - VERSIÓN FUSIONADA (Docker Base + Sistema de Permisos Local)
+// ClientesLista.jsx - Docker Base + Sistema de Permisos + Caché en DashboardContext
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "../contexts/DashboardContext";
 
 import "./Clientes.css";
 import clientesService from "../services/clientesService";
-//  AGREGADO DE LOCAL: Importar servicio de permisos
 import permissionService from "../services/permisoService";
 
-// Importar iconos de MUI
+// Iconos MUI
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -29,18 +28,39 @@ import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
 import GroupIcon from '@mui/icons-material/Group';
 import PinIcon from '@mui/icons-material/Room';
-// ✅ AGREGADO DE LOCAL: Importar LockIcon
 import LockIcon from '@mui/icons-material/Lock';
 
+// Tiempo que la caché se considera "fresca" (5 minutos)
+const TTL = 5 * 60 * 1000;
+
 const ClientesLista = () => {
-  const [clientes, setClientes] = useState([]);
+  const navigate = useNavigate();
+
+  // ============================================
+  // CACHÉ (viene del DashboardContext)
+  // ============================================
+  const { clientesCache, setClientesCache } = useDashboard();
+
+  // ============================================
+  // PERMISOS (se calculan ANTES de los efectos)
+  // ============================================
+  const puedeVerClientes = permissionService.hasPermission('ver_clientes');
+  const puedeCrearClientes = permissionService.hasPermission('crear_clientes');
+  const puedeEditarClientes = permissionService.hasPermission('editar_clientes');
+  const puedeEliminarClientes = permissionService.hasPermission('eliminar_clientes');
+
+  // ============================================
+  // ESTADO
+  // ============================================
+  // Si ya hay caché, arrancamos con ella y sin spinner
+  const [clientes, setClientes] = useState(clientesCache?.data || []);
+  const [cargando, setCargando] = useState(!clientesCache?.data);
+
   const [busqueda, setBusqueda] = useState("");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [modalEliminar, setModalEliminar] = useState(false);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  // ✅ AGREGADO DE LOCAL: Estado de carga
-  const [cargando, setCargando] = useState(true);
 
   const [formEditar, setFormEditar] = useState({
     nombre: "",
@@ -58,72 +78,63 @@ const ClientesLista = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const clientesPorPagina = 8;
 
-  const navigate = useNavigate();
+  // ============================================
+  // EFECTOS
+  // ============================================
 
-  // ============================================
-  // ✅ AGREGADO DE LOCAL: VERIFICAR PERMISOS
-  // ============================================
-  const puedeVerClientes = permissionService.hasPermission('ver_clientes');
-  const puedeCrearClientes = permissionService.hasPermission('crear_clientes');
-  const puedeEditarClientes = permissionService.hasPermission('editar_clientes');
-  const puedeEliminarClientes = permissionService.hasPermission('eliminar_clientes');
-
-  // También puedes verificar por módulo (si lo necesitas)
-  const puedeAccederModuloClientes = permissionService.canAccessModule('clientes');
-
-  // ============================================
-  // ✅ AGREGADO DE LOCAL: REDIRIGIR SI NO TIENE PERMISO PARA VER
-  // ============================================
+  // Redirigir si no tiene permiso para ver
   useEffect(() => {
     if (!puedeVerClientes) {
       navigate('/dashboard');
     }
   }, [puedeVerClientes, navigate]);
 
-  // ✅ MEJORADO CON LOCAL: useEffect con verificación de permisos
+  // Cargar clientes: usa caché si existe; si está vencida, refresca en segundo plano
   useEffect(() => {
-    if (puedeVerClientes) {
+    if (!puedeVerClientes) return;
+
+    if (clientesCache?.data) {
+      setClientes(clientesCache.data);
+      setCargando(false);
+
+      const vencida = Date.now() - clientesCache.timestamp >= TTL;
+      if (vencida) {
+        cargarClientes({ silencioso: true });
+      }
+    } else {
       cargarClientes();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puedeVerClientes]);
 
   // ============================================
-  // FUNCIONES CRUD (MEJORADAS CON LOCAL)
+  // FUNCIONES CRUD
   // ============================================
-  
-  // ✅ MEJORADO CON LOCAL: cargarClientes con manejo de carga y mejor extracción de datos
-  const cargarClientes = async () => {
-    setCargando(true);
+
+  // Guarda en estado local Y en la caché del contexto
+  const guardarClientes = (lista) => {
+    setClientes(lista);
+    setClientesCache({ data: lista, timestamp: Date.now() });
+  };
+
+  const cargarClientes = async ({ silencioso = false } = {}) => {
+    if (!silencioso) setCargando(true);
     try {
       const response = await clientesService.obtenerClientes();
-      console.log('📦 Respuesta completa:', response);
-      
-      // ✅ EXTRAER EL ARRAY CORRECTAMENTE (mejorado de Local)
+
+      // Extraer el array sin importar la forma de la respuesta
       let data = [];
-      
-      // Si la respuesta tiene { success: true, data: [...] }
       if (response.data && response.data.success && Array.isArray(response.data.data)) {
         data = response.data.data;
-      }
-      // Si la respuesta es directamente { data: [...] }
-      else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
         data = response.data.data;
-      }
-      // Si la respuesta es directamente el array
-      else if (Array.isArray(response.data)) {
+      } else if (Array.isArray(response.data)) {
         data = response.data;
-      }
-      // Si la respuesta tiene { success: true, data: [...] } pero sin anidar
-      else if (response.success && Array.isArray(response.data)) {
+      } else if (response.success && Array.isArray(response.data)) {
         data = response.data;
-      }
-      // Si la respuesta es el array directamente
-      else if (Array.isArray(response)) {
+      } else if (Array.isArray(response)) {
         data = response;
       }
-      
-      console.log('✅ Array de clientes:', data);
-      console.log('📊 Cantidad:', data.length);
 
       const clientesAdaptados = data.map(cliente => ({
         ...cliente,
@@ -134,10 +145,11 @@ const ClientesLista = () => {
         codigoPostal: cliente.codigo_postal || cliente.codigoPostal || ''
       }));
 
-      setClientes(clientesAdaptados);
+      guardarClientes(clientesAdaptados);
     } catch (error) {
       console.error("Error cargando clientes", error);
-      setClientes([]);
+      // En refresco silencioso conservamos lo que ya se ve en pantalla
+      if (!silencioso) setClientes([]);
     } finally {
       setCargando(false);
     }
@@ -154,7 +166,6 @@ const ClientesLista = () => {
   const clientesActuales = clientesFiltrados.slice(indicePrimero, indiceUltimo);
   const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
 
-  // ✅ MEJORADO CON LOCAL: abrirDetalle con validación de permisos
   const abrirDetalle = async (cliente) => {
     if (!puedeVerClientes) {
       alert('No tienes permiso para ver detalles de clientes');
@@ -177,7 +188,6 @@ const ClientesLista = () => {
 
       setClienteSeleccionado(clienteData);
       setModalAbierto(true);
-      
     } catch (error) {
       console.error("Error cargando detalles del cliente", error);
     }
@@ -190,7 +200,6 @@ const ClientesLista = () => {
     }, 300);
   };
 
-  // ✅ MEJORADO CON LOCAL: abrirModalEditar con validación de permisos
   const abrirModalEditar = (cliente) => {
     if (!puedeEditarClientes) {
       alert('No tienes permiso para editar clientes');
@@ -198,7 +207,7 @@ const ClientesLista = () => {
     }
 
     const clienteParaEditar = cliente || clienteSeleccionado;
-    
+
     setFormEditar({
       nombre: clienteParaEditar.nombre || "",
       telefono: clienteParaEditar.telefono || "",
@@ -210,7 +219,7 @@ const ClientesLista = () => {
       numeroIdentificacion: clienteParaEditar.numeroIdentificacion || clienteParaEditar.numero_identificacion || "",
       fecha: clienteParaEditar.fecha || clienteParaEditar.fecha_registro || ""
     });
-    
+
     setClienteSeleccionado(clienteParaEditar);
     setModalEditarAbierto(true);
   };
@@ -218,67 +227,6 @@ const ClientesLista = () => {
   const cerrarModalEditar = () => {
     setModalEditarAbierto(false);
     setClienteSeleccionado(null);
-  };
-
-  // ✅ MEJORADO CON LOCAL: handleEditarSubmit con validación de permisos
-  const handleEditarSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!puedeEditarClientes) {
-      alert('No tienes permiso para editar clientes');
-      return;
-    }
-
-    try {
-      await editarCliente(clienteSeleccionado.id_cliente, formEditar);
-      cerrarModalEditar();
-      cargarClientes();
-    } catch (error) {
-      console.error("Error al guardar cambios", error);
-    }
-  };
-
-  // ✅ MEJORADO CON LOCAL: confirmarEliminar con validación de permisos
-  const confirmarEliminar = (cliente) => {
-    if (!puedeEliminarClientes) {
-      alert('No tienes permiso para eliminar clientes');
-      return;
-    }
-
-    setClienteSeleccionado(cliente);
-    setModalEliminar(true);
-  };
-
-  // ✅ MEJORADO CON LOCAL: handleEliminar con validación de permisos
-  const handleEliminar = async () => {
-    if (!puedeEliminarClientes) {
-      alert('No tienes permiso para eliminar clientes');
-      return;
-    }
-
-    try {
-      await clientesService.eliminarCliente(clienteSeleccionado.id_cliente);
-      setClientes(clientes.filter(c => c.id_cliente !== clienteSeleccionado.id_cliente));
-      setModalEliminar(false);
-      setModalAbierto(false);
-      setClienteSeleccionado(null);
-    } catch (error) {
-      console.error("Error eliminando cliente", error);
-    }
-  };
-
-  const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
-  const irPaginaSiguiente = () => setPaginaActual(prev => Math.min(prev + 1, totalPaginas));
-  const irPaginaAnterior = () => setPaginaActual(prev => Math.max(prev - 1, 1));
-
-  const obtenerNumerosPagina = () => {
-    const numeros = [];
-    const maxPaginasVisibles = 5;
-    let inicio = Math.max(1, paginaActual - Math.floor(maxPaginasVisibles / 2));
-    let fin = Math.min(totalPaginas, inicio + maxPaginasVisibles - 1);
-    if (fin - inicio + 1 < maxPaginasVisibles) inicio = Math.max(1, fin - maxPaginasVisibles + 1);
-    for (let i = inicio; i <= fin; i++) numeros.push(i);
-    return numeros;
   };
 
   const editarCliente = async (id, datos) => {
@@ -300,12 +248,82 @@ const ClientesLista = () => {
     }
   };
 
-  // ✅ AGREGADO DE LOCAL: Si no tiene permiso, no renderizar nada
+  const handleEditarSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!puedeEditarClientes) {
+      alert('No tienes permiso para editar clientes');
+      return;
+    }
+
+    try {
+      await editarCliente(clienteSeleccionado.id_cliente, formEditar);
+      cerrarModalEditar();
+      // Refresca desde el servidor sin spinner; esto también actualiza la caché
+      cargarClientes({ silencioso: true });
+    } catch (error) {
+      console.error("Error al guardar cambios", error);
+    }
+  };
+
+  const confirmarEliminar = (cliente) => {
+    if (!puedeEliminarClientes) {
+      alert('No tienes permiso para eliminar clientes');
+      return;
+    }
+
+    setClienteSeleccionado(cliente);
+    setModalEliminar(true);
+  };
+
+  const handleEliminar = async () => {
+    if (!puedeEliminarClientes) {
+      alert('No tienes permiso para eliminar clientes');
+      return;
+    }
+
+    try {
+      await clientesService.eliminarCliente(clienteSeleccionado.id_cliente);
+
+      // Actualiza estado local Y caché
+      const nuevaLista = clientes.filter(c => c.id_cliente !== clienteSeleccionado.id_cliente);
+      guardarClientes(nuevaLista);
+
+      setModalEliminar(false);
+      setModalAbierto(false);
+      setClienteSeleccionado(null);
+    } catch (error) {
+      console.error("Error eliminando cliente", error);
+    }
+  };
+
+  // ============================================
+  // PAGINACIÓN
+  // ============================================
+  const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
+  const irPaginaSiguiente = () => setPaginaActual(prev => Math.min(prev + 1, totalPaginas));
+  const irPaginaAnterior = () => setPaginaActual(prev => Math.max(prev - 1, 1));
+
+  const obtenerNumerosPagina = () => {
+    const numeros = [];
+    const maxPaginasVisibles = 5;
+    let inicio = Math.max(1, paginaActual - Math.floor(maxPaginasVisibles / 2));
+    let fin = Math.min(totalPaginas, inicio + maxPaginasVisibles - 1);
+    if (fin - inicio + 1 < maxPaginasVisibles) inicio = Math.max(1, fin - maxPaginasVisibles + 1);
+    for (let i = inicio; i <= fin; i++) numeros.push(i);
+    return numeros;
+  };
+
+  // ============================================
+  // RENDER
+  // ============================================
+
+  // Sin permiso: no renderizar nada
   if (!puedeVerClientes) {
     return null;
   }
 
-  // ✅ AGREGADO DE LOCAL: Mostrar loader mientras carga
+  // Loader solo cuando NO hay datos en caché
   if (cargando) {
     return (
       <div className="dashboard">
@@ -321,16 +339,16 @@ const ClientesLista = () => {
 
   return (
     <div className="dashboard">
-      <div className="content2 owner-header"> 
+      <div className="content2 owner-header">
         <div className="header-container">
           <div className="">
             <h1>
-              <GroupIcon className="title-icon"/> Listado de clientes
+              <GroupIcon className="title-icon" /> Listado de clientes
               <p className="header-sub">Gestiona y administra tus clientes</p>
             </h1>
           </div>
-          
-          {/* ✅ AGREGADO DE LOCAL: BOTÓN NUEVO - SOLO CON PERMISO */}
+
+          {/* Botón nuevo - solo con permiso */}
           {puedeCrearClientes && (
             <button className="btn-nuevo" onClick={() => navigate("nuevo")}>
               <AddIcon fontSize="small" /> Nuevo Registro
@@ -403,30 +421,30 @@ const ClientesLista = () => {
                       <td>{cliente.fecha}</td>
                       <td>
                         <div className="acciones-container">
-                          {/* BOTÓN VER - SIEMPRE VISIBLE */}
-                          <button 
-                            className="btn-accion ver" 
+                          {/* Ver - siempre visible */}
+                          <button
+                            className="btn-accion ver"
                             onClick={() => abrirDetalle(cliente)}
                             title="Ver detalles"
                           >
                             <VisibilityIcon fontSize="small" />
                           </button>
-                          
-                          {/* ✅ AGREGADO DE LOCAL: BOTÓN EDITAR - SOLO CON PERMISO */}
+
+                          {/* Editar - solo con permiso */}
                           {puedeEditarClientes && (
-                            <button 
-                              className="btn-accion editar" 
+                            <button
+                              className="btn-accion editar"
                               onClick={() => abrirModalEditar(cliente)}
                               title="Editar cliente"
                             >
                               <EditIcon fontSize="small" />
                             </button>
                           )}
-                          
-                          {/* ✅ AGREGADO DE LOCAL: BOTÓN ELIMINAR - SOLO CON PERMISO */}
+
+                          {/* Eliminar - solo con permiso */}
                           {puedeEliminarClientes && (
-                            <button 
-                              className="btn-accion eliminar" 
+                            <button
+                              className="btn-accion eliminar"
                               onClick={() => confirmarEliminar(cliente)}
                               title="Eliminar cliente"
                             >
@@ -480,7 +498,7 @@ const ClientesLista = () => {
       </div>
 
       {/* ============================================ */}
-      {/* MODAL DE DETALLE - MEJORADO CON PERMISOS */}
+      {/* MODAL DE DETALLE */}
       {/* ============================================ */}
       {modalAbierto && clienteSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModal}>
@@ -488,7 +506,7 @@ const ClientesLista = () => {
             <button className="modal-cerrar" onClick={cerrarModal}>
               <CloseIcon />
             </button>
-            
+
             <div className="modal-header">
               <h2>{clienteSeleccionado.nombre} {clienteSeleccionado.apellido || ''}</h2>
             </div>
@@ -502,49 +520,49 @@ const ClientesLista = () => {
                   </span>
                   <span className="info-value">{clienteSeleccionado.telefono}</span>
                 </div>
-                
+
                 <div className="info-item">
                   <span className="info-label">
                     <EmailIcon fontSize="small" /> Email
                   </span>
                   <span className="info-value">{clienteSeleccionado.email}</span>
                 </div>
-                
+
                 <div className="info-item">
                   <span className="info-label">
                     <LocationOnIcon fontSize="small" /> Dirección
                   </span>
                   <span className="info-value">{clienteSeleccionado.direccion || "No especificada"}</span>
                 </div>
-                
+
                 <div className="info-item">
                   <span className="info-label">
                     <LocationOnIcon fontSize="small" /> Ciudad
                   </span>
                   <span className="info-value">{clienteSeleccionado.ciudad || "No especificada"}</span>
                 </div>
-                
+
                 <div className="info-item">
                   <span className="info-label">
                     <PinIcon fontSize="small" /> Código Postal
                   </span>
                   <span className="info-value">{clienteSeleccionado.codigoPostal || "No especificado"}</span>
                 </div>
-                
+
                 <div className="info-item">
                   <span className="info-label">
                     <BadgeIcon fontSize="small" /> Tipo ID
                   </span>
                   <span className="info-value">{clienteSeleccionado.tipoIdentificacion || "INE"}</span>
                 </div>
-                
+
                 <div className="info-item">
                   <span className="info-label">
                     <AssignmentIndIcon fontSize="small" /> Número ID
                   </span>
                   <span className="info-value">{clienteSeleccionado.numeroIdentificacion || "No especificado"}</span>
                 </div>
-                
+
                 <div className="info-item">
                   <span className="info-label">
                     <CalendarTodayIcon fontSize="small" /> Fecha Registro
@@ -558,10 +576,10 @@ const ClientesLista = () => {
                 {/* Historial de Empeños */}
                 <div className="seccion">
                   <h4>
-                    <HistoryIcon /> Historial de Empeños 
+                    <HistoryIcon /> Historial de Empeños
                     <span className="cliente-id">({clienteSeleccionado.empenos?.length || 0})</span>
                   </h4>
-                  
+
                   {clienteSeleccionado.empenos && clienteSeleccionado.empenos.length > 0 ? (
                     <div className="lista-empenos">
                       {clienteSeleccionado.empenos.map((empeno) => (
@@ -586,16 +604,16 @@ const ClientesLista = () => {
                               ${empeno.monto}
                             </span>
                           </div>
-                          
+
                           <div className="empeno-pagos">
                             <strong style={{ color: '#666', fontSize: '0.9rem' }}>
                               Pagos ({empeno.pagos?.length || 0}):
                             </strong>
                             {empeno.pagos && empeno.pagos.length > 0 ? (
-                              <ul style={{ 
-                                listStyle: 'none', 
-                                padding: 0, 
-                                margin: '8px 0 0 0' 
+                              <ul style={{
+                                listStyle: 'none',
+                                padding: 0,
+                                margin: '8px 0 0 0'
                               }}>
                                 {empeno.pagos.map((pago) => (
                                   <li key={pago.id_pago} style={{
@@ -629,11 +647,11 @@ const ClientesLista = () => {
                     <PaymentIcon /> Todos los Pagos
                     <span className="cliente-id">({clienteSeleccionado.pagos?.length || 0})</span>
                   </h4>
-                  
+
                   {clienteSeleccionado.pagos && clienteSeleccionado.pagos.length > 0 ? (
-                    <ul style={{ 
-                      listStyle: 'none', 
-                      padding: 0, 
+                    <ul style={{
+                      listStyle: 'none',
+                      padding: 0,
                       margin: 0,
                       maxHeight: '300px',
                       overflowY: 'auto'
@@ -670,11 +688,11 @@ const ClientesLista = () => {
               </div>
             </div>
 
-            {/* ✅ AGREGADO DE LOCAL: ACCIONES DEL MODAL CON PERMISOS */}
+            {/* Acciones del modal con permisos */}
             <div className="modal-acciones">
               {puedeEditarClientes && (
-                <button 
-                  className="btn-editar" 
+                <button
+                  className="btn-editar"
                   onClick={() => {
                     setModalAbierto(false);
                     abrirModalEditar(clienteSeleccionado);
@@ -683,20 +701,19 @@ const ClientesLista = () => {
                   <EditIcon fontSize="small" /> Editar
                 </button>
               )}
-              
+
               {puedeEliminarClientes && (
-                <button 
-                  className="btn-eliminar" 
+                <button
+                  className="btn-eliminar"
                   onClick={() => confirmarEliminar(clienteSeleccionado)}
                 >
                   <DeleteIcon fontSize="small" /> Eliminar
                 </button>
               )}
 
-              {/* ✅ AGREGADO DE LOCAL: Mensaje si no tiene permisos */}
               {!puedeEditarClientes && !puedeEliminarClientes && (
                 <div className="sin-permisos-modal">
-                  <LockIcon fontSize="small" /> 
+                  <LockIcon fontSize="small" />
                   <span>Solo visualización - No tienes permisos para modificar</span>
                 </div>
               )}
@@ -706,7 +723,7 @@ const ClientesLista = () => {
       )}
 
       {/* ============================================ */}
-      {/* ✅ AGREGADO DE LOCAL: MODAL DE EDICIÓN - SOLO CON PERMISO */}
+      {/* MODAL DE EDICIÓN - SOLO CON PERMISO */}
       {/* ============================================ */}
       {modalEditarAbierto && clienteSeleccionado && puedeEditarClientes && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
@@ -714,7 +731,7 @@ const ClientesLista = () => {
             <button className="modal-cerrar" onClick={cerrarModalEditar}>
               <CloseIcon />
             </button>
-            
+
             <div className="modal-header">
               <h2>Editar Cliente</h2>
             </div>
@@ -727,7 +744,7 @@ const ClientesLista = () => {
                     <input
                       type="text"
                       value={formEditar.nombre}
-                      onChange={(e) => setFormEditar({...formEditar, nombre: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, nombre: e.target.value })}
                       required
                     />
                   </div>
@@ -737,7 +754,7 @@ const ClientesLista = () => {
                     <input
                       type="text"
                       value={formEditar.telefono}
-                      onChange={(e) => setFormEditar({...formEditar, telefono: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, telefono: e.target.value })}
                       required
                     />
                   </div>
@@ -747,7 +764,7 @@ const ClientesLista = () => {
                     <input
                       type="email"
                       value={formEditar.email}
-                      onChange={(e) => setFormEditar({...formEditar, email: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, email: e.target.value })}
                     />
                   </div>
 
@@ -756,7 +773,7 @@ const ClientesLista = () => {
                     <input
                       type="text"
                       value={formEditar.direccion}
-                      onChange={(e) => setFormEditar({...formEditar, direccion: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, direccion: e.target.value })}
                     />
                   </div>
 
@@ -765,7 +782,7 @@ const ClientesLista = () => {
                     <input
                       type="text"
                       value={formEditar.ciudad}
-                      onChange={(e) => setFormEditar({...formEditar, ciudad: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, ciudad: e.target.value })}
                     />
                   </div>
 
@@ -774,7 +791,7 @@ const ClientesLista = () => {
                     <input
                       type="text"
                       value={formEditar.codigoPostal}
-                      onChange={(e) => setFormEditar({...formEditar, codigoPostal: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, codigoPostal: e.target.value })}
                     />
                   </div>
 
@@ -783,7 +800,7 @@ const ClientesLista = () => {
                     <input
                       type="text"
                       value={formEditar.tipoIdentificacion}
-                      onChange={(e) => setFormEditar({...formEditar, tipoIdentificacion: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, tipoIdentificacion: e.target.value })}
                     />
                   </div>
 
@@ -792,7 +809,7 @@ const ClientesLista = () => {
                     <input
                       type="text"
                       value={formEditar.numeroIdentificacion}
-                      onChange={(e) => setFormEditar({...formEditar, numeroIdentificacion: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, numeroIdentificacion: e.target.value })}
                     />
                   </div>
                 </div>
@@ -812,7 +829,7 @@ const ClientesLista = () => {
       )}
 
       {/* ============================================ */}
-      {/* ✅ AGREGADO DE LOCAL: MODAL DE ELIMINAR - SOLO CON PERMISO */}
+      {/* MODAL DE ELIMINAR - SOLO CON PERMISO */}
       {/* ============================================ */}
       {modalEliminar && clienteSeleccionado && puedeEliminarClientes && (
         <div className="modal-overlay" onClick={() => setModalEliminar(false)}>
@@ -823,7 +840,7 @@ const ClientesLista = () => {
             <h3>¿Eliminar Cliente?</h3>
             <p>¿Estás seguro de que deseas eliminar a <strong>{clienteSeleccionado.nombre}</strong>?</p>
             <p className="advertencia">Esta acción no se puede deshacer.</p>
-            
+
             <div className="modal-botones">
               <button className="btn-cancelar" onClick={() => setModalEliminar(false)}>
                 Cancelar

@@ -1,8 +1,9 @@
-// src/Roles/Roles.jsx - VERSIÓN FUSIONADA (Docker Base + Filtro de Local)
+// src/Roles/Roles.jsx - VERSIÓN FUSIONADA (Docker Base + Filtro de Local) + caché
 import React, { useState, useEffect } from "react";
 
 import "./Roles.css";
 import rolesService from "../services/rolService";
+import { useDashboard } from "../contexts/DashboardContext";
 import Select from 'react-select';
 
 // Iconos MUI
@@ -21,10 +22,22 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
+// Tiempo de vida de la caché (15 min, igual que el dashboard)
+const CACHE_TTL_MS = 15 * 60 * 1000;
+const CACHE_ROLES = 'roles';
+const CACHE_PERMISOS = 'roles:permisos'; // cuelga de 'roles': invalidarCache('roles') también la borra
+const vigente = (c) => c && Date.now() - c.timestamp < CACHE_TTL_MS;
+
 const Roles = () => {
-  const [roles, setRoles] = useState([]);
-  const [permisos, setPermisos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { getCache, setCache, invalidarCache } = useDashboard();
+
+  // Si ya hay caché, el componente arranca con los datos y sin spinner
+  const rolesCacheInicial = getCache(CACHE_ROLES);
+  const permisosCacheInicial = getCache(CACHE_PERMISOS);
+
+  const [roles, setRoles] = useState(rolesCacheInicial?.data ?? []);
+  const [permisos, setPermisos] = useState(permisosCacheInicial?.data ?? []);
+  const [loading, setLoading] = useState(!rolesCacheInicial);
   const [error, setError] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [modalDetalle, setModalDetalle] = useState(false);
@@ -32,7 +45,7 @@ const Roles = () => {
   const [modalEliminar, setModalEliminar] = useState(false);
   const [rolSeleccionado, setRolSeleccionado] = useState(null);
   const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
-  
+
   // Para nuevo rol
   const [showNuevoRol, setShowNuevoRol] = useState(false);
   const [nuevoRol, setNuevoRol] = useState({
@@ -106,18 +119,30 @@ const Roles = () => {
     })
   };
 
-  // Cargar datos al montar el componente
+  // Cargar datos al montar el componente (usa caché si está vigente)
   useEffect(() => {
-    console.log('rolesService:', rolesService);
     cargarRoles();
     cargarPermisos();
   }, []);
 
-  const cargarRoles = async () => {
+  const cargarRoles = async (forzar = false) => {
+    const cache = getCache(CACHE_ROLES);
+
+    // Caché vigente: no se llama a la API
+    if (!forzar && vigente(cache)) {
+      setRoles(cache.data);
+      setLoading(false);
+      return;
+    }
+
     try {
-      setLoading(true);
+      // Si hay caché (aunque vieja) se muestra mientras se actualiza, sin spinner
+      if (!cache) setLoading(true);
+
       const response = await rolesService.obtenerRoles();
+      setCache(CACHE_ROLES, response.data.data);
       setRoles(response.data.data);
+      setError(null);
     } catch (error) {
       console.error('Error cargando roles:', error);
       setError('No se pudieron cargar los roles');
@@ -127,21 +152,26 @@ const Roles = () => {
   };
 
   // ✅ VERSIÓN FUSIONADA: Cargar permisos con filtro por empresa (de LOCAL)
-  const cargarPermisos = async () => {
+  const cargarPermisos = async (forzar = false) => {
+    const cache = getCache(CACHE_PERMISOS);
+
+    if (!forzar && vigente(cache)) {
+      setPermisos(cache.data);
+      return;
+    }
+
     try {
       const response = await rolesService.obtenerPermisos();
-      console.log('Todos los permisos:', response.data.data);
-      
+
       // ✅ FILTRADO POR EMPRESA (Agregado de LOCAL)
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      console.log('Empresa del usuario:', user.id_empresa);
-      
+
       // Filtrar permisos por empresa
       const permisosFiltrados = response.data.data.filter(
         p => p.id_empresa === user.id_empresa
       );
-      
-      console.log('Permisos filtrados por empresa:', permisosFiltrados);
+
+      setCache(CACHE_PERMISOS, permisosFiltrados);
       setPermisos(permisosFiltrados);
     } catch (error) {
       console.error('Error cargando permisos:', error);
@@ -161,6 +191,12 @@ const Roles = () => {
     }
   };
 
+  // Después de modificar roles: invalida la caché y recarga
+  const refrescarRoles = async () => {
+    invalidarCache('roles'); // borra 'roles' y 'roles:permisos'
+    await Promise.all([cargarRoles(true), cargarPermisos(true)]);
+  };
+
   const handleCrearRol = async (e) => {
     e.preventDefault();
     try {
@@ -171,7 +207,7 @@ const Roles = () => {
         permisos: nuevoRol.permisos
       };
       await rolesService.crearRol(data);
-      await cargarRoles();
+      await refrescarRoles();
       setShowNuevoRol(false);
       setNuevoRol({ nombre: "", nivel: "", descripcion: "", permisos: [] });
     } catch (error) {
@@ -190,7 +226,7 @@ const Roles = () => {
         permisos: permisosSeleccionados
       };
       await rolesService.actualizarRol(rolSeleccionado.id, data);
-      await cargarRoles();
+      await refrescarRoles();
       setModalEditar(false);
       setRolSeleccionado(null);
       setPermisosSeleccionados([]);
@@ -203,7 +239,7 @@ const Roles = () => {
   const handleEliminar = async () => {
     try {
       await rolesService.eliminarRol(rolSeleccionado.id);
-      await cargarRoles();
+      await refrescarRoles();
       setModalEliminar(false);
       setRolSeleccionado(null);
     } catch (error) {
@@ -214,6 +250,8 @@ const Roles = () => {
 
   const handleVerDetalle = (rol) => {
     setRolSeleccionado(rol);
+    // Carga los permisos del rol para mostrarlos en el detalle
+    cargarPermisosDelRol(rol.id);
     setModalDetalle(true);
   };
 
@@ -265,7 +303,7 @@ const Roles = () => {
   if (loading) {
     return (
       <div className="dashboard">
-      
+
         <div className="content loading-container">
           <div className="spinner"></div>
           <p>Cargando roles...</p>
@@ -277,11 +315,11 @@ const Roles = () => {
   if (error) {
     return (
       <div className="dashboard">
-      
+
         <div className="content error-container">
           <h3>Error</h3>
           <p>{error}</p>
-          <button onClick={cargarRoles} className="btn-reintentar">
+          <button onClick={() => cargarRoles(true)} className="btn-reintentar">
             <RefreshIcon />
             Reintentar
           </button>
@@ -292,7 +330,7 @@ const Roles = () => {
 
   return (
     <div className="dashboard">
-   
+
 
       <div className="content roles-content">
         {/* HEADER */}
@@ -348,7 +386,7 @@ const Roles = () => {
 
         {/* BUSCADOR */}
         <div className="buscador-roles">
-          <div className="search-wrapper">   
+          <div className="search-wrapper">
             <input
               type="text"
               placeholder="Buscar roles..."
@@ -391,21 +429,21 @@ const Roles = () => {
                   <td className="text-center">{rol.permisos || 0}</td>
                   <td>
                     <div className="acciones-cell">
-                      <button 
+                      <button
                         className="btn-accion ver"
                         onClick={() => handleVerDetalle(rol)}
                         title="Ver detalles"
                       >
                         <VisibilityIcon />
                       </button>
-                      <button 
+                      <button
                         className="btn-accion editar"
                         onClick={() => handleEditar(rol)}
                         title="Editar"
                       >
                         <EditIcon />
                       </button>
-                      <button 
+                      <button
                         className="btn-accion eliminar"
                         onClick={() => handleEliminarClick(rol)}
                         title="Eliminar"
@@ -429,7 +467,7 @@ const Roles = () => {
           </table>
         </div>
       </div>
-      
+
       {/* MODAL NUEVO ROL */}
       {showNuevoRol && (
         <div className="modal-overlay" onClick={() => setShowNuevoRol(false)}>
@@ -437,7 +475,7 @@ const Roles = () => {
             <button className="modal-cerrar" onClick={() => setShowNuevoRol(false)}>
               <CloseIcon />
             </button>
-            
+
             <div className="modal-header">
               <h2>
                 <AddIcon />
@@ -494,7 +532,7 @@ const Roles = () => {
                       noOptionsMessage={() => "No se encontraron permisos"}
                       loadingMessage={() => "Cargando permisos..."}
                       styles={customStyles}
-                      value={permisosOptions.filter(option => 
+                      value={permisosOptions.filter(option =>
                         nuevoRol.permisos.includes(option.value)
                       )}
                       onChange={(selected) => {
@@ -505,9 +543,9 @@ const Roles = () => {
                         });
                       }}
                       formatOptionLabel={(option) => (
-                        <div style={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
                           alignItems: 'center',
                           width: '100%'
                         }}>
@@ -519,8 +557,8 @@ const Roles = () => {
                               {option.descripcion || `Permiso para ${option.label.split(' (')[0]}`}
                             </div>
                           </div>
-                          <span style={{ 
-                            fontSize: '0.7rem', 
+                          <span style={{
+                            fontSize: '0.7rem',
                             backgroundColor: '#e9ecef',
                             padding: '2px 8px',
                             borderRadius: '20px',
@@ -552,7 +590,7 @@ const Roles = () => {
           </div>
         </div>
       )}
-      
+
       {/* MODAL DETALLE DE ROL */}
       {modalDetalle && rolSeleccionado && (
         <div className="modal-overlay" onClick={() => setModalDetalle(false)}>
@@ -560,7 +598,7 @@ const Roles = () => {
             <button className="modal-cerrar" onClick={() => setModalDetalle(false)}>
               <CloseIcon />
             </button>
-            
+
             <div className="modal-header">
               <h2>
                 {getIconoPorNivel(rolSeleccionado.nivel)}
@@ -613,7 +651,7 @@ const Roles = () => {
             </div>
 
             <div className="modal-acciones">
-              <button 
+              <button
                 className="btn-editar"
                 onClick={() => {
                   setModalDetalle(false);
@@ -631,7 +669,7 @@ const Roles = () => {
           </div>
         </div>
       )}
-      
+
       {/* MODAL EDITAR ROL */}
       {modalEditar && rolSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
@@ -639,7 +677,7 @@ const Roles = () => {
             <button className="modal-cerrar" onClick={cerrarModalEditar}>
               <CloseIcon />
             </button>
-            
+
             <div className="modal-header">
               <h2>
                 <EditIcon />
@@ -706,7 +744,7 @@ const Roles = () => {
                       noOptionsMessage={() => "No se encontraron permisos"}
                       loadingMessage={() => "Cargando permisos..."}
                       styles={customStyles}
-                      value={permisosOptions.filter(option => 
+                      value={permisosOptions.filter(option =>
                         permisosSeleccionados.includes(option.value)
                       )}
                       onChange={(selected) => {
@@ -714,9 +752,9 @@ const Roles = () => {
                         setPermisosSeleccionados(selectedIds);
                       }}
                       formatOptionLabel={(option) => (
-                        <div style={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
                           alignItems: 'center',
                           width: '100%'
                         }}>
@@ -728,8 +766,8 @@ const Roles = () => {
                               {option.descripcion || `Permiso para ${option.label.split(' (')[0]}`}
                             </div>
                           </div>
-                          <span style={{ 
-                            fontSize: '0.7rem', 
+                          <span style={{
+                            fontSize: '0.7rem',
                             backgroundColor: '#e9ecef',
                             padding: '2px 8px',
                             borderRadius: '20px',
@@ -772,7 +810,7 @@ const Roles = () => {
             <h3>¿Eliminar Rol?</h3>
             <p>Estás a punto de eliminar el rol <strong>{rolSeleccionado.nombre}</strong></p>
             <p className="advertencia">Esta acción no se puede deshacer</p>
-            
+
             <div className="modal-botones">
               <button className="btn-cancelar" onClick={() => setModalEliminar(false)}>
                 Cancelar

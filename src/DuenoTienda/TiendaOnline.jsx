@@ -1,4 +1,5 @@
 // TiendaOnline.jsx - Subida de imagen a Cloudinary + gestión de productos de la tienda
+// Usa useTienda (con caché) + debounce en la búsqueda
 
 import React, { useState, useEffect, useRef } from "react";
 
@@ -87,7 +88,7 @@ const FORM_INICIAL = {
 };
 
 const TiendaOnline = () => {
-  // ========== HOOK DE TIENDA ==========
+  // ========== HOOK DE TIENDA (con caché) ==========
   const {
     productos,
     estadisticas,
@@ -107,6 +108,7 @@ const TiendaOnline = () => {
 
   // ========== ESTADOS LOCALES ==========
   const [busqueda, setBusqueda] = useState("");
+  const [busquedaDebounced, setBusquedaDebounced] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
   const [verSoloVisibles, setVerSoloVisibles] = useState(false);
@@ -138,21 +140,29 @@ const TiendaOnline = () => {
   const estados = ["Todos", "Nuevo", "Como nuevo", "Buen estado", "Aceptable"];
 
   // ========== EFECTOS ==========
-  // Los productos los carga el propio hook (se recargan cuando cambian los filtros);
-  // aquí solo hace falta cargar las estadísticas una vez.
+  // Los productos los carga el propio hook (usa caché y se recargan al cambiar los filtros).
+  // Las estadísticas se muestran desde la caché al instante; esto las refresca en segundo plano.
   useEffect(() => {
     cargarEstadisticas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sincronizar filtros
+  // Debounce de la búsqueda: espera 400 ms sin teclear antes de filtrar
+  useEffect(() => {
+    const t = setTimeout(() => setBusquedaDebounced(busqueda), 400);
+    return () => clearTimeout(t);
+  }, [busqueda]);
+
+  // Sincronizar filtros con el hook
   useEffect(() => {
     setFiltros({
-      busqueda,
+      busqueda: busquedaDebounced,
       categoria: categoriaFiltro,
       estado: estadoFiltro,
       solo_visibles: verSoloVisibles
     });
-  }, [busqueda, categoriaFiltro, estadoFiltro, verSoloVisibles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busquedaDebounced, categoriaFiltro, estadoFiltro, verSoloVisibles]);
 
   // Cargar los días de gracia guardados (si el backend los manda en estadísticas)
   useEffect(() => {
@@ -177,6 +187,14 @@ const TiendaOnline = () => {
     if (inputImagenRef.current) {
       inputImagenRef.current.value = "";
     }
+  };
+
+  const limpiarFiltros = () => {
+    setBusqueda("");
+    setBusquedaDebounced("");
+    setCategoriaFiltro("Todas");
+    setEstadoFiltro("Todos");
+    setVerSoloVisibles(false);
   };
 
   const abrirNuevoProducto = () => {
@@ -234,10 +252,12 @@ const TiendaOnline = () => {
     // Validación básica en el cliente (el backend también valida)
     if (!file.type.startsWith("image/")) {
       alert("El archivo debe ser una imagen (jpg, png, etc.)");
+      e.target.value = "";
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
       alert("La imagen no debe superar los 5MB");
+      e.target.value = "";
       return;
     }
 
@@ -270,7 +290,7 @@ const TiendaOnline = () => {
         formData.append("imagen_url", imagenUrl);
       }
 
-      // El hook useTienda ya recarga productos y estadísticas después de guardar
+      // El hook useTienda ya refresca productos, estadísticas y la caché después de guardar
       if (modoEdicion && productoSeleccionado) {
         await actualizarProducto(productoSeleccionado.id_producto, formData);
       } else {
@@ -321,7 +341,7 @@ const TiendaOnline = () => {
     setResultadoPublicacion(null);
 
     try {
-      // El hook ya recarga productos y estadísticas
+      // El hook ya refresca productos, estadísticas y la caché
       const resultado = await ejecutarPublicacionAutomatica(diasGracia);
       setResultadoPublicacion(resultado);
     } catch (err) {
@@ -479,6 +499,7 @@ const TiendaOnline = () => {
               Solo visibles
             </label>
 
+            {/* Refrescar: ignora la caché y recarga desde el servidor */}
             <button
               className="btn-refrescar"
               onClick={() => {
@@ -494,12 +515,7 @@ const TiendaOnline = () => {
           {(busqueda || categoriaFiltro !== "Todas" || estadoFiltro !== "Todos" || verSoloVisibles) && (
             <button
               className="btn-limpiar-filtros"
-              onClick={() => {
-                setBusqueda("");
-                setCategoriaFiltro("Todas");
-                setEstadoFiltro("Todos");
-                setVerSoloVisibles(false);
-              }}
+              onClick={limpiarFiltros}
             >
               <ClearIcon fontSize="small" />
               Limpiar filtros
@@ -507,7 +523,7 @@ const TiendaOnline = () => {
           )}
         </div>
 
-        {/* LOADING */}
+        {/* LOADING (solo cuando no hay datos en caché para estos filtros) */}
         {loading && (
           <div className="loading-container">
             <div className="spinner"></div>

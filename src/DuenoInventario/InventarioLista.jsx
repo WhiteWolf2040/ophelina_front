@@ -1,6 +1,6 @@
-// InventarioLista.jsx - VERSIÓN CORREGIDA (usando campos reales + imagen vía Cloudinary)
+// InventarioLista.jsx - campos reales + imagen vía Cloudinary + caché (useListaCache)
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Inventario.css";
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -9,10 +9,14 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 
-// 📌 Servicio de inventario
+// Servicio de inventario
 import inventarioService from "../services/inventarioService";
 
-// ✅ NUEVO: mismos datos de Cloudinary que ya usa TiendaOnline.jsx / NuevoInventario.jsx
+// Caché
+import useListaCache from "../hooks/useListaCache";
+import { useDashboard } from "../contexts/DashboardContext";
+
+// Mismos datos de Cloudinary que ya usa TiendaOnline.jsx / NuevoInventario.jsx
 const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
 const CLOUDINARY_UPLOAD_PRESET = "ophelina_productos";
 
@@ -35,13 +39,35 @@ const subirImagenACloudinary = async (file) => {
   return data.secure_url;
 };
 
+// Fetcher FUERA del componente (referencia estable)
+const obtenerPrendas = async () => {
+  const data = await inventarioService.getPrendas();
+  return data || [];
+};
+
 const InventarioLista = () => {
   const navigate = useNavigate();
+  const { invalidarCache } = useDashboard();
 
-  // ✅ Estados reales
-  const [prendas, setPrendas] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // ============================================
+  // DATOS CON CACHÉ
+  // ============================================
+  const {
+    data: prendas,
+    setData: setPrendas,
+    cargando: loading,
+    error: errorCarga,
+    recargar: cargarPrendas
+  } = useListaCache('inventario', obtenerPrendas);
+
+  const error = errorCarga ? "Error al cargar el inventario" : null;
+
+  // Otras listas que muestran datos de la prenda (descripción, imagen...)
+  const invalidarRelacionadas = () => {
+    invalidarCache('empenos');
+    invalidarCache('pagos');
+    invalidarCache('reportes');
+  };
 
   // Filtros
   const [busqueda, setBusqueda] = useState("");
@@ -56,56 +82,35 @@ const InventarioLista = () => {
   const [guardandoEdicion, setGuardandoEdicion] = useState(false);
   const [errorEdicion, setErrorEdicion] = useState("");
 
-  // Estado para el formulario de edición (Mapeado a campos reales)
+  // Formulario de edición (mapeado a campos reales)
   const [formEditar, setFormEditar] = useState({
-    descripcion: "",      // ← nombre en frontend
-    tipo: "",            // ← categoria en frontend
+    descripcion: "",
+    tipo: "",
     material: "",
-    peso_gramos: "",     // ← peso en frontend
-    valor_estimado: "",  // ← valor en frontend
+    peso_gramos: "",
+    valor_estimado: "",
     estado: ""
   });
 
-  // ✅ NUEVO: estado para la imagen dentro del modal de edición
+  // Imagen dentro del modal de edición
   const [imagenEditar, setImagenEditar] = useState(null); // File real (si se elige una nueva)
-  const [previewImagenEditar, setPreviewImagenEditar] = useState(""); // preview (nueva o la ya existente)
+  const [previewImagenEditar, setPreviewImagenEditar] = useState(""); // preview (nueva o existente)
   const inputImagenEditarRef = useRef(null);
 
-  // Categorías reales (de tu tabla)
   const categorias = ["Todas", "Joyería", "Electrónica", "Relojes", "Herramientas", "Instrumentos", "Otros"];
   const estados = ["Todos", "Disponible", "En Empeño", "Vendido", "Vencido", "Apartado"];
 
-  // ========== CARGAR PRENDAS ==========
-  useEffect(() => {
-    cargarPrendas();
-  }, []);
-
-  const cargarPrendas = async () => {
-    setLoading(true);
-    try {
-        const data = await inventarioService.getPrendas();
-        console.log('Prendas recibidas:', data); // ← Verificar en consola
-        setPrendas(data || []);
-        setError(null);
-    } catch (err) {
-        console.error("Error cargando prendas:", err);
-        setError("Error al cargar el inventario");
-    } finally {
-        setLoading(false);
-    }
-  };
-
   // ========== FILTRADO ==========
   const prendasFiltradas = prendas.filter((item) => {
-    const coincideBusqueda = 
+    const coincideBusqueda =
       item.descripcion?.toLowerCase().includes(busqueda.toLowerCase()) ||
       item.tipo?.toLowerCase().includes(busqueda.toLowerCase()) ||
       item.material?.toLowerCase().includes(busqueda.toLowerCase()) ||
       item.codigo_barras?.toLowerCase().includes(busqueda.toLowerCase());
-    
+
     const coincideCategoria = categoriaFiltro === "" || categoriaFiltro === "Todas" || item.tipo === categoriaFiltro;
     const coincideEstado = estadoFiltro === "" || estadoFiltro === "Todos" || item.estado === estadoFiltro;
-    
+
     return coincideBusqueda && coincideCategoria && coincideEstado;
   });
 
@@ -143,7 +148,7 @@ const InventarioLista = () => {
     });
     setErrorEdicion("");
     setImagenEditar(null);
-    // ✅ NUEVO: si la prenda ya tiene imagen, se muestra como preview inicial
+    // Si la prenda ya tiene imagen, se muestra como preview inicial
     setPreviewImagenEditar(prenda.imagen_url || "");
     setModalEditarAbierto(true);
     setModalAbierto(false);
@@ -155,7 +160,7 @@ const InventarioLista = () => {
     limpiarImagenEditar();
   };
 
-  // ✅ NUEVO: selección de nueva imagen dentro del modal de edición
+  // Selección de nueva imagen dentro del modal de edición
   const handleFileChangeEditar = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -187,10 +192,9 @@ const InventarioLista = () => {
     setErrorEdicion("");
 
     try {
-      // ✅ NUEVO: si se eligió una imagen nueva, se sube primero a
-      // Cloudinary y se manda su URL junto con el resto de los datos.
-      // Si no se tocó la imagen, no se manda `imagen_url` y el backend
-      // conserva la que ya tenía la prenda.
+      // Si se eligió una imagen nueva, se sube primero a Cloudinary y se manda
+      // su URL con el resto de los datos. Si no se tocó la imagen, no se manda
+      // `imagen_url` y el backend conserva la que ya tenía la prenda.
       const datos = { ...formEditar };
 
       if (imagenEditar) {
@@ -198,7 +202,10 @@ const InventarioLista = () => {
       }
 
       await inventarioService.actualizarPrenda(prendaSeleccionada.id_prenda, datos);
-      await cargarPrendas();
+
+      // Refresca desde el servidor sin spinner (también actualiza la caché)
+      await cargarPrendas({ silencioso: true });
+      invalidarRelacionadas();
       cerrarModalEditar();
     } catch (err) {
       console.error("Error actualizando:", err);
@@ -219,7 +226,11 @@ const InventarioLista = () => {
   const handleEliminar = async () => {
     try {
       await inventarioService.eliminarPrenda(prendaSeleccionada.id_prenda);
-      await cargarPrendas();
+
+      // Actualiza la lista Y la caché sin volver a pedir todo al servidor
+      setPrendas(prev => prev.filter(p => p.id_prenda !== prendaSeleccionada.id_prenda));
+      invalidarRelacionadas();
+
       setModalEliminar(false);
       setPrendaSeleccionada(null);
     } catch (err) {
@@ -303,7 +314,14 @@ const InventarioLista = () => {
       {loading && <div className="loading">Cargando inventario...</div>}
 
       {/* ERROR */}
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="error-message">
+          {error}{" "}
+          <button className="btn-limpiar" onClick={() => cargarPrendas()}>
+            Reintentar
+          </button>
+        </div>
+      )}
 
       {/* TABLA */}
       {!loading && !error && (
@@ -317,7 +335,7 @@ const InventarioLista = () => {
                 <div key={item.id_prenda} className="inventario-tarjeta">
                   <div className="tarjeta-header">
                     <strong>{item.descripcion || "Sin nombre"}</strong>
-                    <button 
+                    <button
                       className="btn-accion ver"
                       onClick={() => abrirDetalle(item)}
                       title="Ver detalles"
@@ -383,21 +401,21 @@ const InventarioLista = () => {
                         </span>
                       </td>
                       <td>
-                        <button 
+                        <button
                           className="btn-accion ver"
                           onClick={() => abrirDetalle(item)}
                           title="Ver detalles"
                         >
                           <VisibilityIcon fontSize="small" />
                         </button>
-                        <button 
+                        <button
                           className="btn-accion editar"
                           onClick={() => abrirModalEditar(item)}
                           title="Editar"
                         >
                           <EditIcon fontSize="small" />
                         </button>
-                        <button 
+                        <button
                           className="btn-accion eliminar"
                           onClick={() => confirmarEliminar(item)}
                           title="Eliminar"
@@ -425,13 +443,13 @@ const InventarioLista = () => {
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
             <button className="modal-cerrar" onClick={cerrarModal}>×</button>
-            
+
             <div className="modal-header">
               <h2>Detalle de Prenda</h2>
             </div>
 
             <div className="modal-body">
-              {/* ✅ NUEVO: imagen de la prenda, si tiene */}
+              {/* Imagen de la prenda, si tiene */}
               {prendaSeleccionada.imagen_url && (
                 <div style={{ textAlign: 'center', marginBottom: '16px' }}>
                   <img
@@ -487,7 +505,7 @@ const InventarioLista = () => {
             </div>
 
             <div className="modal-acciones">
-              <button 
+              <button
                 className="btn-editar"
                 onClick={() => abrirModalEditar(prendaSeleccionada)}
               >
@@ -497,7 +515,7 @@ const InventarioLista = () => {
               <button className="btn-nuevo" onClick={() => navigate("/inventario/asignar-imagenes")} style={{ marginLeft: "8px" }}>
                  Asignar imágenes masivamente
               </button>
-              <button 
+              <button
                 className="btn-eliminar"
                 onClick={() => confirmarEliminar(prendaSeleccionada)}
               >
@@ -508,12 +526,12 @@ const InventarioLista = () => {
         </div>
       )}
 
-      {/* MODAL EDITAR - Con campos mapeados + imagen */}
+      {/* MODAL EDITAR - campos mapeados + imagen */}
       {modalEditarAbierto && prendaSeleccionada && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
           <div className="modal-editar-prenda" onClick={(e) => e.stopPropagation()}>
             <button className="modal-cerrar" onClick={cerrarModalEditar}>×</button>
-            
+
             <div className="modal-header">
               <h2>Editar Prenda</h2>
               <span className="cliente-id">ID: #{prendaSeleccionada.id_prenda}</span>
@@ -533,7 +551,7 @@ const InventarioLista = () => {
                     <input
                       name="descripcion"
                       value={formEditar.descripcion}
-                      onChange={(e) => setFormEditar({...formEditar, descripcion: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, descripcion: e.target.value })}
                       placeholder="Ej: Anillo de Oro 18k"
                       required
                     />
@@ -544,7 +562,7 @@ const InventarioLista = () => {
                     <select
                       name="tipo"
                       value={formEditar.tipo}
-                      onChange={(e) => setFormEditar({...formEditar, tipo: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, tipo: e.target.value })}
                       required
                     >
                       <option value="">Seleccionar</option>
@@ -559,7 +577,7 @@ const InventarioLista = () => {
                     <input
                       name="material"
                       value={formEditar.material}
-                      onChange={(e) => setFormEditar({...formEditar, material: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, material: e.target.value })}
                       placeholder="Ej: Oro, Plata, Acero"
                     />
                   </div>
@@ -571,7 +589,7 @@ const InventarioLista = () => {
                       type="number"
                       step="0.01"
                       value={formEditar.peso_gramos}
-                      onChange={(e) => setFormEditar({...formEditar, peso_gramos: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, peso_gramos: e.target.value })}
                       placeholder="Ej: 15.5"
                     />
                   </div>
@@ -582,7 +600,7 @@ const InventarioLista = () => {
                       name="valor_estimado"
                       type="number"
                       value={formEditar.valor_estimado}
-                      onChange={(e) => setFormEditar({...formEditar, valor_estimado: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, valor_estimado: e.target.value })}
                       placeholder="Ej: 7000"
                       required
                     />
@@ -593,7 +611,7 @@ const InventarioLista = () => {
                     <select
                       name="estado"
                       value={formEditar.estado}
-                      onChange={(e) => setFormEditar({...formEditar, estado: e.target.value})}
+                      onChange={(e) => setFormEditar({ ...formEditar, estado: e.target.value })}
                       required
                     >
                       <option value="">Seleccionar</option>
@@ -603,7 +621,7 @@ const InventarioLista = () => {
                     </select>
                   </div>
 
-                  {/* ✅ NUEVO: subir/reemplazar imagen */}
+                  {/* Subir/reemplazar imagen */}
                   <div className="form-group full-width">
                     <label>Imagen de la prenda</label>
                     <input
@@ -660,15 +678,15 @@ const InventarioLista = () => {
             <h3>¿Eliminar prenda?</h3>
             <p>Estás a punto de eliminar <strong>{prendaSeleccionada.descripcion || "esta prenda"}</strong></p>
             <p className="advertencia">Esta acción no se puede deshacer</p>
-            
+
             <div className="modal-botones">
-              <button 
+              <button
                 className="btn-cancelar"
                 onClick={() => setModalEliminar(false)}
               >
                 Cancelar
               </button>
-              <button 
+              <button
                 className="btn-confirmar-eliminar"
                 onClick={handleEliminar}
               >

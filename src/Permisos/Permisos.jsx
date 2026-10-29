@@ -27,17 +27,31 @@ import {
 } from '@mui/icons-material';
 
 import permisoService from "../services/permisoService";
+import { useDashboard } from '../contexts/DashboardContext';
 import './Permisos.css';
 
+// Tiempo de vida de la caché (15 min, igual que el dashboard)
+const CACHE_TTL_MS = 15 * 60 * 1000;
+const CACHE_KEY = 'permisos';
+
+const extraerCategorias = (lista) => [...new Set(lista.map(p => p.modulo))];
+
 const Permisos = () => {
+  const { getCache, setCache, invalidarCache } = useDashboard();
+
+  // Si ya hay caché, el componente arranca con los datos y sin spinner
+  const cacheInicial = getCache(CACHE_KEY);
+
   // Estado para los permisos desde la BD
-  const [permisos, setPermisos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [permisos, setPermisos] = useState(cacheInicial?.data ?? []);
+  const [loading, setLoading] = useState(!cacheInicial);
   const [error, setError] = useState(null);
-  
+
   // Estado para categorías
-  const [categorias, setCategorias] = useState([]);
-  
+  const [categorias, setCategorias] = useState(
+    cacheInicial ? extraerCategorias(cacheInicial.data) : []
+  );
+
   // Estados para modales
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('');
@@ -45,11 +59,11 @@ const Permisos = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('todas');
   const [filtroEstado, setFiltroEstado] = useState('todos');
-  
+
   // Estados para paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  
+
   // Estado para formulario de permiso
   const [formPermiso, setFormPermiso] = useState({
     nombre: '',
@@ -58,11 +72,11 @@ const Permisos = () => {
     modulo: 'general',
     estado: 'activo'
   });
-  
+
   // Estado para selección múltiple
   const [selectedPermisos, setSelectedPermisos] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-  
+
   // Estado para formulario masivo
   const [formBulk, setFormBulk] = useState({
     nombres: '',
@@ -71,26 +85,46 @@ const Permisos = () => {
     estado: 'activo'
   });
 
-  // Cargar datos al montar el componente
+  // Cargar datos al montar el componente (usa caché si está vigente)
   useEffect(() => {
     cargarPermisos();
   }, []);
 
-  const cargarPermisos = async () => {
+  const cargarPermisos = async (forzar = false) => {
+    const cache = getCache(CACHE_KEY);
+    const vigente = cache && Date.now() - cache.timestamp < CACHE_TTL_MS;
+
+    // Caché vigente: no se llama a la API
+    if (!forzar && vigente) {
+      setPermisos(cache.data);
+      setCategorias(extraerCategorias(cache.data));
+      setLoading(false);
+      return;
+    }
+
     try {
-      setLoading(true);
+      // Si hay caché (aunque vieja) se muestra mientras se actualiza, sin spinner
+      if (!cache) setLoading(true);
+
       const response = await permisoService.obtenerPermisos();
-      setPermisos(response.data.data);
-      
-      // Extraer categorías únicas
-      const categoriasUnicas = [...new Set(response.data.data.map(p => p.modulo))];
-      setCategorias(categoriasUnicas);
+      const lista = response.data.data;
+
+      setCache(CACHE_KEY, lista);
+      setPermisos(lista);
+      setCategorias(extraerCategorias(lista));
+      setError(null);
     } catch (error) {
       console.error('Error cargando permisos:', error);
       setError('No se pudieron cargar los permisos');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Después de modificar datos: invalida lo que dependa de permisos y recarga
+  const refrescarDespuesDeCambio = async () => {
+    invalidarCache('roles'); // los roles muestran conteo/lista de permisos
+    await cargarPermisos(true);
   };
 
   // Reiniciar a página 1 cuando cambian los filtros
@@ -111,10 +145,10 @@ const Permisos = () => {
     const matchesSearch = permiso.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          permiso.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          permiso.descripcion?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesCategoria = filtroCategoria === 'todas' || permiso.modulo === filtroCategoria;
     const matchesEstado = filtroEstado === 'todos' || permiso.estado === filtroEstado;
-    
+
     return matchesSearch && matchesCategoria && matchesEstado;
   });
 
@@ -220,7 +254,7 @@ const Permisos = () => {
         .replace(/[^a-z0-9]/g, '_')
         .replace(/_+/g, '_')
         .replace(/^_|_$/g, '');
-      
+
       setFormPermiso(prev => ({
         ...prev,
         codigo: codigoGenerado
@@ -260,7 +294,7 @@ const Permisos = () => {
           modulo: formPermiso.modulo
         });
       }
-      await cargarPermisos(); // Recargar la lista
+      await refrescarDespuesDeCambio();
       closeModal();
     } catch (error) {
       console.error('Error guardando permiso:', error);
@@ -277,14 +311,14 @@ const Permisos = () => {
 
     const nombresList = formBulk.nombres.split('\n').filter(n => n.trim());
     let errores = 0;
-    
+
     for (const nombre of nombresList) {
       const codigo = nombre
         .toLowerCase()
         .replace(/[^a-z0-9]/g, '_')
         .replace(/_+/g, '_')
         .replace(/^_|_$/g, '');
-      
+
       try {
         await permisoService.crearPermiso({
           nombre: nombre.trim(),
@@ -297,10 +331,10 @@ const Permisos = () => {
         console.error(`Error creando permiso ${nombre}:`, error);
       }
     }
-    
-    await cargarPermisos();
+
+    await refrescarDespuesDeCambio();
     closeModal();
-    
+
     if (errores > 0) {
       alert(`Se crearon ${nombresList.length - errores} permisos. ${errores} errores.`);
     } else {
@@ -312,7 +346,7 @@ const Permisos = () => {
   const handleDeletePermiso = async () => {
     try {
       await permisoService.eliminarPermiso(selectedPermiso.id);
-      await cargarPermisos();
+      await refrescarDespuesDeCambio();
       closeModal();
     } catch (error) {
       console.error('Error eliminando permiso:', error);
@@ -323,7 +357,7 @@ const Permisos = () => {
   // Eliminar múltiples permisos
   const handleDeleteSelected = async () => {
     if (selectedPermisos.length === 0) return;
-    
+
     const confirmDelete = window.confirm(`¿Estás seguro de eliminar ${selectedPermisos.length} permiso(s)?`);
     if (confirmDelete) {
       let errores = 0;
@@ -334,10 +368,10 @@ const Permisos = () => {
           errores++;
         }
       }
-      await cargarPermisos();
+      await refrescarDespuesDeCambio();
       setSelectedPermisos([]);
       setSelectAll(false);
-      
+
       if (errores > 0) {
         alert(`Se eliminaron ${selectedPermisos.length - errores} permisos. ${errores} errores.`);
       }
@@ -349,7 +383,7 @@ const Permisos = () => {
     try {
       const nuevoEstado = currentEstado === 'activo' ? 'inactivo' : 'activo';
       await permisoService.actualizarPermiso(permisoId, { estado: nuevoEstado });
-      await cargarPermisos();
+      await refrescarDespuesDeCambio();
     } catch (error) {
       console.error('Error cambiando estado:', error);
       alert('Error al cambiar el estado del permiso');
@@ -394,7 +428,7 @@ const Permisos = () => {
   };
 
   const getEstadoBadge = (estado) => {
-    return estado === 'activo' 
+    return estado === 'activo'
       ? <span className="badge-estado activo"><CheckCircleIcon fontSize="small" /> Activo</span>
       : <span className="badge-estado inactivo"><CancelIcon fontSize="small" /> Inactivo</span>;
   };
@@ -421,7 +455,7 @@ const Permisos = () => {
           <div className="error-container">
             <h3>Error</h3>
             <p>{error}</p>
-            <button onClick={cargarPermisos} className="btn-reintentar">
+            <button onClick={() => cargarPermisos(true)} className="btn-reintentar">
               <RefreshIcon /> Reintentar
             </button>
           </div>
@@ -506,7 +540,7 @@ const Permisos = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
+
             <div className="filters-wrapper">
               <select
                 className="filter-select"
@@ -585,7 +619,7 @@ const Permisos = () => {
                         <span className="badge-categoria">{permiso.modulo}</span>
                       </td>
                       <td>
-                        <button 
+                        <button
                           className={`estado-toggle ${permiso.estado}`}
                           onClick={() => toggleEstado(permiso.id, permiso.estado)}
                           title="Click para cambiar estado"
@@ -638,14 +672,14 @@ const Permisos = () => {
                   Mostrando {indexOfFirstItem + 1} a {Math.min(indexOfLastItem, filteredPermisos.length)} de {filteredPermisos.length} permisos
                 </div>
                 <div className="pagination-controls">
-                  <button 
+                  <button
                     className="pagination-button"
                     onClick={() => paginate(currentPage - 1)}
                     disabled={currentPage === 1}
                   >
                     <ChevronLeftIcon />
                   </button>
-                  
+
                   <div className="pagination-pages">
                     {getPageNumbers().map((page, index) => (
                       page === '...' ? (
@@ -662,7 +696,7 @@ const Permisos = () => {
                     ))}
                   </div>
 
-                  <button 
+                  <button
                     className="pagination-button"
                     onClick={() => paginate(currentPage + 1)}
                     disabled={currentPage === totalPages}
@@ -682,7 +716,7 @@ const Permisos = () => {
             <button className="modal-cerrar" onClick={closeModal}>
               <CloseIcon />
             </button>
-            
+
             <div className="modal-header">
               <h2>
                 <AddIcon />
@@ -784,7 +818,7 @@ const Permisos = () => {
             <button className="modal-cerrar" onClick={closeModal}>
               <CloseIcon />
             </button>
-            
+
             <div className="modal-header">
               <h2>
                 <EditIcon />
@@ -884,7 +918,7 @@ const Permisos = () => {
             <button className="modal-cerrar" onClick={closeModal}>
               <CloseIcon />
             </button>
-            
+
             <div className="modal-header">
               <h2>
                 {getIconByModulo(selectedPermiso.modulo)}
@@ -926,7 +960,7 @@ const Permisos = () => {
                   <div className="rol-info-item">
                     <span className="rol-info-label">Estado</span>
                     <span className="rol-info-valor">
-                      {selectedPermiso.estado === 'activo' 
+                      {selectedPermiso.estado === 'activo'
                         ? <span className="badge-estado activo"><CheckCircleIcon fontSize="small" /> Activo</span>
                         : <span className="badge-estado inactivo"><CancelIcon fontSize="small" /> Inactivo</span>}
                     </span>
@@ -948,7 +982,7 @@ const Permisos = () => {
             </div>
 
             <div className="modal-acciones">
-              <button 
+              <button
                 className="btn-editar"
                 onClick={() => {
                   closeModal();
@@ -977,7 +1011,7 @@ const Permisos = () => {
             <h3>¿Eliminar Permiso?</h3>
             <p>Estás a punto de eliminar el permiso <strong>"{selectedPermiso.nombre}"</strong></p>
             <p className="advertencia">Esta acción no se puede deshacer</p>
-            
+
             <div className="modal-botones">
               <button className="btn-cancelar" onClick={closeModal}>
                 Cancelar
@@ -998,7 +1032,7 @@ const Permisos = () => {
             <button className="modal-cerrar" onClick={closeModal}>
               <CloseIcon />
             </button>
-            
+
             <div className="modal-header">
               <h2>
                 <AddIcon />

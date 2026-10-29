@@ -1,63 +1,62 @@
-// PagosLista.jsx - VERSIÓN FUSIONADA (Docker Base + Características Local)
+// PagosLista.jsx - Docker Base + Características Local + Caché (useListaCache)
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import "./Pagos.css";
 import PaymentsIcon from '@mui/icons-material/Payments';
 import pagosService from "../services/pagosService";
+import useListaCache from "../hooks/useListaCache";
 
-// Importar iconos de MUI
+// Iconos MUI
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PrintIcon from '@mui/icons-material/Print';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import QrCodeIcon from '@mui/icons-material/QrCode';
 import CloseIcon from '@mui/icons-material/Close';
-// ✅ AGREGADO DE LOCAL: Icono AddIcon
 import AddIcon from '@mui/icons-material/Add';
 
-const PagosLista = () => { 
+// Fetcher FUERA del componente (referencia estable): trae y formatea los pagos
+const obtenerPagosFormateados = async () => {
+  const response = await pagosService.obtenerPagos();
+  return response.data.data.map(pago => ({
+    ...pago,
+    articulo: typeof pago.articulo === 'object' ? pago.articulo.descripcion || 'Sin artículo' : pago.articulo,
+    cliente: typeof pago.cliente === 'object' ? pago.cliente.nombre || 'Cliente' : pago.cliente
+  }));
+};
+
+const PagosLista = () => {
   const navigate = useNavigate();
 
-  // ✅ AGREGADO DE LOCAL: Verificación de permisos usando el hook usePermissions
-  // Nota: Asumiendo que existe el hook usePermissions en tu proyecto Docker
-  // Si no existe, puedes usar el sistema de permisos que tengas en Docker
+  // ============================================
+  // DATOS CON CACHÉ
+  // ============================================
+  const {
+    data: pagos,
+    setData: setPagos,
+    cargando: loading,
+    error: errorCarga,
+    recargar: cargarPagos
+  } = useListaCache('pagos', obtenerPagosFormateados);
+
+  const error = errorCarga ? 'No se pudieron cargar los pagos' : null;
+
+  // ============================================
+  // PERMISOS (por rol)
+  // ============================================
   const [userRole, setUserRole] = useState('');
-  
-  // ✅ AGREGADO DE LOCAL: Función para verificar permisos basada en roles
+
   const puedeRegistrarPagos = () => {
-    // Si tienes usePermissions, úsalo aquí
-    // const { hasPermission } = usePermissions();
-    // return hasPermission('registrar_pagos');
-    
-    // Versión simple basada en roles (ajusta según tu sistema)
     const rolesConPermiso = ['Administrador', 'Dueño', 'Gerente'];
     return rolesConPermiso.includes(userRole);
   };
 
-  // ✅ AGREGADO DE LOCAL: Función para verificar permiso de eliminar
   const puedeEliminar = () => {
     const rolesConPermiso = ['Administrador', 'Dueño'];
     return rolesConPermiso.includes(userRole);
   };
 
-  // Estados
-  const [pagos, setPagos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [busqueda, setBusqueda] = useState("");
-  const [fechaFiltro, setFechaFiltro] = useState("");
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [pagoSeleccionado, setPagoSeleccionado] = useState(null);
-  const [detalleCompleto, setDetalleCompleto] = useState(null);
-  const [modalEliminar, setModalEliminar] = useState(false);
-  const [loadingDetalle, setLoadingDetalle] = useState(false);
-  
-  // Paginación
-  const [paginaActual, setPaginaActual] = useState(1);
-  const pagosPorPagina = 8;
-
-  // ✅ AGREGADO DE LOCAL: Cargar rol del usuario
   useEffect(() => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
@@ -70,32 +69,25 @@ const PagosLista = () => {
     }
   }, []);
 
-  // Cargar pagos al montar el componente
-  useEffect(() => {
-    cargarPagos();
-  }, []);
+  // ============================================
+  // ESTADO LOCAL DE UI
+  // ============================================
+  const [busqueda, setBusqueda] = useState("");
+  const [fechaFiltro, setFechaFiltro] = useState("");
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [pagoSeleccionado, setPagoSeleccionado] = useState(null);
+  const [detalleCompleto, setDetalleCompleto] = useState(null);
+  const [modalEliminar, setModalEliminar] = useState(false);
+  const [loadingDetalle, setLoadingDetalle] = useState(false);
 
-  const cargarPagos = async () => {
-    try {
-      setLoading(true);
-      const response = await pagosService.obtenerPagos();
-      // Asegurarse de que articulo sea un string
-      const pagosFormateados = response.data.data.map(pago => ({
-        ...pago,
-        articulo: typeof pago.articulo === 'object' ? pago.articulo.descripcion || 'Sin artículo' : pago.articulo,
-        cliente: typeof pago.cliente === 'object' ? pago.cliente.nombre || 'Cliente' : pago.cliente
-      }));
-      setPagos(pagosFormateados);
-    } catch (error) {
-      console.error('Error cargando pagos:', error);
-      setError('No se pudieron cargar los pagos');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const pagosPorPagina = 8;
 
+  // ============================================
+  // ACCIONES
+  // ============================================
   const handleEliminar = async () => {
-    // ✅ AGREGADO DE LOCAL: Validación de permiso para eliminar
     if (!puedeEliminar()) {
       alert('No tienes permiso para eliminar pagos');
       return;
@@ -103,7 +95,8 @@ const PagosLista = () => {
 
     try {
       await pagosService.eliminarPago(pagoSeleccionado.id);
-      setPagos(pagos.filter(p => p.id !== pagoSeleccionado.id));
+      // Actualiza la lista Y la caché
+      setPagos(prev => prev.filter(p => p.id !== pagoSeleccionado.id));
       setModalEliminar(false);
       setPagoSeleccionado(null);
       setDetalleCompleto(null);
@@ -132,15 +125,14 @@ const PagosLista = () => {
   const pagosActuales = pagosFiltrados.slice(indicePrimero, indiceUltimo);
   const totalPaginas = Math.ceil(pagosFiltrados.length / pagosPorPagina);
 
-  // Función para abrir detalle con datos completos desde la API
+  // Abrir detalle con datos completos desde la API
   const abrirDetalle = async (pago) => {
     setPagoSeleccionado(pago);
     setModalAbierto(true);
     setLoadingDetalle(true);
-    
+
     try {
       const response = await pagosService.obtenerPago(pago.id);
-      console.log("Detalle completo del pago:", response.data.data);
       setDetalleCompleto(response.data.data);
     } catch (error) {
       console.error('Error cargando detalle del pago:', error);
@@ -157,7 +149,6 @@ const PagosLista = () => {
   };
 
   const confirmarEliminar = (pago) => {
-    // ✅ AGREGADO DE LOCAL: Validación de permiso para eliminar
     if (!puedeEliminar()) {
       alert('No tienes permiso para eliminar pagos');
       return;
@@ -170,9 +161,9 @@ const PagosLista = () => {
 
   const handleImprimir = () => {
     const contenidoTicket = document.getElementById('contenido-ticket-imprimir').innerHTML;
-    
+
     const ventanaImpresion = window.open('', '_blank');
-    
+
     ventanaImpresion.document.write(`
       <html>
         <head>
@@ -201,7 +192,7 @@ const PagosLista = () => {
         </body>
       </html>
     `);
-    
+
     ventanaImpresion.document.close();
     ventanaImpresion.focus();
     ventanaImpresion.print();
@@ -221,10 +212,9 @@ const PagosLista = () => {
     alert("Folio copiado al portapapeles");
   };
 
-  // Función que OBTIENE DATOS REALES - se ejecuta dentro del modal
+  // Datos del recibo (reales desde la API, o básicos si aún no llega el detalle)
   const getReciboData = () => {
     if (!detalleCompleto) {
-      // Si no hay detalle completo, usar datos básicos del pago seleccionado
       if (!pagoSeleccionado) return null;
       return {
         folio: pagoSeleccionado.folio || `PAG-${pagoSeleccionado.id}-${new Date().getFullYear()}`,
@@ -245,35 +235,34 @@ const PagosLista = () => {
         prendaDescripcion: typeof pagoSeleccionado.articulo === 'object' ? pagoSeleccionado.articulo.descripcion : pagoSeleccionado.articulo || "Artículo"
       };
     }
-    
-    // Datos REALES desde la API
+
     const pagoData = detalleCompleto.pago || {};
     const empenoData = detalleCompleto.empeno || {};
     const clienteData = detalleCompleto.cliente || {};
-    
+
     return {
       folio: empenoData.folio || `PAG-${detalleCompleto.id}-${new Date().getFullYear()}`,
-      fechaVencimiento: empenoData.fecha_vencimiento 
-        ? new Date(empenoData.fecha_vencimiento).toLocaleDateString('es-MX') 
+      fechaVencimiento: empenoData.fecha_vencimiento
+        ? new Date(empenoData.fecha_vencimiento).toLocaleDateString('es-MX')
         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('es-MX'),
-      
+
       capital: Number(pagoData.capital) || 0,
       interes: Number(pagoData.interes) || 0,
       iva: Number(pagoData.iva) || 0,
       subtotal: (Number(pagoData.capital) || 0) + (Number(pagoData.interes) || 0),
       total: Number(pagoData.monto_total) || 0,
-      
+
       metodoPago: pagoData.metodo || pagoData.metodo_pago || "Efectivo",
       referencia: pagoData.referencia || `REF-${Date.now().toString(36).toUpperCase()}`,
       fechaPago: pagoData.fecha || detalleCompleto.fecha_pago,
-      
+
       id_empeno: empenoData.id,
       monto_prestado: empenoData.monto_prestado || 0,
       prendaDescripcion: typeof empenoData.prenda === 'object' ? empenoData.prenda.descripcion : empenoData.prenda || "Artículo",
-      
+
       cajero: "Laura Martínez",
       sucursal: "Casa Matriz - Mérida",
-      
+
       rfcCliente: "XAXX010101000",
       telefonoCliente: clienteData.telefono || "999 999 9999",
       emailCliente: clienteData.correo || "cliente@email.com",
@@ -281,40 +270,35 @@ const PagosLista = () => {
     };
   };
 
-  // Funciones de paginación
-  const cambiarPagina = (numeroPagina) => {
-    setPaginaActual(numeroPagina);
-  };
-
-  const irPaginaSiguiente = () => {
-    setPaginaActual(prev => Math.min(prev + 1, totalPaginas));
-  };
-
-  const irPaginaAnterior = () => {
-    setPaginaActual(prev => Math.max(prev - 1, 1));
-  };
+  // ============================================
+  // PAGINACIÓN
+  // ============================================
+  const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
+  const irPaginaSiguiente = () => setPaginaActual(prev => Math.min(prev + 1, totalPaginas));
+  const irPaginaAnterior = () => setPaginaActual(prev => Math.max(prev - 1, 1));
 
   const obtenerNumerosPagina = () => {
     const numeros = [];
     const maxPaginasVisibles = 5;
     let inicio = Math.max(1, paginaActual - Math.floor(maxPaginasVisibles / 2));
     let fin = Math.min(totalPaginas, inicio + maxPaginasVisibles - 1);
-    
+
     if (fin - inicio + 1 < maxPaginasVisibles) {
       inicio = Math.max(1, fin - maxPaginasVisibles + 1);
     }
-    
+
     for (let i = inicio; i <= fin; i++) {
       numeros.push(i);
     }
     return numeros;
   };
 
-  // Renderizado condicional
+  // ============================================
+  // RENDER
+  // ============================================
   if (loading) {
     return (
       <div className="dashboard">
-    
         <div className="content loading-container">
           <div className="spinner"></div>
           <p>Cargando pagos...</p>
@@ -326,11 +310,10 @@ const PagosLista = () => {
   if (error) {
     return (
       <div className="dashboard">
-   
         <div className="content error-container">
           <h3>Error</h3>
           <p>{error}</p>
-          <button onClick={cargarPagos} className="btn-reintentar">
+          <button onClick={() => cargarPagos()} className="btn-reintentar">
             Reintentar
           </button>
         </div>
@@ -340,20 +323,17 @@ const PagosLista = () => {
 
   return (
     <div className="dashboard">
- 
-
       <div className="content">
         {/* HEADER */}
         <div className="header-container">
           <div className="">
             <h1>
-              <PaymentsIcon className="title-icon" /> 
-              Listado de pagos 
+              <PaymentsIcon className="title-icon" />
+              Listado de pagos
               <p className="header-sub">Gestiona los pagos realizados</p>
             </h1>
           </div>
-          
-          {/* ✅ AGREGADO DE LOCAL: Botón Nuevo Pago con permiso */}
+
           {puedeRegistrarPagos() && (
             <button
               className="btn-nuevo"
@@ -416,7 +396,7 @@ const PagosLista = () => {
                 <div key={pago.id} className="pago-tarjeta">
                   <div className="tarjeta-header">
                     <strong>{pago.cliente}</strong>
-                    <span 
+                    <span
                       className="detalle-link"
                       onClick={() => abrirDetalle(pago)}
                     >
@@ -480,7 +460,7 @@ const PagosLista = () => {
                       <td>{pago.fecha}</td>
                       <td>
                         <div className="acciones-container">
-                          <button 
+                          <button
                             className="btn-accion ver"
                             onClick={() => abrirDetalle(pago)}
                             title="Ver detalles"
@@ -506,14 +486,14 @@ const PagosLista = () => {
           {totalPaginas > 1 && (
             <div className="paginacion-wrapper">
               <div className="paginacion-container">
-                <button 
+                <button
                   className="btn-paginacion"
                   onClick={irPaginaAnterior}
                   disabled={paginaActual === 1}
                 >
                   ←
                 </button>
-                
+
                 <div className="paginacion-numeros">
                   {obtenerNumerosPagina().map(numero => (
                     <button
@@ -525,8 +505,8 @@ const PagosLista = () => {
                     </button>
                   ))}
                 </div>
-                
-                <button 
+
+                <button
                   className="btn-paginacion"
                   onClick={irPaginaSiguiente}
                   disabled={paginaActual === totalPaginas}
@@ -546,7 +526,7 @@ const PagosLista = () => {
       {modalAbierto && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-recibo" onClick={(e) => e.stopPropagation()}>
-            
+
             <div className="recibo-header-modal">
               <button className="recibo-cerrar" onClick={cerrarModal}>
                 <CloseIcon />
@@ -692,11 +672,10 @@ const PagosLista = () => {
                 );
               })()
             )}
-           
-            {/* ✅ AGREGADO DE LOCAL: Botón Eliminar Pago con permiso */}
+
             {puedeEliminar() && (
               <div className="recibo-eliminar">
-                <button 
+                <button
                   className="btn-eliminar-pago"
                   onClick={() => confirmarEliminar(pagoSeleccionado)}
                 >
@@ -709,7 +688,7 @@ const PagosLista = () => {
         </div>
       )}
 
-      {/* ✅ AGREGADO DE LOCAL: MODAL DE CONFIRMACIÓN ELIMINAR con permiso */}
+      {/* MODAL DE CONFIRMACIÓN ELIMINAR */}
       {modalEliminar && pagoSeleccionado && puedeEliminar() && (
         <div className="modal-overlay" onClick={() => setModalEliminar(false)}>
           <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
@@ -717,15 +696,15 @@ const PagosLista = () => {
             <h3>¿Eliminar pago?</h3>
             <p>Estás a punto de eliminar el pago de <strong>{pagoSeleccionado.cliente}</strong></p>
             <p className="advertencia">Esta acción no se puede deshacer</p>
-            
+
             <div className="modal-botones">
-              <button 
+              <button
                 className="btn-cancelar"
                 onClick={() => setModalEliminar(false)}
               >
                 Cancelar
               </button>
-              <button 
+              <button
                 className="btn-confirmar-eliminar"
                 onClick={handleEliminar}
               >

@@ -1,5 +1,5 @@
-// EmpenosLista.jsx - VERSIÓN CORREGIDA + IMAGEN
-import React, { useState, useEffect } from "react";
+// EmpenosLista.jsx - corregido + imagen + caché (useListaCache)
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import "./Empenos.css";
@@ -9,13 +9,54 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
 import api from '../config/api';
-import AgregarImagenPrenda from '../components/AgregarImagenPrenda'; // ← NUEVO (ajusta la ruta si tu carpeta es distinta)
+import AgregarImagenPrenda from '../components/AgregarImagenPrenda'; // ajusta la ruta si tu carpeta es distinta
+import useListaCache from "../hooks/useListaCache";
+
+// Fetcher FUERA del componente (referencia estable): trae y formatea los empeños
+const obtenerEmpenosFormateados = async () => {
+  const response = await api.get('/empenos/todos');
+  if (!response.data.success) {
+    throw new Error('Respuesta inválida del servidor');
+  }
+
+  // El backend ya viene ordenado: no se hace sort manual
+  return response.data.data.map(emp => ({
+    id: emp.id_empeno,
+    id_prenda: emp.id_prenda,
+    imagen: emp.imagen_url || null,
+    cliente: emp.cliente || 'Cliente no disponible',
+    objeto: emp.articulo || 'Sin artículo',
+    monto: emp.monto_prestado ? emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00',
+    interes: emp.intereses || 0,
+    fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
+    vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
+    estado: emp.estado || 'activo',
+    saldo_pendiente: emp.saldo_total_pendiente || 0,
+    saldo_cuota: emp.saldo_pendiente_cuota || 0,
+    total_pagado: emp.total_pagado || 0,
+    dias_vencidos: emp.dias_vencidos || 0,
+    cliente_id: emp.id_cliente || null,
+    material: emp.material || 'No especificado'
+  }));
+};
 
 const EmpenosLista = () => {
   const navigate = useNavigate();
-  const [empenos, setEmpenos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+
+  // ============================================
+  // DATOS CON CACHÉ (TTL corto: saldos y estados "vencido" cambian seguido)
+  // ============================================
+  const {
+    data: empenos,
+    setData: setEmpenos,
+    cargando: loading,
+    error: errorCarga,
+    recargar: cargarTodosEmpenos
+  } = useListaCache('empenos', obtenerEmpenosFormateados, { ttl: 2 * 60 * 1000 });
+
+  const error = errorCarga ? 'No se pudieron cargar los empeños' : null;
+
+  // Estado de UI
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [empenoSeleccionado, setEmpenoSeleccionado] = useState(null);
@@ -26,58 +67,14 @@ const EmpenosLista = () => {
   const [nombreCliente, setNombreCliente] = useState("");
   const [material, setMaterial] = useState("");
 
-  // Estados para paginación
+  // Paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const empenosPorPagina = 8;
 
-  // Cargar todos los empeños
-// EmpenosLista.jsx - Al cargar los empeños
-// EmpenosLista.jsx - cargarTodosEmpenos
-const cargarTodosEmpenos = async () => {
-    try {
-        setLoading(true);
-        const response = await api.get('/empenos/todos');
-        if (response.data.success) {
-            const empenosFormateados = response.data.data.map(emp => ({
-                id: emp.id_empeno,
-                id_prenda: emp.id_prenda,
-                imagen: emp.imagen_url || null,
-                cliente: emp.cliente || 'Cliente no disponible',
-                objeto: emp.articulo || 'Sin artículo',
-                monto: emp.monto_prestado ? emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00',
-                interes: emp.intereses || 0,
-                fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
-                vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
-                estado: emp.estado || 'activo',
-                saldo_pendiente: emp.saldo_total_pendiente || 0,
-                saldo_cuota: emp.saldo_pendiente_cuota || 0,
-                total_pagado: emp.total_pagado || 0,
-                dias_vencidos: emp.dias_vencidos || 0,
-                cliente_id: emp.id_cliente || null,
-                material: emp.material || 'No especificado'
-            }));
-            
-            // ✅ EL BACKEND YA ESTÁ ORDENADO, NO HACER SORT MANUAL
-            setEmpenos(empenosFormateados);
-        }
-    } catch (error) {
-        console.error('Error al cargar empeños:', error);
-        setError('No se pudieron cargar los empeños');
-    } finally {
-        setLoading(false);
-    }
-};
-
-  useEffect(() => {
-    cargarTodosEmpenos();
-  }, []);
-
-  // ← NUEVO: actualiza la imagen de una fila sin recargar todo el listado
+  // Actualiza la imagen de una fila sin recargar todo el listado (y mantiene la caché al día)
   const actualizarImagenLocal = (idEmpeno, nuevaUrl) => {
     setEmpenos(prev => prev.map(e => e.id === idEmpeno ? { ...e, imagen: nuevaUrl } : e));
   };
-
-
 
   // Filtrar empeños por estado
   const empenosFiltrados = empenos.filter((e) => {
@@ -121,24 +118,20 @@ const cargarTodosEmpenos = async () => {
   };
 
   // Guardar cambios (solo nombre y material)
+  // ⚠️ PENDIENTE: esto solo modifica el estado local y NO llama al backend.
+  // Antes el cambio se perdía al recargar; ahora se quedaría en la caché unos minutos.
+  // Falta agregar aquí un `await api.put(...)` con el endpoint real antes de actualizar el estado.
   const guardarCambios = async () => {
     if (!nombreCliente.trim() || !empenoSeleccionado) return;
 
     try {
       setEditando(true);
 
-      const empenosActualizados = empenos.map(emp => {
-        if (emp.id === empenoSeleccionado.id) {
-          return {
-            ...emp,
-            cliente: nombreCliente,
-            material: material
-          };
-        }
-        return emp;
-      });
-
-      setEmpenos(empenosActualizados);
+      setEmpenos(prev => prev.map(emp =>
+        emp.id === empenoSeleccionado.id
+          ? { ...emp, cliente: nombreCliente, material: material }
+          : emp
+      ));
 
       setEmpenoSeleccionado({
         ...empenoSeleccionado,
@@ -147,7 +140,6 @@ const cargarTodosEmpenos = async () => {
       });
 
       cerrarModalEditar();
-
     } catch (error) {
       console.error('Error al actualizar:', error);
       alert('Error al actualizar los datos');
@@ -185,7 +177,7 @@ const cargarTodosEmpenos = async () => {
     return numeros;
   };
 
-  // Estado de carga
+  // Estado de carga (solo cuando NO hay datos en caché)
   if (loading) {
     return (
       <div className="dashboard">
@@ -210,7 +202,7 @@ const cargarTodosEmpenos = async () => {
           </div>
           <div className="tabla-card">
             <p style={{ color: 'red', textAlign: 'center', padding: '40px' }}>{error}</p>
-            <button onClick={cargarTodosEmpenos} style={{ margin: '0 auto', display: 'block', padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+            <button onClick={() => cargarTodosEmpenos()} style={{ margin: '0 auto', display: 'block', padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
               Reintentar
             </button>
           </div>

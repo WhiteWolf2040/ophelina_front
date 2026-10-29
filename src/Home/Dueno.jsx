@@ -1,4 +1,4 @@
-// src/Home/Dueno.jsx - VERSIÓN COMPLETA CON TOOLBAR REFRESCAR
+// src/Home/Dueno.jsx - VERSIÓN CORREGIDA
 import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
 import "./dueno.css";
@@ -23,7 +23,51 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import AreaChartIcon from '@mui/icons-material/AreaChart';
-import RefreshIcon from '@mui/icons-material/Refresh'; // ✅ NUEVO
+// import RefreshIcon from '@mui/icons-material/Refresh'; // Solo si activas el toolbar
+
+// ============================================
+// HELPERS (fuera del componente: no se recrean en cada render)
+// ============================================
+const parseFecha = (fecha) => {
+  if (!fecha) return null;
+  // "YYYY-MM-DD" se interpreta como UTC y en México se ve un día antes.
+  // Agregar la hora fuerza interpretación en hora local.
+  if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    return new Date(fecha + 'T00:00:00');
+  }
+  const d = new Date(fecha);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+const formatFecha = (fecha) => {
+  if (!fecha || fecha === 'Invalid Date') return 'Sin pagos';
+  // Si ya viene como dd/mm/yyyy desde el backend, se respeta
+  if (typeof fecha === 'string' && fecha.includes('/')) return fecha;
+  const d = parseFecha(fecha);
+  return d ? d.toLocaleDateString('es-MX') : 'Sin pagos';
+};
+
+const formatearMoneda = (monto) =>
+  new Intl.NumberFormat('es-MX', {
+    style: 'currency', currency: 'MXN', minimumFractionDigits: 2
+  }).format(Number(monto) || 0);
+
+const formatearPorcentaje = (valor) =>
+  new Intl.NumberFormat('es-MX', {
+    style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2
+  }).format((Number(valor) || 0) / 100);
+
+// Eje Y: evita "$0k" cuando el valor es menor a 1,000
+const formatEjeY = (val) =>
+  Math.abs(val) >= 1000 ? `$${(val / 1000).toFixed(0)}k` : `$${Math.round(val)}`;
+
+const leerRolInicial = () => {
+  try {
+    const userStr = localStorage.getItem('user');
+    if (userStr) return JSON.parse(userStr).rol || 'Empleado';
+  } catch (e) { /* ignorar */ }
+  return '';
+};
 
 const Dueno = () => {
   // ============================================
@@ -34,30 +78,25 @@ const Dueno = () => {
     cargando,
     error,
     cargar,
-    refrescar,           // ✅ NUEVO
-    edadCache,           // ✅ NUEVO
-    cacheEsValido,       // ✅ NUEVO
-    invalidado,          // ✅ NUEVO
-    ultimaActualizacion  // ✅ NUEVO
+    refrescar,
+    edadCache,
+    invalidado
   } = useDashboard();
 
   // ============================================
-  // ✅ NUEVO: ESTADOS LOCALES DEL TOOLBAR
+  // TOOLBAR DE REFRESCAR (opcional, ver bloque comentado en el render)
   // ============================================
   const [refrescandoManual, setRefrescandoManual] = useState(false);
 
-  // Tick para forzar re-render cada 60s (para "hace X min")
   const [, setTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 60000);
     return () => clearInterval(id);
   }, []);
 
-  // Minutos desde la última actualización
   const minutosDesde =
-    edadCache !== null ? Math.floor(edadCache / 60000) : null;
+    edadCache !== null && edadCache !== undefined ? Math.floor(edadCache / 60000) : null;
 
-  // Handler del botón refrescar
   const handleRefrescarManual = async () => {
     setRefrescandoManual(true);
     try {
@@ -80,7 +119,7 @@ const Dueno = () => {
   const dashboardData = data?.dashboard || {
     resumen: {
       empenos_activos: 0, empenos_vencidos: 0, proximos_vencer: 0,
-      ingresos_recientes: 0, precio_oro: 850,
+      ingresos_recientes: 0, precio_oro: null,
       total_clientes: 0, prendas_disponibles: 0
     },
     top_clientes: [], top_articulos: [],
@@ -91,12 +130,14 @@ const Dueno = () => {
   const amortizacionesPendientes = data?.amortizaciones || [];
 
   // ============================================
-  // GRÁFICAS: construir series desde capital_retorno
+  // GRÁFICAS: series desde capital_retorno
   // ============================================
   const capitalRetorno = dashboardData.capital_retorno || [];
-  const capitalAcumulado = capitalRetorno.map(i => Number(i.capital));
-  const retornoAcumulado = capitalRetorno.map(i => Number(i.retorno));
-  const gananciaAcumulada = capitalRetorno.map(i => Number(i.ganancia));
+  const capitalAcumulado = capitalRetorno.map(i => Number(i.capital) || 0);
+  const retornoAcumulado = capitalRetorno.map(i => Number(i.retorno) || 0);
+  const gananciaAcumulada = capitalRetorno.map(i => Number(i.ganancia) || 0);
+  // Ingreso de cada mes (no acumulado) para la gráfica de tendencia
+  const retornoMensual = capitalRetorno.map(i => Number(i.retorno_mes) || 0);
   const meses = capitalRetorno.map(i => i.mes);
 
   // ============================================
@@ -152,6 +193,7 @@ const Dueno = () => {
 
   useEffect(() => {
     verificarSuscripcion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ============================================
@@ -160,9 +202,9 @@ const Dueno = () => {
   const [showActivos, setShowActivos] = useState(false);
   const [showVencidos, setShowVencidos] = useState(false);
   const [showProximos, setShowProximos] = useState(false);
-  const [showIngresos, setShowIngresos] = useState(false);
   const [showPrecioOroModal, setShowPrecioOroModal] = useState(false);
-  const [userRole, setUserRole] = useState('');
+  // Se inicializa desde localStorage para que las gráficas de admin no aparezcan con retraso
+  const [userRole, setUserRole] = useState(leerRolInicial);
 
   const [preciosQuilates, setPreciosQuilates] = useState({
     precio_24k: 0, precio_22k: 0, precio_21k: 0,
@@ -173,14 +215,14 @@ const Dueno = () => {
   const [empenosActivos, setEmpenosActivos] = useState([]);
   const [empenosVencidos, setEmpenosVencidos] = useState([]);
   const [proximosVencer, setProximosVencer] = useState([]);
-  const [ingresosRecientes, setIngresosRecientes] = useState([]);
 
   // ============================================
-  // GRÁFICAS (configuración estática)
+  // GRÁFICAS (configuración)
   // ============================================
   const areaChartOptions = {
     chart: {
-      type: 'area', stacked: true,
+      type: 'area',
+      stacked: false, // las series ya son acumuladas: apilarlas suma valores sin sentido
       toolbar: {
         show: true,
         tools: {
@@ -194,17 +236,16 @@ const Dueno = () => {
     stroke: { curve: 'smooth', width: 2 },
     fill: {
       type: 'gradient',
-      gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3, stops: [0, 90, 100] }
+      gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.1, stops: [0, 90, 100] }
     },
     xaxis: {
       categories: meses,
       title: { text: 'Mes', style: { fontSize: '11px', fontWeight: 500 } },
-      labels: { rotate: -45, style: { fontSize: '10px' }, hideOverlappingLabels: true },
-      tickAmount: 5
+      labels: { rotate: -45, style: { fontSize: '10px' }, hideOverlappingLabels: true }
     },
     yaxis: {
       title: { text: '$ (pesos acumulados)', style: { fontSize: '11px', fontWeight: 500 } },
-      labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k`, style: { fontSize: '10px' } }
+      labels: { formatter: formatEjeY, style: { fontSize: '10px' } }
     },
     colors: ["#1e3a8a", "#10b981", "#f59e0b"],
     tooltip: {
@@ -227,26 +268,30 @@ const Dueno = () => {
 
   const areaChartSeries = [
     { name: "Capital Prestado (Acumulado)", data: capitalAcumulado },
-    { name: "Retorno (Pagos Acumulados)", data: retornoAcumulado },
-    { name: "Ganancia (Acumulada)", data: gananciaAcumulada }
+    { name: "Pagos Recibidos (Acumulado)", data: retornoAcumulado },
+    { name: "Intereses Cobrados (Acumulado)", data: gananciaAcumulada }
   ];
 
   const trendChartOptions = {
     chart: { type: "line", toolbar: { show: false } },
     xaxis: { categories: meses, title: { text: 'Mes' } },
     yaxis: {
-      title: { text: '$ (pesos)' },
-      labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k` }
+      title: { text: '$ (pesos por mes)' },
+      labels: { formatter: formatEjeY }
     },
     colors: ["#10b981"],
     stroke: { width: 3, curve: 'smooth' },
-    tooltip: { y: { formatter: (val) => `$${val.toLocaleString()}` } }
+    markers: { size: 4 },
+    tooltip: {
+      y: { formatter: (val) => formatearMoneda(val) }
+    }
   };
 
-  const trendChartSeries = [{ name: "Retorno Total", data: retornoAcumulado }];
+  const trendChartSeries = [{ name: "Ingresos del mes", data: retornoMensual }];
 
-  const distribucionSeries = distribucion.map(item => item.total);
+  const distribucionSeries = distribucion.map(item => Number(item.total) || 0);
   const distribucionLabels = distribucion.map(item => item.categoria);
+  const hayDistribucion = distribucionSeries.some(v => v > 0);
 
   const categoriaDistribucionOptions = {
     chart: { type: "donut" },
@@ -271,37 +316,10 @@ const Dueno = () => {
   };
 
   // ============================================
-  // FUNCIONES AUXILIARES
-  // ============================================
-  const formatearMoneda = (monto) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency', currency: 'MXN', minimumFractionDigits: 2
-    }).format(monto || 0);
-  };
-
-  const formatearPorcentaje = (valor) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2
-    }).format((valor || 0) / 100);
-  };
-
-  const formatFecha = (fecha) => {
-    if (!fecha || fecha === '' || fecha === 'Invalid Date') return 'Sin pagos';
-    try {
-      if (typeof fecha === 'string' && fecha.includes('/')) return fecha;
-      const date = new Date(fecha);
-      if (isNaN(date.getTime())) return 'Sin pagos';
-      return date.toLocaleDateString('es-MX');
-    } catch (e) {
-      return 'Sin pagos';
-    }
-  };
-
-  // ============================================
   // ROLES
   // ============================================
-  const esAdmin = () => userRole === 'Administrador' || userRole === 'Dueño' || userRole === 'Admin';
-  const esGerente = () => userRole === 'Gerente' || userRole === 'gerente' || userRole === 'GERENTE';
+  const esAdmin = () => ['Administrador', 'Dueño', 'Admin'].includes(userRole);
+  const esGerente = () => ['Gerente', 'gerente', 'GERENTE'].includes(userRole);
   const puedeVerEvolucionAcumulada = () => esAdmin();
   const puedeVerGraficasBasicas = () => esAdmin() || esGerente();
 
@@ -310,11 +328,6 @@ const Dueno = () => {
   // ============================================
   const cargarRolUsuario = async () => {
     try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        setUserRole(user.rol || 'Empleado');
-      }
       const response = await api.get('/user');
       if (response.data.success) {
         const user = response.data.data.usuario;
@@ -382,43 +395,36 @@ const Dueno = () => {
     }
   };
 
-  const cargarIngresos = async () => {
-    try {
-      setIngresosRecientes([
-        { id: 1, concepto: "Pago de Juan Pérez", monto: 5000, fecha: "10/03/2024" },
-        { id: 2, concepto: "Pago de María García", monto: 3500, fecha: "09/03/2024" }
-      ]);
-      setShowIngresos(true);
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
   // ============================================
   // MODAL DE PAGO
   // ============================================
-  const handlePaymentSuccess = (data) => {
-    console.log('Pago exitoso:', data);
-    verificarSuscripcion();
-    setTimeout(() => {
-      setShowPaymentModal(false);
-      localStorage.removeItem('pending_plan_id');
-      localStorage.removeItem('pending_plan_name');
-      localStorage.removeItem('pending_plan_price');
-    }, 2000);
-  };
-
-  const handleClosePaymentModal = () => {
-    setShowPaymentModal(false);
+  const limpiarPlanPendiente = () => {
     localStorage.removeItem('pending_plan_id');
     localStorage.removeItem('pending_plan_name');
     localStorage.removeItem('pending_plan_price');
   };
 
+  const handlePaymentSuccess = (data) => {
+    console.log('Pago exitoso:', data);
+    verificarSuscripcion();
+    setTimeout(() => {
+      setShowPaymentModal(false);
+      limpiarPlanPendiente();
+    }, 2000);
+  };
+
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+    limpiarPlanPendiente();
+  };
+
   // ============================================
-  // LOADING
+  // LOADING / ERROR
   // ============================================
-  if (cargando && !data) {
+  // `cargando` empieza en false, así que en el primer render (antes de que corra
+  // el useEffect) se pintaba el dashboard vacío con ceros. Mientras no haya datos
+  // ni error, se muestra "Cargando...".
+  if (!data && !error) {
     return (
       <div className="dashboard">
         <div className="content">
@@ -448,6 +454,8 @@ const Dueno = () => {
     );
   }
 
+  const precioOro = dashboardData.resumen?.precio_oro;
+
   // ============================================
   // RENDER
   // ============================================
@@ -455,7 +463,7 @@ const Dueno = () => {
     <div className="dashboard">
       <div className="content">
 
-        {/* ✅ NUEVO: TOOLBAR CON REFRESH 
+        {/* TOOLBAR CON REFRESH (descomenta junto con el import de RefreshIcon)
         <div className="dashboard-toolbar">
           <span className="dashboard-freshness">
             {minutosDesde === null
@@ -497,16 +505,22 @@ const Dueno = () => {
             <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
           </div>
 
-          <div className="stat-card" onClick={cargarIngresos}>
+          {/* Sin onClick: el modal de ingresos no existía y usaba datos falsos */}
+          <div className="stat-card">
             <AttachMoneyIcon className="card-icon" />
             <h3>Ingresos Recientes</h3>
-            <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
+            <p className="stat-number">{formatearMoneda(dashboardData.resumen?.ingresos_recientes)}</p>
+            <small style={{ fontSize: '10px', color: '#666', display: 'block', marginTop: '5px' }}>
+              Últimos 15 días
+            </small>
           </div>
 
           <div className="stat-card gold-card" onClick={() => setShowPrecioOroModal(true)}>
             <MonetizationOnIcon className="card-icon" />
             <h3>Precio del Oro</h3>
-            <p className="stat-number">${dashboardData.resumen?.precio_oro || 850} / gramo</p>
+            <p className="stat-number">
+              {precioOro != null ? `$${Number(precioOro).toLocaleString('es-MX')} / gramo` : 'No disponible'}
+            </p>
             {dashboardData.resumen?.ultima_actualizacion_oro && (
               <small style={{ fontSize: '10px', color: '#666', display: 'block', marginTop: '5px' }}>
                 Actualizado: {new Date(dashboardData.resumen.ultima_actualizacion_oro).toLocaleDateString('es-MX')}
@@ -518,12 +532,16 @@ const Dueno = () => {
         {/* GRÁFICAS */}
         {puedeVerEvolucionAcumulada() && (
           <div className="chart-section">
-            <h2><AreaChartIcon /> Evolución Acumulada (Capital vs Retorno vs Ganancia)</h2>
+            <h2><AreaChartIcon /> Evolución Acumulada del Año (Capital, Pagos e Intereses)</h2>
             <p className="chart-subtitle">
-              El área muestra el crecimiento total del negocio - La diferencia entre Capital y Retorno es la ganancia acumulada
+              Capital prestado vs pagos recibidos vs intereses cobrados, acumulados mes a mes
             </p>
             <div className="chart-wrapper">
-              <Chart options={areaChartOptions} series={areaChartSeries} type="area" height={chartHeight} />
+              {capitalRetorno.length > 0 ? (
+                <Chart options={areaChartOptions} series={areaChartSeries} type="area" height={chartHeight} />
+              ) : (
+                <div style={{ textAlign: 'center', padding: 40 }}>Sin datos en lo que va del año</div>
+              )}
             </div>
           </div>
         )}
@@ -531,13 +549,21 @@ const Dueno = () => {
         {puedeVerGraficasBasicas() && (
           <div className="nuevas-graficas-grid">
             <div className="grafica-nueva-card">
-              <h2><TrendingUpIcon /> Tendencia de Ingresos</h2>
-              <Chart options={trendChartOptions} series={trendChartSeries} type="line" height={smallChartHeight} />
+              <h2><TrendingUpIcon /> Tendencia de Ingresos (por mes)</h2>
+              {capitalRetorno.length > 0 ? (
+                <Chart options={trendChartOptions} series={trendChartSeries} type="line" height={smallChartHeight} />
+              ) : (
+                <div style={{ textAlign: 'center', padding: 40 }}>Sin datos</div>
+              )}
             </div>
 
             <div className="grafica-nueva-card">
               <h2><PieChartIcon /> Distribución por Categoría</h2>
-              <Chart options={categoriaDistribucionOptions} series={distribucionSeries} type="donut" height={smallChartHeight} />
+              {hayDistribucion ? (
+                <Chart options={categoriaDistribucionOptions} series={distribucionSeries} type="donut" height={smallChartHeight} />
+              ) : (
+                <div style={{ textAlign: 'center', padding: 40 }}>Sin empeños este año</div>
+              )}
             </div>
           </div>
         )}
@@ -559,12 +585,13 @@ const Dueno = () => {
                     <td><strong>{cliente.nombre}</strong></td>
                     <td>{cliente.empenos}</td>
                     <td>{formatearMoneda(cliente.monto_total)}</td>
-                    <td className="profit-text">{formatearMoneda(cliente.ganancia_generada || (cliente.monto_total * 0.15))}</td>
-                    <td><span className="profit-badge">+{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}</span></td>
+                    {/* ?? en lugar de ||: un 0 real no debe reemplazarse por un valor inventado */}
+                    <td className="profit-text">{formatearMoneda(cliente.ganancia_generada ?? 0)}</td>
+                    <td><span className="profit-badge">+{formatearPorcentaje(cliente.porcentaje_ganancia ?? 0)}</span></td>
                     <td>{formatFecha(cliente.ultimo_empeno)}</td>
                   </tr>
                 ))}
-                {dashboardData.top_clientes?.length === 0 && (
+                {(!dashboardData.top_clientes || dashboardData.top_clientes.length === 0) && (
                   <tr><td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td></tr>
                 )}
               </tbody>
@@ -585,17 +612,17 @@ const Dueno = () => {
               </thead>
               <tbody>
                 {morosidad.map((item, index) => {
-                  let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
+                  let porcentaje = item.porcentaje_perdida ?? ((item.deuda / (item.total_prestado || 1)) * 100);
                   if (porcentaje > 100) porcentaje = 100;
                   return (
                     <tr key={index}>
                       <td><strong>{item.nombre}</strong></td>
                       <td>{formatearMoneda(item.total_prestado)}</td>
                       <td className="loss-text">{formatearMoneda(item.deuda)}</td>
-                      <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
-                      <td><span className="loss-badge">-{porcentaje.toFixed(2)}%</span></td>
-                      <td><span className="badge-danger">{Math.floor(item.dias_mora)} días</span></td>
-                      <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' ? formatFecha(item.ultimo_pago) : 'Sin registro'}</td>
+                      <td className="loss-text">{formatearMoneda(item.perdida_proyectada ?? item.deuda)}</td>
+                      <td><span className="loss-badge">-{Number(porcentaje).toFixed(2)}%</span></td>
+                      <td><span className="badge-danger">{Math.floor(item.dias_mora || 0)} días</span></td>
+                      <td>{item.ultimo_pago ? formatFecha(item.ultimo_pago) : 'Sin registro'}</td>
                     </tr>
                   );
                 })}
@@ -612,7 +639,7 @@ const Dueno = () => {
           <div className="nueva-seccion">
             <h2>
               <AssignmentIcon /> Amortizaciones Pendientes
-              <span className="seccion-badge">{amortizacionesPendientes.length} registros</span>
+              <span className="seccion-badge">Mostrando las {amortizacionesPendientes.length} más antiguas</span>
             </h2>
             <div className="tabla-container">
               <table className="tabla-moderna">
@@ -633,7 +660,7 @@ const Dueno = () => {
                         <td>{item.articulo}</td>
                         <td><span className="folio-badge">{item.folio}</span></td>
                         <td>{item.numero_pago}</td>
-                        <td>{new Date(item.fecha_pago_programado).toLocaleDateString('es-MX')}</td>
+                        <td>{formatFecha(item.fecha_pago_programado)}</td>
                         <td className="monto">{formatearMoneda(item.monto_total)}</td>
                         <td className="monto-pagado">{formatearMoneda(item.monto_pagado || 0)}</td>
                         <td className="monto-restante">{formatearMoneda(item.saldo_restante)}</td>
@@ -670,7 +697,7 @@ const Dueno = () => {
                     <td>{formatearMoneda(articulo.monto_promedio)}</td>
                   </tr>
                 ))}
-                {dashboardData.top_articulos?.length === 0 && (
+                {(!dashboardData.top_articulos || dashboardData.top_articulos.length === 0) && (
                   <tr><td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td></tr>
                 )}
               </tbody>
@@ -693,12 +720,12 @@ const Dueno = () => {
                   <p><strong>{actividad.descripcion}</strong></p>
                   <small>{formatFecha(actividad.fecha)}</small>
                 </div>
-                {actividad.monto && (
+                {actividad.monto != null && (
                   <div className="actividad-monto">{formatearMoneda(actividad.monto)}</div>
                 )}
               </div>
             ))}
-            {dashboardData.actividad_reciente?.length === 0 && (
+            {(!dashboardData.actividad_reciente || dashboardData.actividad_reciente.length === 0) && (
               <div style={{ textAlign: 'center', padding: 20 }}>No hay actividad reciente</div>
             )}
           </div>
@@ -725,7 +752,7 @@ const Dueno = () => {
                         <td><strong>{item.cliente}</strong></td>
                         <td>{item.nombre}</td>
                         <td>{formatearMoneda(item.monto)}</td>
-                        <td>{item.fecha}</td>
+                        <td>{formatFecha(item.fecha)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -757,7 +784,7 @@ const Dueno = () => {
                         <td><strong>{item.cliente}</strong></td>
                         <td>{item.nombre}</td>
                         <td>{formatearMoneda(item.monto)}</td>
-                        <td>{item.fecha}</td>
+                        <td>{formatFecha(item.fecha)}</td>
                         <td><span className="badge-danger">{item.dias} días</span></td>
                       </tr>
                     ))}
@@ -790,7 +817,7 @@ const Dueno = () => {
                         <td><strong>{item.cliente}</strong></td>
                         <td>{item.nombre}</td>
                         <td>{formatearMoneda(item.monto)}</td>
-                        <td>{item.fecha}</td>
+                        <td>{formatFecha(item.fecha)}</td>
                         <td><span className="badge-warning">{item.dias} días</span></td>
                       </tr>
                     ))}
@@ -819,30 +846,22 @@ const Dueno = () => {
             </div>
             <div className="modal-body">
               <div className="quilates-grid">
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 24k</h3><p>99.9% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_24k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 22k</h3><p>91.7% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_22k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 21k</h3><p>87.5% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_21k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 18k</h3><p>75.0% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_18k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 14k</h3><p>58.5% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_14k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
-                <div className="quilate-card">
-                  <div className="quilate-info"><h3>Oro 10k</h3><p>41.7% pureza</p></div>
-                  <div className="quilate-precio"><span className="precio">${preciosQuilates.precio_10k?.toLocaleString()}</span><span className="unidad">/ gramo</span></div>
-                </div>
+                {[
+                  { k: '24k', pureza: '99.9%', precio: preciosQuilates.precio_24k },
+                  { k: '22k', pureza: '91.7%', precio: preciosQuilates.precio_22k },
+                  { k: '21k', pureza: '87.5%', precio: preciosQuilates.precio_21k },
+                  { k: '18k', pureza: '75.0%', precio: preciosQuilates.precio_18k },
+                  { k: '14k', pureza: '58.5%', precio: preciosQuilates.precio_14k },
+                  { k: '10k', pureza: '41.7%', precio: preciosQuilates.precio_10k }
+                ].map(q => (
+                  <div className="quilate-card" key={q.k}>
+                    <div className="quilate-info"><h3>Oro {q.k}</h3><p>{q.pureza} pureza</p></div>
+                    <div className="quilate-precio">
+                      <span className="precio">${Number(q.precio || 0).toLocaleString('es-MX')}</span>
+                      <span className="unidad">/ gramo</span>
+                    </div>
+                  </div>
+                ))}
               </div>
               <div className="oro-nota">
                 <small>ℹ️ Los precios son referenciales basados en el precio del oro de 24k.</small>

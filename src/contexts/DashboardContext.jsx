@@ -12,13 +12,47 @@ const AUTO_REFRESH_MS = 10 * 60 * 1000;       // 10 min para auto-refresh
 
 export const DashboardProvider = ({ children }) => {
   // ============================================
-  // ESTADO DEL CACHÉ
+  // ESTADO DEL CACHÉ DEL DASHBOARD
   // ============================================
   const [data, setData] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
   const [ultimaActualizacion, setUltimaActualizacion] = useState(null);
   const [invalidado, setInvalidado] = useState(false);
+
+  // ============================================
+  // CACHÉ DE CLIENTES (usada por ClientesLista)
+  // ============================================
+  const [clientesCache, setClientesCache] = useState({ data: null, timestamp: 0 });
+
+  // ============================================
+  // CACHÉ GENÉRICA PARA CUALQUIER LISTA (usada por useListaCache)
+  // Se guarda en un ref: no provoca re-renders al escribir.
+  // Formato: { pagos: { data: [...], timestamp: 123 }, empenos: {...} }
+  // ============================================
+  const listasCacheRef = useRef({});
+
+  const getCache = useCallback((key) => listasCacheRef.current[key] || null, []);
+
+  const setCache = useCallback((key, lista) => {
+    listasCacheRef.current[key] = { data: lista, timestamp: Date.now() };
+  }, []);
+
+  // Invalida una lista y todas sus variantes por filtros:
+  //   invalidarCache('reportes') borra 'reportes', 'reportes:kpis',
+  //   'reportes:empenos:2026-10-01:2026-10-27', etc.
+  // Sin argumento borra todas las cachés.
+  const invalidarCache = useCallback((key) => {
+    if (!key) {
+      listasCacheRef.current = {};
+      return;
+    }
+    Object.keys(listasCacheRef.current).forEach((k) => {
+      if (k === key || k.startsWith(`${key}:`)) {
+        delete listasCacheRef.current[k];
+      }
+    });
+  }, []);
 
   // ============================================
   // REFS (control de concurrencia)
@@ -51,11 +85,18 @@ export const DashboardProvider = ({ children }) => {
     const miPeticion = ++requestIdRef.current;
     enProgresoRef.current = true;
 
+    // El backend cachea la respuesta 90s por empresa. Si el refresco es manual
+    // o los datos fueron invalidados (por ejemplo, se registró un pago), hay que
+    // pedirle que ignore ese caché; si no, devolvería los datos viejos.
+    const saltarCacheServidor = forzar || invalidado;
+
     try {
       setCargando(true);
       setError(null);
 
-      const response = await api.get('/home/completo');
+      const response = await api.get('/home/completo', {
+        params: saltarCacheServidor ? { refresh: 1 } : undefined
+      });
       if (miPeticion !== requestIdRef.current) return;
 
       if (response.data.success) {
@@ -75,7 +116,7 @@ export const DashboardProvider = ({ children }) => {
         enProgresoRef.current = false;
       }
     }
-  }, [cacheEsValido]);
+  }, [cacheEsValido, invalidado]);
 
   // ============================================
   // REFRESCAR (forzar recarga)
@@ -99,7 +140,16 @@ export const DashboardProvider = ({ children }) => {
     setUltimaActualizacion(null);
     setInvalidado(false);
     setError(null);
-    requestIdRef.current++;
+    setClientesCache({ data: null, timestamp: 0 }); // limpia también la caché de clientes
+    listasCacheRef.current = {};                    // limpia la caché genérica (pagos, etc.)
+    requestIdRef.current++;                         // descarta cualquier respuesta en vuelo
+
+    // Si había una petición en curso, su "finally" ya no se ejecuta como vigente
+    // (el id cambió), así que estos dos valores se quedarían atascados:
+    // enProgresoRef en true bloquearía todas las cargas futuras y el dashboard
+    // se quedaría cargando para siempre después de volver a iniciar sesión.
+    enProgresoRef.current = false;
+    setCargando(false);
   }, []);
 
   // ============================================
@@ -107,14 +157,14 @@ export const DashboardProvider = ({ children }) => {
   // ============================================
   useEffect(() => {
     // Solo arranca el auto-refresh si ya hay datos cargados
-    // (evita que dispare en el primer render cuando data es null)
     if (!data) return;
 
     const interval = setInterval(() => {
-      // Solo refresca si no está ya en curso
+      // No gastar peticiones si la pestaña está en segundo plano
+      if (document.hidden) return;
       if (!enProgresoRef.current) {
         console.log('🔄 Auto-refresh del dashboard (10 min)');
-        cargar(true); // silencioso: no bloquea el render porque data ya existe
+        cargar(true);
       }
     }, AUTO_REFRESH_MS);
 
@@ -139,7 +189,14 @@ export const DashboardProvider = ({ children }) => {
     cargar,
     refrescar,
     invalidar,
-    limpiar
+    limpiar,
+    // Caché de clientes
+    clientesCache,
+    setClientesCache,
+    // Caché genérica de listas
+    getCache,
+    setCache,
+    invalidarCache
   };
 
   return (
