@@ -1,8 +1,8 @@
-// OpheliaLogin.jsx - CON CONTEXT API
-import React, { useState, useEffect } from "react";
+// OpheliaLogin.jsx - VERSIÓN CORREGIDA
+import React, { useState } from "react";
 import "./OpheliaLogin.css";
 import logo from "../assets/ophelina_logo-sinFondo.png";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { login } from "../config/auth";
 import { useUser } from "../contexts/UserContext";
 
@@ -54,80 +54,63 @@ export default function OpheliaLogin() {
     try {
       const result = await login(formData.email, formData.password);
       
-      console.log('✅ Respuesta completa del login:', result);
+      // ============================================
+      // VERIFICAR ESTRUCTURA DE LA RESPUESTA
+      // ============================================
+      console.log('Respuesta completa del login:', result);
       
       if (result.success) {
+        // Obtener los datos del usuario de forma segura
         const userData = result.data?.usuario || result.data || result;
         
-        console.log('✅ Datos del usuario:', userData);
-        console.log('✅ Rol del usuario:', userData.rol);
+        console.log('Datos del usuario:', userData);
         
-        // Guardar token
-        if (result.data?.token) {
-          localStorage.setItem('token', result.data.token);
-        }
-
-        // Guardar datos en localStorage
+        // Guardar TODOS los datos del usuario en localStorage
         localStorage.setItem('user', JSON.stringify(userData));
         
+        // Guardar permisos si existen
         if (userData.permisos) {
           localStorage.setItem('permisos', JSON.stringify(userData.permisos));
         } else {
+          // Si no hay permisos, guardar array vacío
           localStorage.setItem('permisos', JSON.stringify([]));
         }
         
+        // Guardar módulos si existen
         if (userData.modulos) {
           localStorage.setItem('modulos', JSON.stringify(userData.modulos));
         } else {
           localStorage.setItem('modulos', JSON.stringify([]));
         }
         
+        // Guardar empresa_id
         if (userData.id_empresa) {
           localStorage.setItem('empresa_id', userData.id_empresa);
         }
 
-        // REFRESCAR EL CONTEXTO
-        console.log('🔄 Refrescando contexto del usuario...');
-        await refreshUserData();
-
-        // VERIFICAR PAGO PENDIENTE
-        const pendingSessionId = localStorage.getItem('pending_session_id');
-        const pendingPayment = localStorage.getItem('pending_payment');
-        
-        if (pendingSessionId && pendingPayment === 'success') {
-          console.log('💳 Pago pendiente detectado');
-          localStorage.setItem('stripe_session_id', pendingSessionId);
-          localStorage.removeItem('pending_session_id');
-          localStorage.removeItem('pending_payment');
-          
-          setLoading(false);
-          window.location.href = `/home?session_id=${pendingSessionId}&payment=success`;
-          return;
+        // Verificar si tiene token
+        if (result.data?.token) {
+          localStorage.setItem('token', result.data.token);
         }
 
-        // ==========================================
-        // REDIRECCIÓN SIMPLIFICADA POR ROL
-        // ==========================================
-        setLoading(false);
+        // Redirigir según el rol/permisos
+        const tieneDashboard = userData.permisos?.includes('ver_dashboard') || 
+                              userData.rol === 'Administrador' || 
+                              userData.rol === 'Admin' ||
+                              userData.rol === 'Dueño';
         
-        // Si es Cliente -> /homecliente
-        if (userData.rol === 'Cliente') {
-          console.log('👤 Cliente detectado - Redirigiendo a /homecliente');
-          navigate("/homecliente");
-        } 
-        // Si es Administrador, Gerente, Cajero, etc. -> /home
-        else {
-          console.log('💼 Admin/Empleado detectado - Redirigiendo a /home');
+        if (tieneDashboard) {
           navigate("/home");
+        } else {
+          navigate("/homecliente");
         }
-        
       } else {
         setError(result.message || "Error al iniciar sesión");
-        setLoading(false);
       }
     } catch (error) {
-      console.error('❌ Error en login:', error);
+      console.error('Error en login:', error);
       setError("Error de conexión. Intenta de nuevo.");
+    } finally {
       setLoading(false);
     }
   };
@@ -178,14 +161,6 @@ export default function OpheliaLogin() {
             {loading ? "Iniciando sesión..." : "Ingresar"}
           </button>
         </form>
-
-        <p className="page-link">
-          <span className="page-link-label">
-            <Link to="/register" style={{ color: "#000000", textDecoration: "underline", position: "relative", top: "2px", right: "100px" }}>
-              Regístrate
-            </Link>
-          </span>
-        </p>
       </div>
     </div>
   );

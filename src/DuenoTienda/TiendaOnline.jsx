@@ -1,9 +1,8 @@
-// TiendaOnline.jsx - Versión con subida de imagen como archivo real (FormData)
-
-import React, { useState, useEffect, useRef } from "react";
-
-import { useTienda } from "../hooks/useTienda";
+// TiendaOnline.jsx - Versión con permisos
+import React, { useState } from "react";
+import Sidebar from "../components/Sidebar";
 import "./TiendaOnline.css";
+import permissionService from "../services/permisoService"; // 👈 Importar servicio de permisos
 
 // Importar iconos de MUI
 import StorefrontIcon from '@mui/icons-material/Storefront';
@@ -28,34 +27,84 @@ import CloseIcon from '@mui/icons-material/Close';
 import ClearIcon from '@mui/icons-material/Clear';
 import BoxIcon from '@mui/icons-material/Inventory';
 import SellIcon from '@mui/icons-material/Sell';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import SettingsIcon from '@mui/icons-material/Settings';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import TimerIcon from '@mui/icons-material/Timer';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-
-// Placeholder para imágenes
-const PLACEHOLDER_IMAGE = '/placeholder.png';
+import LockIcon from '@mui/icons-material/Lock';
 
 const TiendaOnline = () => {
-  // ========== HOOK DE TIENDA ==========
-  const {
-    productos,
-    estadisticas,
-    loading,
-    error,
-    filtros,
-    setFiltros,
-    cargarProductos,
-    cargarEstadisticas,
-    crearProducto,
-    actualizarProducto,
-    toggleVisibilidad,
-    toggleDestacado,
-    eliminarProducto,
-    ejecutarPublicacionAutomatica,
-    configurarDiasGracia
-  } = useTienda();
+  // ============================================
+  // 👇 VERIFICAR PERMISOS
+  // ============================================
+  const puedeVerTienda = permissionService.hasPermission('ver_tienda');
+  const puedeCrearProductos = permissionService.hasPermission('crear_productos');
+  const puedeEditarProductos = permissionService.hasPermission('editar_productos');
+  const puedeEliminarProductos = permissionService.hasPermission('eliminar_productos');
+
+  // ============================================
+  // REDIRIGIR SI NO TIENE PERMISO PARA VER
+  // ============================================
+  if (!puedeVerTienda) {
+    window.location.href = '/dashboard';
+    return null;
+  }
+
+  // Estados para productos
+  const [productos, setProductos] = useState([
+    {
+      id: 1,
+      nombre: "Anillo de Oro 18k",
+      categoria: "Joyería",
+      precio: 8500,
+      descuento: 10,
+      stock: 3,
+      imagen: "https://via.placeholder.com/300x200?text=Anillo+Oro",
+      descripcion: "Anillo de oro 18k con grabado floral, tamaño 7",
+      estado: "Como nuevo",
+      visible: true,
+      destacado: true,
+      fechaPublicacion: "2024-02-15"
+    },
+    {
+      id: 2,
+      nombre: "Smartwatch Samsung",
+      categoria: "Electrónica",
+      precio: 3200,
+      descuento: 0,
+      stock: 1,
+      imagen: "https://via.placeholder.com/300x200?text=Smartwatch",
+      descripcion: "Smartwatch Samsung Galaxy Watch 4, 44mm, color negro",
+      estado: "Buen estado",
+      visible: true,
+      destacado: false,
+      fechaPublicacion: "2024-02-20"
+    },
+    {
+      id: 3,
+      nombre: "Collar de Plata",
+      categoria: "Joyería",
+      precio: 1800,
+      descuento: 15,
+      stock: 2,
+      imagen: "https://via.placeholder.com/300x200?text=Collar+Plata",
+      descripcion: "Collar de plata ley 925 con dije de corazón",
+      estado: "Nuevo",
+      visible: true,
+      destacado: true,
+      fechaPublicacion: "2024-02-10"
+    },
+    {
+      id: 4,
+      nombre: "Taladro Inalámbrico",
+      categoria: "Herramientas",
+      precio: 2200,
+      descuento: 0,
+      stock: 1,
+      imagen: "https://via.placeholder.com/300x200?text=Taladro",
+      descripcion: "Taladro inalámbrico 18V con batería y cargador incluidos",
+      estado: "Buen estado",
+      visible: false,
+      destacado: false,
+      fechaPublicacion: "2024-01-05"
+    }
+  ]);
 
  const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
 const CLOUDINARY_UPLOAD_PRESET = "ophelina_productos";
@@ -163,6 +212,12 @@ const subirImagenACloudinary = async (file) => {
   };
 
   const abrirNuevoProducto = () => {
+    // 👇 Validar permiso para crear
+    if (!puedeCrearProductos) {
+      alert('No tienes permiso para crear productos');
+      return;
+    }
+
     setModoEdicion(false);
     setProductoSeleccionado(null);
     setFormProducto({
@@ -182,6 +237,12 @@ const subirImagenACloudinary = async (file) => {
   };
 
   const abrirEditarProducto = (producto) => {
+    // 👇 Validar permiso para editar
+    if (!puedeEditarProductos) {
+      alert('No tienes permiso para editar productos');
+      return;
+    }
+
     setModoEdicion(true);
     setProductoSeleccionado({
       ...producto,
@@ -206,28 +267,50 @@ const subirImagenACloudinary = async (file) => {
   };
 
   const abrirDetalleProducto = (producto) => {
+    if (!puedeVerTienda) {
+      alert('No tienes permiso para ver detalles de productos');
+      return;
+    }
     setProductoSeleccionado(producto);
     setModalDetalleAbierto(true);
   };
 
   const abrirEliminarProducto = (producto) => {
+    // 👇 Validar permiso para eliminar
+    if (!puedeEliminarProductos) {
+      alert('No tienes permiso para eliminar productos');
+      return;
+    }
+
     setProductoSeleccionado(producto);
     setModalEliminarAbierto(true);
   };
 
-  const abrirModalPublicacion = () => {
-    setModalPublicacionAbierto(true);
-  };
-
-  // ✅ Cuando el usuario selecciona un archivo en el input type="file"
-  const handleImagenSeleccionada = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validación básica en el cliente (el backend también valida)
-    if (!file.type.startsWith("image/")) {
-      alert("El archivo debe ser una imagen (jpg, png, etc.)");
+  const guardarProducto = (e) => {
+    e.preventDefault();
+    
+    // 👇 Validar permiso para crear/editar
+    if (!puedeCrearProductos && !puedeEditarProductos) {
+      alert('No tienes permiso para guardar productos');
       return;
+    }
+    
+    if (modoEdicion) {
+      setProductos(productos.map(p => 
+        p.id === productoSeleccionado.id 
+          ? { ...formProducto, id: p.id, precio: Number(formProducto.precio), descuento: Number(formProducto.descuento), stock: Number(formProducto.stock) }
+          : p
+      ));
+    } else {
+      const nuevoProducto = {
+        ...formProducto,
+        id: productos.length + 1,
+        precio: Number(formProducto.precio),
+        descuento: Number(formProducto.descuento),
+        stock: Number(formProducto.stock),
+        fechaPublicacion: new Date().toISOString().split('T')[0]
+      };
+      setProductos([...productos, nuevoProducto]);
     }
     if (file.size > 5 * 1024 * 1024) {
       alert("La imagen no debe superar los 5MB");
@@ -284,9 +367,14 @@ const handleGuardarProducto = async (e) => {
   }
 };
 
-const handleEliminarProducto = async () => {
-  try {
-    await eliminarProducto(productoSeleccionado.id_producto);
+  const eliminarProducto = () => {
+    // 👇 Validar permiso para eliminar
+    if (!puedeEliminarProductos) {
+      alert('No tienes permiso para eliminar productos');
+      return;
+    }
+
+    setProductos(productos.filter(p => p.id !== productoSeleccionado.id));
     setModalEliminarAbierto(false);
     setProductoSeleccionado(null);
     // ✅ QUITADO: await cargarProductos(); await cargarEstadisticas();
@@ -337,15 +425,28 @@ const handleToggleVisible = async (id) => {
     }
   };
 
-  const handleConfigurarDiasGracia = async () => {
-    try {
-      await configurarDiasGracia(diasGracia);
-      alert(`✅ Días de gracia configurados a ${diasGracia} días`);
-      setMostrarConfiguracion(false);
-    } catch (err) {
-      console.error("Error configurando días de gracia:", err);
-      alert("Error al configurar días de gracia: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
+  const toggleVisible = (id) => {
+    // 👇 Validar permiso para editar (cambiar visibilidad es una edición)
+    if (!puedeEditarProductos) {
+      alert('No tienes permiso para cambiar la visibilidad del producto');
+      return;
     }
+
+    setProductos(productos.map(p => 
+      p.id === id ? { ...p, visible: !p.visible } : p
+    ));
+  };
+
+  const toggleDestacado = (id) => {
+    // 👇 Validar permiso para editar (cambiar destacado es una edición)
+    if (!puedeEditarProductos) {
+      alert('No tienes permiso para destacar productos');
+      return;
+    }
+
+    setProductos(productos.map(p => 
+      p.id === id ? { ...p, destacado: !p.destacado } : p
+    ));
   };
 
   const handleInputChange = (e) => {
@@ -367,30 +468,22 @@ const handleToggleVisible = async (id) => {
     <div className="dashboard">
       <div className="content tienda-content">
         {/* HEADER */}
-        <div>
+        <div className="tienda-header">
           <h1>
             <StorefrontIcon className="title-icon" />
             Tienda Online
             <p className="header-sub">Gestiona los productos en venta</p>
           </h1>
 
-          <div className="header-actions">
-            <button
-              className="btn-publicacion-auto"
-              onClick={abrirModalPublicacion}
-              title="Publicación automática de productos vencidos"
-            >
-              <AutoAwesomeIcon />
-              Publicación Automática
-            </button>
-            <button
-              className="btn-nuevo-producto"
-              onClick={abrirNuevoProducto}
-            >
+          {/* ============================================ */}
+          {/* 👇 BOTÓN NUEVO PRODUCTO - SOLO CON PERMISO crear_productos */}
+          {/* ============================================ */}
+          {puedeCrearProductos && (
+            <button className="btn-nuevo-producto" onClick={abrirNuevoProducto}>
               <AddIcon />
               Nuevo Producto
             </button>
-          </div>
+          )}
         </div>
 
         {/* ESTADÍSTICAS */}
@@ -576,67 +669,75 @@ const handleToggleVisible = async (id) => {
                       <CategoryIcon fontSize="small" />
                       {producto.categoria || 'Sin categoría'}
                     </span>
-
-                    <div className="producto-precios">
-                      {producto.descuento > 0 ? (
-                        <>
-                          <span className="precio-original">${formatPrice(producto.precio)}</span>
-                          <span className="precio-descuento">
-                            ${formatPrice(producto.precio * (1 - producto.descuento / 100))}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="precio-normal">${formatPrice(producto.precio)}</span>
-                      )}
-                    </div>
-
-                    <div className="producto-detalles">
-                      <span className={`estado-badge estado-${(producto.estado_producto || producto.estado || 'buen-estado').toLowerCase().replace(/\s+/g, '-')}`}>
-                        {producto.estado_producto || producto.estado || 'Buen estado'}
-                      </span>
-                      <span className="producto-stock">
-                        <BoxIcon fontSize="small" />
-                        Stock: {producto.stock || 0}
-                      </span>
-                    </div>
-
-                    <div className="producto-acciones">
-                      <button
-                        className="btn-accion ver"
-                        onClick={() => abrirDetalleProducto(producto)}
-                        title="Ver detalles"
-                      >
-                        <VisibilityIcon />
-                      </button>
-                      <button
+                    <span className="producto-stock">
+                      <BoxIcon fontSize="small" />
+                      Stock: {producto.stock}
+                    </span>
+                  </div>
+                  
+                  <div className="producto-acciones">
+                    {/* ============================================ */}
+                    {/* BOTÓN VER - SIEMPRE VISIBLE */}
+                    {/* ============================================ */}
+                    <button 
+                      className="btn-accion ver"
+                      onClick={() => abrirDetalleProducto(producto)}
+                      title="Ver detalles"
+                    >
+                      <VisibilityIcon />
+                    </button>
+                    
+                    {/* ============================================ */}
+                    {/* 👇 BOTÓN EDITAR - SOLO CON PERMISO editar_productos */}
+                    {/* ============================================ */}
+                    {puedeEditarProductos && (
+                      <button 
                         className="btn-accion editar"
                         onClick={() => abrirEditarProducto(producto)}
                         title="Editar"
                       >
                         <EditIcon />
                       </button>
-                      <button
+                    )}
+                    
+                    {/* ============================================ */}
+                    {/* 👇 BOTÓN TOGGLE VISIBLE - SOLO CON PERMISO editar_productos */}
+                    {/* ============================================ */}
+                    {puedeEditarProductos && (
+                      <button 
                         className="btn-accion toggle-visible"
-                        onClick={() => handleToggleVisible(producto.id_producto)}
+                        onClick={() => toggleVisible(producto.id)}
                         title={producto.visible ? "Ocultar" : "Mostrar"}
                       >
                         {producto.visible ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       </button>
-                      <button
+                    )}
+                    
+                    {/* ============================================ */}
+                    {/* 👇 BOTÓN DESTACAR - SOLO CON PERMISO editar_productos */}
+                    {/* ============================================ */}
+                    {puedeEditarProductos && (
+                      <button 
                         className="btn-accion destacar"
-                        onClick={() => handleToggleDestacado(producto.id_producto)}
+                        onClick={() => toggleDestacado(producto.id)}
                         title={producto.destacado ? "Quitar destacado" : "Destacar"}
                       >
                         {producto.destacado ? <StarIcon /> : <StarBorderIcon />}
                       </button>
-                      <button
+                    )}
+                    
+                    {/* ============================================ */}
+                    {/* 👇 BOTÓN ELIMINAR - SOLO CON PERMISO eliminar_productos */}
+                    {/* ============================================ */}
+                    {puedeEliminarProductos && (
+                      <button 
                         className="btn-accion eliminar"
                         onClick={() => abrirEliminarProducto(producto)}
                         title="Eliminar"
                       >
                         <DeleteIcon />
                       </button>
-                    </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -738,8 +839,10 @@ const handleToggleVisible = async (id) => {
           </div>
         )}
 
-        {/* MODAL PRODUCTO (Nuevo/Editar) */}
-        {modalProductoAbierto && (
+        {/* ============================================ */}
+        {/* MODAL PRODUCTO (Nuevo/Editar) - SOLO SI TIENE PERMISO */}
+        {/* ============================================ */}
+        {modalProductoAbierto && (puedeCrearProductos || puedeEditarProductos) && (
           <div className="modal-overlay" onClick={() => setModalProductoAbierto(false)}>
             <div className="modal-producto" onClick={(e) => e.stopPropagation()}>
               <button className="modal-cerrar" onClick={() => setModalProductoAbierto(false)}>
@@ -960,9 +1063,11 @@ const handleToggleVisible = async (id) => {
           </div>
         )}
 
-        {/* MODAL DETALLE */}
-        {modalDetalleAbierto && productoSeleccionado && (
-          <div className="modal-overlay" onClick={() => setModalDetalleAbierto(false)}>
+        {/* ============================================ */}
+        {/* MODAL DETALLE PRODUCTO */}
+        {/* ============================================ */}
+        {modalEditarAbierto && productoSeleccionado && (
+          <div className="modal-overlay" onClick={() => setModalEditarAbierto(false)}>
             <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
               <button className="modal-cerrar" onClick={() => setModalDetalleAbierto(false)}>
                 <CloseIcon />
@@ -1078,28 +1183,45 @@ const handleToggleVisible = async (id) => {
                 </div>
               </div>
 
+              {/* ============================================ */}
+              {/* 👇 ACCIONES DEL MODAL CON PERMISOS */}
+              {/* ============================================ */}
               <div className="modal-acciones">
-                <button
-                  className="btn-editar"
-                  onClick={() => {
-                    setModalDetalleAbierto(false);
-                    abrirEditarProducto(productoSeleccionado);
-                  }}
-                >
-                  <EditIcon />
-                  Editar
-                </button>
-                <button
-                  className="btn-eliminar"
-                  onClick={() => {
-                    setModalDetalleAbierto(false);
-                    abrirEliminarProducto(productoSeleccionado);
-                  }}
-                >
-                  <DeleteIcon />
-                  Eliminar
-                </button>
-                <button className="btn-cancelar" onClick={() => setModalDetalleAbierto(false)}>
+                {puedeEditarProductos && (
+                  <button 
+                    className="btn-editar"
+                    onClick={() => {
+                      setModalEditarAbierto(false);
+                      abrirEditarProducto(productoSeleccionado);
+                    }}
+                  >
+                    <EditIcon />
+                    Editar
+                  </button>
+                )}
+                
+                {puedeEliminarProductos && (
+                  <button 
+                    className="btn-eliminar"
+                    onClick={() => {
+                      setModalEditarAbierto(false);
+                      abrirEliminarProducto(productoSeleccionado);
+                    }}
+                  >
+                    <DeleteIcon />
+                    Eliminar
+                  </button>
+                )}
+
+                {/* Mostrar mensaje si no tiene permisos para modificar */}
+                {!puedeEditarProductos && !puedeEliminarProductos && (
+                  <div className="sin-permisos-modal">
+                    <LockIcon fontSize="small" /> 
+                    <span>Solo visualización - No tienes permisos para modificar</span>
+                  </div>
+                )}
+                
+                <button className="btn-cancelar" onClick={() => setModalEditarAbierto(false)}>
                   <CloseIcon />
                   Cerrar
                 </button>
@@ -1108,8 +1230,10 @@ const handleToggleVisible = async (id) => {
           </div>
         )}
 
-        {/* MODAL ELIMINAR */}
-        {modalEliminarAbierto && productoSeleccionado && (
+        {/* ============================================ */}
+        {/* 👇 MODAL ELIMINAR - SOLO SI TIENE PERMISO */}
+        {/* ============================================ */}
+        {modalEliminarAbierto && productoSeleccionado && puedeEliminarProductos && (
           <div className="modal-overlay" onClick={() => setModalEliminarAbierto(false)}>
             <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
               <div className="modal-icono">

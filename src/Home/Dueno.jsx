@@ -1,17 +1,15 @@
-// Home/Dueno.jsx - VERSIÓN FUSIONADA (Docker Base + Mejoras Local) + Endpoint consolidado
-// ============================================
-// FIX: evitar que una respuesta tardía/duplicada de /home/completo
-// (por ejemplo por React.StrictMode disparando el useEffect dos veces
-// en desarrollo) tape con una pantalla de error un dashboard que ya
-// se había cargado y mostrado correctamente.
-// ============================================
-import React, { useState, useEffect, useRef } from "react";
+// Dueno.jsx - Versión COMPLETA con permisos integrados
+import React, { useState, useEffect } from "react";
+import Sidebar from "../components/Sidebar";
 import Chart from "react-apexcharts";
 import "./dueno.css";
 import api from '../config/api';
 import { useSearchParams } from 'react-router-dom';
 import { stripeService } from '../services/stripeService';
 import PaymentModal from '../components/PaymentModal';
+import { usePermissions } from '../hooks/usePermissions';
+import PermissionGuard from '../components/PermissionGuard';
+import PermissionButton from '../components/PermissionButton';
 
 // Importar iconos de MUI
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -35,25 +33,21 @@ import AreaChartIcon from '@mui/icons-material/AreaChart';
 
 const Dueno = () => {
   // ============================================
-  // DETECCIÓN DE TAMAÑO DE PANTALLA (DESDE LOCAL)
+  // HOOK DE PERMISOS
   // ============================================
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Alturas de gráficas según el tamaño de pantalla (DESDE LOCAL)
-  const chartHeight = windowWidth < 480 ? 250 : windowWidth < 768 ? 300 : 380;
-  const smallChartHeight = windowWidth < 480 ? 200 : windowWidth < 768 ? 250 : 300;
+  const { 
+    hasPermission, 
+    hasAnyPermission, 
+    hasAllPermissions, 
+    hasModule,
+    permisos,
+    modulos,
+    userRole,
+    loading: permissionsLoading 
+  } = usePermissions();
 
   // ============================================
-  // HOOKS DE PAGO (DESDE DOCKER)
+  // HOOKS DE PAGO
   // ============================================
   const [searchParams] = useSearchParams();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -135,17 +129,19 @@ const Dueno = () => {
   const [showAlertas, setShowAlertas] = useState(false);
   const [showPerfil, setShowPerfil] = useState(false);
   const [morosidad, setMorosidad] = useState([]);
-  const [distribucionCategorias, setDistribucionCategorias] = useState({
-    series: [],
-    labels: []
-  });
-  const [userRole, setUserRole] = useState('');
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [modulosPermitidos, setModulosPermitidos] = useState([]);
   const [planInfo, setPlanInfo] = useState({ plan_id: null, plan_nombre: '' });
   const [amortizacionesPendientes, setAmortizacionesPendientes] = useState([]);
   const [loadingAmortizaciones, setLoadingAmortizaciones] = useState(false);
 
+  // Estados para datos de modales
+  const [empenosActivos, setEmpenosActivos] = useState([]);
+  const [empenosVencidos, setEmpenosVencidos] = useState([]);
+  const [proximosVencer, setProximosVencer] = useState([]);
+  const [ingresosRecientes, setIngresosRecientes] = useState([]);
+
+  // Estado para precios del oro
   const [showPrecioOroModal, setShowPrecioOroModal] = useState(false);
   const [preciosQuilates, setPreciosQuilates] = useState({
     precio_24k: 0,
@@ -155,6 +151,17 @@ const Dueno = () => {
     precio_14k: 0,
     precio_10k: 0,
     ultima_actualizacion: null
+  });
+
+  // DATOS DEL PERFIL - DESDE BD
+  const [datosPerfil, setDatosPerfil] = useState({
+    nombre: "Cargando...",
+    email: "cargando...",
+    telefono: "cargando...",
+    rol: "cargando...",
+    fechaRegistro: "cargando...",
+    sucursal: "Casa Matriz - Mérida",
+    fotoPerfil: "https://ui-avatars.com/api/?name=Usuario&size=128&background=1e3a8a&color=fff&bold=true"
   });
 
   // Estados para datos del dashboard
@@ -175,23 +182,6 @@ const Dueno = () => {
     actividad_reciente: [],
     ingresos_mensuales: []
   });
-
-  // DATOS DEL PERFIL - DESDE BD
-  const [datosPerfil, setDatosPerfil] = useState({
-    nombre: "Cargando...",
-    email: "cargando...",
-    telefono: "cargando...",
-    rol: "cargando...",
-    fechaRegistro: "cargando...",
-    sucursal: "Casa Matriz - Mérida",
-    fotoPerfil: "https://ui-avatars.com/api/?name=Usuario&size=128&background=1e3a8a&color=fff&bold=true"
-  });
-
-  // Estados para datos de modales
-  const [empenosActivos, setEmpenosActivos] = useState([]);
-  const [empenosVencidos, setEmpenosVencidos] = useState([]);
-  const [proximosVencer, setProximosVencer] = useState([]);
-  const [ingresosRecientes, setIngresosRecientes] = useState([]);
 
   // Configuración de GRÁFICA DE ÁREA APILADA
   const [areaChartData, setAreaChartData] = useState({
@@ -368,7 +358,35 @@ const Dueno = () => {
   };
 
   // ============================================
-  // FUNCIONES DE ROLES (DESDE DOCKER)
+  // FUNCIONES DE VERIFICACIÓN DE PERMISOS
+  // ============================================
+  
+  const puedeVerEvolucionAcumulada = () => {
+    return hasPermission('ver_dashboard') && hasAnyPermission(['ver_reportes', 'ver_dashboard']);
+  };
+
+  const puedeVerGraficasBasicas = () => {
+    return hasAnyPermission(['ver_reportes', 'ver_dashboard']);
+  };
+
+  const puedeVerAmortizaciones = () => {
+    return hasPermission('ver_empenos');
+  };
+
+  const puedeVerMorosidad = () => {
+    return hasAnyPermission(['ver_reportes', 'ver_empenos']);
+  };
+
+  const puedeVerTopClientes = () => {
+    return hasPermission('ver_clientes');
+  };
+
+  const puedeVerArticulosMasEmpenados = () => {
+    return hasAnyPermission(['ver_tienda', 'ver_empenos']);
+  };
+
+  // ============================================
+  // FUNCIONES DE CARGA DE DATOS
   // ============================================
   const esAdmin = () => {
     return userRole === 'Administrador' || userRole === 'Dueño' || userRole === 'Admin';
@@ -501,7 +519,6 @@ const Dueno = () => {
           fechaRegistro: formatearFecha(user.fecha_registro) || "Fecha no disponible",
           fotoPerfil: user.foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&size=128&background=1e3a8a&color=fff&bold=true`
         }));
-        setUserRole(user.rol || 'Empleado');
       }
 
       const response = await api.get('/user');
@@ -517,7 +534,6 @@ const Dueno = () => {
           fotoPerfil: user.foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&size=128&background=1e3a8a&color=fff&bold=true`
         }));
         localStorage.setItem('user', JSON.stringify(user));
-        setUserRole(user.rol || 'Empleado');
       }
     } catch (error) {
       console.error('Error cargando usuario:', error);
@@ -553,8 +569,93 @@ const Dueno = () => {
     }
   };
 
+  const cargarDistribucionCategorias = async () => {
+    try {
+      const response = await api.get('/dashboard/distribucion-categorias');
+      if (response.data.success) {
+        const data = response.data.data;
+        const series = data.map(item => item.total);
+        const labels = data.map(item => item.categoria);
+        setCategoriaDistribucion(prev => ({ ...prev, series, options: { ...prev.options, labels } }));
+      }
+    } catch (error) {
+      console.error('Error al cargar distribución de categorías:', error);
+    }
+  };
+
+  const cargarDashboard = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await api.get('/dashboard');
+      
+      if (response.data.success) {
+        const data = response.data.data;
+        setDashboardData(data);
+        
+        const capitalRetorno = data.capital_retorno || [];
+        const capitalAcumulado = capitalRetorno.map(i => Number(i.capital)) || [];
+        const retornoAcumulado = capitalRetorno.map(i => Number(i.retorno)) || [];
+        const gananciaAcumulada = capitalRetorno.map(i => Number(i.ganancia)) || [];
+        const meses = capitalRetorno.map(i => i.mes) || [];
+
+        setAreaChartData({
+          series: [
+            { name: "Capital Prestado (Acumulado)", data: capitalAcumulado },
+            { name: "Retorno (Pagos Acumulados)", data: retornoAcumulado },
+            { name: "Ganancia (Acumulada)", data: gananciaAcumulada }
+          ],
+          options: {
+            ...areaChartData.options,
+            xaxis: { ...areaChartData.options.xaxis, categories: meses }
+          }
+        });
+
+        setTrendChartData({
+          series: [{ name: "Retorno Total", data: retornoAcumulado }],
+          options: {
+            ...trendChartData.options,
+            xaxis: { ...trendChartData.options.xaxis, categories: meses }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar dashboard:', error);
+      setError('No se pudo conectar con el servidor.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cargarAmortizacionesPendientes = async () => {
+    try {
+      setLoadingAmortizaciones(true);
+      const response = await api.get('/dashboard/amortizaciones-pendientes');
+      if (response.data.success) {
+        setAmortizacionesPendientes(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error al cargar amortizaciones:', error);
+    } finally {
+      setLoadingAmortizaciones(false);
+    }
+  };
+
+  const cargarPreciosQuilates = async () => {
+    try {
+      const response = await api.get('/precio-oro/quilates');
+      if (response.data.success) {
+        setPreciosQuilates(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error al cargar precios por quilate:', error);
+    }
+  };
+
   // Funciones para cargar datos específicos de modales
   const cargarActivos = async () => {
+    if (!hasPermission('ver_empenos')) return;
     try {
       const response = await api.get('/home/activos');
       if (response.data.success) {
@@ -568,6 +669,7 @@ const Dueno = () => {
   };
 
   const cargarVencidos = async () => {
+    if (!hasPermission('ver_empenos')) return;
     try {
       const response = await api.get('/home/vencidos');
       if (response.data.success) {
@@ -581,6 +683,7 @@ const Dueno = () => {
   };
 
   const cargarProximos = async () => {
+    if (!hasPermission('ver_empenos')) return;
     try {
       const response = await api.get('/home/proximos');
       if (response.data.success) {
@@ -594,14 +697,16 @@ const Dueno = () => {
   };
 
   const cargarIngresos = async () => {
+    if (!hasPermission('ver_pagos')) return;
     try {
-      setIngresosRecientes([
-        { id: 1, concepto: "Pago de Juan Pérez", monto: 5000, fecha: "10/03/2024" },
-        { id: 2, concepto: "Pago de María García", monto: 3500, fecha: "09/03/2024" },
-      ]);
-      setShowIngresos(true);
+      const response = await api.get('/dashboard/ingresos-recientes');
+      if (response.data.success) {
+        setIngresosRecientes(response.data.data);
+        setShowIngresos(true);
+      }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error al cargar ingresos:', error);
+      alert('Error al cargar ingresos recientes');
     }
   };
 
@@ -616,14 +721,7 @@ const Dueno = () => {
     cargarUsuarioActual();
     cargarPreciosQuilates();
     cargarModulosPorPlan();
-
-    // Si el componente se desmonta/remonta (p. ej. doble montaje de
-    // React.StrictMode en desarrollo), invalidamos cualquier petición
-    // que haya quedado en vuelo para que su respuesta, al llegar, se
-    // ignore en vez de pisar el estado de la instancia nueva.
-    return () => {
-      requestIdRef.current++;
-    };
+    cargarAmortizacionesPendientes();
   }, []);
 
   // Manejadores del modal de pago
@@ -686,11 +784,11 @@ const Dueno = () => {
   return (
     <div className="dashboard">
       <div className="content">
-        {/* HEADER */}
+        {/* HEADER - Visible para todos */}
         <div className="owner-header">
           <div className="header-top">
             <h1>
-              Hola, {datosPerfil.nombre.split(' ')[0] || 'Dueño'}
+              Hola, {datosPerfil.nombre.split(' ')[0] || 'Usuario'}
               <p className="header-sub">Conoce el estado de tu casa de empeño</p>
             </h1>
 
@@ -711,32 +809,47 @@ const Dueno = () => {
           </div>
         </div>
 
-        {/* CARDS - Visibles para todos */}
+        {/* ============================================ */}
+        {/* CARDS - CON PERMISOS */}
+        {/* ============================================ */}
         <div className="cards-grid">
-          <div className="stat-card" onClick={cargarActivos}>
-            <AssignmentIcon className="card-icon" />
-            <h3>Empeños Activos</h3>
-            <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
-          </div>
+          {/* Card de Empeños Activos - requiere ver_empenos */}
+          <PermissionGuard permission="ver_empenos">
+            <div className="stat-card" onClick={cargarActivos} style={{ cursor: 'pointer' }}>
+              <AssignmentIcon className="card-icon" />
+              <h3>Empeños Activos</h3>
+              <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
+            </div>
+          </PermissionGuard>
 
-          <div className="stat-card" onClick={cargarVencidos}>
-            <WarningIcon className="card-icon" />
-            <h3>Empeños Vencidos</h3>
-            <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
-          </div>
+          {/* Card de Empeños Vencidos - requiere ver_empenos */}
+          <PermissionGuard permission="ver_empenos">
+            <div className="stat-card" onClick={cargarVencidos} style={{ cursor: 'pointer' }}>
+              <WarningIcon className="card-icon" />
+              <h3>Empeños Vencidos</h3>
+              <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
+            </div>
+          </PermissionGuard>
 
-          <div className="stat-card" onClick={cargarProximos}>
-            <AccessTimeIcon className="card-icon" />
-            <h3>Próximos a Vencer</h3>
-            <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
-          </div>
+          {/* Card de Próximos a Vencer - requiere ver_empenos */}
+          <PermissionGuard permission="ver_empenos">
+            <div className="stat-card" onClick={cargarProximos} style={{ cursor: 'pointer' }}>
+              <AccessTimeIcon className="card-icon" />
+              <h3>Próximos a Vencer</h3>
+              <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
+            </div>
+          </PermissionGuard>
 
-          <div className="stat-card" onClick={cargarIngresos}>
-            <AttachMoneyIcon className="card-icon" />
-            <h3>Ingresos Recientes</h3>
-            <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
-          </div>
+          {/* Card de Ingresos - requiere ver_pagos */}
+          <PermissionGuard permission="ver_pagos">
+            <div className="stat-card" onClick={cargarIngresos} style={{ cursor: 'pointer' }}>
+              <AttachMoneyIcon className="card-icon" />
+              <h3>Ingresos Recientes</h3>
+              <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
+            </div>
+          </PermissionGuard>
 
+          {/* Card de Precio del Oro - siempre visible */}
           <div className="stat-card gold-card" onClick={() => setShowPrecioOroModal(true)} style={{ cursor: 'pointer' }}>
             <MonetizationOnIcon className="card-icon" />
             <h3>Precio del Oro</h3>
@@ -753,10 +866,10 @@ const Dueno = () => {
         </div>
 
         {/* ============================================ */}
-        {/* GRÁFICAS - SEGÚN ROL DEL USUARIO */}
+        {/* GRÁFICAS - CON PERMISOS */}
         {/* ============================================ */}
-
-        {/* 🆕 GRÁFICA PRINCIPAL - CON chartHeight DINÁMICO (DESDE LOCAL) */}
+        
+        {/* GRÁFICA PRINCIPAL - Solo con permisos de reportes */}
         {puedeVerEvolucionAcumulada() && (
           <div className="chart-section">
             <h2>
@@ -777,135 +890,148 @@ const Dueno = () => {
           </div>
         )}
 
-        {/* GRÁFICAS ADICIONALES - CON smallChartHeight DINÁMICO */}
+        {/* GRÁFICAS ADICIONALES - Con permisos de reportes */}
         {puedeVerGraficasBasicas() && (
           <div className="nuevas-graficas-grid">
-            <div className="grafica-nueva-card">
-              <h2>
-                <TrendingUpIcon />
-                Tendencia de Ingresos
-              </h2>
-              <Chart
-                options={trendChartData.options}
-                series={trendChartData.series}
-                type="line"
-                height={smallChartHeight}
-              />
-            </div>
+            <PermissionGuard permission="ver_reportes">
+              <div className="grafica-nueva-card">
+                <h2>
+                  <TrendingUpIcon />
+                  Tendencia de Ingresos
+                </h2>
+                <Chart
+                  options={trendChartData.options}
+                  series={trendChartData.series}
+                  type="line"
+                  height={300}
+                />
+              </div>
+            </PermissionGuard>
 
-            <div className="grafica-nueva-card">
-              <h2>
-                <PieChartIcon />
-                Distribución por Categoría
-              </h2>
-              <Chart
-                options={categoriaDistribucion.options}
-                series={categoriaDistribucion.series}
-                type="donut"
-                height={smallChartHeight}
-              />
+            <PermissionGuard permission="ver_reportes">
+              <div className="grafica-nueva-card">
+                <h2>
+                  <PieChartIcon />
+                  Distribución por Categoría
+                </h2>
+                <Chart
+                  options={categoriaDistribucion.options}
+                  series={categoriaDistribucion.series}
+                  type="donut"
+                  height={300}
+                />
+              </div>
+            </PermissionGuard>
+          </div>
+        )}
+
+        {/* ============================================ */}
+        {/* TOP CLIENTES - Con permiso ver_clientes */}
+        {/* ============================================ */}
+        {puedeVerTopClientes() && (
+          <div className="nueva-seccion">
+            <h2>
+              <EmojiEventsIcon />
+              Top 5 Clientes (Mayores Ganancias)
+            </h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Empeños</th>
+                    <th>Monto Prestado</th>
+                    <th>Ganancia Generada</th>
+                    <th>% Ganancia</th>
+                    <th>Último Empeño</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dashboardData.top_clientes?.map(cliente => (
+                    <tr key={cliente.id_cliente}>
+                      <td><strong>{cliente.nombre}</strong></td>
+                      <td>{cliente.empenos}</td>
+                      <td>{formatearMoneda(cliente.monto_total)}</td>
+                      <td className="profit-text">{formatearMoneda(cliente.ganancia_generada || (cliente.monto_total * 0.15))}</td>
+                      <td>
+                        <span className="profit-badge">
+                          +{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}
+                        </span>
+                      </td>
+                      <td>{formatFecha(cliente.ultimo_empeno)}</td>
+                    </tr>
+                  ))}
+                  {dashboardData.top_clientes?.length === 0 && (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
-        {/* Top Clientes - Visible para todos */}
-        <div className="nueva-seccion">
-          <h2>
-            <EmojiEventsIcon />
-            Top 5 Clientes (Mayores Ganancias)
-          </h2>
-          <div className="tabla-container">
-            <table className="tabla-moderna">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Empeños</th>
-                  <th>Monto Prestado</th>
-                  <th>Ganancia Generada</th>
-                  <th>% Ganancia</th>
-                  <th>Último Empeño</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboardData.top_clientes?.map(cliente => (
-                  <tr key={cliente.id_cliente}>
-                    <td><strong>{cliente.nombre}</strong></td>
-                    <td>{cliente.empenos}</td>
-                    <td>{formatearMoneda(cliente.monto_total)}</td>
-                    <td className="profit-text">{formatearMoneda(cliente.ganancia_generada || (cliente.monto_total * 0.15))}</td>
-                    <td>
-                      <span className="profit-badge">
-                        +{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}
-                      </span>
-                    </td>
-                    <td>{formatFecha(cliente.ultimo_empeno)}</td>
-                  </tr>
-                ))}
-                {dashboardData.top_clientes?.length === 0 && (
+        {/* ============================================ */}
+        {/* MOROSIDAD - Con permisos de reportes o empeños */}
+        {/* ============================================ */}
+        {puedeVerMorosidad() && (
+          <div className="nueva-seccion">
+            <h2>
+              <WarningIcon />
+              Morosidad - Clientes con Mayor Pérdida
+            </h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
                   <tr>
-                    <td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td>
+                    <th>Cliente</th>
+                    <th>Total Prestado</th>
+                    <th>Deuda Vencida</th>
+                    <th>Pérdida Proyectada</th>
+                    <th>% Pérdida</th>
+                    <th>Días en Mora</th>
+                    <th>Último Pago</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* SECCIÓN DE MOROSIDAD - Visible para todos */}
-        <div className="nueva-seccion">
-          <h2>
-            <WarningIcon />
-            Morosidad - Clientes con Mayor Pérdida
-          </h2>
-          <div className="tabla-container">
-            <table className="tabla-moderna">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Total Prestado</th>
-                  <th>Deuda Vencida</th>
-                  <th>Pérdida Proyectada</th>
-                  <th>% Pérdida</th>
-                  <th>Días en Mora</th>
-                  <th>Último Pago</th>
-                </tr>
-              </thead>
-              <tbody>
-                {morosidad.map((item, index) => {
-                  let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
-                  if (porcentaje > 100) porcentaje = 100;
-
-                  return (
-                    <tr key={index}>
-                      {/* ✅ CORREGIDO: item.nombre en vez de item.cliente (esa clave no existía) */}
-                      <td><strong>{item.nombre}</strong></td>
-                      <td>{formatearMoneda(item.total_prestado)}</td>
-                      <td className="loss-text">{formatearMoneda(item.deuda)}</td>
-                      <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
-                      <td>
-                        <span className="loss-badge">
-                          -{porcentaje.toFixed(2)}%
-                        </span>
-                      </td>
-                      <td><span className="badge-danger">{Math.floor(item.dias_mora)} días</span></td>
-                      <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date'
-                        ? formatFecha(item.ultimo_pago)
-                        : 'Sin registro'}</td>
+                </thead>
+                <tbody>
+                  {morosidad.map((item, index) => {
+                    let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
+                    if (porcentaje > 100) porcentaje = 100;
+                    
+                    return (
+                      <tr key={index}>
+                        <td><strong>{item.cliente}</strong></td>
+                        <td>{formatearMoneda(item.total_prestado)}</td>
+                        <td className="loss-text">{formatearMoneda(item.deuda)}</td>
+                        <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
+                        <td>
+                          <span className="loss-badge">
+                            -{porcentaje.toFixed(2)}%
+                          </span>
+                        </td>
+                        <td><span className="badge-danger">{item.pagos_atrasados || item.dias_mora} días</span></td>
+                        <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' 
+                          ? formatFecha(item.ultimo_pago) 
+                          : 'Sin registro'}</td>
+                      </tr>
+                    );
+                  })}
+                  {morosidad.length === 0 && (
+                    <tr>
+                      <td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td>
                     </tr>
-                  );
-                })}
-                {morosidad.length === 0 && (
-                  <tr>
-                    <td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* AMORTIZACIONES PENDIENTES - Solo para Administradores */}
-        {puedeVerEvolucionAcumulada() && (
+        {/* ============================================ */}
+        {/* AMORTIZACIONES PENDIENTES - Solo Administradores */}
+        {/* ============================================ */}
+        {puedeVerAmortizaciones() && (
           <div className="nueva-seccion">
             <h2>
               <AssignmentIcon />
@@ -961,42 +1087,48 @@ const Dueno = () => {
           </div>
         )}
 
-        {/* Artículos más empeñados - Visible para todos */}
-        <div className="nueva-seccion">
-          <h2>
-            <LocalOfferIcon />
-            Artículos Más Empeñados
-          </h2>
-          <div className="tabla-container">
-            <table className="tabla-moderna">
-              <thead>
-                <tr>
-                  <th>Artículo</th>
-                  <th>Categoría</th>
-                  <th>Cantidad</th>
-                  <th>Monto Promedio</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboardData.top_articulos?.map((articulo, index) => (
-                  <tr key={index}>
-                    <td><strong>{articulo.nombre}</strong></td>
-                    <td>{articulo.categoria}</td>
-                    <td>{articulo.cantidad}</td>
-                    <td>{formatearMoneda(articulo.monto_promedio)}</td>
-                  </tr>
-                ))}
-                {dashboardData.top_articulos?.length === 0 && (
+        {/* ============================================ */}
+        {/* ARTÍCULOS MÁS EMPEÑADOS - Con permisos */}
+        {/* ============================================ */}
+        {puedeVerArticulosMasEmpenados() && (
+          <div className="nueva-seccion">
+            <h2>
+              <LocalOfferIcon />
+              Artículos Más Empeñados
+            </h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
                   <tr>
-                    <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
+                    <th>Artículo</th>
+                    <th>Categoría</th>
+                    <th>Cantidad</th>
+                    <th>Monto Promedio</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {dashboardData.top_articulos?.map((articulo, index) => (
+                    <tr key={index}>
+                      <td><strong>{articulo.nombre}</strong></td>
+                      <td>{articulo.categoria}</td>
+                      <td>{articulo.cantidad}</td>
+                      <td>{formatearMoneda(articulo.monto_promedio)}</td>
+                    </tr>
+                  ))}
+                  {dashboardData.top_articulos?.length === 0 && (
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Actividad Reciente - Visible para todos */}
+        {/* ============================================ */}
+        {/* ACTIVIDAD RECIENTE - Visible para todos */}
+        {/* ============================================ */}
         <div className="nueva-seccion">
           <h2>
             <HistoryIcon />
@@ -1029,10 +1161,10 @@ const Dueno = () => {
       </div>
 
       {/* ============================================ */}
-      {/* MODALES (TODOS IGUALES QUE EN DOCKER) */}
+      {/* MODALES - CON PERMISOS */}
       {/* ============================================ */}
 
-      {/* MODAL DE PERFIL */}
+      {/* MODAL DE PERFIL - Visible para todos */}
       {showPerfil && (
         <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
           <div className="modal-detalle modal-perfil" onClick={(e) => e.stopPropagation()}>
@@ -1078,108 +1210,148 @@ const Dueno = () => {
         </div>
       )}
 
-      {/* MODAL DE EMPEÑOS ACTIVOS */}
+      {/* MODAL DE EMPEÑOS ACTIVOS - Con permiso ver_empenos */}
       {showActivos && (
-        <div className="modal-overlay" onClick={() => setShowActivos(false)}>
-          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowActivos(false)}><CloseIcon /></button>
-            <div className="modal-header">
-              <h2><AssignmentIcon /> Empeños Activos</h2>
-              <span className="cliente-id">Total: {empenosActivos.length}</span>
-            </div>
-            <div className="modal-body">
-              <div className="tabla-container-modal">
-                <table className="tabla-modal">
-                  <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Fecha</th></tr></thead>
-                  <tbody>
-                    {empenosActivos.map(item => (
-                      <tr key={item.id_empeno}>
-                        <td><strong>{item.cliente}</strong></td>
-                        <td>{item.nombre}</td>
-                        <td>{formatearMoneda(item.monto)}</td>
-                        <td>{item.fecha}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        <PermissionGuard permission="ver_empenos">
+          <div className="modal-overlay" onClick={() => setShowActivos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowActivos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><AssignmentIcon /> Empeños Activos</h2>
+                <span className="cliente-id">Total: {empenosActivos.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Fecha</th></tr></thead>
+                    <tbody>
+                      {empenosActivos.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowActivos(false)}>Cerrar</button>
               </div>
             </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowActivos(false)}>Cerrar</button>
-            </div>
           </div>
-        </div>
+        </PermissionGuard>
       )}
 
-      {/* MODAL DE EMPEÑOS VENCIDOS */}
+      {/* MODAL DE EMPEÑOS VENCIDOS - Con permiso ver_empenos */}
       {showVencidos && (
-        <div className="modal-overlay" onClick={() => setShowVencidos(false)}>
-          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowVencidos(false)}><CloseIcon /></button>
-            <div className="modal-header">
-              <h2><WarningIcon /> Empeños Vencidos</h2>
-              <span className="cliente-id">Total: {empenosVencidos.length}</span>
-            </div>
-            <div className="modal-body">
-              <div className="tabla-container-modal">
-                <table className="tabla-modal">
-                  <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vencido</th><th>Días</th></tr></thead>
-                  <tbody>
-                    {empenosVencidos.map(item => (
-                      <tr key={item.id_empeno}>
-                        <td><strong>{item.cliente}</strong></td>
-                        <td>{item.nombre}</td>
-                        <td>{formatearMoneda(item.monto)}</td>
-                        <td>{item.fecha}</td>
-                        <td><span className="badge-danger">{item.dias} días</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        <PermissionGuard permission="ver_empenos">
+          <div className="modal-overlay" onClick={() => setShowVencidos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowVencidos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><WarningIcon /> Empeños Vencidos</h2>
+                <span className="cliente-id">Total: {empenosVencidos.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vencido</th><th>Días</th></tr></thead>
+                    <tbody>
+                      {empenosVencidos.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                          <td><span className="badge-danger">{item.dias} días</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowVencidos(false)}>Cerrar</button>
               </div>
             </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowVencidos(false)}>Cerrar</button>
-            </div>
           </div>
-        </div>
+        </PermissionGuard>
       )}
 
-      {/* MODAL DE PRÓXIMOS A VENCER */}
+      {/* MODAL DE PRÓXIMOS A VENCER - Con permiso ver_empenos */}
       {showProximos && (
-        <div className="modal-overlay" onClick={() => setShowProximos(false)}>
-          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowProximos(false)}><CloseIcon /></button>
-            <div className="modal-header">
-              <h2><AccessTimeIcon /> Próximos a Vencer</h2>
-              <span className="cliente-id">Total: {proximosVencer.length}</span>
-            </div>
-            <div className="modal-body">
-              <div className="tabla-container-modal">
-                <table className="tabla-modal">
-                  <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vence</th><th>Días</th></tr></thead>
-                  <tbody>
-                    {proximosVencer.map(item => (
-                      <tr key={item.id_empeno}>
-                        <td><strong>{item.cliente}</strong></td>
-                        <td>{item.nombre}</td>
-                        <td>{formatearMoneda(item.monto)}</td>
-                        <td>{item.fecha}</td>
-                        <td><span className="badge-warning">{item.dias} días</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        <PermissionGuard permission="ver_empenos">
+          <div className="modal-overlay" onClick={() => setShowProximos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowProximos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><AccessTimeIcon /> Próximos a Vencer</h2>
+                <span className="cliente-id">Total: {proximosVencer.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vence</th><th>Días</th></tr></thead>
+                    <tbody>
+                      {proximosVencer.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                          <td><span className="badge-warning">{item.dias} días</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowProximos(false)}>Cerrar</button>
               </div>
             </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowProximos(false)}>Cerrar</button>
-            </div>
           </div>
-        </div>
+        </PermissionGuard>
       )}
 
-      {/* MODAL DE PRECIOS DEL ORO POR QUILATE */}
+      {/* MODAL DE INGRESOS - Con permiso ver_pagos */}
+      {showIngresos && (
+        <PermissionGuard permission="ver_pagos">
+          <div className="modal-overlay" onClick={() => setShowIngresos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowIngresos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><AttachMoneyIcon /> Ingresos Recientes</h2>
+                <span className="cliente-id">Total: {ingresosRecientes.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Concepto</th><th>Monto</th><th>Fecha</th></tr></thead>
+                    <tbody>
+                      {ingresosRecientes.map(item => (
+                        <tr key={item.id}>
+                          <td><strong>{item.concepto}</strong></td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowIngresos(false)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </PermissionGuard>
+      )}
+
+      {/* MODAL DE PRECIOS DEL ORO - Siempre visible */}
       {showPrecioOroModal && (
         <div className="modal-overlay" onClick={() => setShowPrecioOroModal(false)}>
           <div className="modal-detalle modal-oro" onClick={(e) => e.stopPropagation()}>
@@ -1232,7 +1404,7 @@ const Dueno = () => {
         </div>
       )}
 
-      {/* MODAL DE ALERTAS */}
+      {/* MODAL DE ALERTAS - Visible para todos */}
       {showAlertas && (
         <div className="modal-overlay" onClick={() => setShowAlertas(false)}>
           <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>

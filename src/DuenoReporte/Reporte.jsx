@@ -1,60 +1,49 @@
-// Reportes.jsx — Versión completa con datos reales
-// Reemplaza el archivo anterior completo
-
-import React, { useState, useRef, useEffect } from "react";
-
-import KPIsFinancieros   from "../components/KPIsFinancieros";
-import { useReportes }   from "../hooks/useReportes";
-import ApexCharts        from "apexcharts";
-import jsPDF             from "jspdf";
-import autoTable         from "jspdf-autotable";
-import * as XLSX         from "xlsx";
-
-// Iconos MUI
-import AssessmentIcon    from "@mui/icons-material/Assessment";
-import PictureAsPdfIcon  from "@mui/icons-material/PictureAsPdf";
-import FilterAltIcon     from "@mui/icons-material/FilterAlt";
-import ClearIcon         from "@mui/icons-material/Clear";
-import DateRangeIcon     from "@mui/icons-material/DateRange";
-import TableChartIcon    from "@mui/icons-material/TableChart";
-import ShowChartIcon     from "@mui/icons-material/ShowChart";
-import PeopleIcon        from "@mui/icons-material/People";
-import InventoryIcon     from "@mui/icons-material/Inventory";
-import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
-import RefreshIcon       from "@mui/icons-material/Refresh";
-import CloseIcon         from "@mui/icons-material/Close";
+// Reportes.jsx - Versión con permisos
+import React, { useState, useEffect, useRef } from "react";
+import Sidebar from "../components/Sidebar";
 import "./Reporte.css";
+import permissionService from "../services/permisoService"; // 👈 Importar servicio de permisos
 
-// ─── Tabs del módulo ──────────────────────────────────────────────────────────
-const TABS = [
-  { id: "financiero",  label: "Financiero",   icon: AccountBalanceIcon },
-  { id: "empenos",     label: "Empeños",       icon: ShowChartIcon },
-  { id: "flujo",       label: "Flujo de caja", icon: TableChartIcon },
-  { id: "clientes",    label: "Clientes",      icon: PeopleIcon },
-  { id: "inventario",  label: "Inventario",    icon: InventoryIcon },
-];
+// Importar iconos de MUI
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import ClearIcon from '@mui/icons-material/Clear';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import PieChartIcon from '@mui/icons-material/PieChart';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import CloseIcon from '@mui/icons-material/Close';
+import DownloadIcon from '@mui/icons-material/Download';
+import DateRangeIcon from '@mui/icons-material/DateRange';
+import LockIcon from '@mui/icons-material/Lock';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const hoy        = new Date();
-const isoHoy     = hoy.toISOString().slice(0, 7);           // YYYY-MM
-const isoInicio  = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-                     .toISOString().slice(0, 10);            // primer día del mes
-const isoFin     = hoy.toISOString().slice(0, 10);          // hoy
+// Importar ApexCharts y jsPDF
+import ApexCharts from "apexcharts";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // ══════════════════════════════════════════════════════════════════════════════
 const Reportes = () => {
-  // ── Estado de filtros ─────────────────────────────────────────────────────
-  const [inicio, setInicio]           = useState(isoInicio);
-  const [fin,    setFin]              = useState(isoFin);
-  const [filtros, setFiltros]         = useState({ inicio: isoInicio, fin: isoFin });
-  const [activeTab, setActiveTab]     = useState("financiero");
+  // ============================================
+  // 👇 VERIFICAR PERMISOS
+  // ============================================
+  const puedeVerReportes = permissionService.hasPermission('ver_reportes');
+  const puedeExportarPDF = permissionService.hasPermission('ver_reportes'); // O puedes crear un permiso específico 'exportar_reportes'
 
-  // ── Hook de datos ─────────────────────────────────────────────────────────
-  const { kpis, empeños, flujoCaja, clientes, inventario, loading, error, refetch, formatMXN } =
-    useReportes(filtros);
+  // ============================================
+  // REDIRIGIR SI NO TIENE PERMISO PARA VER
+  // ============================================
+  if (!puedeVerReportes) {
+    // Redirigir a dashboard
+    window.location.href = '/dashboard';
+    return null;
+  }
 
-  // ── Gráfica ───────────────────────────────────────────────────────────────
-  const chartRef      = useRef(null);
+  const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
   useEffect(() => {
@@ -83,15 +72,145 @@ const Reportes = () => {
       legend:    { position: "top" },
     });
 
-    chartInstance.current.render();
+  // Función para exportar a PDF (CORREGIDA)
+  const exportarAPDF = async () => {
+    // 👇 Validar permiso para exportar
+    if (!puedeExportarPDF) {
+      alert('No tienes permiso para exportar reportes');
+      return;
+    }
+
+    try {
+      // Crear nuevo PDF (horizontal para más espacio)
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
 
     return () => { if (chartInstance.current) chartInstance.current.destroy(); };
   }, [empeños]);
 
-  // ── Aplicar filtros ───────────────────────────────────────────────────────
-  const aplicarFiltros = () => {
-    if (!inicio || !fin) return alert("Selecciona ambas fechas");
-    setFiltros({ inicio, fin });
+      // Tarjetas de resumen
+      pdf.setFontSize(14);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('RESUMEN DE MÉTRICAS', 15, 55);
+
+      // Crear tabla de resumen
+      autoTable(pdf, {
+        startY: 60,
+        head: [['Métrica', 'Cantidad', 'Valor Total', 'Detalle']],
+        body: [
+          ['Empeños Activos', '3', '$11,300', '3 artículos'],
+          ['Empeños Vencidos', '2', '$12,200', '25 días promedio'],
+          ['Próximos a Vencer', '2', '$3,500', '6.5 días promedio'],
+          ['Ingresos Totales', '8', '$8,950', 'Últimos 30 días'],
+          ['Productos en Tienda', '4', '$15,700', '3 visibles, 1 oculto'],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+        styles: { fontSize: 10 },
+        columnStyles: {
+          0: { cellWidth: 50 },
+          1: { cellWidth: 30, halign: 'center' },
+          2: { cellWidth: 40, halign: 'right' },
+          3: { cellWidth: 70 }
+        }
+      });
+
+      // ===== GRÁFICA PRINCIPAL =====
+      pdf.setFontSize(14);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('GRÁFICA DE TENDENCIAS', 15, pdf.lastAutoTable.finalY + 15);
+
+      // Capturar la gráfica como imagen
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { imgURI } = await ApexCharts.exec('grafica-principal', 'dataURI', {
+          scale: 2,
+          width: 800
+        });
+        
+        if (imgURI) {
+          const yPos = pdf.lastAutoTable.finalY + 20;
+          pdf.addImage(imgURI, 'PNG', 15, yPos, 250, 100);
+        }
+      } catch (error) {
+        console.error("Error capturando gráfica:", error);
+      }
+
+      // ===== PÁGINA 2: TENDENCIAS DETALLADAS =====
+      pdf.addPage();
+
+      pdf.setFontSize(18);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('TENDENCIAS DE EMPEÑOS', 15, 20);
+
+      autoTable(pdf, {
+        startY: 30,
+        head: [['Mes', 'Valor', 'Cantidad', 'Variación %']],
+        body: tendenciasDetalle.map((item, i) => [
+          item.mes,
+          item.valor.toString(),
+          `${item.cantidad} empeños`,
+          i > 0 ? `${((item.valor - tendenciasDetalle[i-1].valor) / tendenciasDetalle[i-1].valor * 100).toFixed(1)}%` : '-'
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+        styles: { fontSize: 9 }
+      });
+
+      // ===== PÁGINA 3: INGRESOS DETALLADOS =====
+      pdf.addPage();
+
+      pdf.setFontSize(18);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('COMPARATIVA DE INGRESOS', 15, 20);
+
+      autoTable(pdf, {
+        startY: 30,
+        head: [['Mes', 'Ingresos', 'Transacciones', 'Promedio']],
+        body: ingresosDetalle.map(item => [
+          item.mes,
+          `$${item.valor.toLocaleString()}`,
+          item.transacciones.toString(),
+          `$${(item.valor / item.transacciones).toFixed(0)}`
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+        styles: { fontSize: 9 }
+      });
+
+      // ===== PÁGINA 4: SECCIONES PDF =====
+      pdf.addPage();
+
+      pdf.setFontSize(18);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('SECCIONES PARA EXPORTAR', 15, 20);
+
+      autoTable(pdf, {
+        startY: 30,
+        head: [['Sección', 'Tipo', 'Cantidad de Datos']],
+        body: seccionesDetalle.map(item => [
+          item.nombre,
+          item.tipo,
+          `${item.datos} datos`
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+        styles: { fontSize: 9 }
+      });
+
+      // ===== GUARDAR PDF =====
+      pdf.save(`reporte_completo_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      alert("✅ Reporte generado exitosamente");
+
+    } catch (error) {
+      console.error("Error detallado:", error);
+      alert(`❌ Error al generar el PDF: ${error.message}`);
+    }
   };
 
   const limpiarFiltros = () => {
@@ -247,17 +366,16 @@ const Reportes = () => {
               {filtros.inicio} → {filtros.fin}
             </p>
           </h1>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn-exportar" onClick={refetch} title="Actualizar datos">
-              <RefreshIcon /> Actualizar
+           
+          {/* ============================================ */}
+          {/* 👇 BOTÓN EXPORTAR PDF - SOLO CON PERMISO */}
+          {/* ============================================ */}
+          {puedeExportarPDF && (
+            <button className="btn-exportar" onClick={exportarAPDF}>
+              <PictureAsPdfIcon />
+              Exportar PDF
             </button>
-            <button className="btn-exportar" onClick={exportarExcel}>
-              <TableChartIcon /> Excel
-            </button>
-            <button className="btn-exportar" onClick={exportarPDF}>
-              <PictureAsPdfIcon /> PDF
-            </button>
-          </div>
+          )}
         </div>
 
         {/* ERROR */}
@@ -505,7 +623,24 @@ const Reportes = () => {
           </>
         )}
 
-      </div>
+            <div className="modal-acciones">
+              {/* ============================================ */}
+              {/* 👇 BOTÓN EXPORTAR PDF EN MODAL - SOLO CON PERMISO */}
+              {/* ============================================ */}
+              {puedeExportarPDF && (
+                <button className="btn-exportar-modal" onClick={exportarAPDF}>
+                  <DownloadIcon />
+                  Exportar PDF
+                </button>
+              )}
+              <button className="btn-cancelar" onClick={() => setShowSecciones(false)}>
+                <CloseIcon />
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

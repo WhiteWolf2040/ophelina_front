@@ -6,35 +6,14 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const [searchParams] = useSearchParams();
   const { isAuthenticated, loading, userData, modules } = useUser();
 
-  const sessionId = searchParams.get('session_id');
-  const paymentStatus = searchParams.get('payment');
-
-  // Esperar a que carguen los datos
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Cargando...</div>
-      </div>
-    );
-  }
-
-  // Permitir acceso si viene de pago exitoso
-  if (sessionId && paymentStatus === 'success') {
-    const token = localStorage.getItem('token');
-    if (token) {
-      return children;
-    }
-    return <Navigate to={`/login?session_id=${sessionId}&payment=success`} replace />;
-  }
-
-  // Si no está autenticado → LOGIN
-  if (!isAuthenticated || !userData) {
+  //  Si no está logueado → login
+  if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
 
-  // ==========================================
-  // VALIDACIÓN DE ROLES (con return correcto)
-  // ==========================================
+  const user = getCurrentUser();
+
+  // Validar roles
   if (allowedRoles.length > 0) {
     if (allowedRoles.includes(userData.rol)) {
       // ✅ Tiene el rol correcto para esta ruta: mostrar el contenido y salir

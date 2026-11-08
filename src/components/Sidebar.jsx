@@ -1,13 +1,10 @@
-// components/Sidebar.jsx
-import React, { useState } from "react";
+// Sidebar.jsx - Versión CORREGIDA con permisos reales
+import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/LogoWhite.png";
 import "./Sidebar.css";
 import { logout } from "../config/auth";
-import { useUser } from "../contexts/UserContext";
-import LogoutIcon from '@mui/icons-material/Logout';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
+import { usePermissions } from "../hooks/usePermissions";
 
 // Iconos
 import HomeIcon from '@mui/icons-material/Home';
@@ -46,6 +43,20 @@ const ORDEN_MODULOS = [
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  // ============================================
+  // HOOK DE PERMISOS - PARA VERIFICAR ACCESO
+  // ============================================
+  const { 
+    hasPermission, 
+    hasModule, 
+    permisos, 
+    modulos,
+    userRole,
+    loading 
+  } = usePermissions();
+
   const navigate = useNavigate();
   
   let userContext;
@@ -55,67 +66,128 @@ const Sidebar = () => {
     userContext = { modules: DEFAULT_MENUS, loading: false, clearUserData: () => {} };
   }
 
-  const { modules, loading, clearUserData } = userContext;
+  // ============================================
+  // DEFINICIÓN DE TODOS LOS MENÚS POSIBLES
+  // ============================================
+  const allMenus = [
+    { 
+      path: "/home", 
+      icon: <HomeIcon />, 
+      text: "Dashboard", 
+      modulo: "dashboard",
+      permission: null // Siempre visible
+    },
+    { 
+      path: "/clientes", 
+      icon: <PeopleIcon />, 
+      text: "Clientes", 
+      modulo: "clientes",
+      permission: "ver_clientes"
+    },
+    { 
+      path: "/empenos", 
+      icon: <DiamondIcon />, 
+      text: "Empeños", 
+      modulo: "empenos",
+      permission: "ver_empenos"
+    },
+    { 
+      path: "/tienda", 
+      icon: <StorefrontIcon />, 
+      text: "Tienda", 
+      modulo: "tienda",
+      permission: "ver_tienda"
+    },
+    { 
+      path: "/pagos", 
+      icon: <PaymentsIcon />, 
+      text: "Pagos", 
+      modulo: "pagos",
+      permission: "ver_pagos"
+    },
+    { 
+      path: "/reportes", 
+      icon: <BarChartIcon />, 
+      text: "Reportes", 
+      modulo: "reportes",
+      permission: "ver_reportes"
+    },
+    { 
+      path: "/configuracion", 
+      icon: <SettingsIcon />, 
+      text: "Configuración", 
+      modulo: "configuracion",
+      permission: "ver_configuracion"
+    },
+    { 
+      path: "/roles", 
+      icon: <SecurityIcon />, 
+      text: "Roles", 
+      modulo: "configuracion",
+      permission: "ver_roles"
+    },
+    { 
+      path: "/permisos", 
+      icon: <VpnKeyIcon />, 
+      text: "Permisos", 
+      modulo: "configuracion",
+      permission: "ver_permisos"
+    }
+  ];
 
-  // Obtener menús de forma segura
-  const getMenus = () => {
-    if (!modules || modules.length === 0) return DEFAULT_MENUS;
-    
-    // Si los módulos ya tienen path e icon, usarlos
-    if (modules[0]?.path) return modules;
-    
-    // Si son strings, mapearlos
-    const map = {
-      'home': { path: '/home', icon: <HomeIcon />, text: 'Home' },
-      'dashboard': { path: '/home', icon: <HomeIcon />, text: 'Home' },
-      'clientes': { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
-      'pagos': { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
-      'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
-      'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
-      'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
-      'apartados': { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
-      'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
-      'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
-      'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
-      'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
-    };
-    
-    // ✅ Mapear todos los módulos
-    const menus = modules.map(mod => {
-      const name = typeof mod === 'string' ? mod : mod.modulo || mod.nombre || '';
-      const normalized = String(name).toLowerCase().trim();
-      return map[normalized] || { path: `/${normalized}`, icon: <HomeIcon />, text: name };
-    });
+  // ============================================
+  // FILTRAR MENÚS POR PERMISOS DEL USUARIO
+  // ============================================
+  const getVisibleMenus = () => {
+    // Si está cargando, mostrar solo Home
+    if (loading) {
+      return allMenus.filter(m => m.path === "/home");
+    }
 
-    // ✅ ORDENAR según el orden definido
-    return menus.sort((a, b) => {
-      const pathA = a.path.replace('/', '');
-      const pathB = b.path.replace('/', '');
-      const indexA = ORDEN_MODULOS.indexOf(pathA);
-      const indexB = ORDEN_MODULOS.indexOf(pathB);
+    // Administrador ve TODO
+    if (userRole === 'Administrador' || userRole === 'Admin' || userRole === 'Dueño') {
+      return allMenus;
+    }
+
+    // Para otros roles, filtrar por permisos
+    return allMenus.filter(menu => {
+      // Home siempre visible
+      if (menu.path === "/home") return true;
       
-      // Si no está en el orden, ponerlo al final
-      if (indexA === -1 && indexB === -1) return 0;
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
+      // Si tiene permiso específico
+      if (menu.permission) {
+        return hasPermission(menu.permission);
+      }
+      
+      // Si tiene módulo
+      if (menu.modulo) {
+        return hasModule(menu.modulo);
+      }
+      
+      return false;
     });
   };
 
-  const menuItems = getMenus();
+  const visibleMenus = getVisibleMenus();
 
-  // ✅ DEBUG: Ver qué menús se están renderizando
-  console.log('📋 Menús a renderizar:', menuItems.map(m => m.text));
-
+  // ============================================
+  // FUNCIONES DEL SIDEBAR
+  // ============================================
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => setIsOpen(false);
 
   const handleLogout = async () => {
     await logout();
-    if (clearUserData) clearUserData();
+    // Limpiar permisos al cerrar sesión
+    localStorage.removeItem('permisos');
+    localStorage.removeItem('modulos');
+    localStorage.removeItem('user');
     navigate("/login");
   };
 
+  // ============================================
+  // RENDER - ESTADO DE CARGA
+  // ============================================
   if (loading) {
     return (
       <div className="sidebar">
@@ -127,6 +199,9 @@ const Sidebar = () => {
     );
   }
 
+  // ============================================
+  // RENDER - SIDEBAR COMPLETO
+  // ============================================
   return (
     <>
       <button className="mobile-menu-btn" onClick={toggleSidebar}>
@@ -148,7 +223,9 @@ const Sidebar = () => {
             <NavLink 
               key={item.path}
               to={item.path} 
-              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              className={({ isActive }) => 
+                `sidebar-link ${isActive ? 'active' : ''}`
+              }
               onClick={closeSidebar}
             >
               {item.icon}
@@ -162,9 +239,21 @@ const Sidebar = () => {
           </NavLink>
         </nav>
 
-        <div className="sidebar-footer">
-          <p>Versión 2.0.0</p>
-        </div>
+        {!isCollapsed && (
+          <div className="sidebar-footer">
+            <p>Versión 2.0.0</p>
+            {userRole && (
+              <p className="sidebar-rol">
+                <small>Rol: {userRole}</small>
+              </p>
+            )}
+            {permisos.length > 0 && (
+              <p className="sidebar-permisos-count">
+                <small>{permisos.length} permisos activos</small>
+              </p>
+            )}
+          </div>
+        )}
       </aside>
     </>
   );
