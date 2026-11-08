@@ -9,18 +9,18 @@
       ============================================================ */
    * { margin: 0; padding: 0; box-sizing: border-box; }
    
-   .me-page {
-     --me-marino: #112250;
-     --me-acero: #3b507d;
-     --me-dorado: #e0c58e;
-     --me-rosado: #d9cbc2;
-     --me-blanco: #f5f0ea;
+   .oh-page {
+     --oh-marino: #112250;
+     --oh-acero: #3b507d;
+     --oh-dorado: #e0c58e;
+     --oh-rosado: #d9cbc2;
+     --oh-blanco: #f5f0ea;
      min-height: 100vh;
-     background-color: var(--me-marino);
+     background-color: var(--oh-marino);
      font-family: 'Inter', sans-serif;
    }
    
-   .me-dashboard {
+   .oh-dashboard {
      max-width: 1200px;
      margin: 0 auto;
      padding: 24px 20px 56px;
@@ -29,25 +29,25 @@
    /* ============================================================
       ENCABEZADO
       ============================================================ */
-   .me-page-header {
+   .oh-page-header {
      margin-bottom: 30px;
      text-align: center;
    }
    
-   .me-page-title {
+   .oh-page-title {
      font-family: 'Bodoni Moda', serif;
      font-size: 32px;
      font-weight: 600;
-     color: var(--me-blanco);
+     color: var(--oh-blanco);
      margin-bottom: 8px;
    }
    
-   .me-welcome-name {
-     color: var(--me-dorado);
+   .oh-welcome-name {
+     color: var(--oh-dorado);
    }
    
-   .me-page-subtitle {
-     color: var(--me-rosado);
+   .oh-page-subtitle {
+     color: var(--oh-rosado);
      font-size: 16px;
      opacity: 0.8;
    }
@@ -55,15 +55,15 @@
    /* ============================================================
       TARJETAS DE RESUMEN (SOLO ICONOS)
       ============================================================ */
-   .me-stats-grid {
+   .oh-stats-grid {
      display: grid;
      grid-template-columns: repeat(4, 1fr);
      gap: 15px;
      margin-bottom: 30px;
    }
    
-   .me-ficha {
-     background-color: var(--me-blanco) !important; /* Forzamos el color de fondo */
+   .oh-ficha {
+     background-color: var(--oh-blanco) !important;
      border-radius: 16px;
      padding: 20px;
      display: flex;
@@ -72,7 +72,7 @@
      transition: transform 0.2s ease, box-shadow 0.2s ease;
    }
    
-   .me-ficha-stat {
+   .oh-ficha-stat {
      padding: 20px;
      display: flex;
      align-items: center;
@@ -81,26 +81,26 @@
      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
    }
    
-   .me-ficha-stat:hover {
+   .oh-ficha-stat:hover {
      transform: translateY(-3px) scale(1.05);
      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
      background-color: #fff !important;
    }
    
-   .me-stat-icon-only {
+   .oh-stat-icon-only {
      font-size: 44px !important;
    }
    
    /* ============================================================
-      ESTILOS DEL TOOLTIP (MÁS GRANDE Y LEGIBLE)
+      ESTILOS DEL TOOLTIP
       ============================================================ */
    .MuiTooltip-tooltip {
-     background-color: #0b1738 !important; /* Azul más oscuro para contrastar */
+     background-color: #0b1738 !important;
      color: white !important;
      font-family: 'Inter', sans-serif !important;
      border-radius: 12px !important;
      padding: 16px 24px !important;
-     box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
      max-width: 300px !important;
      border: 1px solid rgba(224, 197, 142, 0.3) !important;
    }
@@ -109,23 +109,23 @@
      color: #0b1738 !important;
    }
    
-   .me-tooltip-content {
+   .oh-tooltip-content {
      display: flex;
      flex-direction: column;
      align-items: center;
      gap: 6px;
    }
    
-   .me-tooltip-label {
+   .oh-tooltip-label {
      font-size: 13px !important;
      font-weight: 600 !important;
      text-transform: uppercase;
      letter-spacing: 1px;
-     color: var(--me-dorado) !important;
+     color: var(--oh-dorado) !important;
      opacity: 0.9;
    }
    
-   .me-tooltip-value {
+   .oh-tooltip-value {
      font-family: 'Bodoni Moda', serif !important;
      font-size: 26px !important;
      font-weight: 700 !important;
@@ -136,28 +136,28 @@
    /* ============================================================
       SECCIONES DE CONTENIDO (CAJAS BLANCAS)
       ============================================================ */
-   .me-contenido-section {
-     background-color: var(--me-blanco) !important; /* FORZAMOS EL FONDO BLANCO */
+   .oh-contenido-section {
+     background-color: var(--oh-blanco) !important;
      border-radius: 16px;
      padding: 24px;
      margin-bottom: 24px;
      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
    }
    
-   .me-section-title {
+   .oh-section-title {
      font-size: 16px;
-     color: var(--me-marino) !important; /* Forzamos el color del texto */
+     color: var(--oh-marino) !important;
      margin-bottom: 20px;
      display: flex;
      align-items: center;
      gap: 10px;
      font-weight: 700;
-     border-bottom: 2px solid var(--me-dorado);
+     border-bottom: 2px solid var(--oh-dorado);
      padding-bottom: 10px;
    }
    
-   .me-texto-vacio {
-     color: var(--me-acero);
+   .oh-texto-vacio {
+     color: var(--oh-acero);
      font-size: 14px;
      font-style: italic;
      text-align: center;
@@ -167,16 +167,16 @@
    /* ============================================================
       FICHAS DE EMPEÑOS PRÓXIMOS A VENCER
       ============================================================ */
-   .me-fichas-grid {
+   .oh-fichas-grid {
      display: grid;
      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
      gap: 15px;
    }
    
-   .me-empeno-nombre {
+   .oh-empeno-nombre {
      font-weight: 600;
      font-size: 15px;
-     color: var(--me-marino);
+     color: var(--oh-marino);
      line-height: 1.3;
      display: -webkit-box;
      -webkit-line-clamp: 2;
@@ -184,13 +184,13 @@
      overflow: hidden;
    }
    
-   .me-empeno-id {
+   .oh-empeno-id {
      font-size: 12px;
-     color: var(--me-acero);
+     color: var(--oh-acero);
      opacity: 0.8;
    }
    
-   .me-estado {
+   .oh-estado {
      display: inline-block;
      padding: 4px 12px;
      border-radius: 20px;
@@ -199,13 +199,13 @@
      white-space: nowrap;
    }
    
-   .me-estado-vencido   { background: #f6dad6; color: #962d22; }
-   .me-estado-porvencer { background: #fbe6cc; color: #96500f; }
+   .oh-estado-vencido   { background: #f6dad6; color: #962d22; }
+   .oh-estado-porvencer { background: #fbe6cc; color: #96500f; }
    
    /* ============================================================
       DESGLOSE DE DEUDA (TABLA FINANCIERA)
       ============================================================ */
-   .me-financiero-tabla {
+   .oh-financiero-tabla {
      display: flex;
      flex-direction: column;
      background-color: #fff !important;
@@ -215,52 +215,52 @@
      border: 1px solid #eae4db;
    }
    
-   .me-financiero-fila {
+   .oh-financiero-fila {
      display: flex;
      justify-content: space-between;
      align-items: center;
      gap: 12px;
      padding: 14px 18px;
      font-size: 14px;
-     color: var(--me-acero);
+     color: var(--oh-acero);
      border-bottom: 1px solid #EFEAE0;
    }
    
-   .me-financiero-fila:last-child {
+   .oh-financiero-fila:last-child {
      border-bottom: none;
    }
    
-   .me-financiero-label {
+   .oh-financiero-label {
      font-weight: 500;
    }
    
-   .me-financiero-valor {
-     color: var(--me-marino);
+   .oh-financiero-valor {
+     color: var(--oh-marino);
      font-weight: 700;
      font-variant-numeric: tabular-nums;
    }
    
-   .me-financiero-fila.me-financiero-total {
-     background-color: var(--me-marino);
+   .oh-financiero-fila.oh-financiero-total {
+     background-color: var(--oh-marino);
      font-size: 16px;
    }
    
-   .me-financiero-fila.me-financiero-total .me-financiero-label,
-   .me-financiero-fila.me-financiero-total .me-financiero-valor {
-     color: var(--me-dorado);
+   .oh-financiero-fila.oh-financiero-total .oh-financiero-label,
+   .oh-financiero-fila.oh-financiero-total .oh-financiero-valor {
+     color: var(--oh-dorado);
      font-weight: 700;
    }
    
    /* ============================================================
       ACTIVIDAD RECIENTE
       ============================================================ */
-   .me-historial-lista {
+   .oh-historial-lista {
      display: flex;
      flex-direction: column;
      gap: 10px;
    }
    
-   .me-historial-item {
+   .oh-historial-item {
      display: flex;
      align-items: center;
      gap: 14px;
@@ -270,39 +270,39 @@
      border: 1px solid #eae4db;
    }
    
-   .me-activity-icon {
+   .oh-activity-icon {
      display: flex;
      align-items: center;
      justify-content: center;
-     background-color: var(--me-blanco);
+     background-color: var(--oh-blanco);
      width: 36px;
      height: 36px;
      border-radius: 50%;
      flex-shrink: 0;
    }
    
-   .me-historial-main {
+   .oh-historial-main {
      display: flex;
      flex-direction: column;
      gap: 4px;
      min-width: 0;
    }
    
-   .me-historial-monto {
+   .oh-historial-monto {
      font-weight: 600;
-     color: var(--me-marino);
+     color: var(--oh-marino);
      line-height: 1.3;
    }
    
-   .me-historial-fecha {
+   .oh-historial-fecha {
      font-size: 12px;
-     color: var(--me-acero);
+     color: var(--oh-acero);
    }
    
    /* ============================================================
       SECCIONES INFERIORES
       ============================================================ */
-   .me-bottom-sections {
+   .oh-bottom-sections {
      display: grid;
      grid-template-columns: 1fr 1fr;
      gap: 24px;
@@ -311,10 +311,10 @@
    /* ============================================================
       ESTADOS DE CARGA Y ERROR
       ============================================================ */
-   .me-cargando-texto {
+   .oh-cargando-texto {
      text-align: center;
      padding: 80px 20px;
-     color: var(--me-blanco);
+     color: var(--oh-blanco);
      font-size: 20px;
      font-weight: 500;
      animation: pulse 1.5s infinite ease-in-out;
@@ -326,11 +326,11 @@
      100% { opacity: 0.6; }
    }
    
-   .me-sin-resultados {
+   .oh-sin-resultados {
      text-align: center;
      padding: 40px;
-     color: var(--me-acero);
-     background-color: var(--me-blanco);
+     color: var(--oh-acero);
+     background-color: var(--oh-blanco);
      border-radius: 12px;
      display: flex;
      flex-direction: column;
@@ -338,8 +338,8 @@
      gap: 16px;
    }
    
-   .me-btn-reintentar {
-     background-color: var(--me-acero);
+   .oh-btn-reintentar {
+     background-color: var(--oh-acero);
      color: #fff;
      border: none;
      padding: 10px 20px;
@@ -349,843 +349,80 @@
      transition: background 0.2s;
    }
    
-   .me-btn-reintentar:hover {
-     background-color: var(--me-marino);
+   .oh-btn-reintentar:hover {
+     background-color: var(--oh-marino);
    }
    
    /* ============================================================
       RESPONSIVE (CELULAR Y TABLET)
       ============================================================ */
    @media (max-width: 1024px) {
-     .me-stats-grid {
+     .oh-stats-grid {
        grid-template-columns: repeat(2, 1fr);
      }
-     
-     .me-bottom-sections {
+   
+     .oh-bottom-sections {
        grid-template-columns: 1fr;
        gap: 20px;
      }
    }
    
    @media (max-width: 600px) {
-     .me-dashboard {
+     .oh-dashboard {
        padding: 16px 12px 40px;
      }
    
-     .me-page-title {
+     .oh-page-title {
        font-size: 24px;
      }
    
-     .me-stats-grid {
-       grid-template-columns: repeat(2, 1fr); 
+     .oh-stats-grid {
+       grid-template-columns: repeat(2, 1fr);
        gap: 10px;
      }
    
-     .me-ficha-stat {
+     .oh-ficha-stat {
        padding: 16px;
      }
    
-     .me-stat-icon-only {
+     .oh-stat-icon-only {
        font-size: 36px !important;
      }
    
-     .me-fichas-grid {
+     .oh-fichas-grid {
        grid-template-columns: 1fr;
      }
    
-     .me-contenido-section {
+     .oh-contenido-section {
        padding: 16px;
      }
    
-     .me-financiero-fila {
+     .oh-financiero-fila {
        flex-direction: column;
        align-items: flex-start;
        gap: 4px;
      }
-     
-     .me-financiero-valor {
+   
+     .oh-financiero-valor {
        align-self: flex-end;
      }
    }
-  /* OphelinaHome.css - Optimizado y completamente responsive */
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700&display=swap');
-
-  /* Variables */
-  :root {
-    --primary-blue: #0d1b3e;
-    --secondary-blue: #435b83;
-    --gold: #c5a059;
-    --gold-light: #e9c46a;
-    --gold-dark: #be981d;
-    --white: #ffffff;
-    --gray-light: #f0f2f5;
-    --gray-medium: #e0e0e0;
-    --gray-dark: #333;
-    --gray-text: #777;
-    --shadow-sm: 0 4px 20px rgba(0,0,0,0.1);
-    --shadow-md: 0 10px 30px rgba(0,0,0,0.05);
-    --transition: all 0.3s ease;
-  }
-
-  /* Reset */
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  body {
-    background-color: #F5F0E9;
-    font-family: 'Inter', sans-serif;
-    overflow-x: hidden;
-  }
-
-  /* MAIN CONTENT */
-  .main-content {
-    min-height: 100vh;
-    width: 100%;
-    margin: 0 auto;
-    padding: 40px 20px;
-    background-color: #F5F0E9;
-  }
-
-  /* HOME MAIN */
-  .home-main {
-    max-width: 1200px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  /* WELCOME SECTION */
-  .welcome-section {
-    text-align: center;
-    margin-bottom: 40px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-  }
-
-  .welcome-title {
-    font-size: clamp(24px, 5vw, 32px);
-    color: var(--primary-blue);
-    font-weight: 600;
-    margin-bottom: 10px;
-    font-family: 'Bodoni Moda', serif;
-    text-align: center;
-    width: 100%;
-    line-height: 1.2;
-  }
-
-  .welcome-name {
-    color: var(--gold-dark);
-    font-size: clamp(24px, 5vw, 32px);
-    display: inline-block;
-  }
-
-  .welcome-subtitle {
-    color: var(--gray-text);
-    font-size: clamp(14px, 3vw, 18px);
-    text-align: center;
-    width: 100%;
-    margin-top: 5px;
-    padding: 0 10px;
-  }
-
-  /* CARDS SECTION */
-  .cards-section {
-    margin-bottom: 1px;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-  }
-
-  .cards-grid {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    gap: 25px;
-    padding-right: 1px;
-  }
-
-  .stat-card {
-    background: var(--white);
-    border-radius: 16px;
-    text-align: center;
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    flex: 1;
-    min-width: 200px;
-    max-width: 260px;
-    transition: var(--transition);
-    cursor: pointer;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-  }
-
-  .stat-number {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--gold-dark);
-    margin-top: 12px;
-    margin-bottom: 0;
-    line-height: 1.2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-  }
-
-  .gold-card {
-    background: linear-gradient(135deg, #f1dcb0 0%, #d4af37 100%) !important;
-  }
-
-  .gold-card svg {
-    color: white !important;
-  }
-
-  /* CONTENIDO SECTIONS */
-  .contenido-section {
-    background: var(--white);
-    border-radius: 16px;
-    padding: 28px;
-    margin-bottom: 30px;
-    box-shadow: var(--shadow-sm);
-    width: 100%;
-    overflow: hidden;
-  }
-
-  .section-title {
-    font-size: clamp(16px, 4vw, 18px);
-    color: var(--primary-blue);
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    flex-wrap: wrap;
-  }
-
-  .section-icon {
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-  }
-
-  /* PAWN ITEMS */
-  .pawn-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 0;
-    border-bottom: 1px solid var(--gray-light);
-  }
-
-  .pawn-item:last-child {
-    border-bottom: none;
-  }
-
-  .pawn-info {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .pawn-title {
-    font-size: clamp(14px, 3.5vw, 16px);
-    color: var(--primary-blue);
-    font-weight: 600;
-    margin-bottom: 4px;
-    word-break: break-word;
-  }
-
-  .pawn-date {
-    color: var(--gray-text);
-    font-size: clamp(12px, 3vw, 13px);
-  }
-
-  .pawn-days {
-    display: flex;
-    align-items: center;
-    margin-left: 10px;
-  }
-
-  .days-badge {
-    background-color: var(--gold-light);
-    color: var(--primary-blue);
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: clamp(11px, 2.8vw, 13px);
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  /* BOTTOM SECTIONS */
-  .bottom-sections {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 25px;
-    width: 100%;
-    margin-top: 10px;
-  }
-
-  .bottom-sections .contenido-section {
-    margin-bottom: 0;
-    height: 100%;
-  }
-
-  /* DEBT BREAKDOWN */
-  .debt-breakdown {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .debt-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--gray-dark);
-    font-size: clamp(13px, 3.5vw, 15px);
-    padding: 4px 0;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .debt-amount {
-    font-weight: 600;
-    color: var(--primary-blue);
-  }
-
-  .debt-divider {
-    height: 1px;
-    background: var(--gray-medium);
-    margin: 10px 0;
-  }
-
-  .total-row {
-    font-size: clamp(15px, 4vw, 17px);
-    font-weight: 600;
-  }
-
-  .total-amount {
-    color: var(--gold-dark);
-    font-weight: 700;
-    font-size: clamp(16px, 4.5vw, 18px);
-  }
-
-  /* ACTIVITY LIST */
-  .activity-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .activity-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 8px 0;
-  }
-
-  .activity-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 32px;
-  }
-
-  .activity-content {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .activity-title {
-    color: var(--primary-blue);
-    font-size: clamp(13px, 3.5vw, 15px);
-    margin-bottom: 4px;
-    word-break: break-word;
-  }
-
-  .activity-detail {
-    color: var(--gray-text);
-    font-size: clamp(11px, 3vw, 13px);
-    word-break: break-word;
-  }
-
-  /* Tooltip */
-  .MuiTooltip-tooltip {
-    background-color: var(--primary-blue) !important;
-    color: white !important;
-    font-size: 12px !important;
-    padding: 8px 14px !important;
-    border-radius: 8px !important;
-    font-weight: 500 !important;
-  }
-
-  .MuiTooltip-arrow {
-    color: var(--primary-blue) !important;
-  }
-
-  /* ===== MEDIA QUERIES OPTIMIZADAS ===== */
-
-  /* Pantallas grandes (1200px a 1600px) */
-  @media screen and (min-width: 1200px) and (max-width: 1599px) {
-    .home-main {
-      max-width: 1100px;
-    }
-    
-    .cards-grid {
-      max-width: 1100px;
-      gap: 30px;
-    }
-    
-    .stat-card {
-      min-width: 220px;
-      max-width: 240px;
-      padding: 32px 25px;
-    }
-    
-    .stat-number {
-      font-size: 26px;
-      margin-top: 14px;
-    }
-    
-    .stat-card svg {
-      font-size: 52px !important;
-    }
-  }
-
-  /* Pantallas extra grandes (1600px en adelante) */
-  @media screen and (min-width: 1600px) {
-    .home-main {
-      max-width: 1400px;
-    }
-    
-    .cards-grid {
-      max-width: 1400px;
-      gap: 35px;
-    }
-    
-    .stat-card {
-      min-width: 260px;
-      max-width: 280px;
-      padding: 35px 30px;
-    }
-    
-    .stat-number {
-      font-size: 28px;
-      margin-top: 16px;
-    }
-    
-    .stat-card svg {
-      font-size: 56px !important;
-    }
-    
-    .welcome-title {
-      font-size: 38px;
-    }
-    
-    .welcome-name {
-      font-size: 38px;
-    }
-    
-    .welcome-subtitle {
-      font-size: 18px;
-    }
-    
-    .contenido-section {
-      padding: 32px;
-    }
-    
-    .section-title {
-      font-size: 20px;
-      margin-bottom: 24px;
-    }
-    
-    .pawn-title {
-      font-size: 17px;
-    }
-    
-    .pawn-date {
-      font-size: 14px;
-    }
-    
-    .days-badge {
-      font-size: 14px;
-      padding: 8px 16px;
-    }
-    
-    .debt-row {
-      font-size: 16px;
-    }
-    
-    .total-row {
-      font-size: 18px;
-    }
-    
-    .total-amount {
-      font-size: 20px;
-    }
-    
-    .activity-title {
-      font-size: 16px;
-    }
-    
-    .activity-detail {
-      font-size: 14px;
-    }
-  }
-
-  /* Pantallas ultra grandes (2000px en adelante) */
-  @media screen and (min-width: 2000px) {
-    .home-main {
-      max-width: 1600px;
-    }
-    
-    .cards-grid {
-      max-width: 1600px;
-      gap: 40px;
-    }
-    
-    .stat-card {
-      min-width: 300px;
-      max-width: 320px;
-      padding: 40px 35px;
-    }
-    
-    .stat-number {
-      font-size: 32px;
-      margin-top: 18px;
-    }
-    
-    .stat-card svg {
-      font-size: 64px !important;
-    }
-    
-    .welcome-title {
-      font-size: 42px;
-    }
-    
-    .welcome-name {
-      font-size: 42px;
-    }
-    
-    .welcome-subtitle {
-      font-size: 20px;
-    }
-    
-    .contenido-section {
-      padding: 38px;
-    }
-  }
-
-  /* Tablets y laptops pequeñas */
-  @media screen and (max-width: 1199px) {
-    .main-content {
-      padding: 30px 16px;
-    }
-    
-    .stat-card {
-      min-width: 200px;
-      max-width: 240px;
-      padding: 25px 20px;
-    }
-    
-    .stat-number {
-      font-size: 22px;
-      margin-top: 10px;
-    }
-  }
-
-  /* Tablets medianas */
-  @media screen and (max-width: 900px) {
-    .cards-grid {
-      gap: 20px;
-    }
-    
-    .stat-card {
-      min-width: 180px;
-      max-width: 220px;
-      padding: 22px 18px;
-    }
-    
-    .bottom-sections {
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
-    
-    .contenido-section {
-      padding: 24px;
-    }
-    
-    .stat-number {
-      font-size: 20px;
-      margin-top: 10px;
-    }
-  }
-
-  /* Tablets pequeñas y móviles grandes */
-  @media screen and (max-width: 768px) {
-    .main-content {
-      padding: 20px 12px;
-    }
-    
-    .welcome-section {
-      margin-bottom: 30px;
-    }
-    
-    .cards-grid {
-      gap: 15px;
-    }
-    
-    .stat-card {
-      min-width: 160px;
-      max-width: 200px;
-      padding: 20px 15px;
-    }
-    
-    .stat-card svg {
-      font-size: 40px !important;
-    }
-    
-    .stat-number {
-      font-size: 18px;
-      margin-top: 8px;
-    }
-    
-    .pawn-item {
-      padding: 12px 0;
-    }
-    
-    .days-badge {
-      padding: 5px 10px;
-    }
-    
-    .contenido-section {
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    
-    .bottom-sections {
-      gap: 15px;
-    }
-  }
-
-  /* Móviles */
-  @media screen and (max-width: 600px) {
-    .cards-grid {
-      gap: 12px;
-    }
-    
-    .stat-card {
-      min-width: calc(50% - 6px);
-      max-width: none;
-      flex: 1;
-      padding: 16px 12px;
-    }
-    
-    .stat-card svg {
-      font-size: 36px !important;
-    }
-    
-    .stat-number {
-      font-size: 16px;
-      margin-top: 6px;
-    }
-    
-    .pawn-item {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-    }
-    
-    .pawn-days {
-      width: 100%;
-      margin-left: 0;
-    }
-    
-    .days-badge {
-      width: 100%;
-      text-align: center;
-      white-space: normal;
-    }
-    
-    .contenido-section {
-      padding: 18px;
-      border-radius: 14px;
-    }
-    
-    .section-title {
-      margin-bottom: 15px;
-    }
-    
-    .debt-row {
-      flex-direction: row;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .activity-item {
-      gap: 10px;
-    }
-  }
-
-  /* Móviles pequeños */
-  @media screen and (max-width: 480px) {
-    .main-content {
-      padding: 15px 10px;
-    }
-    
-    .welcome-section {
-      margin-bottom: 25px;
-    }
-    
-    .welcome-title {
-      font-size: 22px;
-    }
-    
-    .welcome-name {
-      font-size: 22px;
-    }
-    
-    .welcome-subtitle {
-      font-size: 14px;
-    }
-    
-    .cards-grid {
-      gap: 10px;
-    }
-    
-    .stat-card {
-      min-width: calc(50% - 5px);
-      padding: 14px 10px;
-    }
-    
-    .stat-card svg {
-      font-size: 32px !important;
-    }
-    
-    .stat-number {
-      font-size: 14px;
-      margin-top: 5px;
-    }
-    
-    .contenido-section {
-      padding: 16px;
-      border-radius: 12px;
-    }
-    
-    .section-title {
-      font-size: 15px;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-    
-    .section-icon svg {
-      font-size: 20px !important;
-    }
-    
-    .pawn-title {
-      font-size: 14px;
-    }
-    
-    .pawn-date {
-      font-size: 11px;
-    }
-    
-    .days-badge {
-      font-size: 11px;
-      padding: 5px 8px;
-    }
-    
-    .debt-row {
-      font-size: 13px;
-    }
-    
-    .total-row {
-      font-size: 14px;
-    }
-    
-    .total-amount {
-      font-size: 15px;
-    }
-    
-    .activity-title {
-      font-size: 13px;
-    }
-    
-    .activity-detail {
-      font-size: 11px;
-    }
-    
-    .activity-icon svg {
-      font-size: 18px !important;
-    }
-  }
-
-  /* Móviles muy pequeños */
-  @media screen and (max-width: 360px) {
-    .main-content {
-      padding: 12px 8px;
-    }
-    
-    .welcome-title {
-      font-size: 20px;
-    }
-    
-    .welcome-name {
-      font-size: 20px;
-    }
-    
-    .welcome-subtitle {
-      font-size: 12px;
-    }
-    
-    .stat-card {
-      padding: 12px 8px;
-    }
-    
-    .stat-card svg {
-      font-size: 28px !important;
-    }
-    
-    .stat-number {
-      font-size: 12px;
-    }
-    
-    .contenido-section {
-      padding: 14px;
-    }
-  }
-
-  /* Orientación landscape en móviles */
-  @media screen and (max-height: 500px) and (orientation: landscape) {
-    .main-content {
-      padding: 20px;
-    }
-    
-    .cards-grid {
-      flex-direction: row;
-      flex-wrap: wrap;
-    }
-    
-    .stat-card {
-      min-width: 180px;
-      max-width: 200px;
-    }
-    
-    .bottom-sections {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
+   
+   /* ============================================================
+      FICHAS (encabezado de cada empeño próximo a vencer)
+      Antes venían de MisEmpenos.css; ahora el Home es independiente
+      ============================================================ */
+   .oh-ficha-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: flex-start;
+     gap: 12px;
+     width: 100%;
+   }
+   
+   .oh-ficha-titulo {
+     display: flex;
+     flex-direction: column;
+     gap: 4px;
+     min-width: 0;
+   }

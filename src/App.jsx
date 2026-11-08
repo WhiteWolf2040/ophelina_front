@@ -12,7 +12,6 @@ import LandingPage from "./components/LandingPage";
 import OphelinaHome from "./Clientes/OphelinaHome";
 import MisEmpenos from "./Clientes/MisEmpenos";
 import OphelinaTienda from "./Clientes/OphelinaTienda";
-import Tarjetero from "./Clientes/Tarjetero";
 //  NUEVO: módulo de tickets del cliente
 import MisTickets from "./Clientes/MisTickets";
 import MisTicketDetalle from "./Clientes/MisTicketDetalle";
@@ -98,12 +97,6 @@ function App() {
           <Route path="/ophelina" element={
             <ProtectedRoute allowedRoles={['Cliente']}>
               <OphelinaTienda />
-            </ProtectedRoute>
-          } />
-
-          <Route path="/tarjetas" element={
-            <ProtectedRoute allowedRoles={['Cliente']}>
-              <Tarjetero />
             </ProtectedRoute>
           } />
 
