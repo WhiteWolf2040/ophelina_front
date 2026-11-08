@@ -123,10 +123,7 @@ const Configuraciones = () => {
 
   return (
     <div className="configuraciones-container">
-      <h2 className="page-title">
-        <SettingsIcon className="title-icon" />
-        Configuraciones
-      </h2>
+      
 
       {/* ✅ TABS DE NAVEGACIÓN */}
       <div className="config-tabs">

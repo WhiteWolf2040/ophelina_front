@@ -29,7 +29,6 @@ const DEFAULT_MENUS = [
   { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
   { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
   { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
-  { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
   { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
   { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
   { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
@@ -40,7 +39,7 @@ const DEFAULT_MENUS = [
 // ✅ ORDEN CORRECTO DE LOS MÓDULOS
 const ORDEN_MODULOS = [
   'home', 'clientes', 'pagos', 'empenos',
-  'tienda', 'apartados', 'inventario',
+  'tienda', 'inventario',
   'reportes', 'roles', 'permisos', 'configuracion'
 ];
 
@@ -75,7 +74,6 @@ const Sidebar = () => {
       'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
       'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
       'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
-      'apartados': { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
       'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
       'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
       'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
@@ -111,11 +109,22 @@ const Sidebar = () => {
   // ✅ AGREGADO #2: función para alternar colapso
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
-  const handleLogout = async () => {
-    await logout();
-    if (clearUserData) clearUserData();
-    navigate("/login");
-  };
+ const handleLogout = async () => {
+  // 1. Limpiar TODO el frontend primero (instantáneo)
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  if (clearUserData) clearUserData();
+
+  // 2. Redirigir YA (el usuario ve la pantalla de login al instante)
+  navigate("/login");
+
+  // 3. Avisar al backend en segundo plano (si falla, no importa)
+  try {
+    await api.post('/logout').catch(() => {});
+  } catch (e) {
+    // silencio
+  }
+};
 
   if (loading) {
     return (

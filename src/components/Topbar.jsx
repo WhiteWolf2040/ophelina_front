@@ -4,13 +4,26 @@ import { useLocation } from "react-router-dom";
 import "./Topbar.css";
 import { useDashboard } from "../contexts/DashboardContext";
 
-// Iconos
+// Iconos generales
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import WarningIcon from '@mui/icons-material/Warning';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import CloseIcon from '@mui/icons-material/Close';
 import ErrorIcon from '@mui/icons-material/Error';
 import RefreshIcon from '@mui/icons-material/Refresh';
+
+// Iconos por ruta
+import HomeIcon from '@mui/icons-material/Home';
+import PeopleIcon from '@mui/icons-material/People';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import DiamondIcon from '@mui/icons-material/Diamond';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import SecurityIcon from '@mui/icons-material/Security';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 
 const Topbar = () => {
   // ============================================
@@ -26,18 +39,20 @@ const Topbar = () => {
 
   const location = useLocation();
 
-  // Estados de UI
+  // ============================================
+  // ESTADOS DE UI
+  // ============================================
   const [showPerfil, setShowPerfil] = useState(false);
   const [showAlertas, setShowAlertas] = useState(false);
   const [refrescandoManual, setRefrescandoManual] = useState(false);
 
   // ============================================
-  // ✅ DETECTAR SI ESTAMOS EN EL DASHBOARD
+  // DETECTAR SI ESTAMOS EN EL DASHBOARD
   // ============================================
   const esDashboard = location.pathname === '/home';
 
   // ============================================
-  // ✅ TICK PARA ACTUALIZAR "HACE X MIN"
+  // TICK PARA ACTUALIZAR "HACE X MIN"
   // ============================================
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -48,7 +63,7 @@ const Topbar = () => {
   const minutosDesde = edadCache !== null ? Math.floor(edadCache / 60000) : null;
 
   // ============================================
-  // ✅ REFRESCAR MANUAL
+  // REFRESCAR MANUAL
   // ============================================
   const handleRefrescarManual = async () => {
     setRefrescandoManual(true);
@@ -108,10 +123,10 @@ const Topbar = () => {
   };
 
   // ============================================
-  // SUBTÍTULOS POR RUTA
+  // SUBTÍTULOS E ÍCONOS POR RUTA
   // ============================================
   const subtitulosPorRuta = {
-    '/home': 'Estado general de tu casa de empeño' ,
+    '/home': 'Estado general de tu casa de empeño',
     '/clientes': 'Gestiona tus clientes',
     '/clientes/nuevo': 'Registra un nuevo cliente',
     '/pagos': 'Registra y consulta pagos',
@@ -127,45 +142,73 @@ const Topbar = () => {
     '/roles/nuevo': 'Crear un nuevo rol',
     '/permisos': 'Permisos de usuarios',
     '/permisos/nuevo': 'Crear un nuevo permiso',
-    '/configuracion': 'Configura tu casa de empeño'
+    '/configuracion': 'Configuración'
   };
 
-  const getSubtitulo = () => {
-    const path = location.pathname;
-    if (subtitulosPorRuta[path]) return subtitulosPorRuta[path];
-    const match = Object.keys(subtitulosPorRuta).find(key =>
-      path.startsWith(key)
-    );
-    return match ? subtitulosPorRuta[match] : 'Bienvenido a Ophelina';
+  const iconosPorRuta = {
+    '/home': <HomeIcon />,
+    '/clientes': <PeopleIcon />,
+    '/pagos': <PaymentsIcon />,
+    '/empenos': <DiamondIcon />,
+    '/inventario': <InventoryIcon />,
+    '/tienda': <StorefrontIcon />,
+    '/tienda/apartados': <ShoppingBagIcon />,
+    '/reportes': <BarChartIcon />,
+    '/roles': <SecurityIcon />,
+    '/permisos': <VpnKeyIcon />,
+    '/configuracion': <SettingsIcon />
   };
+
+  // ✅ DENTRO del componente, usa `location`
+  const getInfoRuta = () => {
+    const path = location.pathname;
+
+    let keyMatch = subtitulosPorRuta[path] ? path : null;
+
+    if (!keyMatch) {
+      keyMatch = Object.keys(subtitulosPorRuta).find(key =>
+        path.startsWith(key)
+      );
+    }
+
+    return {
+      texto: keyMatch ? subtitulosPorRuta[keyMatch] : 'Bienvenido a Ophelina',
+      icono: keyMatch ? iconosPorRuta[keyMatch] : null
+    };
+  };
+
+  const { texto: tituloPagina, icono: iconoPagina } = getInfoRuta();
 
   const totalAlertas = contadores.vencidos + contadores.proximos;
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <>
       <header className="topbar">
         <div className="topbar-left">
           <h1 className="topbar-saludo">
-            {getSubtitulo()}
+            {iconoPagina}
+            {tituloPagina}
           </h1>
+
           <span className="topbar-subtitulo">
-            Bienvenido, {datosPerfil.nombre.split(' ')[0] || 'Usuario'} | 
+            Bienvenido, {datosPerfil.nombre.split(' ')[0] || 'Usuario'} |
             <span className="topbar-freshness-text">
-          {minutosDesde === null
-            ? 'Cargando...'
-            : minutosDesde < 1
-            ? ' Dashboard actualizado ahora mismo'
-            : `Actualizado hace ${minutosDesde} min`}
-        </span>
+              {minutosDesde === null
+                ? ' Cargando...'
+                : minutosDesde < 1
+                ? ' Dashboard actualizado ahora mismo'
+                : ` Actualizado hace ${minutosDesde} min`}
+            </span>
           </span>
         </div>
 
         <div className="topbar-actions">
-
-          {/* ✅ NUEVO: TOOLBAR SOLO EN /home */}
+          {/* Toolbar con refresh SOLO en /home */}
           {esDashboard && (
             <div className="dashboard-toolbar-inline">
-              
               <button
                 type="button"
                 className={`dashboard-btn-refresh ${refrescandoManual ? 'girando' : ''}`}
@@ -178,6 +221,7 @@ const Topbar = () => {
             </div>
           )}
 
+          {/* Campanita de alertas */}
           <button
             className="topbar-btn-alertas"
             onClick={() => setShowAlertas(true)}
@@ -189,6 +233,7 @@ const Topbar = () => {
             )}
           </button>
 
+          {/* Perfil */}
           <button
             className="topbar-btn-perfil"
             onClick={() => setShowPerfil(true)}

@@ -22,9 +22,9 @@
   to { transform: rotate(360deg); }
 }
 
-/* ===== Espaciado uniforme arriba/abajo en TODAS las vistas ===== */
+/* ===== Espaciado uniforme arriba/abajo en TODAS las vistas
 .dashboard > .content,
 .dashboard > .content2 {
   padding-top: 24px;
   padding-bottom: 40px;
-}
+} ===== */

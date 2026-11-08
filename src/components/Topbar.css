@@ -1,6 +1,7 @@
 /* ============================================
    TOPBAR GLOBAL (perfil + notificaciones)
    ============================================ */
+   
 .topbar {
   position: sticky;
   top: 0;
@@ -27,8 +28,7 @@
   font-weight: 600;
   color: #1e3a8a;
   line-height: 1.2;
-  display: flex;
-  flex-direction: column;
+  
   gap: 2px;
 }
 
@@ -602,4 +602,25 @@
   .topbar-btn-refresh-alertas svg {
     font-size: 18px !important;
   }
+}
+
+/* ============================================
+   SALUDO CON ÍCONO
+   ============================================ */
+.topbar-saludo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-saludo svg {
+  font-size: 22px !important;
+  color: #d3b372;
+}
+
+.topbar-freshness-text {
+  font-style: italic;
+  color: #9ca3af;
+  font-size: 12px;
+  margin-left: 4px;
 }
