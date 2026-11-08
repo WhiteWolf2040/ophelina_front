@@ -216,17 +216,6 @@ export default function Navbar() {
               <span>Empeños</span>
             </NavLink>
           </li>
-        {/*   <li>
-            <NavLink
-              to="/tarjetas"
-              className={({ isActive }) =>
-                isActive ? "Ophe-icon-item Ophe-icon-active" : "Ophe-icon-item"
-              }
-            >
-              <CreditCardIcon />
-              <span>Tarjetas</span>
-            </NavLink>
-          </li> */}
           <li>
             <NavLink
               to="/ophelina"
@@ -257,14 +246,6 @@ export default function Navbar() {
 
               <div className="divider"></div>
 
-              {/*
-                ✅ CORREGIDO: se agrega el wrapper con la clase
-                "notification-list-scroll" (ya existía en Navbar.css, pero
-                no estaba aplicada a ningún elemento del JSX, por eso el
-                scroll nunca aparecía). Header y "Cerrar sesión" se quedan
-                FUERA de este div para que permanezcan fijos mientras solo
-                la lista interna hace scroll.
-              */}
               <div className="notification-list-scroll">
                 {loadingNotificaciones ? (
                   <div className="notification-item">
@@ -326,7 +307,9 @@ export default function Navbar() {
                   disabled
                   style={{ backgroundColor: "#f0f0f0", cursor: "not-allowed" }}
                 />
-                <small style={{ color: "#888" }}>El nombre no se puede modificar</small>
+                <small style={{ color: "#888", display: "block", marginTop: "4px" }}>
+                  El nombre no se puede modificar
+                </small>
               </div>
 
               <div className="form-group">
@@ -371,11 +354,7 @@ export default function Navbar() {
               <button className="cancel-btn" onClick={closeEditModal} disabled={isSaving}>
                 Cancelar
               </button>
-              <button
-                className="save-btn"
-                onClick={saveUserInfo}
-                disabled={isSaving}
-              >
+              <button className="save-btn" onClick={saveUserInfo} disabled={isSaving}>
                 <SaveIcon sx={{ fontSize: 18 }} />
                 {isSaving ? "Guardando..." : "Guardar cambios"}
               </button>

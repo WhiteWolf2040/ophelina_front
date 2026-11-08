@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from "react";
 import "./OphelinaHome.css";
 import Navbar from "../ClientesNav/Navbar";
-import InventoryIcon from '@mui/icons-material/Inventory';
-import PaymentIcon from '@mui/icons-material/Payment';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import BoxIcon from '@mui/icons-material/Inventory';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import DiamondIcon from '@mui/icons-material/Diamond';
-import Tooltip from '@mui/material/Tooltip';
+import InventoryIcon from "@mui/icons-material/Inventory";
+import PaymentIcon from "@mui/icons-material/Payment";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import Tooltip from "@mui/material/Tooltip";
 import api from "../config/api";
 import { getCurrentUser } from "../config/auth";
 
-// Mapea el string que manda el backend al ícono real de MUI
 const iconMap = {
   pago: <PaymentIcon sx={{ fontSize: 20 }} />,
   nuevo: <AddCircleOutlineIcon sx={{ fontSize: 20 }} />,
@@ -29,9 +27,9 @@ export default function OphelinaHome() {
 
   const [resumen, setResumen] = useState({
     activos: "0",
+    vencidos: "0",
     totalPendiente: "$0",
     proximoVencimiento: "Sin vencimientos",
-    precioOro: "$0",
   });
   const [proximosVencer, setProximosVencer] = useState([]);
   const [deuda, setDeuda] = useState({ capital: "$0", intereses: "$0", total: "$0" });
@@ -46,26 +44,37 @@ export default function OphelinaHome() {
         const response = await api.get("/homecliente");
 
         if (response.data.success) {
-          const { resumen, proximosVencer, deuda, actividadReciente } = response.data.data;
+          const data = response.data.data;
+          
+          console.log("Datos del Dashboard:", data);
 
-              //  ORDENAR ACTIVIDAD RECIENTE POR FECHA DESCENDENTE
-            const actividadOrdenada = [...actividadReciente].sort((a, b) => {
-                // Asumimos que hay una propiedad 'fecha' o 'timestamp'
-                const fechaA = new Date(a.fecha || a.timestamp || 0);
-                const fechaB = new Date(b.fecha || b.timestamp || 0);
-                return fechaB - fechaA; // Descendente
-            });
-          setResumen(resumen);
-          setProximosVencer(proximosVencer);
-          setDeuda(deuda);
-          setActividadReciente(actividadReciente);
+          const actividadOrdenada = [...(data.actividadReciente || [])].sort((a, b) => {
+            const fechaA = new Date(a.fecha || a.timestamp || 0);
+            const fechaB = new Date(b.fecha || b.timestamp || 0);
+            return fechaB - fechaA;
+          });
+
+          const proximosOrdenados = [...(data.proximosVencer || [])].sort((a, b) => {
+            const da = parseInt(a.diasRestantes, 10) || 0;
+            const db = parseInt(b.diasRestantes, 10) || 0;
+            return da - db;
+          });
+
+          setResumen({
+            activos: data.resumen?.activos || "0",
+            vencidos: data.resumen?.vencidos || "0", 
+            totalPendiente: data.resumen?.totalPendiente || "$0",
+            proximoVencimiento: data.resumen?.proximoVencimiento || "Sin vencimientos",
+          });
+          setProximosVencer(proximosOrdenados);
+          setDeuda(data.deuda || { capital: "$0", intereses: "$0", total: "$0" });
+          setActividadReciente(actividadOrdenada);
+          
         } else {
           setError(response.data.message || "No se pudo cargar el dashboard");
         }
       } catch (err) {
-        setError(
-          err.response?.data?.message || "Error al conectar con el servidor"
-        );
+        setError(err.response?.data?.message || "Error al conectar con el servidor");
       } finally {
         setLoading(false);
       }
@@ -78,8 +87,8 @@ export default function OphelinaHome() {
     return (
       <>
         <Navbar />
-        <div className="main-content">
-          <p style={{ textAlign: "center" }}>Cargando tu dashboard...</p>
+        <div className="me-page">
+          <div className="me-cargando-texto">Cargando tu información...</div>
         </div>
       </>
     );
@@ -89,184 +98,154 @@ export default function OphelinaHome() {
     return (
       <>
         <Navbar />
-        <div className="main-content">
-          <p style={{ textAlign: "center", color: "red" }}>{error}</p>
+        <div className="me-page">
+          <div className="me-sin-resultados" style={{ margin: "40px auto", maxWidth: "600px" }}>
+            <p>{error}</p>
+            <button className="me-btn-reintentar" onClick={() => window.location.reload()}>
+              Reintentar
+            </button>
+          </div>
         </div>
       </>
     );
   }
 
   return (
-    <>
+    <div className="me-page">
       <Navbar />
-      <div className="cliente-home-container">
-        <main className="home-main">
-          {/* Welcome section */}
-          <section className="welcome-section">
-            <h1 className="welcome-title">
-              Hola, <span className="welcome-name">{userName}</span>
-            </h1>
-            <h3 className="welcome-subtitle">Conoce el estado de tus empeños</h3>
-          </section>
+      <div className="me-dashboard">
+        
+        <section className="me-page-header">
+          <h1 className="me-page-title">
+            Hola, <span className="me-welcome-name">{userName}</span>
+          </h1>
+          <p className="me-page-subtitle">Resumen de tus prendas empeñadas</p>
+        </section>
 
-          {/* Cards resumen */}
-          <section className="cards-section">
-            <div className="cards-grid">
-              <Tooltip
-                title={
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Empeños Activos</div>
-                    <div style={{ fontSize: '20px', color: '#e9c46a' }}>{resumen.activos}</div>
-                    <div style={{ fontSize: '12px', marginTop: '5px' }}>Préstamos en curso</div>
-                  </div>
-                }
-                placement="top"
-                arrow
-              >
-                <div className="stat-card">
-                  <InventoryIcon sx={{ fontSize: 48, color: '#0d1b3e' }} />
-                  <div className="stat-number">{resumen.activos}</div>
-                </div>
-              </Tooltip>
+        {/* TARJETAS DE RESUMEN (SOLO ICONOS CON TOOLTIP) */}
+        <section className="me-stats-grid">
+          
+          <Tooltip 
+            title={<div className="me-tooltip-content"><span className="me-tooltip-label">Empeños Activos</span><span className="me-tooltip-value">{resumen.activos}</span></div>} 
+            arrow 
+            placement="top"
+          >
+            <div className="me-ficha me-ficha-stat">
+              <InventoryIcon className="me-stat-icon-only" style={{ color: "var(--me-acero)" }} />
+            </div>
+          </Tooltip>
 
-              <Tooltip
-                title={
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Saldo Pendiente</div>
-                    <div style={{ fontSize: '20px', color: '#e9c46a' }}>{resumen.totalPendiente}</div>
-                    <div style={{ fontSize: '12px', marginTop: '5px' }}>Total por liquidar</div>
-                  </div>
-                }
-                placement="top"
-                arrow
-              >
-                <div className="stat-card">
-                  <AttachMoneyIcon sx={{ fontSize: 48, color: '#0d1b3e' }} />
-                  <div className="stat-number">{resumen.totalPendiente}</div>
-                </div>
-              </Tooltip>
+          <Tooltip 
+            title={<div className="me-tooltip-content"><span className="me-tooltip-label">Vencidos</span><span className="me-tooltip-value" style={{ color: "#ff6b6b" }}>{resumen.vencidos}</span></div>} 
+            arrow 
+            placement="top"
+          >
+            <div className="me-ficha me-ficha-stat">
+              <WarningAmberIcon className="me-stat-icon-only" style={{ color: "#c0392b" }} />
+            </div>
+          </Tooltip>
 
-              <Tooltip
-                title={
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Próximo vencimiento</div>
-                    <div style={{ fontSize: '20px', color: '#e9c46a' }}>{resumen.proximoVencimiento}</div>
-                  </div>
-                }
-                placement="top"
-                arrow
-              >
-                <div className="stat-card">
-                  <AccessTimeIcon sx={{ fontSize: 48, color: '#0d1b3e' }} />
-                  <div className="stat-number">{resumen.proximoVencimiento}</div>
-                </div>
-              </Tooltip>
+          <Tooltip 
+            title={<div className="me-tooltip-content"><span className="me-tooltip-label">Saldo Pendiente</span><span className="me-tooltip-value">{resumen.totalPendiente}</span></div>} 
+            arrow 
+            placement="top"
+          >
+            <div className="me-ficha me-ficha-stat">
+              <AttachMoneyIcon className="me-stat-icon-only" style={{ color: "var(--me-dorado)" }} />
+            </div>
+          </Tooltip>
 
-              <Tooltip
-                title={
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Precio del oro (gr)</div>
-                    <div style={{ fontSize: '20px', color: '#e9c46a' }}>{resumen.precioOro}</div>
-                    <div style={{ fontSize: '12px', marginTop: '5px' }}>Precio de referencia</div>
+          <Tooltip 
+            title={<div className="me-tooltip-content"><span className="me-tooltip-label">Próximo Vencimiento</span><span className="me-tooltip-value">{resumen.proximoVencimiento}</span></div>} 
+            arrow 
+            placement="top"
+          >
+            <div className="me-ficha me-ficha-stat">
+              <AccessTimeIcon className="me-stat-icon-only" style={{ color: "var(--me-marino)" }} />
+            </div>
+          </Tooltip>
+
+        </section>
+
+        {/* PRÓXIMOS A VENCER (CAJA BLANCA) */}
+        <section className="me-contenido-section">
+          <h3 className="me-section-title">
+            <InventoryIcon sx={{ fontSize: 24 }} /> Empeños Próximos a Vencer
+          </h3>
+
+          {proximosVencer.length === 0 ? (
+            <p className="me-texto-vacio">No tienes empeños próximos a vencer.</p>
+          ) : (
+            <div className="me-fichas-grid" style={{ marginBottom: 0 }}>
+              {proximosVencer.map((item) => (
+                <div key={item.id} className="me-ficha">
+                  <div className="me-ficha-header">
+                    <div className="me-ficha-titulo">
+                      <span className="me-empeno-nombre">{item.nombre}</span>
+                      <span className="me-empeno-id">Vence: {item.fechaVencimiento}</span>
+                    </div>
+                    <span className={`me-estado ${parseInt(item.diasRestantes) <= 3 ? 'me-estado-vencido' : 'me-estado-porvencer'}`}>
+                      {item.diasRestantes} días
+                    </span>
                   </div>
-                }
-                placement="top"
-                arrow
-              >
-                <div className="stat-card gold-card">
-                  <DiamondIcon sx={{ fontSize: 48, color: '#ffffff' }} />
-                  <div className="stat-number" style={{ color: 'white' }}>{resumen.precioOro}</div>
                 </div>
-              </Tooltip>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* SECCIONES INFERIORES (CAJAS BLANCAS) */}
+        <div className="me-bottom-sections">
+          <section className="me-contenido-section">
+            <h3 className="me-section-title">
+              <PaymentIcon sx={{ fontSize: 24 }} /> Desglose de Deuda
+            </h3>
+            <div className="me-financiero-tabla">
+              <div className="me-financiero-fila">
+                <span className="me-financiero-label">Capital prestado:</span>
+                <span className="me-financiero-valor">{deuda.capital}</span>
+              </div>
+              <div className="me-financiero-fila">
+                <span className="me-financiero-label">Intereses acumulados:</span>
+                <span className="me-financiero-valor">{deuda.intereses}</span>
+              </div>
+              <div className="me-financiero-fila me-financiero-total">
+                <span className="me-financiero-label">Total a pagar:</span>
+                <span className="me-financiero-valor">{deuda.total}</span>
+              </div>
             </div>
           </section>
 
-          {/* Próximos a vencer */}
-          <section className="contenido-section">
-            <h3 className="section-title">
-              <span className="section-icon">
-                <BoxIcon sx={{ fontSize: 24, verticalAlign: 'middle' }} />
-              </span>
-              Empeños Próximos a Vencer:
+          <section className="me-contenido-section">
+            <h3 className="me-section-title">
+              <AccessTimeIcon sx={{ fontSize: 24 }} /> Actividad Reciente
             </h3>
-
-            {proximosVencer.length === 0 ? (
-              <p style={{ color: "#777" }}>No tienes empeños próximos a vencer.</p>
-            ) : (
-              proximosVencer.map(item => (
-                <div key={item.id} className="pawn-item">
-                  <div className="pawn-info">
-                    <div className="pawn-title">{item.nombre}</div>
-                    <div className="pawn-date">Vence el {item.fechaVencimiento}</div>
-                  </div>
-                  <div className="pawn-days">
-                    <span className="days-badge">{item.diasRestantes}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </section>
-
-          {/* Bottom sections */}
-          <div className="bottom-sections">
-            <section className="contenido-section debt-section">
-              <h3 className="section-title">
-                <span className="section-icon">
-                  <InventoryIcon sx={{ fontSize: 24, verticalAlign: 'middle' }} />
-                </span>
-                Desglose de deuda
-              </h3>
-
-              <div className="debt-breakdown">
-                <div className="debt-row">
-                  <span>Capital prestado:</span>
-                  <span className="debt-amount">{deuda.capital}</span>
-                </div>
-                <div className="debt-row">
-                  <span>Intereses acumulados:</span>
-                  <span className="debt-amount">{deuda.intereses}</span>
-                </div>
-                <div className="debt-divider"></div>
-                <div className="debt-row total-row">
-                  <span>Total a pagar:</span>
-                  <span className="total-amount">{deuda.total}</span>
-                </div>
-              </div>
-            </section>
-
-            <section className="contenido-section activity-section">
-              <h3 className="section-title">
-                <span className="section-icon">
-                  <InventoryIcon sx={{ fontSize: 24, verticalAlign: 'middle' }} />
-                </span>
-                Actividad reciente
-              </h3>
-
-              <div className="activity-list">
-                {actividadReciente.length === 0 ? (
-                  <p style={{ color: "#777" }}>Sin actividad reciente.</p>
-                ) : (
-                  actividadReciente.map(item => (
-                    <div key={item.id} className="activity-item">
-                      <div className="activity-icon" style={{
-                        color: item.tipo === 'pago' ? '#28a745' :
-                               item.tipo === 'nuevo' ? '#17a2b8' :
-                               item.tipo === 'vencido' ? '#dc3545' : '#ff9800'
-                      }}>
-                        {iconMap[item.tipo] || <InventoryIcon sx={{ fontSize: 20 }} />}
-                      </div>
-                      <div className="activity-content">
-                        <div className="activity-title"><strong>{item.titulo}</strong></div>
-                        <div className="activity-detail">{item.detalle}</div>
-                      </div>
+            <div className="me-historial-lista">
+              {actividadReciente.length === 0 ? (
+                <p className="me-texto-vacio">Sin actividad reciente.</p>
+              ) : (
+                actividadReciente.map((item) => (
+                  <div key={item.id} className="me-historial-item">
+                    <div
+                      className="me-activity-icon"
+                      style={{
+                        color: item.tipo === "pago" ? "#1e6b34" : item.tipo === "nuevo" ? "#3b507d" : item.tipo === "vencido" ? "#962d22" : "#96500f",
+                      }}
+                    >
+                      {iconMap[item.tipo] || <InventoryIcon sx={{ fontSize: 20 }} />}
                     </div>
-                  ))
-                )}
-              </div>
-            </section>
-          </div>
-        </main>
+                    <div className="me-historial-main">
+                      <span className="me-historial-monto" style={{ fontSize: "14px" }}>{item.titulo}</span>
+                      <span className="me-historial-fecha">{item.detalle}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        </div>
+
       </div>
-    </>
+    </div>
   );
 }

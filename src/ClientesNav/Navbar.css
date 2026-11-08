@@ -1,10 +1,3 @@
-body {
-  background-color: #f5f0e9;
-  margin: 0;
-  overflow-x: hidden;
-  min-height: 100vh;
-}
-
 /* ===== NAVBAR PRINCIPAL ===== */
 .Ophe-navbar {
   position: sticky;
@@ -13,13 +6,19 @@ body {
   justify-content: center;
   z-index: 1000;
   width: 100%;
-  padding: 0;
+  padding: 20px 0;
   margin: 0;
+  background: #112250 !important;     /* CORREGIDO: azul de Inicio y demás páginas */
+}
+
+/* CORREGIDO: en la Tienda el fondo es más oscuro, el navbar lo iguala */
+#root:has(.tienda-luxury) .Ophe-navbar {
+  background: #0d1b3e !important;
 }
 
 .Ophe-navbar-container {
   width: 92%;
-  margin: 20px 0;
+  margin: 0;
   background: #ffffff;
   border-radius: 15px;
   padding: 18px 40px;
@@ -90,9 +89,9 @@ body {
   width: 100%;
 }
 
-/* ===== LINKS - VERSIÓN MÓVIL (ICONOS) ===== */
+/* ===== LINKS - VERSIÓN MÓVIL (OCULTOS POR DEFECTO EN PC) ===== */
 .Ophe-navbar-icons {
-  display: none;
+  display: none; /* ESTO ES VITAL PARA QUE NO SE VEAN LOS ICONOS EN PC */
   list-style: none;
   margin: 0;
   padding: 0;
@@ -147,6 +146,7 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 18px;
+  background: white; /* Aseguramos fondo */
 }
 
 .Ophe-user-icon:hover {
@@ -264,82 +264,90 @@ body {
   background-color: #f9f5eb;
 }
 
-/* ===== MODAL DE EDICIÓN MEJORADO (VERSIÓN ÚNICA) ===== */
+.notification-list-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.notification-list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.notification-list-scroll::-webkit-scrollbar-thumb {
+  background-color: #d8cdb0;
+  border-radius: 3px;
+}
+
+/* ============================================================
+   MODAL DE EDICIÓN DE PERFIL 
+   ============================================================ */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background-color: rgba(13, 27, 62, 0.7);
   backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  animation: fadeInModal 0.3s ease-out;
   padding: 16px;
 }
 
 .edit-modal {
-  background: rgb(255, 255, 255);
-  border-radius: 15px;
+  background: #ffffff;
+  border-radius: 16px;
   width: 100%;
-  max-width: 460px;
-  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.4);
-  animation: slideUpModal 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 480px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   overflow: hidden;
-  border: 1px solid rgb(120, 90, 20);
+  border: 1px solid #c6a75e;
 }
 
 .ophe-modal-header {
   background: linear-gradient(135deg, #0d1b3e 0%, #1f2f57 100%);
-  padding: 2px;
-  max-width: 900px;
+  padding: 20px 24px;
   border-bottom: 3px solid #c6a75e;
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .ophe-modal-header h3 {
-  margin: 1;
+  margin: 0;
   color: #ffffff;
-  font-size: 24px;
-  font-weight: 60;
-  letter-spacing: ºpx;
+  font-size: 22px;
+  font-weight: 600;
   font-family: 'Bodoni Moda', serif;
-  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  padding-left: 10px;
-  padding-top: 10px;
 }
 
-
 .close-modal-btn {
-  background: rgba(43, 6, 255, 0);
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
 }
 
 .close-modal-btn:hover {
-  background: rgba(12, 6, 63, 0.34);
+  transform: scale(1.15);
 }
 
 .modal-body {
   background: #fcf9f5;
-}
-.form-group {
-  padding: 1px 7px; /* espacio arriba/abajo y lados */
-  margin-bottom: 24px;
-  position: relative;
-  margin-bottom: 18px;
+  padding: 30px 35px !important; 
 }
 
-.form-group:last-child {
-  margin-bottom: 0;
+.form-group {
+  margin-bottom: 24px;
+  position: relative;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 1px;
-  padding-top: 10px;
-  padding-left: 10px;
+  margin-bottom: 8px;
   color: #0d1b3e;
   font-size: 12px;
   font-weight: 700;
@@ -349,32 +357,29 @@ body {
 
 .form-group input {
   width: 100%;
-  padding: 16px 18px;
-  border-radius: 15px;
-  font-size: 16px;
-  transition: all 0.2s ease;
-  box-sizing: border-box;
+  padding: 14px 40px 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
   background: white;
   color: #2c3e70;
   font-weight: 500;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
 }
 
 .form-group input:focus {
   outline: none;
   border-color: #c6a75e;
-  box-shadow: 0 0 0 5px rgba(198, 167, 94, 0.2);
-  background: white;
+  box-shadow: 0 0 0 4px rgba(198, 167, 94, 0.15);
 }
 
-/* Iconos decorativos para campos */
 .form-group::after {
   content: '';
   position: absolute;
-  right: 18px;
-  bottom: 16px;
-  width: 22px;
-  height: 22px;
+  right: 16px;
+  top: 38px;
+  width: 20px;
+  height: 20px;
   background-size: contain;
   background-repeat: no-repeat;
   opacity: 0.3;
@@ -396,407 +401,81 @@ body {
 .modal-footer {
   display: flex;
   align-items: center;
-  justify-content: centrado;
-  gap: 30px;
-  padding: 16px 24px;
-  border-top: 1px solid #eee;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 35px 30px;
+  border-top: 1px solid #e5e7eb;
+  background: #fcf9f5;
 }
 
 .cancel-btn {
-  padding: 7px;
-  border-radius: 15px;
-  font-size: 15px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
-  color: #ffffff;
-  background-color: #e8c572;
+  color: #64748b;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
   cursor: pointer;
   transition: all 0.2s ease;
-  letter-spacing: 0.5px;
-  min-width: 130px;
 }
 
 .cancel-btn:hover {
-  background-color: #c6a75e;
-  color: #ffffff;
-  border-color: #c6a75e;
-  transform: translateY(-2px);
+  background-color: #e2e8f0;
+  color: #334155;
 }
 
 .save-btn {
-  background: linear-gradient(135deg, #0d1b3e, #253662);
-  padding: 7px;
-  border-radius: 15px;
-  font-size: 15px;
+  background: #0d1b3e;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
   color: white;
+  border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  transition: all 0.3s ease;
-  letter-spacing: 0.5px;
-  min-width: 160px;
-  box-shadow: 0 8px 18px -6px rgba(13, 27, 62, 0.4);
-  position: relative;
-  overflow: hidden;
-}
-
-.save-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.6s ease;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(13, 27, 62, 0.2);
 }
 
 .save-btn:hover {
-  background: linear-gradient(135deg, #1a2b4e, #2f4070);
-  transform: translateY(-3px);
-  box-shadow: 0 15px 25px -8px rgba(13, 27, 62, 0.5);
-}
-
-.save-btn:hover::before {
-  left: 100%;
-}
-
-.save-btn:active {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 15px -4px rgba(13, 27, 62, 0.4);
+  background: #1a2b4e;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(13, 27, 62, 0.3);
 }
 
 /* ===== ANIMACIONES ===== */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes fadeInModal {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUpModal {
-  from {
-    opacity: 0;
-    transform: translateY(40px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Efecto de entrada para campos del formulario */
-.form-group {
-  animation: slideField 0.4s ease-out forwards;
-  opacity: 0;
-  transform: translateX(-12px);
-}
-
-.form-group:nth-child(1) { animation-delay: 0.1s; }
-.form-group:nth-child(2) { animation-delay: 0.2s; }
-.form-group:nth-child(3) { animation-delay: 0.3s; }
-
-@keyframes slideField {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* ===== MEDIA QUERIES ===== */
+/* ===== MEDIA QUERIES (MÓVILES) ===== */
 @media screen and (max-width: 991px) {
-  .Ophe-navbar-container {
-    padding: 15px 25px;
-  }
-
-  .Ophe-navbar-links {
-    display: none;
-  }
-
-  .Ophe-navbar-icons {
-    display: flex;
-    gap: 35px;
-  }
-  
-  .Ophe-navbar-icons span {
-    display: none;
-  }
-
-  .Ophe-navbar-logo img {
-    height: 42px;
-  }
-
-  .Ophe-user-icon {
-    width: 38px;
-    height: 38px;
-  }
-}
-
-@media screen and (max-width: 767px) {
-  .Ophe-navbar-container {
-    padding: 12px 18px;
-  }
-
-  .Ophe-navbar-icons {
-    gap: 22px;
-  }
-
-  .Ophe-icon-item svg {
-    font-size: 24px !important;
-  }
-  
-  .Ophe-icon-item span {
-    display: none;
-  }
-
-  .notification-dropdown {
-    width: 240px;
-    right: -5px;
-  }
-  
-  .edit-modal {
-    max-width: 420px;
-  }
-  
-  .modal-header {
-    padding: 20px 24px;
-  }
-  
-  .modal-header h3 {
-    font-size: 22px;
-  }
-  
-  .modal-body {
-    padding: 24px 20px;
-  }
-  
-  .modal-footer {
-    padding: 18px 24px;
-  }
-  
-  .form-group input {
-    padding: 14px 16px;
-    font-size: 15px;
-  }
+  .Ophe-navbar-container { padding: 15px 25px; }
+  .Ophe-navbar-links { display: none; } /* Ocultamos links de texto */
+  .Ophe-navbar-icons { display: flex; gap: 35px; } /* Mostramos iconos */
+  .Ophe-navbar-logo img { height: 42px; }
+  .Ophe-user-icon { width: 38px; height: 38px; }
 }
 
 @media screen and (max-width: 575px) {
-  .Ophe-navbar-container {
-    padding: 10px 15px;
-    width: 96%;
-    margin: 10px 0;
-  }
-
-  .Ophe-navbar-icons {
-    gap: 16px;
-  }
-
-  .Ophe-icon-item svg {
-    font-size: 22px !important;
-  }
-  
-  .Ophe-icon-item span {
-    display: none;
-  }
-
-  .Ophe-navbar-logo img {
-    height: 35px;
-  }
-
-  .Ophe-user-icon {
-    width: 35px;
-    height: 35px;
-  }
-
-  .notification-dropdown {
-    width: 220px;
-    padding: 12px;
-  }
-  
-  .edit-modal {
-    border-radius: 24px;
-  }
-  
-  .modal-header {
-    padding: 18px 20px;
-  }
-  
-  .modal-header h3 {
-    font-size: 20px;
-  }
-  
-  .modal-body {
-    padding: 20px 16px;
-  }
+  .Ophe-navbar { padding: 10px 0; }
+  .Ophe-navbar-container { padding: 10px 15px; width: 96%; }
+  .Ophe-navbar-icons { gap: 16px; }
+  .Ophe-icon-item svg { font-size: 22px !important; }
+  .Ophe-navbar-logo img { height: 35px; }
   
   .modal-footer {
-    padding: 16px 20px;
     flex-direction: column-reverse;
-    gap: 12px;
+    padding: 16px 20px;
   }
-  
   .cancel-btn, .save-btn {
     width: 100%;
-    padding: 14px;
-    min-width: auto;
     justify-content: center;
   }
-  
-  .form-group {
-    margin-bottom: 20px;
-  }
-  
-  .form-group label {
-    font-size: 12px;
-  }
-  
-  .form-group input {
-    padding: 14px;
-    font-size: 14px;
-  }
-  
-  .form-group::after {
-    bottom: 14px;
-    right: 14px;
-    width: 18px;
-    height: 18px;
-  }
-}
-
-@media screen and (max-width: 400px) {
-  .Ophe-navbar-icons {
-    gap: 10px;
-  }
-
-  .Ophe-navbar-container {
-    padding: 8px 12px;
-  }
-
-  .Ophe-navbar-logo img {
-    height: 30px;
-  }
-
-  .Ophe-user-icon {
-    width: 32px;
-    height: 32px;
-  }
-
-  .Ophe-icon-item svg {
-    font-size: 20px !important;
-  }
-  
-  .Ophe-icon-item span {
-    display: none;
-  }
-
-  .notification-dropdown {
-    width: 200px;
-    padding: 10px;
-    right: -5px;
-  }
-  
-  .edit-modal {
-    border-radius: 20px;
-  }
-  
-  .modal-header {
-    padding: 16px 18px;
-  }
-  
-  .modal-header h3 {
-    font-size: 18px;
-  }
-  
-  .close-modal-btn {
-    top: 14px;
-    right: 14px;
-    padding: 6px;
-  }
-  
-  .modal-body {
-    padding: 18px 14px;
-  }
-  
-  .form-group input {
-    padding: 12px;
-    border-radius: 14px;
-  }
-}
-
-@media screen and (max-height: 600px) and (orientation: landscape) {
-  .Ophe-navbar-container {
-    margin: 8px 0;
-    padding: 8px 18px;
-  }
-  
-  .edit-modal {
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-  
-  .modal-body {
-    padding: 16px 20px;
-  }
-  
-  .form-group {
-    margin-bottom: 12px;
- }
-
-}
-
-/* ✅ NUEVO: agregar al final de tu Navbar.css real.
-   Arregla el dropdown de notificaciones para que tenga scroll propio en
-   vez de crecer sin límite, y estiliza el botón de "eliminar notificación". */
-
-.notification-list-scroll {
-  max-height: 320px;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* Scrollbar más discreto (Chrome/Edge/Safari) */
-.notification-list-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-
-.notification-list-scroll::-webkit-scrollbar-thumb {
-  background-color: #d8cdb0;
-  border-radius: 3px;
-}
-
-.notification-item {
-  position: relative;
-  padding-right: 28px; /* espacio para el botón de eliminar */
-}
-
-.notification-eliminar-btn {
-  position: absolute;
-  top: 8px;
-  right: 6px;
-  background: transparent;
-  border: none;
-  color: #b0a898;
-  cursor: pointer;
-  padding: 2px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.15s ease, background-color 0.15s ease;
-}
-
-.notification-eliminar-btn:hover {
-  color: #c0392b;
-  background-color: rgba(192, 57, 43, 0.08);
 }
