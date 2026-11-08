@@ -244,7 +244,6 @@ export default function OphelinaHome() {
             </div>
           </section>
         </div>
-
       </div>
     </div>
   );

@@ -25,7 +25,7 @@ export default function OpheliaLogin() {
     console.log('🔍 Parámetros en login:', { sessionId, paymentStatus });
     
     if (sessionId && paymentStatus === 'success') {
-      console.log(' Pago detectado en login!');
+      console.log('✅ Pago detectado en login!');
       localStorage.setItem('pending_session_id', sessionId);
       localStorage.setItem('pending_payment', 'success');
     }
@@ -54,13 +54,13 @@ export default function OpheliaLogin() {
     try {
       const result = await login(formData.email, formData.password);
       
-      console.log(' Respuesta completa del login:', result);
+      console.log('✅ Respuesta completa del login:', result);
       
       if (result.success) {
         const userData = result.data?.usuario || result.data || result;
         
-        console.log(' Datos del usuario:', userData);
-        console.log(' Rol del usuario:', userData.rol);
+        console.log('✅ Datos del usuario:', userData);
+        console.log('✅ Rol del usuario:', userData.rol);
         
         // Guardar token
         if (result.data?.token) {
@@ -87,7 +87,7 @@ export default function OpheliaLogin() {
         }
 
         // REFRESCAR EL CONTEXTO
-        console.log(' Refrescando contexto del usuario...');
+        console.log('🔄 Refrescando contexto del usuario...');
         await refreshUserData();
 
         // VERIFICAR PAGO PENDIENTE
@@ -95,7 +95,7 @@ export default function OpheliaLogin() {
         const pendingPayment = localStorage.getItem('pending_payment');
         
         if (pendingSessionId && pendingPayment === 'success') {
-          console.log(' Pago pendiente detectado');
+          console.log('💳 Pago pendiente detectado');
           localStorage.setItem('stripe_session_id', pendingSessionId);
           localStorage.removeItem('pending_session_id');
           localStorage.removeItem('pending_payment');
@@ -110,14 +110,14 @@ export default function OpheliaLogin() {
         // ==========================================
         setLoading(false);
         
-        //  Si es Cliente -> /homecliente
+        // Si es Cliente -> /homecliente
         if (userData.rol === 'Cliente') {
-          console.log(' Cliente detectado - Redirigiendo a /homecliente');
+          console.log('👤 Cliente detectado - Redirigiendo a /homecliente');
           navigate("/homecliente");
         } 
-        //  Si es Administrador, Gerente, Cajero, etc. -> /home
+        // Si es Administrador, Gerente, Cajero, etc. -> /home
         else {
-          console.log(' Admin/Empleado detectado - Redirigiendo a /home');
+          console.log('💼 Admin/Empleado detectado - Redirigiendo a /home');
           navigate("/home");
         }
         
@@ -179,13 +179,13 @@ export default function OpheliaLogin() {
           </button>
         </form>
 
-              <p className="page-link">
-        <span className="page-link-label" >
-          <Link to="/register" style={{ color: "#000000", textDecoration: "underline", position: "relative", top: "2px", right: "100px" }}>
-            Regístrate
-          </Link>
-        </span>
-      </p>
+        <p className="page-link">
+          <span className="page-link-label">
+            <Link to="/register" style={{ color: "#000000", textDecoration: "underline", position: "relative", top: "2px", right: "100px" }}>
+              Regístrate
+            </Link>
+          </span>
+        </p>
       </div>
     </div>
   );

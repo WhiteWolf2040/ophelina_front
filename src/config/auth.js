@@ -164,44 +164,23 @@ const fetchCurrentUser = async () => {
 
 /*
 ==============================
-VERIFICAR ROL
-==============================
-*/
-
-const hasRole = (rol) => {
-  const user = getCurrentUser();
-  if (!user) return false;
-  return user.rol === rol;
-};
-
-/*
-==============================
-VERIFICAR PERMISOS
-==============================
-*/
-
-const hasPermission = (permiso) => {
-  const user = getCurrentUser();
-  if (!user || !user.permisos) return false;
-  return user.permisos.some(p => p.nombre === permiso);
-};
-
-/*
-==============================
-ACTUALIZAR PERFIL
+ACTUALIZAR PERFIL (correo y teléfono)
 ==============================
 */
 
 const updateProfile = async (correo, telefono) => {
   try {
     const response = await api.put("/user", { correo, telefono });
+
     if (response.data.success) {
       const usuarioActualizado = response.data.data.usuario;
       const usuarioActual = getCurrentUser();
       const usuarioFinal = { ...usuarioActual, ...usuarioActualizado };
       localStorage.setItem("user", JSON.stringify(usuarioFinal));
+
       return { success: true, data: usuarioFinal };
     }
+
     return { success: false, message: response.data.message };
   } catch (error) {
     return {
@@ -281,7 +260,7 @@ TIENDA: OBTENER PRODUCTOS
 
 const getProductosTienda = async () => {
   try {
-    const response = await api.get("/cliente/tienda/productos");
+    const response = await api.get("/tienda/productos");
     if (response.data.success) {
       return { success: true, data: response.data.data };
     }
@@ -332,6 +311,30 @@ const getMisApartados = async () => {
   } catch (error) {
     return { success: false, data: [] };
   }
+};
+
+/*
+==============================
+VERIFICAR ROL
+==============================
+*/
+
+const hasRole = (rol) => {
+  const user = getCurrentUser();
+  if (!user) return false;
+  return user.rol === rol;
+};
+
+/*
+==============================
+VERIFICAR PERMISOS
+==============================
+*/
+
+const hasPermission = (permiso) => {
+  const user = getCurrentUser();
+  if (!user || !user.permisos) return false;
+  return user.permisos.some(p => p.nombre === permiso);
 };
 
 /*
