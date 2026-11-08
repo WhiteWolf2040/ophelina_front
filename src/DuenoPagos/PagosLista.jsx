@@ -1,7 +1,7 @@
 // PagosLista.jsx - Versión con permisos
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import Sidebar from "../components/Sidebar";
 import "./Pagos.css";
 import PaymentsIcon from '@mui/icons-material/Payments';
 import pagosService from "../services/pagosService";
@@ -53,19 +53,6 @@ const PagosLista = () => {
   // Paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const pagosPorPagina = 8;
-
-  // ✅ AGREGADO DE LOCAL: Cargar rol del usuario
-  useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        setUserRole(user.rol || '');
-      } catch (e) {
-        console.error('Error al cargar usuario:', e);
-      }
-    }
-  }, []);
 
   // Cargar pagos al montar el componente
   useEffect(() => {
@@ -323,7 +310,7 @@ const PagosLista = () => {
   if (loading) {
     return (
       <div className="dashboard">
-    
+        <Sidebar />
         <div className="content loading-container">
           <div className="spinner"></div>
           <p>Cargando pagos...</p>
@@ -335,7 +322,7 @@ const PagosLista = () => {
   if (error) {
     return (
       <div className="dashboard">
-   
+        <Sidebar />
         <div className="content error-container">
           <h3>Error</h3>
           <p>{error}</p>
@@ -349,12 +336,12 @@ const PagosLista = () => {
 
   return (
     <div className="dashboard">
- 
+      <Sidebar />
 
       <div className="content">
         {/* HEADER */}
         <div className="header-container">
-          <div className="">
+          <div className="tienda-header">
             <h1>
               <PaymentsIcon className="title-icon" /> 
               Listado de pagos 

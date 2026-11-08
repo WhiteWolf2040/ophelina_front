@@ -24,6 +24,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import WarningIcon from '@mui/icons-material/Warning';
 import CloseIcon from '@mui/icons-material/Close';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import ClearIcon from '@mui/icons-material/Clear';
 import BoxIcon from '@mui/icons-material/Inventory';
 import SellIcon from '@mui/icons-material/Sell';
@@ -106,63 +107,27 @@ const TiendaOnline = () => {
     }
   ]);
 
- const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
-const CLOUDINARY_UPLOAD_PRESET = "ophelina_productos";
-
-const subirImagenACloudinary = async (file) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-  formData.append("folder", "productos"); // ← aquí va el folder
-
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-    { method: "POST", body: formData }
-  );
-
-  if (!response.ok) {
-    throw new Error("Error al subir la imagen a Cloudinary");
-  }
-
-  const data = await response.json();
-  return data.secure_url;
-};
-
-  // ========== ESTADOS LOCALES ==========
+  // Estados para filtros y búsqueda
   const [busqueda, setBusqueda] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("Todas");
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
   const [verSoloVisibles, setVerSoloVisibles] = useState(false);
-  const [mostrarConfiguracion, setMostrarConfiguracion] = useState(false);
-  const [diasGracia, setDiasGracia] = useState(5);
-  const [publicando, setPublicando] = useState(false);
-  const [guardando, setGuardando] = useState(false);
 
   // Estados para modales
   const [modalProductoAbierto, setModalProductoAbierto] = useState(false);
-  const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
+  const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
-  const [modalPublicacionAbierto, setModalPublicacionAbierto] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
-  const [resultadoPublicacion, setResultadoPublicacion] = useState(null);
 
-  // ✅ Referencia al input de archivo (para poder limpiarlo o abrirlo por código si se quiere)
-  const inputImagenRef = useRef(null);
-
-  // ✅ Estado para el archivo de imagen seleccionado (objeto File real)
-  const [archivoImagen, setArchivoImagen] = useState(null);
-  // ✅ Vista previa local de la imagen (antes de subirla)
-  const [previewImagen, setPreviewImagen] = useState(null);
-
-  // Estado para el formulario de producto (ya sin el campo "imagen" como texto)
+  // Estado para el formulario de producto
   const [formProducto, setFormProducto] = useState({
-    id_prenda: "",
     nombre: "",
     categoria: "Joyería",
     precio: "",
     descuento: "0",
     stock: "1",
+    imagen: "",
     descripcion: "",
     estado: "Buen estado",
     visible: true,
@@ -173,43 +138,25 @@ const subirImagenACloudinary = async (file) => {
   const categorias = ["Todas", "Joyería", "Electrónica", "Herramientas", "Relojes", "Instrumentos", "Otros"];
   const estados = ["Todos", "Nuevo", "Como nuevo", "Buen estado", "Aceptable"];
 
-  // ========== EFECTOS ==========
-  useEffect(() => {
-    cargarProductos();
-    cargarEstadisticas();
-  }, []);
+  // Productos filtrados
+  const productosFiltrados = productos.filter(producto => {
+    const coincideBusqueda = producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+                            producto.descripcion.toLowerCase().includes(busqueda.toLowerCase()) ||
+                            producto.categoria.toLowerCase().includes(busqueda.toLowerCase());
+    
+    const coincideCategoria = categoriaFiltro === "Todas" || producto.categoria === categoriaFiltro;
+    const coincideEstado = estadoFiltro === "Todos" || producto.estado === estadoFiltro;
+    const coincideVisibilidad = verSoloVisibles ? producto.visible : true;
+    
+    return coincideBusqueda && coincideCategoria && coincideEstado && coincideVisibilidad;
+  });
 
-  // Sincronizar filtros
-  useEffect(() => {
-    setFiltros({
-      busqueda,
-      categoria: categoriaFiltro,
-      estado: estadoFiltro,
-      solo_visibles: verSoloVisibles
-    });
-  }, [busqueda, categoriaFiltro, estadoFiltro, verSoloVisibles]);
-
-  // ✅ Limpiar el object URL de la vista previa cuando cambie o se cierre el modal,
-  // para no acumular memoria del navegador
-  useEffect(() => {
-    return () => {
-      if (previewImagen) {
-        URL.revokeObjectURL(previewImagen);
-      }
-    };
-  }, [previewImagen]);
-
-  // ========== MANEJADORES ==========
-  const limpiarImagenSeleccionada = () => {
-    setArchivoImagen(null);
-    if (previewImagen) {
-      URL.revokeObjectURL(previewImagen);
-    }
-    setPreviewImagen(null);
-    if (inputImagenRef.current) {
-      inputImagenRef.current.value = "";
-    }
-  };
+  // Estadísticas
+  const totalProductos = productos.length;
+  const productosVisibles = productos.filter(p => p.visible).length;
+  const productosOcultos = totalProductos - productosVisibles;
+  const valorTotalInventario = productos.reduce((sum, p) => sum + (p.precio * p.stock), 0);
+  const productosDestacados = productos.filter(p => p.destacado).length;
 
   const abrirNuevoProducto = () => {
     // 👇 Validar permiso para crear
@@ -219,20 +166,18 @@ const subirImagenACloudinary = async (file) => {
     }
 
     setModoEdicion(false);
-    setProductoSeleccionado(null);
     setFormProducto({
-      id_prenda: "",
       nombre: "",
       categoria: "Joyería",
       precio: "",
       descuento: "0",
       stock: "1",
+      imagen: "",
       descripcion: "",
       estado: "Buen estado",
       visible: true,
       destacado: false
     });
-    limpiarImagenSeleccionada();
     setModalProductoAbierto(true);
   };
 
@@ -244,25 +189,19 @@ const subirImagenACloudinary = async (file) => {
     }
 
     setModoEdicion(true);
-    setProductoSeleccionado({
-      ...producto,
-      id: producto.id_producto
-    });
+    setProductoSeleccionado(producto);
     setFormProducto({
-      id_prenda: producto.id_prenda || "",
-      nombre: producto.nombre || "",
-      categoria: producto.categoria || "Joyería",
-      precio: producto.precio || "",
-      descuento: producto.descuento || 0,
-      stock: producto.stock || 1,
-      descripcion: producto.descripcion || "",
-      estado: producto.estado_producto || producto.estado || "Buen estado",
-      visible: producto.visible !== undefined ? producto.visible : true,
-      destacado: producto.destacado || false
+      nombre: producto.nombre,
+      categoria: producto.categoria,
+      precio: producto.precio,
+      descuento: producto.descuento,
+      stock: producto.stock,
+      imagen: producto.imagen,
+      descripcion: producto.descripcion,
+      estado: producto.estado,
+      visible: producto.visible,
+      destacado: producto.destacado
     });
-    limpiarImagenSeleccionada();
-    // Si el producto ya tiene imagen, se muestra como vista previa inicial
-    setPreviewImagen(producto.imagen_url || producto.imagen_principal || null);
     setModalProductoAbierto(true);
   };
 
@@ -272,7 +211,7 @@ const subirImagenACloudinary = async (file) => {
       return;
     }
     setProductoSeleccionado(producto);
-    setModalDetalleAbierto(true);
+    setModalEditarAbierto(true);
   };
 
   const abrirEliminarProducto = (producto) => {
@@ -312,60 +251,9 @@ const subirImagenACloudinary = async (file) => {
       };
       setProductos([...productos, nuevoProducto]);
     }
-    if (file.size > 5 * 1024 * 1024) {
-      alert("La imagen no debe superar los 5MB");
-      return;
-    }
-
-    if (previewImagen) {
-      URL.revokeObjectURL(previewImagen);
-    }
-
-    setArchivoImagen(file);
-    setPreviewImagen(URL.createObjectURL(file));
-  };
-const handleGuardarProducto = async (e) => {
-  e.preventDefault();
-  setGuardando(true);
-
-  try {
-    let imagenUrl = null;
-    if (archivoImagen) {
-      imagenUrl = await subirImagenACloudinary(archivoImagen);
-    }
-
-    const formData = new FormData();
-    formData.append("nombre", formProducto.nombre);
-    formData.append("categoria", formProducto.categoria);
-    formData.append("precio", Number(formProducto.precio));
-    formData.append("descuento", Number(formProducto.descuento));
-    formData.append("stock", Number(formProducto.stock));
-    formData.append("descripcion", formProducto.descripcion || "");
-    formData.append("estado", formProducto.estado);
-    formData.append("visible", formProducto.visible ? "1" : "0");
-    formData.append("destacado", formProducto.destacado ? "1" : "0");
-
-    if (imagenUrl) {
-      formData.append("imagen_url", imagenUrl);
-    }
-
-    if (modoEdicion && productoSeleccionado) {
-      await actualizarProducto(productoSeleccionado.id_producto, formData);
-    } else {
-      await crearProducto(formData);
-    }
-
+    
     setModalProductoAbierto(false);
-    limpiarImagenSeleccionada();
-    // ✅ QUITADO: await cargarProductos(); await cargarEstadisticas();
-    // El hook useTienda ya las recarga dentro de crearProducto/actualizarProducto
-  } catch (err) {
-    console.error("Error guardando producto:", err);
-    alert("Error al guardar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-  } finally {
-    setGuardando(false);
-  }
-};
+  };
 
   const eliminarProducto = () => {
     // 👇 Validar permiso para eliminar
@@ -376,53 +264,6 @@ const handleGuardarProducto = async (e) => {
 
     setProductos(productos.filter(p => p.id !== productoSeleccionado.id));
     setModalEliminarAbierto(false);
-    setProductoSeleccionado(null);
-    // ✅ QUITADO: await cargarProductos(); await cargarEstadisticas();
-  } catch (err) {
-    console.error("Error eliminando producto:", err);
-    alert("Error al eliminar el producto: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-  }
-};
-
-
-const handleToggleVisible = async (id) => {
-  try {
-    await toggleVisibilidad(id);
-    // ✅ QUITADO: await cargarProductos();
-  } catch (err) {
-    console.error("Error cambiando visibilidad:", err);
-    alert("Error al cambiar visibilidad: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-  }
-};
-
- const handleToggleDestacado = async (id) => {
-  try {
-    await toggleDestacado(id);
-    // ✅ QUITADO: await cargarProductos();
-  } catch (err) {
-    console.error("Error cambiando destacado:", err);
-    alert("Error al cambiar destacado: " + (err.response?.data?.message || err.message || "Intenta de nuevo"));
-  }
-};
-
-  const handlePublicacionAutomatica = async () => {
-    setPublicando(true);
-    setResultadoPublicacion(null);
-
-    try {
-      const resultado = await ejecutarPublicacionAutomatica(diasGracia);
-      setResultadoPublicacion(resultado);
-      await cargarProductos();
-      await cargarEstadisticas();
-    } catch (err) {
-      console.error("Error en publicación automática:", err);
-      setResultadoPublicacion({
-        error: true,
-        message: err.response?.data?.message || err.message || "Error al publicar productos"
-      });
-    } finally {
-      setPublicando(false);
-    }
   };
 
   const toggleVisible = (id) => {
@@ -457,15 +298,10 @@ const handleToggleVisible = async (id) => {
     });
   };
 
-  // Formatear precio de forma segura
-  const formatPrice = (price) => {
-    if (price === null || price === undefined || isNaN(price)) return '0';
-    return Number(price).toLocaleString();
-  };
-
-  // ========== RENDER ==========
   return (
     <div className="dashboard">
+      <Sidebar />
+
       <div className="content tienda-content">
         {/* HEADER */}
         <div className="tienda-header">
@@ -489,50 +325,52 @@ const handleToggleVisible = async (id) => {
         {/* ESTADÍSTICAS */}
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-icon"><InventoryIcon /></div>
+            <div className="stat-icon">
+              <InventoryIcon />
+            </div>
             <div className="stat-info">
               <span className="stat-label">Total Productos</span>
-              <span className="stat-value">{estadisticas?.total || 0}</span>
+              <span className="stat-value">{totalProductos}</span>
             </div>
           </div>
-
+          
           <div className="stat-card">
-            <div className="stat-icon"><VisibilityIcon /></div>
+            <div className="stat-icon">
+              <VisibilityIcon />
+            </div>
             <div className="stat-info">
               <span className="stat-label">Visibles</span>
-              <span className="stat-value">{estadisticas?.visibles || 0}</span>
+              <span className="stat-value">{productosVisibles}</span>
             </div>
           </div>
-
+          
           <div className="stat-card">
-            <div className="stat-icon"><VisibilityOffIcon /></div>
+            <div className="stat-icon">
+              <VisibilityOffIcon />
+            </div>
             <div className="stat-info">
               <span className="stat-label">Ocultos</span>
-              <span className="stat-value">{estadisticas?.ocultos || 0}</span>
+              <span className="stat-value">{productosOcultos}</span>
             </div>
           </div>
-
+          
           <div className="stat-card">
-            <div className="stat-icon"><AttachMoneyIcon /></div>
+            <div className="stat-icon">
+              <AttachMoneyIcon />
+            </div>
             <div className="stat-info">
               <span className="stat-label">Valor Total</span>
-              <span className="stat-value">${estadisticas?.valor_total || 0}</span>
+              <span className="stat-value">${valorTotalInventario.toLocaleString()}</span>
             </div>
           </div>
-
+          
           <div className="stat-card">
-            <div className="stat-icon"><StarIcon /></div>
+            <div className="stat-icon">
+              <StarIcon />
+            </div>
             <div className="stat-info">
               <span className="stat-label">Destacados</span>
-              <span className="stat-value">{estadisticas?.destacados || 0}</span>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon"><TimerIcon /></div>
-            <div className="stat-info">
-              <span className="stat-label">Pub. Automática</span>
-              <span className="stat-value">{estadisticas?.publicaciones_automaticas || 0}</span>
+              <span className="stat-value">{productosDestacados}</span>
             </div>
           </div>
         </div>
@@ -580,17 +418,6 @@ const handleToggleVisible = async (id) => {
               <VisibilityIcon fontSize="small" />
               Solo visibles
             </label>
-
-            <button
-              className="btn-refrescar"
-              onClick={() => {
-                cargarProductos();
-                cargarEstadisticas();
-              }}
-              title="Refrescar lista"
-            >
-              <RefreshIcon fontSize="small" />
-            </button>
           </div>
 
           {(busqueda || categoriaFiltro !== "Todas" || estadoFiltro !== "Todos" || verSoloVisibles) && (
@@ -609,65 +436,52 @@ const handleToggleVisible = async (id) => {
           )}
         </div>
 
-        {/* LOADING */}
-        {loading && (
-          <div className="loading-container">
-            <div className="spinner"></div>
-            <p>Cargando productos...</p>
-          </div>
-        )}
-
-        {/* ERROR */}
-        {error && !loading && (
-          <div className="error-container">
-            <WarningIcon className="error-icon" />
-            <p>{error}</p>
-            <button onClick={() => cargarProductos()}>Reintentar</button>
-          </div>
-        )}
-
         {/* PRODUCTOS GRID */}
-        {!loading && !error && (
-          <div className="productos-grid">
-            {productos?.data?.length > 0 ? (
-              productos.data.map(producto => (
-                <div key={producto.id_producto} className={`producto-card ${!producto.visible ? 'producto-oculto' : ''}`}>
-                  <div className="producto-imagen">
-                    <img
-                      src={producto.imagen_url || producto.imagen_principal || PLACEHOLDER_IMAGE}
-                      alt={producto.nombre || 'Producto'}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = PLACEHOLDER_IMAGE;
-                      }}
-                    />
-                    {producto.descuento > 0 && (
-                      <span className="producto-descuento">-{producto.descuento}%</span>
-                    )}
-                    {producto.destacado && (
-                      <span className="producto-destacado">
-                        <StarIcon />
-                      </span>
-                    )}
-                    {!producto.visible && (
-                      <span className="producto-oculto-badge">
-                        <VisibilityOffIcon fontSize="small" />
-                        OCULTO
-                      </span>
-                    )}
-                    {producto.publicacion_automatica && (
-                      <span className="producto-auto-badge">
-                        <AutoAwesomeIcon fontSize="small" />
-                        AUTO
-                      </span>
+        <div className="productos-grid">
+          {productosFiltrados.length > 0 ? (
+            productosFiltrados.map(producto => (
+              <div key={producto.id} className={`producto-card ${!producto.visible ? 'producto-oculto' : ''}`}>
+                <div className="producto-imagen">
+                  <img src={producto.imagen} alt={producto.nombre} />
+                  {producto.descuento > 0 && (
+                    <span className="producto-descuento">-{producto.descuento}%</span>
+                  )}
+                  {producto.destacado && (
+                    <span className="producto-destacado">
+                      <StarIcon />
+                    </span>
+                  )}
+                  {!producto.visible && (
+                    <span className="producto-oculto-badge">
+                      <VisibilityOffIcon fontSize="small" />
+                      OCULTO
+                    </span>
+                  )}
+                </div>
+                
+                <div className="producto-info">
+                  <h3>{producto.nombre}</h3>
+                  <span className="producto-categoria">
+                    <CategoryIcon fontSize="small" />
+                    {producto.categoria}
+                  </span>
+                  
+                  <div className="producto-precios">
+                    {producto.descuento > 0 ? (
+                      <>
+                        <span className="precio-original">${producto.precio.toLocaleString()}</span>
+                        <span className="precio-descuento">
+                          ${(producto.precio * (1 - producto.descuento/100)).toLocaleString()}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="precio-normal">${producto.precio.toLocaleString()}</span>
                     )}
                   </div>
-
-                  <div className="producto-info">
-                    <h3>{producto.nombre || 'Sin nombre'}</h3>
-                    <span className="producto-categoria">
-                      <CategoryIcon fontSize="small" />
-                      {producto.categoria || 'Sin categoría'}
+                  
+                  <div className="producto-detalles">
+                    <span className={`estado-badge estado-${producto.estado.toLowerCase().replace(/\s+/g, '-')}`}>
+                      {producto.estado}
                     </span>
                     <span className="producto-stock">
                       <BoxIcon fontSize="small" />
@@ -740,104 +554,15 @@ const handleToggleVisible = async (id) => {
                     )}
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="sin-resultados">
-                <SearchIcon className="empty-icon" />
-                <p>No se encontraron productos con esos filtros</p>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* MODAL PUBLICACIÓN AUTOMÁTICA */}
-        {modalPublicacionAbierto && (
-          <div className="modal-overlay" onClick={() => setModalPublicacionAbierto(false)}>
-            <div className="modal-publicacion" onClick={(e) => e.stopPropagation()}>
-              <button className="modal-cerrar" onClick={() => setModalPublicacionAbierto(false)}>
-                <CloseIcon />
-              </button>
-
-              <div className="modal-header">
-                <h2>
-                  <AutoAwesomeIcon className="modal-icon" />
-                  Publicación Automática
-                </h2>
-              </div>
-
-              <div className="modal-body">
-                <p className="publicacion-descripcion">
-                  Esta función buscará empeños vencidos y los publicará automáticamente en la tienda online.
-                </p>
-
-                <div className="config-gracia">
-                  <label>
-                    <TimerIcon fontSize="small" />
-                    Días de gracia después del vencimiento:
-                  </label>
-                  <div className="gracia-input-group">
-                    <input
-                      type="number"
-                      value={diasGracia}
-                      onChange={(e) => setDiasGracia(Number(e.target.value))}
-                      min="0"
-                      max="30"
-                      className="gracia-input"
-                    />
-                    <span>días</span>
-                    <button
-                      className="btn-configurar-gracia"
-                      onClick={handleConfigurarDiasGracia}
-                      title="Guardar configuración"
-                    >
-                      <SettingsIcon fontSize="small" />
-                    </button>
-                  </div>
-                  <p className="gracia-help">
-                    Los productos se publicarán después de {diasGracia} días de vencido el contrato.
-                  </p>
-                </div>
-
-                {resultadoPublicacion && (
-                  <div className={`resultado-publicacion ${resultadoPublicacion.error ? 'error' : 'success'}`}>
-                    {resultadoPublicacion.error ? (
-                      <>
-                        <CancelIcon />
-                        <span>{resultadoPublicacion.message}</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircleIcon />
-                        <span>
-                          {resultadoPublicacion.message ||
-                            `✅ ${resultadoPublicacion.productos_creados || 0} productos publicados`}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                <button
-                  className="btn-ejecutar-publicacion"
-                  onClick={handlePublicacionAutomatica}
-                  disabled={publicando}
-                >
-                  {publicando ? (
-                    <>
-                      <span className="spinner-small"></span>
-                      Publicando...
-                    </>
-                  ) : (
-                    <>
-                      <AutoAwesomeIcon />
-                      Ejecutar Publicación
-                    </>
-                  )}
-                </button>
-              </div>
+            ))
+          ) : (
+            <div className="sin-resultados">
+              <SearchIcon className="empty-icon" />
+              <p>No se encontraron productos con esos filtros</p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* ============================================ */}
         {/* MODAL PRODUCTO (Nuevo/Editar) - SOLO SI TIENE PERMISO */}
@@ -848,7 +573,7 @@ const handleToggleVisible = async (id) => {
               <button className="modal-cerrar" onClick={() => setModalProductoAbierto(false)}>
                 <CloseIcon />
               </button>
-
+              
               <div className="modal-header">
                 <h2>
                   {modoEdicion ? <EditIcon className="modal-icon" /> : <AddIcon className="modal-icon" />}
@@ -856,11 +581,14 @@ const handleToggleVisible = async (id) => {
                 </h2>
               </div>
 
-              <form onSubmit={handleGuardarProducto}>
+              <form onSubmit={guardarProducto}>
                 <div className="modal-body">
                   <div className="form-grid">
                     <div className="form-group">
-                      <label><SellIcon fontSize="small" />Nombre del producto *</label>
+                      <label>
+                        <SellIcon fontSize="small" />
+                        Nombre del producto *
+                      </label>
                       <input
                         type="text"
                         name="nombre"
@@ -872,7 +600,10 @@ const handleToggleVisible = async (id) => {
                     </div>
 
                     <div className="form-group">
-                      <label><CategoryIcon fontSize="small" />Categoría *</label>
+                      <label>
+                        <CategoryIcon fontSize="small" />
+                        Categoría *
+                      </label>
                       <select
                         name="categoria"
                         value={formProducto.categoria}
@@ -886,7 +617,10 @@ const handleToggleVisible = async (id) => {
                     </div>
 
                     <div className="form-group">
-                      <label><AttachMoneyIcon fontSize="small" />Precio ($) *</label>
+                      <label>
+                        <AttachMoneyIcon fontSize="small" />
+                        Precio ($) *
+                      </label>
                       <input
                         type="number"
                         name="precio"
@@ -894,13 +628,15 @@ const handleToggleVisible = async (id) => {
                         onChange={handleInputChange}
                         required
                         min="0"
-                        step="0.01"
                         placeholder="0"
                       />
                     </div>
 
                     <div className="form-group">
-                      <label><LocalOfferIcon fontSize="small" />Descuento (%)</label>
+                      <label>
+                        <LocalOfferIcon fontSize="small" />
+                        Descuento (%)
+                      </label>
                       <input
                         type="number"
                         name="descuento"
@@ -913,7 +649,10 @@ const handleToggleVisible = async (id) => {
                     </div>
 
                     <div className="form-group">
-                      <label><BoxIcon fontSize="small" />Stock *</label>
+                      <label>
+                        <BoxIcon fontSize="small" />
+                        Stock *
+                      </label>
                       <input
                         type="number"
                         name="stock"
@@ -939,72 +678,25 @@ const handleToggleVisible = async (id) => {
                       </select>
                     </div>
 
-                    {/* ✅ NUEVO: subida de archivo real en vez de input de texto con URL */}
                     <div className="form-group full-width">
-                      <label><ImageIcon fontSize="small" />Imagen del producto</label>
-
-                      <input
-                        type="file"
-                        accept="image/*"
-                        ref={inputImagenRef}
-                        onChange={handleImagenSeleccionada}
-                        style={{ display: "none" }}
-                        id="input-imagen-producto"
-                      />
-
-                      <label
-                        htmlFor="input-imagen-producto"
-                        className="btn-subir-imagen"
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          cursor: "pointer",
-                          border: "1px dashed #999",
-                          borderRadius: "8px",
-                          padding: "12px",
-                          justifyContent: "center",
-                          color: "#555"
-                        }}
-                      >
-                        <CloudUploadIcon fontSize="small" />
-                        {archivoImagen ? archivoImagen.name : "Seleccionar imagen desde tu equipo"}
+                      <label>
+                        <ImageIcon fontSize="small" />
+                        URL de la imagen
                       </label>
-
-                      {previewImagen && (
-                        <div style={{ marginTop: "10px", textAlign: "center" }}>
-                          <img
-                            src={previewImagen}
-                            alt="Vista previa"
-                            style={{
-                              maxWidth: "160px",
-                              maxHeight: "160px",
-                              borderRadius: "8px",
-                              objectFit: "cover"
-                            }}
-                          />
-                          <div>
-                            <button
-                              type="button"
-                              onClick={limpiarImagenSeleccionada}
-                              style={{
-                                marginTop: "6px",
-                                background: "none",
-                                border: "none",
-                                color: "#c0392b",
-                                cursor: "pointer",
-                                fontSize: "13px"
-                              }}
-                            >
-                              Quitar imagen
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                      <input
+                        type="text"
+                        name="imagen"
+                        value={formProducto.imagen}
+                        onChange={handleInputChange}
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                      />
                     </div>
 
                     <div className="form-group full-width">
-                      <label><DescriptionIcon fontSize="small" />Descripción</label>
+                      <label>
+                        <DescriptionIcon fontSize="small" />
+                        Descripción
+                      </label>
                       <textarea
                         name="descripcion"
                         value={formProducto.descripcion}
@@ -1043,17 +735,11 @@ const handleToggleVisible = async (id) => {
                 </div>
 
                 <div className="modal-acciones">
-                  <button type="submit" className="btn-guardar" disabled={guardando}>
-                    {guardando ? (
-                      <span className="spinner-small"></span>
-                    ) : modoEdicion ? (
-                      <EditIcon />
-                    ) : (
-                      <AddIcon />
-                    )}
-                    {guardando ? "Guardando..." : modoEdicion ? "Guardar Cambios" : "Crear Producto"}
+                  <button type="submit" className="btn-guardar">
+                    {modoEdicion ? <EditIcon /> : <AddIcon />}
+                    {modoEdicion ? "Guardar Cambios" : "Crear Producto"}
                   </button>
-                  <button type="button" className="btn-cancelar" onClick={() => setModalProductoAbierto(false)} disabled={guardando}>
+                  <button type="button" className="btn-cancelar" onClick={() => setModalProductoAbierto(false)}>
                     <CloseIcon />
                     Cancelar
                   </button>
@@ -1069,93 +755,74 @@ const handleToggleVisible = async (id) => {
         {modalEditarAbierto && productoSeleccionado && (
           <div className="modal-overlay" onClick={() => setModalEditarAbierto(false)}>
             <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-              <button className="modal-cerrar" onClick={() => setModalDetalleAbierto(false)}>
+              <button className="modal-cerrar" onClick={() => setModalEditarAbierto(false)}>
                 <CloseIcon />
               </button>
-
+              
               <div className="modal-header">
-                <h2>{productoSeleccionado.nombre || 'Sin nombre'}</h2>
-                <span className="cliente-id">ID: #{productoSeleccionado.id_producto}</span>
-                {productoSeleccionado.publicacion_automatica && (
-                  <span className="auto-tag">
-                    <AutoAwesomeIcon fontSize="small" />
-                    Publicado automáticamente
-                  </span>
-                )}
+                <h2>{productoSeleccionado.nombre}</h2>
+                <span className="cliente-id">ID: #{productoSeleccionado.id}</span>
               </div>
 
               <div className="modal-body">
                 <div className="detalle-grid">
                   <div className="detalle-imagen">
-                    <img
-                      src={productoSeleccionado.imagen_url || productoSeleccionado.imagen_principal || PLACEHOLDER_IMAGE}
-                      alt={productoSeleccionado.nombre || 'Producto'}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = PLACEHOLDER_IMAGE;
-                      }}
-                    />
-                    {productoSeleccionado.fecha_vencimiento_contrato && (
-                      <div className="info-contrato">
-                        <TimerIcon fontSize="small" />
-                        Contrato vencido: {new Date(productoSeleccionado.fecha_vencimiento_contrato).toLocaleDateString()}
-                      </div>
-                    )}
+                    <img src={productoSeleccionado.imagen} alt={productoSeleccionado.nombre} />
                   </div>
-
+                  
                   <div className="detalle-info">
                     <div className="info-item">
                       <span className="info-label">Categoría</span>
-                      <span className="info-value">{productoSeleccionado.categoria || 'Sin categoría'}</span>
+                      <span className="info-value">{productoSeleccionado.categoria}</span>
                     </div>
-
+                    
                     <div className="info-item">
                       <span className="info-label">Precio</span>
                       <span className="info-value">
                         {productoSeleccionado.descuento > 0 ? (
                           <>
-                            <span className="precio-original">${formatPrice(productoSeleccionado.precio)}</span>
+                            <span className="precio-original">${productoSeleccionado.precio.toLocaleString()}</span>
                             <span className="precio-descuento">
-                              ${formatPrice(productoSeleccionado.precio * (1 - productoSeleccionado.descuento / 100))}
+                              ${(productoSeleccionado.precio * (1 - productoSeleccionado.descuento/100)).toLocaleString()}
                             </span>
                             <span className="descuento-badge">-{productoSeleccionado.descuento}%</span>
                           </>
                         ) : (
-                          `$${formatPrice(productoSeleccionado.precio)}`
+                          `$${productoSeleccionado.precio.toLocaleString()}`
                         )}
                       </span>
                     </div>
-
+                    
                     <div className="info-item">
                       <span className="info-label">Stock</span>
-                      <span className="info-value">{productoSeleccionado.stock || 0} unidades</span>
+                      <span className="info-value">{productoSeleccionado.stock} unidades</span>
                     </div>
-
+                    
                     <div className="info-item">
                       <span className="info-label">Estado</span>
                       <span className="info-value">
-                        <span className={`estado-badge estado-${(productoSeleccionado.estado_producto || productoSeleccionado.estado || 'buen-estado').toLowerCase().replace(/\s+/g, '-')}`}>
-                          {productoSeleccionado.estado_producto || productoSeleccionado.estado || 'Buen estado'}
+                        <span className={`estado-badge estado-${productoSeleccionado.estado.toLowerCase().replace(/\s+/g, '-')}`}>
+                          {productoSeleccionado.estado}
                         </span>
                       </span>
                     </div>
-
+                    
                     <div className="info-item full-width">
                       <span className="info-label">Descripción</span>
-                      <span className="info-value">{productoSeleccionado.descripcion || 'Sin descripción'}</span>
+                      <span className="info-value">{productoSeleccionado.descripcion}</span>
                     </div>
-
+                    
                     <div className="info-item">
                       <span className="info-label">Publicado</span>
                       <span className="info-value">
-                        {productoSeleccionado.visible ?
-                          <CheckCircleIcon className="visible-icon" /> :
+                        {productoSeleccionado.visible ? 
+                          <CheckCircleIcon className="visible-icon" /> : 
                           <CancelIcon className="oculto-icon" />
                         }
                         {productoSeleccionado.visible ? " Visible" : " Oculto"}
                       </span>
                     </div>
-
+                    
                     <div className="info-item">
                       <span className="info-label">Destacado</span>
                       <span className="info-value">
@@ -1163,22 +830,11 @@ const handleToggleVisible = async (id) => {
                         {productoSeleccionado.destacado ? " Sí" : " No"}
                       </span>
                     </div>
-
+                    
                     <div className="info-item">
                       <span className="info-label">Fecha publicación</span>
-                      <span className="info-value">
-                        {productoSeleccionado.fecha_publicacion
-                          ? new Date(productoSeleccionado.fecha_publicacion).toLocaleDateString()
-                          : 'No publicada'}
-                      </span>
+                      <span className="info-value">{productoSeleccionado.fechaPublicacion}</span>
                     </div>
-
-                    {productoSeleccionado.dias_gracia && (
-                      <div className="info-item">
-                        <span className="info-label">Días de gracia</span>
-                        <span className="info-value">{productoSeleccionado.dias_gracia} días</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -1240,19 +896,19 @@ const handleToggleVisible = async (id) => {
                 <WarningIcon />
               </div>
               <h3>¿Eliminar producto?</h3>
-              <p>Estás a punto de eliminar <strong>{productoSeleccionado.nombre || 'este producto'}</strong></p>
+              <p>Estás a punto de eliminar <strong>{productoSeleccionado.nombre}</strong></p>
               <p className="advertencia">Esta acción no se puede deshacer</p>
-
+              
               <div className="modal-botones">
-                <button
+                <button 
                   className="btn-cancelar"
                   onClick={() => setModalEliminarAbierto(false)}
                 >
                   Cancelar
                 </button>
-                <button
+                <button 
                   className="btn-confirmar-eliminar"
-                  onClick={handleEliminarProducto}
+                  onClick={eliminarProducto}
                 >
                   <DeleteIcon />
                   Sí, eliminar

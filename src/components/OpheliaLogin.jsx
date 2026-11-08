@@ -4,32 +4,15 @@ import "./OpheliaLogin.css";
 import logo from "../assets/ophelina_logo-sinFondo.png";
 import { useNavigate } from "react-router-dom";
 import { login } from "../config/auth";
-import { useUser } from "../contexts/UserContext";
 
 export default function OpheliaLogin() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  
-  const { refreshUserData } = useUser();
-
-  useEffect(() => {
-    const sessionId = searchParams.get('session_id');
-    const paymentStatus = searchParams.get('payment');
-    
-    console.log('🔍 Parámetros en login:', { sessionId, paymentStatus });
-    
-    if (sessionId && paymentStatus === 'success') {
-      console.log('✅ Pago detectado en login!');
-      localStorage.setItem('pending_session_id', sessionId);
-      localStorage.setItem('pending_payment', 'success');
-    }
-  }, [searchParams]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

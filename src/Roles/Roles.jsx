@@ -1,6 +1,6 @@
-// src/Roles/Roles.jsx - VERSIÓN FUSIONADA (Docker Base + Filtro de Local)
+// src/Roles/Roles.jsx
 import React, { useState, useEffect } from "react";
-
+import Sidebar from "../components/Sidebar";
 import "./Roles.css";
 import rolesService from "../services/rolService";
 import Select from 'react-select';
@@ -296,7 +296,7 @@ const handlePermisosChange = (selected) => {
   if (loading) {
     return (
       <div className="dashboard">
-      
+        <Sidebar />
         <div className="content loading-container">
           <div className="spinner"></div>
           <p>Cargando roles...</p>
@@ -308,7 +308,7 @@ const handlePermisosChange = (selected) => {
   if (error) {
     return (
       <div className="dashboard">
-      
+        <Sidebar />
         <div className="content error-container">
           <h3>Error</h3>
           <p>{error}</p>
@@ -323,7 +323,7 @@ const handlePermisosChange = (selected) => {
 
   return (
     <div className="dashboard">
-   
+      <Sidebar />
 
       <div className="content roles-content">
         {/* HEADER */}
@@ -460,8 +460,8 @@ const handlePermisosChange = (selected) => {
           </table>
         </div>
       </div>
-      
-      {/* MODAL NUEVO ROL */}
+      {/* MODAL NUEVO ROL - CON SELECT CON BÚSQUEDA */}
+    
       {showNuevoRol && (
         <div className="modal-overlay" onClick={() => setShowNuevoRol(false)}>
           <div className="modal-producto modal-rol-nuevo" onClick={(e) => e.stopPropagation()}>
@@ -583,8 +583,8 @@ const handlePermisosChange = (selected) => {
           </div>
         </div>
       )}
-      
       {/* MODAL DETALLE DE ROL */}
+  
       {modalDetalle && rolSeleccionado && (
         <div className="modal-overlay" onClick={() => setModalDetalle(false)}>
           <div className="modal-detalle modal-rol" onClick={(e) => e.stopPropagation()}>
@@ -662,8 +662,7 @@ const handlePermisosChange = (selected) => {
           </div>
         </div>
       )}
-      
-      {/* MODAL EDITAR ROL */}
+      {/* MODAL EDITAR ROL - CON SELECT CON BÚSQUEDA */}
       {modalEditar && rolSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
           <div className="modal-producto modal-rol-editar" onClick={(e) => e.stopPropagation()}>
@@ -795,6 +794,7 @@ const handlePermisosChange = (selected) => {
           </div>
         </div>
       )}
+
 
       {/* MODAL ELIMINAR ROL */}
       {modalEliminar && rolSeleccionado && (

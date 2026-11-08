@@ -53,74 +53,41 @@ const Dueno = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentSessionId, setPaymentSessionId] = useState(null);
   const [paymentPlanName, setPaymentPlanName] = useState('');
-  const [paymentPlanId, setPaymentPlanId] = useState(null);
 
   // Detectar pago exitoso
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const paymentStatus = searchParams.get('payment');
-
-    console.log('🔍 Parámetros URL:', { sessionId, paymentStatus });
-
+    
     if (sessionId && paymentStatus === 'success') {
-      console.log(' Pago detectado, abriendo modal...');
-      console.log(' session_id:', sessionId);
-      console.log(' plan_name:', localStorage.getItem('pending_plan_name'));
-      console.log(' plan_id:', localStorage.getItem('pending_plan_id'));
-
       setPaymentSessionId(sessionId);
       setPaymentPlanName(localStorage.getItem('pending_plan_name') || 'Premium');
-      setPaymentPlanId(localStorage.getItem('pending_plan_id'));
       setShowPaymentModal(true);
-
-      // Limpiar la URL
-      window.history.replaceState({}, document.title, '/home');
+      window.history.replaceState({}, document.title, '/dashboard');
     }
   }, [searchParams]);
 
-  // ============================================
-  // SUSCRIPCIÓN
-  // ============================================
-  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
-
-  const verificarSuscripcion = async () => {
-    const empresaId = localStorage.getItem('empresa_id');
-    if (!empresaId) {
-      console.warn(' No hay empresa_id en localStorage');
-      return;
-    }
-
-    try {
-      console.log(' Verificando suscripción para empresa:', empresaId);
-      const response = await stripeService.checkSubscription(empresaId);
-      console.log(' Estado suscripción:', response);
-      setSubscriptionInfo(response);
-
-      if (response.fecha_fin_plan === null && response.plan_activo === 1) {
-        console.log(' Suscripción activa sin fecha de vencimiento');
-        return;
-      }
-
-      if (response.activo) {
-        console.log(' Suscripción activa. Días restantes:', response.dias_restantes);
-        return;
-      }
-
-      console.warn(' Suscripción inactiva o vencida');
-      alert('Tu suscripción ha vencido. Por favor, renueva.');
-      window.location.href = '/planes';
-
-    } catch (error) {
-      console.error(' Error al verificar suscripción:', error);
-    }
-  };
-
+  // Verificar suscripción al cargar
   useEffect(() => {
+    const verificarSuscripcion = async () => {
+      const empresaId = localStorage.getItem('empresa_id');
+      if (!empresaId) return;
+      
+      try {
+        const response = await stripeService.checkSubscription(empresaId);
+        if (!response.activo && response.dias_restantes <= 0) {
+          alert('Tu suscripción ha vencido. Por favor, renueva.');
+          window.location.href = '/planes';
+        }
+      } catch (error) {
+        console.error('Error al verificar suscripción:', error);
+      }
+    };
     verificarSuscripcion();
   }, []);
 
   // ============================================
-  // ESTADOS (DESDE DOCKER)
+  // ESTADOS
   // ============================================
   const [showActivos, setShowActivos] = useState(false);
   const [showVencidos, setShowVencidos] = useState(false);
@@ -279,13 +246,13 @@ const Dueno = () => {
   const [trendChartData, setTrendChartData] = useState({
     series: [{ name: "Retorno Total", data: [] }],
     options: {
-      chart: {
-        type: "line",
+      chart: { 
+        type: "line", 
         height: 300,
         toolbar: { show: false }
       },
       xaxis: { categories: [], title: { text: 'Mes' } },
-      yaxis: {
+      yaxis: { 
         title: { text: '$ (pesos)' },
         labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k` }
       },
@@ -311,8 +278,8 @@ const Dueno = () => {
               total: {
                 show: true,
                 label: "Total",
-                formatter: function (w) {
-                  return w.globals.seriesTotals.reduce((a, b) => a + b, 0) + " artículos";
+                formatter: function(w) {
+                  return w.globals.seriesTotals.reduce((a,b) => a+b, 0) + " artículos";
                 }
               }
             }
@@ -323,7 +290,7 @@ const Dueno = () => {
   });
 
   // ============================================
-  // FUNCIONES AUXILIARES (DESDE DOCKER)
+  // FUNCIONES AUXILIARES
   // ============================================
   const formatearFecha = (fecha) => {
     if (!fecha) return "Fecha no disponible";
@@ -388,123 +355,7 @@ const Dueno = () => {
   // ============================================
   // FUNCIONES DE CARGA DE DATOS
   // ============================================
-  const esAdmin = () => {
-    return userRole === 'Administrador' || userRole === 'Dueño' || userRole === 'Admin';
-  };
-
-  const esGerente = () => {
-    return userRole === 'Gerente' || userRole === 'gerente' || userRole === 'GERENTE';
-  };
-
-  const puedeVerEvolucionAcumulada = () => {
-    return esAdmin();
-  };
-
-  const puedeVerGraficasBasicas = () => {
-    return esAdmin() || esGerente();
-  };
-
-  // ============================================
-  //  CARGA CONSOLIDADA: dashboard + morosidad +
-  // distribución + amortizaciones en UNA sola petición
-  // ============================================
-
-  // --- FIX de la carrera de peticiones ---
-  // requestIdRef: identifica cuál es la petición "vigente". Si una
-  // respuesta (éxito o error) llega y ya no corresponde a la petición
-  // vigente, se ignora por completo: ni pinta datos ni muestra error.
-  // huboCargaExitosaRef: si ya mostramos el dashboard una vez con éxito,
-  // un error posterior (de una petición vieja/duplicada) ya NO debe
-  // tapar la pantalla con el mensaje de error.
-  const requestIdRef = useRef(0);
-  const huboCargaExitosaRef = useRef(false);
-
-  const cargarTodo = async () => {
-    const miPeticion = ++requestIdRef.current;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await api.get('/home/completo');
-
-      // Si mientras esperábamos se disparó una petición más nueva
-      // (por ejemplo por doble montaje en desarrollo), esta respuesta
-      // ya está obsoleta: la ignoramos para no pisar datos más frescos.
-      if (miPeticion !== requestIdRef.current) return;
-
-      if (response.data.success) {
-        const { dashboard, morosidad: morosidadData, distribucion, amortizaciones } = response.data.data;
-
-        // --- Dashboard principal ---
-        setDashboardData(dashboard);
-
-        const capitalRetorno = dashboard.capital_retorno || [];
-        const capitalAcumulado = capitalRetorno.map(i => Number(i.capital)) || [];
-        const retornoAcumulado = capitalRetorno.map(i => Number(i.retorno)) || [];
-        const gananciaAcumulada = capitalRetorno.map(i => Number(i.ganancia)) || [];
-        const meses = capitalRetorno.map(i => i.mes) || [];
-
-        setAreaChartData(prev => ({
-          series: [
-            { name: "Capital Prestado (Acumulado)", data: capitalAcumulado },
-            { name: "Retorno (Pagos Acumulados)", data: retornoAcumulado },
-            { name: "Ganancia (Acumulada)", data: gananciaAcumulada }
-          ],
-          options: {
-            ...prev.options,
-            xaxis: { ...prev.options.xaxis, categories: meses }
-          }
-        }));
-
-        setTrendChartData(prev => ({
-          series: [{ name: "Retorno Total", data: retornoAcumulado }],
-          options: {
-            ...prev.options,
-            xaxis: { ...prev.options.xaxis, categories: meses }
-          }
-        }));
-
-        // --- Morosidad ---
-        setMorosidad(morosidadData || []);
-
-        // --- Distribución por categoría ---
-        const series = (distribucion || []).map(item => item.total);
-        const labels = (distribucion || []).map(item => item.categoria);
-        setCategoriaDistribucion(prev => ({
-          ...prev,
-          series,
-          options: { ...prev.options, labels }
-        }));
-
-        // --- Amortizaciones pendientes ---
-        setAmortizacionesPendientes(amortizaciones || []);
-
-        huboCargaExitosaRef.current = true;
-      }
-    } catch (error) {
-      // Ignorar respuestas obsoletas (de una petición vieja/duplicada)
-      if (miPeticion !== requestIdRef.current) return;
-
-      console.error('Error al cargar dashboard:', error);
-
-      // Si ya habíamos mostrado el dashboard con éxito antes, no lo
-      // tapamos con la pantalla de error por un timeout tardío de una
-      // petición duplicada: solo lo registramos en consola.
-      if (!huboCargaExitosaRef.current) {
-        setError('No se pudo conectar con el servidor.');
-      }
-    } finally {
-      if (miPeticion === requestIdRef.current) {
-        setLoading(false);
-      }
-    }
-  };
-
-  // ============================================
-  // FUNCIONES DE CARGA SECUNDARIAS (no bloquean el loading principal)
-  // ============================================
-
+  
   const cargarUsuarioActual = async () => {
     try {
       const userStr = localStorage.getItem('user');
@@ -558,14 +409,18 @@ const Dueno = () => {
     }
   };
 
-  const cargarPreciosQuilates = async () => {
+  const cargarMorosidad = async () => {
     try {
-      const response = await api.get('/precio-oro/quilates');
+      const response = await api.get('/dashboard/morosidad');
       if (response.data.success) {
-        setPreciosQuilates(response.data.data);
+        setMorosidad(response.data.data);
+      } else {
+        console.error('Error en respuesta:', response.data.message);
+        setMorosidad([]);
       }
     } catch (error) {
-      console.error('Error al cargar precios por quilate:', error);
+      console.error('Error al cargar morosidad:', error);
+      setMorosidad([]);
     }
   };
 
@@ -657,7 +512,7 @@ const Dueno = () => {
   const cargarActivos = async () => {
     if (!hasPermission('ver_empenos')) return;
     try {
-      const response = await api.get('/home/activos');
+      const response = await api.get('/dashboard/activos');
       if (response.data.success) {
         setEmpenosActivos(response.data.data);
         setShowActivos(true);
@@ -671,7 +526,7 @@ const Dueno = () => {
   const cargarVencidos = async () => {
     if (!hasPermission('ver_empenos')) return;
     try {
-      const response = await api.get('/home/vencidos');
+      const response = await api.get('/dashboard/vencidos');
       if (response.data.success) {
         setEmpenosVencidos(response.data.data);
         setShowVencidos(true);
@@ -685,7 +540,7 @@ const Dueno = () => {
   const cargarProximos = async () => {
     if (!hasPermission('ver_empenos')) return;
     try {
-      const response = await api.get('/home/proximos');
+      const response = await api.get('/dashboard/proximos');
       if (response.data.success) {
         setProximosVencer(response.data.data);
         setShowProximos(true);
@@ -710,14 +565,11 @@ const Dueno = () => {
     }
   };
 
-  // ============================================
-  // EFECTO PRINCIPAL DE CARGA
-  // ============================================
+  // Efecto principal de carga
   useEffect(() => {
-    // Carga crítica: controla el spinner de la pantalla
-    cargarTodo();
-
-    // Cargas secundarias: no bloquean la vista, entran cuando terminan
+    cargarDashboard();
+    cargarMorosidad();
+    cargarDistribucionCategorias();
     cargarUsuarioActual();
     cargarPreciosQuilates();
     cargarModulosPorPlan();
@@ -727,8 +579,7 @@ const Dueno = () => {
   // Manejadores del modal de pago
   const handlePaymentSuccess = (data) => {
     console.log('Pago exitoso:', data);
-    cargarTodo();
-    verificarSuscripcion(); // 🔑 refresca días restantes / fecha_fin_plan
+    cargarDashboard();
     setTimeout(() => {
       setShowPaymentModal(false);
       localStorage.removeItem('pending_plan_id');
@@ -744,17 +595,13 @@ const Dueno = () => {
     localStorage.removeItem('pending_plan_price');
   };
 
-  // ============================================
-  //  LOADING STATE - CON SPINNER PEQUEÑO (DESDE LOCAL)
-  // ============================================
+  // Loading state
   if (loading) {
     return (
       <div className="dashboard">
-        <div className="content">
-          <div className="loading-container">
-            <span className="spinner"></span>
-            <span>Cargando...</span>
-          </div>
+        <Sidebar modulosPermitidos={modulosPermitidos} />
+        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div>Cargando dashboard...</div>
         </div>
       </div>
     );
@@ -764,25 +611,23 @@ const Dueno = () => {
   if (error) {
     return (
       <div className="dashboard">
-        <div className="content">
-          <div className="error-container">
-            <WarningIcon className="error-icon" />
-            <h3>Error de conexión</h3>
-            <p>{error}</p>
-            <button onClick={cargarTodo} className="btn-reintentar">
-              Reintentar
-            </button>
-          </div>
+        <Sidebar modulosPermitidos={modulosPermitidos} />
+        <div className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+          <WarningIcon style={{ fontSize: 48, color: '#dc3545', marginBottom: 16 }} />
+          <h3>Error de conexión</h3>
+          <p>{error}</p>
+          <button onClick={cargarDashboard} style={{ marginTop: 16, padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+            Reintentar
+          </button>
         </div>
       </div>
     );
   }
 
-  // ============================================
-  //  RENDER - CON ESTRUCTURA DOCKER (SIN SIDEBAR)
-  // ============================================
-  return (
+  return ( 
     <div className="dashboard">
+      <Sidebar modulosPermitidos={modulosPermitidos} />
+
       <div className="content">
         {/* HEADER - Visible para todos */}
         <div className="owner-header">
@@ -791,7 +636,7 @@ const Dueno = () => {
               Hola, {datosPerfil.nombre.split(' ')[0] || 'Usuario'}
               <p className="header-sub">Conoce el estado de tu casa de empeño</p>
             </h1>
-
+          
             <div className="header-botones">
               <button className="btn-perfil" onClick={() => setShowPerfil(true)} title="Mi Perfil">
                 <img src={datosPerfil.fotoPerfil} alt="Perfil" className="perfil-foto" />
@@ -884,7 +729,7 @@ const Dueno = () => {
                 options={areaChartData.options}
                 series={areaChartData.series}
                 type="area"
-                height={chartHeight}
+                height={380}
               />
             </div>
           </div>
@@ -1456,7 +1301,6 @@ const Dueno = () => {
         onClose={handleClosePaymentModal}
         sessionId={paymentSessionId}
         planName={paymentPlanName}
-        planId={paymentPlanId}
         onSuccess={handlePaymentSuccess}
       />
     </div>

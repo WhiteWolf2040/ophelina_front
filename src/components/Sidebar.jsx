@@ -15,31 +15,11 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import SettingsIcon from '@mui/icons-material/Settings';
+import LogoutIcon from '@mui/icons-material/Logout';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 import SecurityIcon from '@mui/icons-material/Security';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-
-// Menús por defecto (orden correcto)
-const DEFAULT_MENUS = [
-  { path: '/home', icon: <HomeIcon />, text: 'Home' },
-  { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
-  { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
-  { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
-  { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
-  { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
-  { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
-  { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
-  { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
-  { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
-  { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
-];
-
-// ✅ ORDEN CORRECTO DE LOS MÓDULOS
-const ORDEN_MODULOS = [
-  'home', 'clientes', 'pagos', 'empenos', 
-  'tienda', 'apartados', 'inventario', 
-  'reportes', 'roles', 'permisos', 'configuracion'
-];
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,13 +38,6 @@ const Sidebar = () => {
   } = usePermissions();
 
   const navigate = useNavigate();
-  
-  let userContext;
-  try {
-    userContext = useUser();
-  } catch (e) {
-    userContext = { modules: DEFAULT_MENUS, loading: false, clearUserData: () => {} };
-  }
 
   // ============================================
   // DEFINICIÓN DE TODOS LOS MENÚS POSIBLES
@@ -175,6 +148,7 @@ const Sidebar = () => {
   // ============================================
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => setIsOpen(false);
+  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
   const handleLogout = async () => {
     await logout();
@@ -190,12 +164,14 @@ const Sidebar = () => {
   // ============================================
   if (loading) {
     return (
-      <div className="sidebar">
+      <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
-          <img src={logo} alt="Logo" className="log-image" />
+          <div className="sidebar-log">
+            <img src={logo} alt="Ophelia Logo" className="log-image" />
+          </div>
         </div>
         <div className="sidebar-loading">Cargando...</div>
-      </div>
+      </aside>
     );
   }
 
@@ -205,21 +181,28 @@ const Sidebar = () => {
   return (
     <>
       <button className="mobile-menu-btn" onClick={toggleSidebar}>
-        {isOpen ? <CloseIcon /> : <MenuIcon />}
+        <MenuIcon className="menu-icon" />
       </button>
 
-      {isOpen && <div className="sidebar-overlay visible" onClick={closeSidebar}></div>}
+      {isOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
 
-      <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
-          <img src={logo} alt="Ophelia Logo" className="log-image" />
+          <div className="sidebar-log">
+            <img src={logo} alt="Ophelia Logo" className="log-image" />
+          </div>
+
+          <button className="collapse-btn" onClick={toggleCollapse}>
+            <MenuIcon className="collapse-icon" />
+          </button>
+
           <button className="close-btn" onClick={closeSidebar}>
             <CloseIcon />
           </button>
         </div>
 
         <nav className="sidebar-menu">
-          {menuItems.map((item) => (
+          {visibleMenus.map((item) => (
             <NavLink 
               key={item.path}
               to={item.path} 
@@ -229,13 +212,14 @@ const Sidebar = () => {
               onClick={closeSidebar}
             >
               {item.icon}
-              <span className="link-text">{item.text}</span>
+              {!isCollapsed && <span>{item.text}</span>}
             </NavLink>
           ))}
 
+          {/* Botón de cerrar sesión siempre visible */}
           <NavLink to="#" className="sidebar-link cerrar-sesion" onClick={handleLogout}>
             <LogoutIcon />
-            <span>Cerrar sesión</span>
+            {!isCollapsed && <span>Cerrar sesión</span>}
           </NavLink>
         </nav>
 

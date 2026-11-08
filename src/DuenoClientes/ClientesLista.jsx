@@ -1,7 +1,6 @@
-// ClientesLista.jsx - VERSIÓN FUSIONADA (Docker Base + Sistema de Permisos Local)
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import Sidebar from "../components/Sidebar";
 import "./Clientes.css";
 import clientesService from "../services/clientesService";
 import permissionService from "../services/permisoService"; // 👈 Importar tu servicio
@@ -89,42 +88,15 @@ const ClientesLista = () => {
     setCargando(true);
     try {
       const response = await clientesService.obtenerClientes();
-      console.log('📦 Respuesta completa:', response);
-      
-      // ✅ EXTRAER EL ARRAY CORRECTAMENTE (mejorado de Local)
-      let data = [];
-      
-      // Si la respuesta tiene { success: true, data: [...] }
-      if (response.data && response.data.success && Array.isArray(response.data.data)) {
-        data = response.data.data;
-      }
-      // Si la respuesta es directamente { data: [...] }
-      else if (response.data && response.data.data && Array.isArray(response.data.data)) {
-        data = response.data.data;
-      }
-      // Si la respuesta es directamente el array
-      else if (Array.isArray(response.data)) {
-        data = response.data;
-      }
-      // Si la respuesta tiene { success: true, data: [...] } pero sin anidar
-      else if (response.success && Array.isArray(response.data)) {
-        data = response.data;
-      }
-      // Si la respuesta es el array directamente
-      else if (Array.isArray(response)) {
-        data = response;
-      }
-      
-      console.log('✅ Array de clientes:', data);
-      console.log('📊 Cantidad:', data.length);
+      const data = response.data || response;
 
       const clientesAdaptados = data.map(cliente => ({
         ...cliente,
-        email: cliente.correo || cliente.email || '',
-        fecha: cliente.fecha_registro || cliente.fecha || '',
-        tipoIdentificacion: cliente.tipo_identificacion || cliente.tipoIdentificacion || 'INE',
-        numeroIdentificacion: cliente.numero_identificacion || cliente.numeroIdentificacion || '',
-        codigoPostal: cliente.codigo_postal || cliente.codigoPostal || ''
+        email: cliente.correo,
+        fecha: cliente.fecha_registro,
+        tipoIdentificacion: cliente.tipo_identificacion,
+        numeroIdentificacion: cliente.numero_identificacion,
+        codigoPostal: cliente.codigo_postal
       }));
 
       setClientes(clientesAdaptados);
@@ -146,7 +118,6 @@ const ClientesLista = () => {
   const clientesActuales = clientesFiltrados.slice(indicePrimero, indiceUltimo);
   const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
 
-  // ✅ MEJORADO CON LOCAL: abrirDetalle con validación de permisos
   const abrirDetalle = async (cliente) => {
     if (!puedeVerClientes) {
       alert('No tienes permiso para ver detalles de clientes');
@@ -182,7 +153,6 @@ const ClientesLista = () => {
     }, 300);
   };
 
-  // ✅ MEJORADO CON LOCAL: abrirModalEditar con validación de permisos
   const abrirModalEditar = (cliente) => {
     // 👇 Validar permiso usando tu servicio
     if (!puedeEditarClientes) {
@@ -213,7 +183,6 @@ const ClientesLista = () => {
     setClienteSeleccionado(null);
   };
 
-  // ✅ MEJORADO CON LOCAL: handleEditarSubmit con validación de permisos
   const handleEditarSubmit = async (e) => {
     e.preventDefault();
     
@@ -232,7 +201,6 @@ const ClientesLista = () => {
     }
   };
 
-  // ✅ MEJORADO CON LOCAL: confirmarEliminar con validación de permisos
   const confirmarEliminar = (cliente) => {
     // 👇 Validar permiso usando tu servicio
     if (!puedeEliminarClientes) {
@@ -244,7 +212,6 @@ const ClientesLista = () => {
     setModalEliminar(true);
   };
 
-  // ✅ MEJORADO CON LOCAL: handleEliminar con validación de permisos
   const handleEliminar = async () => {
     // 👇 Validar permiso usando tu servicio
     if (!puedeEliminarClientes) {
@@ -320,7 +287,7 @@ const ClientesLista = () => {
       <div className="content2 owner-header">
         {/* HEADER */}
         <div className="header-container">
-          <div className="">
+          <div className="tienda-header">
             <h1>
               <GroupIcon className="title-icon"/> Listado de clientes
               <p className="header-sub">Gestiona y administra tus clientes</p>

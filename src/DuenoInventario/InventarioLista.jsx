@@ -1,9 +1,8 @@
-// InventarioLista.jsx - VERSIÓN CORREGIDA (usando campos reales + imagen vía Cloudinary)
-
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import "./Inventario.css";
 import InventoryIcon from '@mui/icons-material/Inventory';
+// Importar iconos de MUI
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -13,24 +12,15 @@ import permissionService from "../services/permisoService";
 
 const InventarioLista = () => {
   const navigate = useNavigate();
-
-  // ✅ Estados reales
-  const [prendas, setPrendas] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Filtros
+  const { inventario, eliminarPrenda, editarPrenda } = useOutletContext();
+  
   const [busqueda, setBusqueda] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("");
-
-  // Modales
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [prendaSeleccionada, setPrendaSeleccionada] = useState(null);
   const [modalEliminar, setModalEliminar] = useState(false);
-  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
-  const [errorEdicion, setErrorEdicion] = useState("");
 
   const puedeVerTienda = permissionService.hasPermission('ver_tienda');
   const puedeCrearProductos = permissionService.hasPermission('crear_productos');
@@ -47,58 +37,28 @@ const InventarioLista = () => {
 
   // Estado para el formulario de edición
   const [formEditar, setFormEditar] = useState({
-    descripcion: "",      // ← nombre en frontend
-    tipo: "",            // ← categoria en frontend
-    material: "",
-    peso_gramos: "",     // ← peso en frontend
-    valor_estimado: "",  // ← valor en frontend
-    estado: ""
+    nombre: "",
+    cliente: "",
+    descripcion: "",
+    categoria: "",
+    peso: "",
+    valor: "",
   });
 
-  // ✅ NUEVO: estado para la imagen dentro del modal de edición
-  const [imagenEditar, setImagenEditar] = useState(null); // File real (si se elige una nueva)
-  const [previewImagenEditar, setPreviewImagenEditar] = useState(""); // preview (nueva o la ya existente)
-  const inputImagenEditarRef = useRef(null);
+  const categorias = ["Todas", "Joyería", "Electrónico", "Relojes", "Herramientas", "Otros"];
+  const estados = ["Todos", "En Empeño", "Disponible", "Vendido", "Vencido"];
 
-  // Categorías reales (de tu tabla)
-  const categorias = ["Todas", "Joyería", "Electrónica", "Relojes", "Herramientas", "Instrumentos", "Otros"];
-  const estados = ["Todos", "Disponible", "En Empeño", "Vendido", "Vencido", "Apartado"];
-
-  // ========== CARGAR PRENDAS ==========
-  useEffect(() => {
-    cargarPrendas();
-  }, []);
-
-  const cargarPrendas = async () => {
-    setLoading(true);
-    try {
-        const data = await inventarioService.getPrendas();
-        console.log('Prendas recibidas:', data); // ← Verificar en consola
-        setPrendas(data || []);
-        setError(null);
-    } catch (err) {
-        console.error("Error cargando prendas:", err);
-        setError("Error al cargar el inventario");
-    } finally {
-        setLoading(false);
-    }
-  };
-
-  // ========== FILTRADO ==========
-  const prendasFiltradas = prendas.filter((item) => {
-    const coincideBusqueda = 
-      item.descripcion?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      item.tipo?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      item.material?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      item.codigo_barras?.toLowerCase().includes(busqueda.toLowerCase());
+  const inventarioFiltrado = inventario.filter((item) => {
+    const coincideBusqueda = item.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+                            item.categoria.toLowerCase().includes(busqueda.toLowerCase()) ||
+                            (item.cliente && item.cliente.toLowerCase().includes(busqueda.toLowerCase()));
     
-    const coincideCategoria = categoriaFiltro === "" || categoriaFiltro === "Todas" || item.tipo === categoriaFiltro;
+    const coincideCategoria = categoriaFiltro === "" || categoriaFiltro === "Todas" || item.categoria === categoriaFiltro;
     const coincideEstado = estadoFiltro === "" || estadoFiltro === "Todos" || item.estado === estadoFiltro;
     
     return coincideBusqueda && coincideCategoria && coincideEstado;
   });
 
-  // ========== CRUD ==========
   const abrirDetalle = (prenda) => {
     if (!puedeVerTienda) {
       alert('No tienes permiso para ver detalles de prendas');
@@ -113,17 +73,6 @@ const InventarioLista = () => {
     setPrendaSeleccionada(null);
   };
 
-  const limpiarImagenEditar = () => {
-    setImagenEditar(null);
-    if (previewImagenEditar && previewImagenEditar.startsWith("blob:")) {
-      URL.revokeObjectURL(previewImagenEditar);
-    }
-    setPreviewImagenEditar("");
-    if (inputImagenEditarRef.current) {
-      inputImagenEditarRef.current.value = "";
-    }
-  };
-
   const abrirModalEditar = (prenda) => {
     //  Validar permiso para editar
     if (!puedeEditarProductos) {
@@ -133,17 +82,13 @@ const InventarioLista = () => {
 
     setPrendaSeleccionada(prenda);
     setFormEditar({
+      nombre: prenda.nombre,
+      cliente: prenda.cliente || "",
       descripcion: prenda.descripcion || "",
-      tipo: prenda.tipo || "",
-      material: prenda.material || "",
-      peso_gramos: prenda.peso_gramos || "",
-      valor_estimado: prenda.valor_estimado || "",
-      estado: prenda.estado || ""
+      categoria: prenda.categoria,
+      peso: prenda.peso || "",
+      valor: prenda.valor,
     });
-    setErrorEdicion("");
-    setImagenEditar(null);
-    // ✅ NUEVO: si la prenda ya tiene imagen, se muestra como preview inicial
-    setPreviewImagenEditar(prenda.imagen_url || "");
     setModalEditarAbierto(true);
     setModalAbierto(false);
   };
@@ -151,36 +96,9 @@ const InventarioLista = () => {
   const cerrarModalEditar = () => {
     setModalEditarAbierto(false);
     setPrendaSeleccionada(null);
-    limpiarImagenEditar();
   };
 
-  // ✅ NUEVO: selección de nueva imagen dentro del modal de edición
-  const handleFileChangeEditar = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!tiposPermitidos.includes(file.type)) {
-      alert('Solo se permiten imágenes (JPEG, PNG, GIF, WEBP)');
-      e.target.value = '';
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no debe superar los 5MB');
-      e.target.value = '';
-      return;
-    }
-
-    if (previewImagenEditar && previewImagenEditar.startsWith("blob:")) {
-      URL.revokeObjectURL(previewImagenEditar);
-    }
-
-    setImagenEditar(file);
-    setPreviewImagenEditar(URL.createObjectURL(file));
-  };
-
-  const handleEditarSubmit = async (e) => {
+  const handleEditarSubmit = (e) => {
     e.preventDefault();
     
     //  Validar permiso para editar
@@ -218,7 +136,6 @@ const InventarioLista = () => {
     setPrendaSeleccionada(null);
   };
 
-  // ========== RENDER ==========
   return (
     <>
       {/* HEADER */}
@@ -247,7 +164,7 @@ const InventarioLista = () => {
         <div className="buscador">
           <input
             type="text"
-            placeholder="Buscar por nombre, categoría, material o código..."
+            placeholder="Buscar por nombre, categoría o cliente..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             className="buscador-input"
@@ -292,8 +209,9 @@ const InventarioLista = () => {
         )}
       </div>
 
-      {/* LOADING */}
-      {loading && <div className="loading">Cargando inventario...</div>}
+      {/* TARJETA DE TABLA */}
+      <div className="tabla-card">
+        <h3>Lista de Prendas ({inventarioFiltrado.length})</h3>
 
         {/* Vista móvil: tarjetas */}
         <div className="vista-movil">
@@ -315,19 +233,55 @@ const InventarioLista = () => {
                     <span className="tarjeta-label">Categoría:</span>
                     <span>{item.categoria}</span>
                   </div>
-                  <div className="tarjeta-cuerpo">
+                  <div className="tarjeta-fila">
+                    <span className="tarjeta-label">Valor:</span>
+                    <span className="monto">${item.valor.toLocaleString()}</span>
+                  </div>
+                  <div className="tarjeta-fila">
+                    <span className="tarjeta-label">Estado:</span>
+                    <span className={`estado-badge estado-${item.estado.toLowerCase().replace(/\s+/g, '-')}`}>
+                      {item.estado}
+                    </span>
+                  </div>
+                  {item.cliente && (
                     <div className="tarjeta-fila">
-                      <span className="tarjeta-label">Categoría:</span>
-                      <span>{item.tipo || "Sin categoría"}</span>
+                      <span className="tarjeta-label">Cliente:</span>
+                      <span>{item.cliente}</span>
                     </div>
-                    <div className="tarjeta-fila">
-                      <span className="tarjeta-label">Valor:</span>
-                      <span className="monto">${(item.valor_estimado || 0).toLocaleString()}</span>
-                    </div>
-                    <div className="tarjeta-fila">
-                      <span className="tarjeta-label">Estado:</span>
-                      <span className={`estado-badge estado-${item.estado?.toLowerCase().replace(/\s+/g, '-') || 'disponible'}`}>
-                        {item.estado || "Disponible"}
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="sin-resultados">
+              No se encontraron prendas con esos filtros
+            </div>
+          )}
+        </div>
+
+        {/* Vista desktop: tabla */}
+        <div className="vista-desktop">
+          <table>
+            <thead>
+              <tr>
+                <th>Prenda</th>
+                <th>Categoría</th>
+                <th>Valor Estimado</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {inventarioFiltrado.length > 0 ? (
+                inventarioFiltrado.map((item) => (
+                  <tr key={item.id}>
+                    <td><strong>{item.nombre}</strong></td>
+                    <td>{item.categoria}</td>
+                    <td>${item.valor.toLocaleString()}</td>
+                    <td>
+                      <span className={`estado-badge estado-${item.estado.toLowerCase().replace(/\s+/g, '-')}`}>
+                        {item.estado}
                       </span>
                     </td>
                     <td>
@@ -365,12 +319,18 @@ const InventarioLista = () => {
                       </div>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="sin-resultados">
+                    No se encontraron prendas con esos filtros
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
       {modalAbierto && prendaSeleccionada && (
         <div className="modal-overlay" onClick={cerrarModal}>
@@ -382,57 +342,38 @@ const InventarioLista = () => {
             </div>
 
             <div className="modal-body">
-              {/* ✅ NUEVO: imagen de la prenda, si tiene */}
-              {prendaSeleccionada.imagen_url && (
-                <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                  <img
-                    src={prendaSeleccionada.imagen_url}
-                    alt={prendaSeleccionada.descripcion || 'Prenda'}
-                    style={{ maxWidth: '220px', maxHeight: '220px', borderRadius: '8px', objectFit: 'cover' }}
-                  />
-                </div>
-              )}
-
               <div className="info-grid">
                 <div className="info-item">
                   <span className="info-label">📦 Prenda</span>
-                  <span className="info-value">{prendaSeleccionada.descripcion || "Sin nombre"}</span>
+                  <span className="info-value">{prendaSeleccionada.nombre}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">📋 Categoría</span>
-                  <span className="info-value">{prendaSeleccionada.tipo || "Sin categoría"}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">🔧 Material</span>
-                  <span className="info-value">{prendaSeleccionada.material || "No especificado"}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">⚖️ Peso</span>
-                  <span className="info-value">{prendaSeleccionada.peso_gramos ? `${prendaSeleccionada.peso_gramos} g` : "No especificado"}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">💰 Valor Estimado</span>
-                  <span className="info-value">${(prendaSeleccionada.valor_estimado || 0).toLocaleString()}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">📊 Estado</span>
-                  <span className="info-value">
-                    <span className={`estado-badge estado-${prendaSeleccionada.estado?.toLowerCase().replace(/\s+/g, '-') || 'disponible'}`}>
-                      {prendaSeleccionada.estado || "Disponible"}
-                    </span>
-                  </span>
+                  <span className="info-label">👤 Cliente</span>
+                  <span className="info-value">{prendaSeleccionada.cliente || "No asignado"}</span>
                 </div>
                 <div className="info-item full-width">
                   <span className="info-label">📝 Descripción</span>
                   <span className="info-value descripcion-texto">{prendaSeleccionada.descripcion || "Sin descripción"}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">🔢 Código</span>
-                  <span className="info-value">{prendaSeleccionada.codigo_barras || "Sin código"}</span>
+                  <span className="info-label">📋 Categoría</span>
+                  <span className="info-value">{prendaSeleccionada.categoria}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">📅 Fecha Registro</span>
-                  <span className="info-value">{prendaSeleccionada.fecha_registro ? new Date(prendaSeleccionada.fecha_registro).toLocaleDateString() : "N/A"}</span>
+                  <span className="info-label">⚖️ Peso</span>
+                  <span className="info-value">{prendaSeleccionada.peso ? `${prendaSeleccionada.peso} g` : "No especificado"}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">💰 Valor</span>
+                  <span className="info-value">${prendaSeleccionada.valor.toLocaleString()}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">📊 Estado</span>
+                  <span className="info-value">
+                    <span className={`estado-badge estado-${prendaSeleccionada.estado.toLowerCase().replace(/\s+/g, '-')}`}>
+                      {prendaSeleccionada.estado}
+                    </span>
+                  </span>
                 </div>
               </div>
             </div>
@@ -476,35 +417,55 @@ const InventarioLista = () => {
             
             <div className="modal-header">
               <h2>Editar Prenda</h2>
-              <span className="cliente-id">ID: #{prendaSeleccionada.id_prenda}</span>
+              <span className="cliente-id">ID: #{prendaSeleccionada.id}</span>
             </div>
 
             <form onSubmit={handleEditarSubmit}>
               <div className="modal-body">
-                {errorEdicion && (
-                  <div className="error-message" style={{ marginBottom: '16px' }}>
-                    {errorEdicion}
-                  </div>
-                )}
-
                 <div className="form-editar-grid">
+                  {/* Prenda */}
                   <div className="form-group">
-                    <label>Nombre de la prenda *</label>
+                    <label>Prenda</label>
                     <input
-                      name="descripcion"
-                      value={formEditar.descripcion}
-                      onChange={(e) => setFormEditar({...formEditar, descripcion: e.target.value})}
-                      placeholder="Ej: Anillo de Oro 18k"
+                      name="nombre"
+                      value={formEditar.nombre}
+                      onChange={(e) => setFormEditar({...formEditar, nombre: e.target.value})}
+                      placeholder="Nombre de la prenda"
                       required
                     />
                   </div>
 
+                  {/* Cliente */}
                   <div className="form-group">
-                    <label>Categoría *</label>
+                    <label>Cliente</label>
+                    <input
+                      name="cliente"
+                      value={formEditar.cliente}
+                      onChange={(e) => setFormEditar({...formEditar, cliente: e.target.value})}
+                      placeholder="Nombre del cliente"
+                    />
+                  </div>
+
+                  {/* Descripción - full width */}
+                  <div className="form-group full-width">
+                    <label>Descripción</label>
+                    <textarea
+                      name="descripcion"
+                      value={formEditar.descripcion}
+                      onChange={(e) => setFormEditar({...formEditar, descripcion: e.target.value})}
+                      placeholder="Describe la prenda, características, estado físico..."
+                      rows="3"
+                      className="textarea-input"
+                    />
+                  </div>
+
+                  {/* Categoría */}
+                  <div className="form-group">
+                    <label>Categoría</label>
                     <select
-                      name="tipo"
-                      value={formEditar.tipo}
-                      onChange={(e) => setFormEditar({...formEditar, tipo: e.target.value})}
+                      name="categoria"
+                      value={formEditar.categoria}
+                      onChange={(e) => setFormEditar({...formEditar, categoria: e.target.value})}
                       required
                     >
                       <option value="">Seleccionar</option>
@@ -514,96 +475,38 @@ const InventarioLista = () => {
                     </select>
                   </div>
 
-                  <div className="form-group">
-                    <label>Material</label>
-                    <input
-                      name="material"
-                      value={formEditar.material}
-                      onChange={(e) => setFormEditar({...formEditar, material: e.target.value})}
-                      placeholder="Ej: Oro, Plata, Acero"
-                    />
-                  </div>
-
+                  {/* Peso */}
                   <div className="form-group">
                     <label>Peso (gramos)</label>
                     <input
-                      name="peso_gramos"
+                      name="peso"
                       type="number"
-                      step="0.01"
-                      value={formEditar.peso_gramos}
-                      onChange={(e) => setFormEditar({...formEditar, peso_gramos: e.target.value})}
+                      value={formEditar.peso}
+                      onChange={(e) => setFormEditar({...formEditar, peso: e.target.value})}
                       placeholder="Ej: 15.5"
                     />
                   </div>
 
+                  {/* Valor estimado */}
                   <div className="form-group">
-                    <label>Valor Estimado ($) *</label>
+                    <label>Valor estimado</label>
                     <input
-                      name="valor_estimado"
+                      name="valor"
                       type="number"
-                      value={formEditar.valor_estimado}
-                      onChange={(e) => setFormEditar({...formEditar, valor_estimado: e.target.value})}
+                      value={formEditar.valor}
+                      onChange={(e) => setFormEditar({...formEditar, valor: e.target.value})}
                       placeholder="Ej: 7000"
                       required
                     />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Estado *</label>
-                    <select
-                      name="estado"
-                      value={formEditar.estado}
-                      onChange={(e) => setFormEditar({...formEditar, estado: e.target.value})}
-                      required
-                    >
-                      <option value="">Seleccionar</option>
-                      {estados.filter(e => e !== "Todos").map((est) => (
-                        <option key={est} value={est}>{est}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* ✅ NUEVO: subir/reemplazar imagen */}
-                  <div className="form-group full-width">
-                    <label>Imagen de la prenda</label>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/gif,image/webp"
-                      onChange={handleFileChangeEditar}
-                      ref={inputImagenEditarRef}
-                      className="file-input"
-                    />
-                    <small className="file-hint">
-                      Deja este campo vacío para conservar la imagen actual. Formatos: JPG, PNG, GIF, WEBP | Máx: 5MB
-                    </small>
-
-                    {previewImagenEditar && (
-                      <div className="image-preview-container">
-                        <img
-                          src={previewImagenEditar}
-                          alt="Vista previa"
-                          className="image-preview"
-                        />
-                        {imagenEditar && (
-                          <button
-                            type="button"
-                            onClick={limpiarImagenEditar}
-                            className="btn-remove-image"
-                          >
-                            Cancelar cambio de imagen
-                          </button>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
 
               <div className="modal-acciones-editar">
-                <button type="submit" className="btn-guardar" disabled={guardandoEdicion}>
-                  {guardandoEdicion ? "Guardando..." : "Guardar Cambios"}
+                <button type="submit" className="btn-guardar">
+                  Guardar Cambios
                 </button>
-                <button type="button" className="btn-cancelar" onClick={cerrarModalEditar} disabled={guardandoEdicion}>
+                <button type="button" className="btn-cancelar" onClick={cerrarModalEditar}>
                   Cancelar
                 </button>
               </div>
@@ -618,7 +521,7 @@ const InventarioLista = () => {
           <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icono">⚠️</div>
             <h3>¿Eliminar prenda?</h3>
-            <p>Estás a punto de eliminar <strong>{prendaSeleccionada.descripcion || "esta prenda"}</strong></p>
+            <p>Estás a punto de eliminar <strong>{prendaSeleccionada.nombre}</strong></p>
             <p className="advertencia">Esta acción no se puede deshacer</p>
             
             <div className="modal-botones">

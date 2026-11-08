@@ -1,7 +1,6 @@
-// EmpenosLista.jsx - VERSIÓN CORREGIDA + IMAGEN
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import Sidebar from "../components/Sidebar";
 import "./Empenos.css";
 import DiamondIcon from '@mui/icons-material/Diamond';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -20,13 +19,8 @@ const EmpenosLista = () => {
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [empenoSeleccionado, setEmpenoSeleccionado] = useState(null);
-  const [modalEditar, setModalEditar] = useState(false);
-  const [editando, setEditando] = useState(false);
-
-  // Estados para edición
-  const [nombreCliente, setNombreCliente] = useState("");
-  const [material, setMaterial] = useState("");
-
+  const [modalEliminar, setModalEliminar] = useState(false);
+  
   // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const empenosPorPagina = 8;
@@ -71,10 +65,10 @@ const EmpenosLista = () => {
         setEmpenos(empenosFormateados);
       }
     } catch (error) {
-        console.error('Error al cargar empeños:', error);
-        setError('No se pudieron cargar los empeños');
+      console.error('Error al cargar empeños:', error);
+      setError('No se pudieron cargar los empeños');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -112,13 +106,6 @@ const EmpenosLista = () => {
     }
   }, [puedeVerEmpenos]);
 
-  // ← NUEVO: actualiza la imagen de una fila sin recargar todo el listado
-  const actualizarImagenLocal = (idEmpeno, nuevaUrl) => {
-    setEmpenos(prev => prev.map(e => e.id === idEmpeno ? { ...e, imagen: nuevaUrl } : e));
-  };
-
-
-
   // Filtrar empeños por estado
   const empenosFiltrados = empenos.filter((e) => {
     if (filtroEstado === "todos") return true;
@@ -133,7 +120,6 @@ const EmpenosLista = () => {
   const empenosActuales = empenosFiltrados.slice(indicePrimero, indiceUltimo);
   const totalPaginas = Math.ceil(empenosFiltrados.length / empenosPorPagina);
 
-  // Abrir modal de detalles
   const abrirDetalle = (empeno) => {
     if (!puedeVerEmpenos) {
       alert('No tienes permiso para ver detalles de empeños');
@@ -155,9 +141,8 @@ const EmpenosLista = () => {
       return;
     }
     setEmpenoSeleccionado(empeno);
-    setNombreCliente(empeno.cliente);
-    setMaterial(empeno.material || '');
-    setModalEditar(true);
+    setModalEliminar(true);
+    setModalAbierto(false);
   };
 
   const handleEliminar = async () => {
@@ -175,10 +160,8 @@ const EmpenosLista = () => {
       setEmpenoSeleccionado(null);
       cargarTodosEmpenos();
     } catch (error) {
-      console.error('Error al actualizar:', error);
-      alert('Error al actualizar los datos');
-    } finally {
-      setEditando(false);
+      console.error('Error al eliminar:', error);
+      alert('Error al eliminar el empeño');
     }
   };
 
@@ -200,11 +183,11 @@ const EmpenosLista = () => {
     const maxPaginasVisibles = 5;
     let inicio = Math.max(1, paginaActual - Math.floor(maxPaginasVisibles / 2));
     let fin = Math.min(totalPaginas, inicio + maxPaginasVisibles - 1);
-
+    
     if (fin - inicio + 1 < maxPaginasVisibles) {
       inicio = Math.max(1, fin - maxPaginasVisibles + 1);
     }
-
+    
     for (let i = inicio; i <= fin; i++) {
       numeros.push(i);
     }
@@ -235,7 +218,7 @@ const EmpenosLista = () => {
     return (
       <div className="dashboard">
         <div className="content">
-          <div className="">
+          <div className="tienda-header">
             <h1>Listado de empeños</h1>
             <p className="header-sub">Error al cargar los datos</p>
           </div>
@@ -254,7 +237,7 @@ const EmpenosLista = () => {
     <div className="dashboard">
       <div className="content">
         {/* HEADER */}
-        <div className="header-container">
+        <div className="tienda-header">
           <div>
             <h1>
               <DiamondIcon className="title-icon" />
@@ -323,7 +306,7 @@ const EmpenosLista = () => {
                 <div key={e.id} className="empeno-tarjeta">
                   <div className="tarjeta-header">
                     <strong>{e.cliente}</strong>
-                    <span
+                    <span 
                       className="detalle-link"
                       onClick={() => abrirDetalle(e)}
                     >
@@ -332,20 +315,8 @@ const EmpenosLista = () => {
                   </div>
                   <div className="tarjeta-cuerpo">
                     <div className="tarjeta-fila">
-                      <span className="tarjeta-label">Imagen:</span>
-                      <AgregarImagenPrenda
-                        idPrenda={e.id_prenda}
-                        imagenActual={e.imagen}
-                        onImagenActualizada={(url) => actualizarImagenLocal(e.id, url)}
-                      />
-                    </div>
-                    <div className="tarjeta-fila">
                       <span className="tarjeta-label">Objeto:</span>
                       <span>{e.objeto}</span>
-                    </div>
-                    <div className="tarjeta-fila">
-                      <span className="tarjeta-label">Material:</span>
-                      <span>{e.material}</span>
                     </div>
                     <div className="tarjeta-fila">
                       <span className="tarjeta-label">Monto:</span>
@@ -353,7 +324,7 @@ const EmpenosLista = () => {
                     </div>
                     <div className="tarjeta-fila">
                       <span className="tarjeta-label">Interés:</span>
-                      <span>${e.interes?.toLocaleString()}</span>
+                      <span>{e.interes}%</span>
                     </div>
                     <div className="tarjeta-fila">
                       <span className="tarjeta-label">Vence:</span>
@@ -392,12 +363,10 @@ const EmpenosLista = () => {
             <table className="tabla-empenos">
               <thead>
                 <tr>
-                  <th>Imagen</th>
                   <th>Cliente</th>
                   <th>Objeto</th>
-                  <th>Material</th>
                   <th>Monto</th>
-                  <th>Interés (MXN)</th>
+                  <th>Interés</th>
                   <th>Vencimiento</th>
                   <th>Estado</th>
                   <th>Saldo</th>
@@ -408,18 +377,10 @@ const EmpenosLista = () => {
                 {empenosActuales.length > 0 ? (
                   empenosActuales.map((e) => (
                     <tr key={e.id}>
-                      <td>
-                        <AgregarImagenPrenda
-                          idPrenda={e.id_prenda}
-                          imagenActual={e.imagen}
-                          onImagenActualizada={(url) => actualizarImagenLocal(e.id, url)}
-                        />
-                      </td>
                       <td><strong>{e.cliente}</strong></td>
                       <td>{e.objeto}</td>
-                      <td>{e.material}</td>
                       <td>${e.monto}</td>
-                      <td>${e.interes?.toLocaleString()}</td>
+                      <td>{e.interes}%</td>
                       <td>{e.vencimiento}</td>
                       <td>
                         <span
@@ -431,14 +392,14 @@ const EmpenosLista = () => {
                         >
                           {e.estado === "activo" ? "Activo" : "Vencido"}
                         </span>
-                      </td>
+                       </td>
                       <td>
                         {e.saldo_pendiente > 0 ? (
                           <span className="saldo-pendiente">${e.saldo_pendiente.toLocaleString()}</span>
                         ) : (
                           <span className="saldo-pagado">Pagado</span>
                         )}
-                      </td>
+                       </td>
                       <td>
                         <div className="acciones-container">
                           {/* ============================================ */}
@@ -483,7 +444,7 @@ const EmpenosLista = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="10" className="sin-resultados">
+                    <td colSpan="8" className="sin-resultados">
                       No se encontraron empeños {filtroEstado !== "todos" ? filtroEstado : ""}
                     </td>
                   </tr>
@@ -496,14 +457,14 @@ const EmpenosLista = () => {
           {totalPaginas > 1 && (
             <div className="paginacion-wrapper">
               <div className="paginacion-container">
-                <button
+                <button 
                   className="btn-paginacion"
                   onClick={irPaginaAnterior}
                   disabled={paginaActual === 1}
                 >
                   ←
                 </button>
-
+                
                 <div className="paginacion-numeros">
                   {obtenerNumerosPagina().map(numero => (
                     <button
@@ -515,8 +476,8 @@ const EmpenosLista = () => {
                     </button>
                   ))}
                 </div>
-
-                <button
+                
+                <button 
                   className="btn-paginacion"
                   onClick={irPaginaSiguiente}
                   disabled={paginaActual === totalPaginas}
@@ -539,56 +500,43 @@ const EmpenosLista = () => {
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
             <button className="modal-cerrar" onClick={cerrarModal}>×</button>
-
+            
             <div className="modal-header">
               <h2>Detalle del Empeño</h2>
             </div>
 
             <div className="modal-body">
-              {empenoSeleccionado.imagen && (
-                <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                  <img
-                    src={empenoSeleccionado.imagen}
-                    alt={empenoSeleccionado.objeto}
-                    style={{ maxWidth: '160px', maxHeight: '160px', borderRadius: '8px', objectFit: 'cover' }}
-                  />
-                </div>
-              )}
               <div className="info-grid">
                 <div className="info-item">
                   <span className="info-label">👤 Cliente</span>
                   <span className="info-value">{empenoSeleccionado.cliente}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label"> Objeto</span>
+                  <span className="info-label">📦 Objeto</span>
                   <span className="info-value">{empenoSeleccionado.objeto}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label"> Material</span>
-                  <span className="info-value">{empenoSeleccionado.material}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label"> Monto</span>
+                  <span className="info-label">💰 Monto</span>
                   <span className="info-value">${empenoSeleccionado.monto}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label"> Interés</span>
-                  <span className="info-value">${empenoSeleccionado.interes?.toLocaleString()}</span>
+                  <span className="info-label">📊 Interés</span>
+                  <span className="info-value">{empenoSeleccionado.interes}%</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label"> Fecha de inicio</span>
+                  <span className="info-label">📅 Fecha de inicio</span>
                   <span className="info-value">{empenoSeleccionado.fecha_inicio}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label"> Vencimiento</span>
+                  <span className="info-label">⏰ Vencimiento</span>
                   <span className="info-value">{empenoSeleccionado.vencimiento}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label"> Saldo pendiente</span>
+                  <span className="info-label">💰 Saldo pendiente</span>
                   <span className="info-value saldo">${empenoSeleccionado.saldo_pendiente?.toLocaleString()}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label"> Total pagado</span>
+                  <span className="info-label">💵 Total pagado</span>
                   <span className="info-value">${empenoSeleccionado.total_pagado?.toLocaleString()}</span>
                 </div>
               </div>
@@ -662,12 +610,11 @@ const EmpenosLista = () => {
               >
                 Cancelar
               </button>
-              <button
-                className="btn-guardar-editar"
-                onClick={guardarCambios}
-                disabled={editando || !nombreCliente.trim()}
+              <button 
+                className="btn-confirmar-eliminar"
+                onClick={handleEliminar}
               >
-                {editando ? 'Guardando...' : 'Guardar cambios'}
+                Sí, eliminar
               </button>
             </div>
           </div>
