@@ -1519,3 +1519,22 @@
   animation: slideUp 0.3s ease;
   position: relative;
 }
+
+/* ===== EMPEÑOS POR VENCER ===== */
+.badge-por-vencer {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+  padding: 5px 13px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.texto-por-vencer {
+  font-size: 11px;
+  color: #b45309;
+  font-weight: 600;
+  margin-top: 2px;
+}

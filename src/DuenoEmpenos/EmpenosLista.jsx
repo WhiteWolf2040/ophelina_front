@@ -12,6 +12,49 @@ import api from '../config/api';
 import AgregarImagenPrenda from '../components/AgregarImagenPrenda'; // ajusta la ruta si tu carpeta es distinta
 import useListaCache from "../hooks/useListaCache";
 
+// ============================================
+// "POR VENCER": empeños activos que vencen en los próximos N días
+// ============================================
+const DIAS_POR_VENCER = 7;
+
+// Convierte "2026-11-09" (o "2026-11-09T00:00:00Z") en una fecha LOCAL.
+// new Date("2026-11-09") la interpreta como UTC y en México la muestra un día antes.
+const parseFechaLocal = (valor) => {
+  if (!valor) return null;
+  const [y, m, d] = String(valor).slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+};
+
+const formatearFecha = (valor) => {
+  const f = parseFechaLocal(valor);
+  return f ? f.toLocaleDateString('es-MX') : '';
+};
+
+const diasParaVencer = (valor) => {
+  const f = parseFechaLocal(valor);
+  if (!f) return null;
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  return Math.round((f - hoy) / 86400000);
+};
+
+const esPorVencer = (emp) => {
+  const dias = diasParaVencer(emp.fecha_vencimiento);
+  return (emp.estado || 'activo') === 'activo' && dias !== null && dias >= 0 && dias <= DIAS_POR_VENCER;
+};
+
+const textoVence = (dias) =>
+  dias === 0 ? 'Vence hoy' : dias === 1 ? 'Vence mañana' : `Vence en ${dias} días`;
+
+const BadgeEstado = ({ e }) => {
+  if (e.estado !== 'activo') return <span className="badge-vencido">Vencido</span>;
+  if (e.por_vencer) {
+    return <span className="badge-por-vencer" title={textoVence(e.dias_para_vencer)}>Por vencer</span>;
+  }
+  return <span className="badge-activo">Activo</span>;
+};
+
 // Fetcher FUERA del componente (referencia estable): trae y formatea los empeños
 const obtenerEmpenosFormateados = async () => {
   const response = await api.get('/empenos/todos');
@@ -28,9 +71,11 @@ const obtenerEmpenosFormateados = async () => {
     objeto: emp.articulo || 'Sin artículo',
     monto: emp.monto_prestado ? emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00',
     interes: emp.intereses || 0,
-    fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
-    vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
+    fecha_inicio: formatearFecha(emp.fecha_empeno),
+    vencimiento: formatearFecha(emp.fecha_vencimiento),
     estado: emp.estado || 'activo',
+    por_vencer: esPorVencer(emp),
+    dias_para_vencer: diasParaVencer(emp.fecha_vencimiento),
     saldo_pendiente: emp.saldo_total_pendiente || 0,
     saldo_cuota: emp.saldo_pendiente_cuota || 0,
     total_pagado: emp.total_pagado || 0,
@@ -80,6 +125,7 @@ const EmpenosLista = () => {
   const empenosFiltrados = empenos.filter((e) => {
     if (filtroEstado === "todos") return true;
     if (filtroEstado === "activos") return e.estado === "activo";
+    if (filtroEstado === "por_vencer") return e.por_vencer;
     if (filtroEstado === "vencidos") return e.estado === "vencido";
     return true;
   });
@@ -254,6 +300,15 @@ const EmpenosLista = () => {
               Activos ({empenos.filter(e => e.estado === "activo").length})
             </button>
             <button
+              className={`filtro-btn ${filtroEstado === "por_vencer" ? "activo" : ""}`}
+              onClick={() => {
+                setFiltroEstado("por_vencer");
+                setPaginaActual(1);
+              }}
+            >
+              Por vencer ({empenos.filter(e => e.por_vencer).length})
+            </button>
+            <button
               className={`filtro-btn ${filtroEstado === "vencidos" ? "activo" : ""}`}
               onClick={() => {
                 setFiltroEstado("vencidos");
@@ -313,19 +368,14 @@ const EmpenosLista = () => {
                     </div>
                     <div className="tarjeta-fila">
                       <span className="tarjeta-label">Vence:</span>
-                      <span>{e.vencimiento}</span>
+                      <span>
+                        {e.vencimiento}
+                        {e.por_vencer && <div className="texto-por-vencer">{textoVence(e.dias_para_vencer)}</div>}
+                      </span>
                     </div>
                     <div className="tarjeta-fila">
                       <span className="tarjeta-label">Estado:</span>
-                      <span
-                        className={
-                          e.estado === "activo"
-                            ? "badge-activo"
-                            : "badge-vencido"
-                        }
-                      >
-                        {e.estado === "activo" ? "Activo" : "Vencido"}
-                      </span>
+                      <BadgeEstado e={e} />
                     </div>
                     {e.saldo_pendiente > 0 && (
                       <div className="tarjeta-fila">
@@ -376,17 +426,12 @@ const EmpenosLista = () => {
                       <td>{e.material}</td>
                       <td>${e.monto}</td>
                       <td>${e.interes?.toLocaleString()}</td>
-                      <td>{e.vencimiento}</td>
                       <td>
-                        <span
-                          className={
-                            e.estado === "activo"
-                              ? "badge-activo"
-                              : "badge-vencido"
-                          }
-                        >
-                          {e.estado === "activo" ? "Activo" : "Vencido"}
-                        </span>
+                        {e.vencimiento}
+                        {e.por_vencer && <div className="texto-por-vencer">{textoVence(e.dias_para_vencer)}</div>}
+                      </td>
+                      <td>
+                        <BadgeEstado e={e} />
                       </td>
                       <td>
                         {e.saldo_pendiente > 0 ? (
