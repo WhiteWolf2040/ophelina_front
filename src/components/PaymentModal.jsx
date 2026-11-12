@@ -2,12 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../config/api';  // ← IMPORTAR api
 import './PaymentModal.css';
+import { useUser } from '../contexts/UserContext';
 
 const PaymentModal = ({ isOpen, onClose, sessionId, planName, planId, onSuccess }) => {
     const [verifying, setVerifying] = useState(false);
     const [verified, setVerified] = useState(false);
     const [error, setError] = useState(null);
     const yaVerificado = useRef(false);
+    const { refreshUserData } = useUser();
 
     useEffect(() => {
     if (isOpen && sessionId && !verified && !verifying && !yaVerificado.current) {
@@ -19,42 +21,43 @@ const PaymentModal = ({ isOpen, onClose, sessionId, planName, planId, onSuccess 
 
     const verifyPayment = async () => {
         try {
-            setVerifying(true);
-            setError(null);
-        console.log('🚀🚀🚀 verifyPayment INICIADO');
+        setVerifying(true);
+        setError(null);
+
+        console.log('🚀 verifyPayment INICIADO');
         console.log('📌 sessionId:', sessionId);
         console.log('📌 planName:', planName);
-        console.log('📌 planId:', planId);
         console.log('🔑 Token:', localStorage.getItem('token') ? 'SÍ' : 'NO');
-            
-            // ✅ USAR API DIRECTAMENTE (el interceptor agrega el token)
-            const response = await api.post('/stripe/verify-payment', {
-                session_id: sessionId
-            });
-            
-            console.log('📊 Respuesta del backend:', response.data);
-            
-            if (response.data.success) {
-                setVerified(true);
-                console.log('✅ Pago verificado correctamente');
-                
-                // Guardar información del plan
-                localStorage.setItem('plan_id', response.data.data.plan_id);
-                localStorage.setItem('plan_nombre', response.data.data.plan_nombre);
-                
-                // Notificar éxito
-                if (onSuccess) {
-                    onSuccess(response.data.data);
-                }
-                
-                // Cerrar modal automáticamente después de 3 segundos
-                setTimeout(() => {
-                    onClose();
-                }, 3000);
-            } else {
-                setError(response.data.message || 'Error al verificar el pago');
+
+        const response = await api.post('/stripe/verify-payment', {
+            session_id: sessionId
+        });
+
+        console.log('📊 Respuesta del backend:', response.data);
+
+        if (response.data.success) {
+            console.log('✅ Pago verificado correctamente');
+
+            localStorage.setItem('plan_id', response.data.data.plan_id);
+            localStorage.setItem('plan_nombre', response.data.data.plan_nombre);
+
+            // AHORA sí: el plan ya cambió en la BD, se piden los módulos nuevos.
+            // Si falla, no debe tumbar la confirmación del pago.
+            try {
+                await refreshUserData();
+            } catch (e) {
+                console.warn('No se pudo refrescar el usuario', e);
             }
-        } catch (error) {
+
+            setVerified(true);
+
+            if (onSuccess) onSuccess(response.data.data);
+
+            setTimeout(() => onClose(), 3000);
+        } else {
+            setError(response.data.message || 'Error al verificar el pago');
+        }
+    } catch (error) {
             console.error('❌ Error al verificar pago:', error);
             console.error('❌ Detalles del error:', error.response?.data);
             
@@ -68,8 +71,8 @@ const PaymentModal = ({ isOpen, onClose, sessionId, planName, planId, onSuccess 
                 setError(error.response?.data?.message || 'Error de conexión al verificar el pago');
             }
         } finally {
-            setVerifying(false);
-        }
+        setVerifying(false);
+    }
     };
 
     // Si no está abierto, no renderizar nada

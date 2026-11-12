@@ -1,5 +1,5 @@
 // contexts/UserContext.jsx
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import api from '../config/api';
 import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
@@ -11,8 +11,7 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SecurityIcon from '@mui/icons-material/Security';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag'; // ✅ NUEVO: icono para Apartados
-
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 const UserContext = createContext();
 
 // Configuración de módulos por plan
@@ -50,7 +49,24 @@ const modulesByPlan = {
     ]
   }
 };
-//  CONVERTIR MÓDULOS DE OBJETO A ARRAY
+
+// Mapa de módulo -> item de menú (fuera del componente para no recrearlo en cada render)
+const moduleMap = {
+  'dashboard': { path: '/home', icon: <HomeIcon />, text: 'Dashboard' },
+  'home': { path: '/home', icon: <HomeIcon />, text: 'Home' },
+  'clientes': { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
+  'pagos': { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
+  'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
+  'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
+  'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+  'apartados': { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
+  'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
+  'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
+  'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
+  'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
+};
+
+// CONVERTIR MÓDULOS DE OBJETO A ARRAY
 const convertModulosToArray = (modulos) => {
   if (!modulos) return [];
   if (Array.isArray(modulos)) return modulos;
@@ -60,60 +76,48 @@ const convertModulosToArray = (modulos) => {
   return [];
 };
 
+// CONVERTIR MÓDULOS A MENÚS
+const convertModulesToMenus = (modulosArray, planId) => {
+  if (!modulosArray || modulosArray.length === 0) {
+    const planMenus = modulesByPlan[planId] || modulesByPlan[3];
+    return planMenus.menus;
+  }
+
+const menus = modulosArray
+  .map(modulo => {
+    const modKey = String(modulo).toLowerCase().trim();
+    const item = moduleMap[modKey];
+    if (!item) console.warn('⚠️ Módulo sin menú definido:', modKey);
+    return item;
+  })
+  .filter(Boolean);
+
+  if (menus.length === 0) {
+    const planMenus = modulesByPlan[planId] || modulesByPlan[3];
+    return planMenus.menus;
+  }
+
+  return menus;
+};
+
 export const UserProvider = ({ children }) => {
   const [userData, setUserData] = useState(null);
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // 🔧 FUNCIÓN PARA CONVERTIR MÓDULOS A MENÚS
-  const convertModulesToMenus = (modulosArray, planId) => {
-    if (!modulosArray || modulosArray.length === 0) {
-      const planMenus = modulesByPlan[planId] || modulesByPlan[3];
-      return planMenus.menus;
-    }
-
-    const moduleMap = {
-      'dashboard': { path: '/home', icon: <HomeIcon />, text: 'Dashboard' },
-      'home': { path: '/home', icon: <HomeIcon />, text: 'Home' },
-      'clientes': { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
-      'pagos': { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
-      'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
-      'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
-      'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
-      //'apartados': { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' }, // ✅ NUEVO
-      'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
-      'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
-      'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
-      'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
-    };
-
-    const menus = modulosArray
-      .map(modulo => {
-        const modKey = String(modulo).toLowerCase().trim();
-        return moduleMap[modKey];
-      })
-      .filter(menu => menu !== undefined);
-
-    if (menus.length === 0) {
-      const planMenus = modulesByPlan[planId] || modulesByPlan[3];
-      return planMenus.menus;
-    }
-
-    return menus;
-  };
-
-  //  CARGAR DATOS DEL USUARIO
-  const loadUserData = async (forceRefresh = false) => {
+  // CARGAR DATOS DEL USUARIO
+  // forceRefresh: ignora localStorage y pide todo al backend
+  // silent: no activa `loading` (evita que el sidebar parpadee con "Cargando...")
+  const loadUserData = useCallback(async (forceRefresh = false, silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         setUserData(null);
         setModules([]);
         setIsAuthenticated(false);
-        setLoading(false);
         return;
       }
 
@@ -121,27 +125,24 @@ export const UserProvider = ({ children }) => {
       if (!forceRefresh) {
         const storedUser = localStorage.getItem('user');
         const storedModules = localStorage.getItem('modulos');
-        
+
         if (storedUser) {
           try {
             const parsedUser = JSON.parse(storedUser);
-            console.log(' Cargando usuario desde localStorage:', parsedUser.nombre || parsedUser.correo);
-            
+            console.log('Cargando usuario desde localStorage:', parsedUser.nombre || parsedUser.correo);
+
             let modulosArray = [];
             if (storedModules) {
-              const parsedModules = JSON.parse(storedModules);
-              modulosArray = convertModulosToArray(parsedModules);
+              modulosArray = convertModulosToArray(JSON.parse(storedModules));
             } else {
               const planId = parsedUser.plan_id || 3;
               const planMenus = modulesByPlan[planId] || modulesByPlan[3];
               modulosArray = planMenus.menus.map(m => m.modulo);
             }
-            
-            const menuModules = convertModulesToMenus(modulosArray, parsedUser.plan_id || 3);
-            setModules(menuModules);
+
+            setModules(convertModulesToMenus(modulosArray, parsedUser.plan_id || 3));
             setUserData(parsedUser);
             setIsAuthenticated(true);
-            setLoading(false);
             return;
           } catch (error) {
             console.error('Error parsing user data:', error);
@@ -150,85 +151,83 @@ export const UserProvider = ({ children }) => {
       }
 
       // Cargar desde API
-      console.log(' Cargando datos del usuario desde API...');
+      console.log('Cargando datos del usuario desde API...');
       const response = await api.get('/user');
-      
+
       if (response.data.success) {
         const usuario = response.data.data.usuario || response.data.data;
         const planId = usuario.plan_id || 3;
-        
+
         console.log('Plan ID:', planId);
-        console.log(' Usuario:', usuario.nombre || usuario.correo);
-        
-        //  CONVERTIR MÓDULOS A ARRAY
+
         let modulosArray = convertModulosToArray(usuario.modulos);
-        console.log(' Módulos convertidos:', modulosArray);
-        
+        console.log('Módulos desde API:', modulosArray);
+
         if (modulosArray.length === 0) {
           const planMenus = modulesByPlan[planId] || modulesByPlan[3];
           modulosArray = planMenus.menus.map(m => m.modulo);
         }
-        
-        // Guardar en localStorage
+
+        // Guardar en localStorage (sobrescribe lo viejo)
         localStorage.setItem('user', JSON.stringify(usuario));
         localStorage.setItem('modulos', JSON.stringify(modulosArray));
-        
+
         if (usuario.permisos) {
-          const permisosArray = convertModulosToArray(usuario.permisos);
-          localStorage.setItem('permisos', JSON.stringify(permisosArray));
+          localStorage.setItem('permisos', JSON.stringify(convertModulosToArray(usuario.permisos)));
         }
-        
-        //  GENERAR MENÚS
+
         const menuModules = convertModulesToMenus(modulosArray, planId);
-        console.log(' Menús generados:', menuModules);
-        
+        console.log('Menús generados:', menuModules.map(m => m.text));
+
         setModules(menuModules);
         setUserData(usuario);
         setIsAuthenticated(true);
-        
-        console.log(' Módulos cargados:', menuModules.length);
-      } else {
+      } else if (!forceRefresh) {
         setUserData(null);
         setModules([]);
         setIsAuthenticated(false);
       }
+      // Si fue un refresh forzado y la respuesta no fue success, se conserva lo que ya había
     } catch (error) {
       console.error('❌ Error cargando datos del usuario:', error);
-      setUserData(null);
-      setModules([]);
-      setIsAuthenticated(false);
+      // En un refresh forzado NO se borra la sesión: se conserva el estado actual
+      if (!forceRefresh) {
+        setUserData(null);
+        setModules([]);
+        setIsAuthenticated(false);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  };
+  }, []);
 
-  //  REFRESCAR DATOS
-  const refreshUserData = async () => {
-    console.log(' Refrescando datos del usuario...');
-    await loadUserData(true);
-  };
+  // REFRESCAR DATOS (usar después de pagar / cambiar de plan)
+  const refreshUserData = useCallback(async () => {
+    console.log('Refrescando datos del usuario...');
+    await loadUserData(true, true);
+  }, [loadUserData]);
 
-  //  LIMPIAR DATOS
-  const clearUserData = () => {
-    console.log(' Limpiando datos del usuario...');
+  // LIMPIAR DATOS
+  const clearUserData = useCallback(() => {
+    console.log('Limpiando datos del usuario...');
     setUserData(null);
     setModules([]);
     setIsAuthenticated(false);
     setLoading(false);
-    
+
     localStorage.removeItem('user');
     localStorage.removeItem('permisos');
     localStorage.removeItem('modulos');
     localStorage.removeItem('empresa_id');
     localStorage.removeItem('token');
-  };
+  }, []);
 
   // CARGAR DATOS AL INICIAR
   useEffect(() => {
     loadUserData();
-  }, []);
+  }, [loadUserData]);
 
-  // ESCUCHAR CAMBIOS EN EL TOKEN
+  // ESCUCHAR CAMBIOS EN EL TOKEN (otras pestañas)
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'token' && !e.newValue) {
@@ -238,7 +237,15 @@ export const UserProvider = ({ children }) => {
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [clearUserData]);
+
+  // Permite refrescar desde cualquier lugar sin usar el hook:
+  // window.dispatchEvent(new Event('user:refresh'))
+  useEffect(() => {
+    const handler = () => refreshUserData();
+    window.addEventListener('user:refresh', handler);
+    return () => window.removeEventListener('user:refresh', handler);
+  }, [refreshUserData]);
 
   const value = {
     userData,
