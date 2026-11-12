@@ -199,7 +199,7 @@ const Topbar = () => {
               {minutosDesde === null
                 ? ' Cargando...'
                 : minutosDesde < 1
-                ? ' Dashboard actualizado ahora mismo'
+                ? ' Datos actualizados: ahora mismo'
                 : ` Actualizado hace ${minutosDesde} min`}
             </span>
           </span>

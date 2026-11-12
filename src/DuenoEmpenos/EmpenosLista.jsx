@@ -287,13 +287,7 @@ const EmpenosLista = () => {
       <div className="content">
         {/* HEADER */}
         <div className="header-container">
-          <div>
-            <h1>
-              <DiamondIcon className="title-icon" />
-              Listado de empeños
-            </h1>
-            <p className="header-sub">Gestiona y administra tus empeños</p>
-          </div>
+          
 
           {/* BOTÓN NUEVO EMPEÑO - SOLO CON PERMISO crear_empenos */}
           {puedeCrearEmpenos && (

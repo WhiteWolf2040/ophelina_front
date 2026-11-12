@@ -259,14 +259,8 @@ const Reportes = () => {
         {/* HEADER */}
         <div className="">
           <h1>
-            <AssessmentIcon className="title-icon" />
-            Reportes
-            <p className="header-sub">
-              {filtros.inicio} → {filtros.fin}
-            </p>
-          </h1>
-
-          <div style={{ display: "flex", gap: 8 }}>
+            
+            <div style={{ display: "flex", gap: 8 }}>
             <button className="btn-exportar" onClick={refetch} title="Actualizar datos">
               <RefreshIcon /> Actualizar
             </button>
@@ -281,6 +275,9 @@ const Reportes = () => {
               </>
             )}
           </div>
+          </h1>
+
+          
         </div>
 
         {/* ERROR */}

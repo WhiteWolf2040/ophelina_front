@@ -1189,19 +1189,34 @@ const Configuraciones = () => {
               <CreditCardIcon className="section-icon" />
               Plan y Suscripción
             </h3>
-            <button
-              className="btn-editar-small"
-              type="button"
-              onClick={refrescarPlan}
-              disabled={cargandoFact || cargandoSusc}
-              title="Actualizar datos del plan"
-            >
-              <RefreshIcon fontSize="small" />
-              {minutosDesdeCarga === null
-                ? "Actualizar"
-                : minutosDesdeCarga < 1
-                ? "Actualizado ahora"
-                : `Hace ${minutosDesdeCarga} min`}
+
+            
+          </div>
+          
+          <div className="plan-actual-card">
+            <div className="plan-badge">PREMIUM</div>
+            <h4>Plan Premium (Empresarial)</h4>
+            <p className="plan-precio">$1,499 <span>/ mes</span></p>
+            <p className="plan-fecha">Próximo cobro: 15 de mayo de 2026</p>
+            <p className="plan-estado"><strong>Estado:</strong> Activo · 32 días restantes</p>
+          </div>
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label"><CreditCardIcon fontSize="small" /> Método de pago:</span>
+              <span className="info-value">Visa •••• 4242</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label"><ReceiptLongIcon fontSize="small" /> Última factura:</span>
+              <span className="info-value">F-2026-0089 · $1,499.00</span>
+            </div>
+          </div>
+          <div className="form-buttons">
+            <button className="btn-gold" type="button">
+              Cambiar de plan
+            </button>
+            <button className="btn-cancel" type="button">
+              Historial de pagos
+
             </button>
           </div>
 

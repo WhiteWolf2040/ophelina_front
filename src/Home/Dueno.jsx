@@ -1,4 +1,4 @@
-// src/Home/Dueno.jsx - Dashboard con datos reales (BD) + secciones Premium
+// src/Home/Dueno.jsx - VERSIÓN FINAL CON CORRECCIONES
 import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
 import "./dueno.css";
@@ -27,7 +27,7 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import AreaChartIcon from '@mui/icons-material/AreaChart';
-import RefreshIcon from '@mui/icons-material/Refresh';
+
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import FlagIcon from '@mui/icons-material/Flag';
@@ -37,14 +37,172 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import CategoryIcon from '@mui/icons-material/Category';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import ErrorIcon from '@mui/icons-material/Error';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+
+// ============================================
+// PRICING COMPARISON
+// ============================================
+const PC_PLANS = [
+  { id: "gratis", name: "Gratis", price: "$0", note: "para empezar sin riesgo" },
+  { id: "profesional", name: "Profesional", price: "$999", note: "al mes" },
+  { id: "premium", name: "Premium", price: "$1,499", note: "al mes", badge: "Más popular" },
+];
+
+const PC_FEATURES = [
+  { name: "Sucursales", desc: "Cuántas sucursales se administran", gratis: "1", profesional: "1", premium: "Multi-sucursal" },
+  { name: "Clientes nuevos al mes", desc: "Altas de clientes permitidas", gratis: "4", profesional: "Sin límite indicado", premium: "Sin límite indicado" },
+  { name: "Empeños activos", desc: "Empeños abiertos al mismo tiempo", gratis: "Máx. 40", profesional: "Sin límite indicado", premium: "Sin límite indicado" },
+  { name: "Control de fechas límite de pago", desc: "Vencimientos de cada empeño", gratis: true, profesional: true, premium: true },
+  { name: "Control de inventario", desc: "Registro y estado de las prendas", gratis: false, profesional: true, premium: true },
+  { name: "Cálculo automático de intereses", desc: "El sistema calcula lo que debe cada cliente", gratis: false, profesional: true, premium: true },
+  { name: "Recordatorios automáticos", desc: "Avisos antes del vencimiento, para reducir la morosidad", gratis: false, profesional: true, premium: true },
+  { name: "Reportes básicos", desc: "Ingresos por mes, clientes frecuentes y estado de empeños", gratis: false, profesional: true, premium: true },
+  { name: "Reportes avanzados", desc: "Análisis más detallado del negocio", gratis: false, profesional: false, premium: true },
+  { name: "Tienda en línea", desc: "Venta de prendas no recuperadas", gratis: false, profesional: false, premium: true },
+  { name: "Roles y permisos", desc: "Accesos distintos para dueño, administrador y empleado", gratis: false, profesional: false, premium: true },
+  { name: "Configuración de la empresa", desc: "Datos y ajustes de la casa de empeño", gratis: false, profesional: false, premium: true },
+  { name: "Prueba de 14 días", desc: "Probar el plan antes de pagarlo", gratis: false, profesional: false, premium: true },
+];
+
+const PCCell = ({ value }) => {
+  if (value === true) {
+    return (
+      <span className="pc-yes" role="img" aria-label="Incluido">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+          <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+    );
+  }
+  if (value === false) {
+    return (
+      <span className="pc-no" role="img" aria-label="No incluido">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+          <path d="M5 10h10" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+        </svg>
+      </span>
+    );
+  }
+  return <span className="pc-text">{value}</span>;
+};
+
+const PricingComparison = ({ onSelectPlan, readOnly = false, currentPlanId = null }) => {
+  const [active, setActive] = useState(currentPlanId || "premium");
+
+  return (
+    <section className="pc" data-active={active} aria-labelledby="pc-title">
+      {!readOnly && (
+        <>
+          <h2 id="pc-title" className="pc-title">Compara los planes de Ophelina</h2>
+          <p className="pc-sub">
+            Cada plan incluye todo lo del anterior. Empieza gratis y sube cuando tu negocio lo pida.
+          </p>
+        </>
+      )}
+
+      <div className="pc-tabs" role="tablist" aria-label="Elige un plan">
+        {PC_PLANS.map((p) => {
+          const esActual = currentPlanId === p.id;
+          return (
+            <button
+              key={p.id}
+              role="tab"
+              aria-selected={active === p.id}
+              className={"pc-tab" + (active === p.id ? " is-active" : "") + (esActual ? " is-current" : "")}
+              onClick={() => setActive(p.id)}
+            >
+              {p.name}
+              {esActual && <span className="pc-tab-badge">Actual</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="pc-scroll">
+        <table className="pc-table">
+          <thead>
+            <tr>
+              <th className="pc-feature-col" scope="col"><span className="pc-sr">Funcionalidad</span></th>
+              {PC_PLANS.map((p) => {
+                const esActual = currentPlanId === p.id;
+                return (
+                  <th
+                    key={p.id}
+                    scope="col"
+                    data-plan={p.id}
+                    className={"pc-plan" + (p.badge ? " is-featured" : "") + (esActual ? " is-current" : "")}
+                  >
+                    {!readOnly && p.badge && <span className="pc-badge">{p.badge}</span>}
+                    <span className="pc-plan-name">{p.name}</span>
+                    <span className="pc-price">{p.price}</span>
+                    <span className="pc-note">{p.note}</span>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {PC_FEATURES.map((f) => (
+              <tr key={f.name}>
+                <th scope="row" className="pc-feature-col">
+                  <span className="pc-feature">{f.name}</span>
+                  <span className="pc-desc">{f.desc}</span>
+                </th>
+                {PC_PLANS.map((p) => {
+                  const esActual = currentPlanId === p.id;
+                  return (
+                    <td key={p.id} data-plan={p.id} className={(p.badge ? "is-featured" : "") + (esActual ? " is-current" : "")}>
+                      <PCCell value={f[p.id]} />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+
+          {!readOnly && (
+            <tfoot>
+              <tr>
+                <td className="pc-feature-col" />
+                {PC_PLANS.map((p) => (
+                  <td key={p.id} data-plan={p.id} className={p.badge ? "is-featured" : ""}>
+                    <button
+                      className={"pc-cta" + (p.badge ? " is-primary" : "")}
+                      onClick={() => onSelectPlan && onSelectPlan(p.id)}
+                    >
+                      {p.id === "gratis" ? "Empezar gratis" : p.id === "premium" ? "Probar 14 días" : "Elegir plan"}
+                    </button>
+                  </td>
+                ))}
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+    </section>
+  );
+};
+
+// ============================================
+// Mapeo plan nombre/clave → id PricingComparison
+// ============================================
+const CLAVE_A_PLAN_ID = {
+  gratis: "gratis",
+  free: "gratis",
+  basico: "gratis",
+  profesional: "profesional",
+  professional: "profesional",
+  pro: "profesional",
+  premium: "premium",
+  empresarial: "premium",
+  empresa: "premium",
+};
 
 const PLAN_PREMIUM = 3;
 
 const Dueno = () => {
   // ============================================================
   // TODOS LOS HOOKS VAN AQUÍ ARRIBA, ANTES DE CUALQUIER return.
-  // (El error "Rendered fewer hooks than expected" venía de un
-  //  useState declarado después de los return de loading/error.)
   // ============================================================
   const { data, cargando, error, cargar, refrescar, edadCache } = useDashboard();
   const { hasPermission, hasAnyPermission } = usePermissions();
@@ -69,6 +227,10 @@ const Dueno = () => {
   const [paymentSessionId, setPaymentSessionId] = useState(null);
   const [paymentPlanName, setPaymentPlanName] = useState('');
   const [paymentPlanId, setPaymentPlanId] = useState(null);
+
+  // Suscripción + modal
+  const [showSuscripcionModal, setShowSuscripcionModal] = useState(false);
+  const [estadoSuscripcion, setEstadoSuscripcion] = useState(null);
 
   // Modales y listados
   const [showActivos, setShowActivos] = useState(false);
@@ -120,15 +282,62 @@ const Dueno = () => {
   const verificarSuscripcion = async () => {
     const empresaId = localStorage.getItem('empresa_id');
     if (!empresaId) return;
+
     try {
       const response = await stripeService.checkSubscription(empresaId);
-      if (response.fecha_fin_plan === null && response.plan_activo === 1) return;
-      if (response.activo) return;
-      alert('Tu suscripción ha vencido. Por favor, renueva.');
-      window.location.href = '/planes';
+
+      const dias = response.dias_restantes ?? 0;
+      const activo = response.activo === true || response.plan_activo === 1;
+      const vencido = !activo;
+      const porVencer = activo && dias > 0 && dias <= 7;
+
+      const planClave = CLAVE_A_PLAN_ID[
+        String(response.plan_nombre || "").toLowerCase()
+      ] || "gratis";
+
+      const estado = {
+        activo,
+        vencido,
+        porVencer,
+        diasRestantes: dias,
+        planId: response.plan_id,
+        planClave,
+        planNombre: response.plan_nombre || "Sin plan",
+        stripeSubscriptionId: response.stripe_subscription_id || null,
+        fechaFin: response.fecha_fin_plan || null,
+      };
+
+      setEstadoSuscripcion(estado);
+
+      // Solo mostrar si NO se ha mostrado en esta sesión
+      const claveAviso = `aviso_suscripcion_visto_${empresaId}`;
+      const yaVisto = sessionStorage.getItem(claveAviso);
+
+      if ((vencido || porVencer) && !yaVisto) {
+        setShowSuscripcionModal(true);
+        sessionStorage.setItem(claveAviso, '1');
+      }
     } catch (err) {
       console.error('Error al verificar suscripción:', err);
     }
+  };
+
+  const abrirPortalOGestion = async () => {
+    if (estadoSuscripcion?.stripeSubscriptionId) {
+      try {
+        const { url } = await stripeService.abrirPortal(window.location.href);
+        window.location.href = url;
+        return;
+      } catch (e) {
+        console.error('Error al abrir portal:', e);
+      }
+    }
+    // Si no hay suscripción en Stripe → ir a configuración
+    window.location.href = '/configuracion';
+  };
+
+  const cerrarSuscripcionModal = () => {
+    setShowSuscripcionModal(false);
   };
 
   const cargarRolUsuario = async () => {
@@ -369,19 +578,13 @@ const Dueno = () => {
       type: 'area', stacked: true,
       toolbar: {
         show: true,
-        tools: {
-          download: true, selection: false, zoom: false,
-          zoomin: false, zoomout: false, pan: false, reset: false
-        }
+        tools: { download: true, selection: false, zoom: false, zoomin: false, zoomout: false, pan: false, reset: false }
       },
       zoom: { enabled: false }
     },
     dataLabels: { enabled: false },
     stroke: { curve: 'smooth', width: 2 },
-    fill: {
-      type: 'gradient',
-      gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3, stops: [0, 90, 100] }
-    },
+    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3, stops: [0, 90, 100] } },
     xaxis: {
       categories: meses,
       title: { text: 'Mes', style: { fontSize: '11px', fontWeight: 500 } },
@@ -394,11 +597,7 @@ const Dueno = () => {
     },
     colors: ["#1e3a8a", "#10b981", "#f59e0b"],
     tooltip: {
-      y: {
-        formatter: (val) => new Intl.NumberFormat('es-MX', {
-          style: 'currency', currency: 'MXN', minimumFractionDigits: 0
-        }).format(val)
-      },
+      y: { formatter: (val) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 }).format(val) },
       shared: true, intersect: false
     },
     legend: {
@@ -417,10 +616,7 @@ const Dueno = () => {
   const trendChartOptions = {
     chart: { type: "line", toolbar: { show: false } },
     xaxis: { categories: meses, title: { text: 'Mes' } },
-    yaxis: {
-      title: { text: '$ (pesos)' },
-      labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k` }
-    },
+    yaxis: { title: { text: '$ (pesos)' }, labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k` } },
     colors: ["#10b981"],
     stroke: { width: 3, curve: 'smooth' },
     tooltip: { y: { formatter: (val) => `$${Number(val).toLocaleString('es-MX')}` } }
@@ -460,15 +656,8 @@ const Dueno = () => {
       bar: { horizontal: true, distributed: true, borderRadius: 6, barHeight: '70%' }
     },
     colors: cohortes.map(c => c.color),
-    dataLabels: {
-      enabled: true,
-      formatter: (val) => `${val} empeños`,
-      style: { fontSize: '12px', fontWeight: 600, colors: ['#fff'] }
-    },
-    xaxis: {
-      categories: cohortes.map(c => c.rango),
-      labels: { style: { fontSize: '12px' } }
-    },
+    dataLabels: { enabled: true, formatter: (val) => `${val} empeños`, style: { fontSize: '12px', fontWeight: 600, colors: ['#fff'] } },
+    xaxis: { categories: cohortes.map(c => c.rango), labels: { style: { fontSize: '12px' } } },
     legend: { show: false },
     tooltip: {
       y: {
@@ -539,8 +728,6 @@ const Dueno = () => {
               Hola, {datosPerfil.nombre.split(' ')[0] || 'Usuario'}
               <p className="header-sub">Conoce el estado de tu casa de empeño</p>
             </h1>
-
-           
           </div>
         </div>
 
@@ -750,7 +937,6 @@ const Dueno = () => {
               <h2><TrendingUpIcon /> Tendencia de Ingresos</h2>
               <Chart options={trendChartOptions} series={trendChartSeries} type="line" height={smallChartHeight} />
             </div>
-
             <div className="grafica-nueva-card">
               <h2><PieChartIcon /> Distribución por Categoría</h2>
               {distribucionSeries.length > 0 ? (
@@ -794,11 +980,7 @@ const Dueno = () => {
 
         {/* ANTIGÜEDAD DE LA CARTERA */}
         <div className="nueva-seccion">
-          <h2>
-            <TimelineIcon />
-            Antigüedad de la Cartera
-            <span className="seccion-badge">Riesgo por tiempo</span>
-          </h2>
+          <h2><TimelineIcon /> Antigüedad de la Cartera<span className="seccion-badge">Riesgo por tiempo</span></h2>
           <p className="chart-subtitle">
             Empeños vigentes y vencidos según hace cuánto tiempo se otorgaron. Los de mayor antigüedad son los más riesgosos.
           </p>
@@ -851,10 +1033,7 @@ const Dueno = () => {
             <div className="tabla-container">
               <table className="tabla-moderna">
                 <thead>
-                  <tr>
-                    <th>Cliente</th><th>Empeños</th><th>Monto Prestado</th>
-                    <th>Ganancia Generada</th><th>% Ganancia</th><th>Último Empeño</th>
-                  </tr>
+                  <tr><th>Cliente</th><th>Empeños</th><th>Monto Prestado</th><th>Ganancia Generada</th><th>% Ganancia</th><th>Último Empeño</th></tr>
                 </thead>
                 <tbody>
                   {dashboardData.top_clientes?.map(cliente => (
@@ -883,10 +1062,7 @@ const Dueno = () => {
             <div className="tabla-container">
               <table className="tabla-moderna">
                 <thead>
-                  <tr>
-                    <th>Cliente</th><th>Total Prestado</th><th>Deuda Vencida</th>
-                    <th>Pérdida Proyectada</th><th>% Pérdida</th><th>Días en Mora</th><th>Último Pago</th>
-                  </tr>
+                  <tr><th>Cliente</th><th>Total Prestado</th><th>Deuda Vencida</th><th>Pérdida Proyectada</th><th>% Pérdida</th><th>Días en Mora</th><th>Último Pago</th></tr>
                 </thead>
                 <tbody>
                   {morosidad.map((item, index) => {
@@ -923,11 +1099,7 @@ const Dueno = () => {
             <div className="tabla-container">
               <table className="tabla-moderna">
                 <thead>
-                  <tr>
-                    <th>Cliente</th><th>Artículo</th><th>Folio</th><th>N° Pago</th>
-                    <th>Fecha Programada</th><th>Monto Total</th><th>Pagado</th>
-                    <th>Saldo Restante</th><th>Estado</th>
-                  </tr>
+                  <tr><th>Cliente</th><th>Artículo</th><th>Folio</th><th>N° Pago</th><th>Fecha Programada</th><th>Monto Total</th><th>Pagado</th><th>Saldo Restante</th><th>Estado</th></tr>
                 </thead>
                 <tbody>
                   {amortizacionesPendientes.length === 0 ? (
@@ -961,21 +1133,11 @@ const Dueno = () => {
 
         {/* ANÁLISIS POR CATEGORÍA */}
         <div className="nueva-seccion">
-          <h2>
-            <CategoryIcon />
-            Análisis por Categoría
-            <span className="seccion-badge">Rentabilidad y riesgo</span>
-          </h2>
+          <h2><CategoryIcon /> Análisis por Categoría<span className="seccion-badge">Rentabilidad y riesgo</span></h2>
           <div className="tabla-container">
             <table className="tabla-moderna">
               <thead>
-                <tr>
-                  <th>Categoría</th>
-                  <th>Cantidad</th>
-                  <th>Ganancia Promedio</th>
-                  <th>Tasa de Mora</th>
-                  <th>Rentabilidad</th>
-                </tr>
+                <tr><th>Categoría</th><th>Cantidad</th><th>Ganancia Promedio</th><th>Tasa de Mora</th><th>Rentabilidad</th></tr>
               </thead>
               <tbody>
                 {analisisCategorias.length === 0 ? (
@@ -1061,6 +1223,44 @@ const Dueno = () => {
         </div>
       </div>
 
+      {/* MODAL DE SUSCRIPCIÓN / PLANES */}
+      {showSuscripcionModal && estadoSuscripcion && (
+        <div className="modal-suscripcion-overlay" onClick={cerrarSuscripcionModal}>
+          <div className="modal-suscripcion" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={cerrarSuscripcionModal}>
+              <CloseIcon />
+            </button>
+
+            <div className="modal-header">
+              <h2>
+                <CreditCardIcon style={{ color: "#f0d89d" }} /> Mejorar mi plan
+              </h2>
+              <span className="cliente-id">
+                Plan actual: <strong>{estadoSuscripcion.planNombre}</strong>
+                {estadoSuscripcion.diasRestantes > 0 &&
+                  ` · ${estadoSuscripcion.diasRestantes} días restantes`}
+              </span>
+            </div>
+
+            <div className="modal-body">
+              <div className={"suscripcion-banner " + (estadoSuscripcion.vencido ? "danger" : "warning")}>
+                {estadoSuscripcion.vencido
+                  ? "Tu suscripción venció. Renueva ahora para no perder acceso a tus empeños, inventario y reportes."
+                  : "Tu plan vence pronto. Renueva ahora o cambia de plan para no interrumpir tu servicio."}
+              </div>
+
+              <PricingComparison readOnly currentPlanId={estadoSuscripcion.planClave} />
+            </div>
+
+            <div className="modal-acciones">
+              <button className="btn-actualizar" onClick={abrirPortalOGestion}>
+                {estadoSuscripcion.stripeSubscriptionId ? "Gestionar suscripción" : "Configurar plan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL DE PERFIL */}
       {showPerfil && (
         <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
@@ -1076,30 +1276,12 @@ const Dueno = () => {
                   <img src={datosPerfil.fotoPerfil} alt={datosPerfil.nombre} />
                 </div>
                 <div className="perfil-info-grid">
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Nombre completo</span>
-                    <span className="perfil-valor">{datosPerfil.nombre}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Email</span>
-                    <span className="perfil-valor">{datosPerfil.email}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Teléfono</span>
-                    <span className="perfil-valor">{datosPerfil.telefono}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Rol</span>
-                    <span className="perfil-valor">{datosPerfil.rol}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Sucursal</span>
-                    <span className="perfil-valor">{datosPerfil.sucursal}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Miembro desde</span>
-                    <span className="perfil-valor">{datosPerfil.fechaRegistro}</span>
-                  </div>
+                  <div className="perfil-info-item"><span className="perfil-label">Nombre completo</span><span className="perfil-valor">{datosPerfil.nombre}</span></div>
+                  <div className="perfil-info-item"><span className="perfil-label">Email</span><span className="perfil-valor">{datosPerfil.email}</span></div>
+                  <div className="perfil-info-item"><span className="perfil-label">Teléfono</span><span className="perfil-valor">{datosPerfil.telefono}</span></div>
+                  <div className="perfil-info-item"><span className="perfil-label">Rol</span><span className="perfil-valor">{datosPerfil.rol}</span></div>
+                  <div className="perfil-info-item"><span className="perfil-label">Sucursal</span><span className="perfil-valor">{datosPerfil.sucursal}</span></div>
+                  <div className="perfil-info-item"><span className="perfil-label">Miembro desde</span><span className="perfil-valor">{datosPerfil.fechaRegistro}</span></div>
                 </div>
               </div>
             </div>
@@ -1113,8 +1295,7 @@ const Dueno = () => {
           <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>
             <button className="modal-cerrar" onClick={() => setShowAlertas(false)}><CloseIcon /></button>
             <div className="modal-header">
-              <h2><NotificationsIcon /> Alertas y Notificaciones</h2>
-              <span className="cliente-id">Actualizadas hoy</span>
+              <h2><NotificationsIcon />Notificaciones</h2>
             </div>
             <div className="modal-body">
               <div className="alertas-modal-lista">
@@ -1134,9 +1315,6 @@ const Dueno = () => {
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowAlertas(false)}>Cerrar</button>
             </div>
           </div>
         </div>

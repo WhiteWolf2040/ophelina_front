@@ -2121,3 +2121,558 @@
     padding: 16px;
   }
 }
+
+/* ============================================ */
+/* MODAL SUSCRIPCIÓN + PRICING                   */
+/* ============================================ */
+
+/* ---- Overlay ---- */
+.modal-suscripcion-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 27, 62, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2500;
+  padding: 20px;
+  animation: suscripcionFade 0.2s ease;
+}
+
+/* ---- Contenedor ---- */
+.modal-suscripcion {
+  position: relative;
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 1100px;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow:
+    0 25px 60px rgba(13, 27, 62, 0.28),
+    0 0 0 1px rgba(30, 58, 138, 0.05);
+  animation: suscripcionSlideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ---- Botón cerrar ---- */
+.modal-suscripcion .modal-cerrar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.modal-suscripcion .modal-cerrar:hover {
+  background: #dc2626;
+  transform: rotate(90deg);
+}
+
+.modal-suscripcion .modal-cerrar svg {
+  font-size: 20px;
+}
+
+/* ---- Header ---- */
+.modal-suscripcion .modal-header {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2d4a9e 100%);
+  padding: 24px 60px 20px 28px;
+  border-radius: 20px 20px 0 0;
+  color: #ffffff;
+}
+
+.modal-suscripcion .modal-header h2 {
+  margin: 0 0 6px 0;
+  font-family: 'Georgia', serif;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-suscripcion .modal-header h2 svg {
+  font-size: 26px;
+}
+
+.modal-suscripcion .cliente-id {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.modal-suscripcion .cliente-id strong {
+  color: #f0d89d;
+  font-weight: 700;
+}
+
+/* ---- Body ---- */
+.modal-suscripcion .modal-body {
+  padding: 24px 28px;
+}
+
+/* ---- Banner ---- */
+.suscripcion-banner {
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  border-left: 4px solid;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.suscripcion-banner.danger {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #dc2626;
+}
+
+.suscripcion-banner.warning {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #d3b372;
+}
+
+/* ---- Acciones ---- */
+.modal-suscripcion .modal-acciones {
+  display: flex;
+  gap: 12px;
+  padding: 20px 28px 24px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafbfc;
+  border-radius: 0 0 20px 20px;
+}
+
+.modal-suscripcion .btn-cancelar,
+.modal-suscripcion .btn-actualizar {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  transition: all 0.25s ease;
+}
+
+.modal-suscripcion .btn-cancelar {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 2px solid #e5e7eb;
+}
+
+.modal-suscripcion .btn-cancelar:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.modal-suscripcion .btn-actualizar {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2d4a9e 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+}
+
+.modal-suscripcion .btn-actualizar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(30, 58, 138, 0.4);
+}
+
+/* ============================================ */
+/* PRICING COMPARISON                            */
+/* ============================================ */
+
+.pc {
+  max-width: 100%;
+  margin: 0;
+  padding: 10px 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.pc-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e3a8a;
+  text-align: center;
+  margin: 0 0 6px;
+  font-family: 'Georgia', serif;
+}
+
+.pc-sub {
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+  max-width: 620px;
+  margin: 0 auto 20px;
+  line-height: 1.5;
+}
+
+.pc-tabs {
+  display: none;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.pc-tab {
+  background: transparent;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.pc-tab:hover {
+  border-color: #d3b372;
+  color: #1e3a8a;
+}
+
+.pc-tab.is-active {
+  background: #1e3a8a;
+  border-color: #1e3a8a;
+  color: white;
+}
+
+.pc-tab.is-current {
+  font-weight: 700;
+}
+
+.pc-tab-badge {
+  display: inline-block;
+  margin-left: 6px;
+  background: #d3b372;
+  color: #ffffff;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+  font-weight: 700;
+}
+
+.pc-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+}
+
+.pc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(13, 27, 62, 0.08);
+  font-size: 13px;
+  border: 1px solid #f1f5f9;
+}
+
+.pc-table thead {
+  background: #f8fafc;
+}
+
+.pc-table th,
+.pc-table td {
+  padding: 12px 14px;
+  text-align: center;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.pc-table tbody tr:last-child th,
+.pc-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pc-table tbody tr:hover {
+  background: #fafbfc;
+}
+
+.pc-feature-col {
+  text-align: left !important;
+  width: 34%;
+  min-width: 200px;
+  padding-left: 20px !important;
+}
+
+.pc-feature {
+  display: block;
+  font-weight: 700;
+  color: #1e3a8a;
+  font-size: 12.5px;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+.pc-desc {
+  display: block;
+  font-size: 11.5px;
+  color: #9ca3af;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.pc-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pc-plan {
+  position: relative;
+  padding: 20px 14px !important;
+  font-weight: 400;
+  vertical-align: top;
+}
+
+.pc-plan-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.pc-price {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin: 6px 0 4px;
+}
+
+.pc-note {
+  display: block;
+  font-size: 11.5px;
+  color: #9ca3af;
+}
+
+.pc-plan.is-featured {
+  background: rgba(211, 179, 114, 0.08);
+  border-left: 2px solid #d3b372;
+  border-right: 2px solid #d3b372;
+}
+
+.pc-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #d3b372, #b8954a);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(211, 179, 114, 0.4);
+}
+
+.pc-plan.is-current,
+.pc-table th[data-plan].is-current,
+.pc-table td[data-plan].is-current {
+  background: rgba(30, 58, 138, 0.05);
+  border-left: 2px solid #1e3a8a;
+  border-right: 2px solid #1e3a8a;
+}
+
+.pc-table thead th[data-plan].is-current {
+  background: rgba(30, 58, 138, 0.08);
+}
+
+.pc-yes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #10b981;
+}
+
+.pc-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #d1d5db;
+}
+
+.pc-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* ---- Animaciones ---- */
+@keyframes suscripcionFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes suscripcionSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .modal-suscripcion {
+    max-width: 100%;
+    border-radius: 16px;
+    max-height: 95vh;
+  }
+
+  .modal-suscripcion .modal-header {
+    padding: 20px 50px 16px 20px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-suscripcion .modal-header h2 {
+    font-size: 18px;
+  }
+
+  .modal-suscripcion .modal-body {
+    padding: 18px 20px;
+  }
+
+  .modal-suscripcion .modal-acciones {
+    padding: 16px 20px 20px;
+    flex-direction: column-reverse;
+  }
+
+  .modal-suscripcion .btn-cancelar,
+  .modal-suscripcion .btn-actualizar {
+    width: 100%;
+  }
+
+  .modal-suscripcion .modal-cerrar {
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .pc-tabs {
+    display: flex;
+  }
+
+  .pc-title {
+    font-size: 17px;
+  }
+
+  .pc-sub {
+    font-size: 12px;
+  }
+
+  .pc-table th[data-plan]:not(.is-active),
+  .pc-table td[data-plan]:not(.is-active) {
+    display: none;
+  }
+
+  .pc-table th[data-plan].is-active,
+  .pc-table td[data-plan].is-active {
+    display: table-cell;
+  }
+
+  .pc-feature-col {
+    width: 50%;
+    min-width: 130px;
+    padding-left: 14px !important;
+    font-size: 12px;
+  }
+
+  .pc-table th,
+  .pc-table td {
+    padding: 10px 8px;
+  }
+
+  .pc-plan-name {
+    font-size: 14px;
+  }
+
+  .pc-price {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pc {
+    padding: 8px 0;
+  }
+
+  .pc-feature-col {
+    width: 55%;
+  }
+
+  .pc-desc {
+    font-size: 11px;
+  }
+
+  .pc-feature {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-suscripcion,
+  .modal-suscripcion-overlay,
+  .modal-suscripcion .modal-cerrar,
+  .modal-suscripcion .btn-cancelar,
+  .modal-suscripcion .btn-actualizar {
+    animation: none;
+    transition: none;
+  }
+}

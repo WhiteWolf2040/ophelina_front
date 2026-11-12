@@ -334,13 +334,7 @@ const PagosLista = () => {
       <div className="content">
         {/* HEADER */}
         <div className="header-container">
-          <div className="">
-            <h1>
-              <PaymentsIcon className="title-icon" /> 
-              Listado de pagos 
-              <p className="header-sub">Gestiona los pagos realizados</p>
-            </h1>
-          </div>
+          
 
           {/* BOTÓN NUEVO PAGO - SOLO CON PERMISO registrar_pagos */}
           {puedeRegistrarPagos && (
