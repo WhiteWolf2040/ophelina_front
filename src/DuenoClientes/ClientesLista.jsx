@@ -312,12 +312,7 @@ const ClientesLista = () => {
     <div className="dashboard">
       <div className="content2 owner-header"> 
         <div className="header-container">
-          <div className="">
-            <h1>
-              <GroupIcon className="title-icon"/> Listado de clientes
-              <p className="header-sub">Gestiona y administra tus clientes</p>
-            </h1>
-          </div>
+          
           
           {/* BOTÓN NUEVO - SOLO CON PERMISO */}
           {puedeCrearClientes && (

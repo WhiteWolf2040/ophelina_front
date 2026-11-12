@@ -281,13 +281,7 @@ const InventarioLista = () => {
     <>
       {/* HEADER */}
       <div className="header-container">
-        <div className="tienda-header">
-          <h1>
-            <InventoryIcon className="title-icon" />
-            Inventario
-            <p className="header-sub">Gestiona todas las prendas del negocio</p>
-          </h1>
-        </div>
+       
 
         {/* BOTÓN NUEVA PRENDA - SOLO CON PERMISO */}
         {puedeCrearProductos && (

@@ -28,13 +28,9 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import AreaChartIcon from '@mui/icons-material/AreaChart';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import SpeedIcon from '@mui/icons-material/Speed';
-import StoreIcon from '@mui/icons-material/Store';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import FlagIcon from '@mui/icons-material/Flag';
-import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 import ShieldIcon from '@mui/icons-material/Shield';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -54,7 +50,6 @@ const PC_PLANS = [
 ];
 
 const PC_FEATURES = [
-  { name: "Precio", desc: "Suscripción mensual por casa de empeño", gratis: "$0", profesional: "$999 / mes", premium: "$1,499 / mes" },
   { name: "Sucursales", desc: "Cuántas sucursales se administran", gratis: "1", profesional: "1", premium: "Multi-sucursal" },
   { name: "Clientes nuevos al mes", desc: "Altas de clientes permitidas", gratis: "4", profesional: "Sin límite indicado", premium: "Sin límite indicado" },
   { name: "Empeños activos", desc: "Empeños abiertos al mismo tiempo", gratis: "Máx. 40", profesional: "Sin límite indicado", premium: "Sin límite indicado" },
@@ -100,7 +95,7 @@ const PricingComparison = ({ onSelectPlan, readOnly = false, currentPlanId = nul
       {/* Título y subtítulo solo en modo interactivo (landing) */}
       {!readOnly && (
         <>
-          <h2 id="pc-title" className="pc-title">Compara los planes de Ophaline</h2>
+          <h2 id="pc-title" className="pc-title">Compara los planes de Ophelina</h2>
           <p className="pc-sub">
             Cada plan incluye todo lo del anterior. Empieza gratis y sube cuando tu negocio lo pida.
           </p>
@@ -211,26 +206,6 @@ const Dueno = () => {
   const { data, cargando, error, cargar, refrescar, edadCache } = useDashboard();
   const { hasPermission, hasAnyPermission } = usePermissions();
 
-  // ESTADOS LOCALES
-  const [refrescandoManual, setRefrescandoManual] = useState(false);
-  const [, setTick] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 60000);
-    return () => clearInterval(id);
-  }, []);
-
-  const minutosDesde = edadCache !== null ? Math.floor(edadCache / 60000) : null;
-
-  const handleRefrescarManual = async () => {
-    setRefrescandoManual(true);
-    try {
-      await refrescar();
-    } finally {
-      setTimeout(() => setRefrescandoManual(false), 600);
-    }
-  };
-
   useEffect(() => { cargar(); }, [cargar]);
 
   // DATOS HARDCODEADOS DE EJEMPLO
@@ -240,20 +215,6 @@ const Dueno = () => {
     proximos_vencer: { actual: 3, anterior: 5, cambio: -2 },
     ingresos_recientes: { actual: 0, anterior: 12500, cambio: -12500 },
   };
-
-  const rentabilidad = {
-    capital: 528964,
-    ganancia: 13000.21,
-    perdida: 320236.33,
-    rentabilidad_mensual: 2.45,
-    rentabilidad_anualizada: 29.4,
-    margen_neto: -57.5,
-  };
-
-  const sucursales = [
-    { nombre: "Casa Matriz - Centro", activos: 5, vencidos: 20, capital: 320000, ganancia: 8500 },
-    { nombre: "Sucursal Norte", activos: 4, vencidos: 13, capital: 208964, ganancia: 4500 },
-  ];
 
   const cohortes = [
     { rango: "0-30 días", cantidad: 12, monto: 45000, color: "#10b981" },
@@ -702,30 +663,6 @@ const Dueno = () => {
     <div className="dashboard">
       <div className="content">
 
-        {/* HEADER */}
-        <div className="owner-header">
-          <div className="header-top">
-            <h1>
-              Hola, {datosPerfil.nombre.split(' ')[0] || 'Usuario'}
-              <p className="header-sub">Conoce el estado de tu casa de empeño</p>
-            </h1>
-
-            <div className="header-botones">
-              <button className="btn-perfil" onClick={() => setShowPerfil(true)} title="Mi Perfil">
-                <img src={datosPerfil.fotoPerfil} alt="Perfil" className="perfil-foto" />
-              </button>
-
-              <button className="btn-alertas" onClick={() => setShowAlertas(true)} title="Alertas">
-                <NotificationsIcon className="alerta-icon" />
-                {((dashboardData.resumen?.proximos_vencer || 0) + (dashboardData.resumen?.empenos_vencidos || 0)) > 0 && (
-                  <span className="alerta-badge">
-                    {(dashboardData.resumen?.proximos_vencer || 0) + (dashboardData.resumen?.empenos_vencidos || 0)}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
 
         {/* HEALTH SCORE + META */}
         <div className="hero-grid">
@@ -1220,8 +1157,8 @@ const Dueno = () => {
           <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>
             <button className="modal-cerrar" onClick={() => setShowAlertas(false)}><CloseIcon /></button>
             <div className="modal-header">
-              <h2><NotificationsIcon /> Alertas y Notificaciones</h2>
-              <span className="cliente-id">Actualizadas hoy</span>
+              <h2><NotificationsIcon />Notificaciones</h2>
+              
             </div>
             <div className="modal-body">
               <div className="alertas-modal-lista">
@@ -1242,9 +1179,7 @@ const Dueno = () => {
                 </div>
               </div>
             </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowAlertas(false)}>Cerrar</button>
-            </div>
+            
           </div>
         </div>
       )}

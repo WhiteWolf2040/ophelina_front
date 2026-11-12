@@ -1,4 +1,5 @@
 /* ===== CONTENEDOR PRINCIPAL ===== */
+
 .dashboard {
   display: flex;
   min-height: 100vh;
@@ -11,7 +12,6 @@
   padding: 0px 0px;
   transition: margin-left 0.3s ease;
 }
-
 /* ===== HEADER ===== */
 .header-container {
   display: flex;
