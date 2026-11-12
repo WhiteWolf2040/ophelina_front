@@ -943,6 +943,7 @@ const Landing = () => {
               <p>Elige el plan que mejor se adapte a tus necesidades. Sin sorpresas, sin costos ocultos.</p>
             </center>
           </div>
+          
 
           <div className="pricing-container">
             {plans.map((plan, index) => (

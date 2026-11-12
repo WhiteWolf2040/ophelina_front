@@ -631,7 +631,9 @@ const Configuraciones = () => {
               <CreditCardIcon className="section-icon" />
               Plan y Suscripción
             </h3>
+            
           </div>
+          
           <div className="plan-actual-card">
             <div className="plan-badge">PREMIUM</div>
             <h4>Plan Premium (Empresarial)</h4>

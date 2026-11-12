@@ -1,4 +1,4 @@
-// src/Home/Dueno.jsx - VERSIÓN FUSIONADA (Dashboard + permisos + modales de perfil/alertas)
+// src/Home/Dueno.jsx - VERSIÓN FINAL CON CORRECCIONES
 import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
 import "./dueno.css";
@@ -9,7 +9,6 @@ import PaymentModal from '../components/PaymentModal';
 import { useDashboard } from '../contexts/DashboardContext';
 import { usePermissions } from '../hooks/usePermissions';
 import PermissionGuard from '../components/PermissionGuard';
-// Al inicio de Dueno.jsx, importar:
 import { calcularHealthScore } from '../utils/healthScore';
 import { calcularProyeccionCobranza } from '../utils/proyeccionCobranza';
 
@@ -30,8 +29,6 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import AreaChartIcon from '@mui/icons-material/AreaChart';
 import RefreshIcon from '@mui/icons-material/Refresh';
-
-// ✅ NUEVOS iconos
 import SpeedIcon from '@mui/icons-material/Speed';
 import StoreIcon from '@mui/icons-material/Store';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -44,23 +41,177 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import CategoryIcon from '@mui/icons-material/Category';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import ErrorIcon from '@mui/icons-material/Error';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+
+// ============================================
+// ✅ PRICING COMPARISON
+// ============================================
+const PC_PLANS = [
+  
+  { id: "gratis", name: "Gratis", price: "$0", note: "para empezar sin riesgo" },
+  { id: "profesional", name: "Profesional", price: "$999", note: "al mes" },
+  { id: "premium", name: "Premium", price: "$1,499", note: "al mes", badge: "Más popular" },
+];
+
+const PC_FEATURES = [
+  { name: "Precio", desc: "Suscripción mensual por casa de empeño", gratis: "$0", profesional: "$999 / mes", premium: "$1,499 / mes" },
+  { name: "Sucursales", desc: "Cuántas sucursales se administran", gratis: "1", profesional: "1", premium: "Multi-sucursal" },
+  { name: "Clientes nuevos al mes", desc: "Altas de clientes permitidas", gratis: "4", profesional: "Sin límite indicado", premium: "Sin límite indicado" },
+  { name: "Empeños activos", desc: "Empeños abiertos al mismo tiempo", gratis: "Máx. 40", profesional: "Sin límite indicado", premium: "Sin límite indicado" },
+  { name: "Control de fechas límite de pago", desc: "Vencimientos de cada empeño", gratis: true, profesional: true, premium: true },
+  { name: "Control de inventario", desc: "Registro y estado de las prendas", gratis: false, profesional: true, premium: true },
+  { name: "Cálculo automático de intereses", desc: "El sistema calcula lo que debe cada cliente", gratis: false, profesional: true, premium: true },
+  { name: "Recordatorios automáticos", desc: "Avisos antes del vencimiento, para reducir la morosidad", gratis: false, profesional: true, premium: true },
+  { name: "Reportes básicos", desc: "Ingresos por mes, clientes frecuentes y estado de empeños", gratis: false, profesional: true, premium: true },
+  { name: "Reportes avanzados", desc: "Análisis más detallado del negocio", gratis: false, profesional: false, premium: true },
+  { name: "Tienda en línea", desc: "Venta de prendas no recuperadas", gratis: false, profesional: false, premium: true },
+  { name: "Roles y permisos", desc: "Accesos distintos para dueño, administrador y empleado", gratis: false, profesional: false, premium: true },
+  { name: "Configuración de la empresa", desc: "Datos y ajustes de la casa de empeño", gratis: false, profesional: false, premium: true },
+  { name: "Prueba de 14 días", desc: "Probar el plan antes de pagarlo", gratis: false, profesional: false, premium: true },
+];
+
+const PCCell = ({ value }) => {
+  if (value === true) {
+    return (
+      <span className="pc-yes" role="img" aria-label="Incluido">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+          <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+    );
+  }
+  if (value === false) {
+    return (
+      <span className="pc-no" role="img" aria-label="No incluido">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+          <path d="M5 10h10" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+        </svg>
+      </span>
+    );
+  }
+  return <span className="pc-text">{value}</span>;
+};
+
+const PricingComparison = ({ onSelectPlan, readOnly = false, currentPlanId = null }) => {
+  const [active, setActive] = useState(currentPlanId || "premium");
+
+  return (
+    <section className="pc" data-active={active} aria-labelledby="pc-title">
+      {/* Título y subtítulo solo en modo interactivo (landing) */}
+      {!readOnly && (
+        <>
+          <h2 id="pc-title" className="pc-title">Compara los planes de Ophaline</h2>
+          <p className="pc-sub">
+            Cada plan incluye todo lo del anterior. Empieza gratis y sube cuando tu negocio lo pida.
+          </p>
+        </>
+      )}
+
+      <div className="pc-tabs" role="tablist" aria-label="Elige un plan">
+        {PC_PLANS.map((p) => {
+          const esActual = currentPlanId === p.id;
+          return (
+            <button
+              key={p.id}
+              role="tab"
+              aria-selected={active === p.id}
+              className={"pc-tab" + (active === p.id ? " is-active" : "") + (esActual ? " is-current" : "")}
+              onClick={() => setActive(p.id)}
+            >
+              {p.name}
+              {esActual && <span className="pc-tab-badge">Actual</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="pc-scroll">
+        <table className="pc-table">
+          <thead>
+            <tr>
+              <th className="pc-feature-col" scope="col"><span className="pc-sr">Funcionalidad</span></th>
+              {PC_PLANS.map((p) => {
+                const esActual = currentPlanId === p.id;
+                return (
+                  <th
+                    key={p.id}
+                    scope="col"
+                    data-plan={p.id}
+                    className={"pc-plan" + (p.badge ? " is-featured" : "") + (esActual ? " is-current" : "")}
+                  >
+                    {/* Badge solo en modo interactivo (landing) */}
+                    {!readOnly && p.badge && <span className="pc-badge">{p.badge}</span>}
+                    <span className="pc-plan-name">{p.name}</span>
+                    <span className="pc-price">{p.price}</span>
+                    <span className="pc-note">{p.note}</span>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {PC_FEATURES.map((f) => (
+              <tr key={f.name}>
+                <th scope="row" className="pc-feature-col">
+                  <span className="pc-feature">{f.name}</span>
+                  <span className="pc-desc">{f.desc}</span>
+                </th>
+                {PC_PLANS.map((p) => {
+                  const esActual = currentPlanId === p.id;
+                  return (
+                    <td key={p.id} data-plan={p.id} className={(p.badge ? "is-featured" : "") + (esActual ? " is-current" : "")}>
+                      <PCCell value={f[p.id]} />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+
+          {!readOnly && (
+            <tfoot>
+              <tr>
+                <td className="pc-feature-col" />
+                {PC_PLANS.map((p) => (
+                  <td key={p.id} data-plan={p.id} className={p.badge ? "is-featured" : ""}>
+                    <button
+                      className={"pc-cta" + (p.badge ? " is-primary" : "")}
+                      onClick={() => onSelectPlan && onSelectPlan(p.id)}
+                    >
+                      {p.id === "gratis" ? "Empezar gratis" : p.id === "premium" ? "Probar 14 días" : "Elegir plan"}
+                    </button>
+                  </td>
+                ))}
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+    </section>
+  );
+};
+
+// ============================================
+// ✅ Mapeo plan nombre/clave → id PricingComparison
+// ============================================
+const CLAVE_A_PLAN_ID = {
+  gratis: "gratis",
+  free: "gratis",
+  basico: "gratis",
+  profesional: "profesional",
+  professional: "profesional",
+  pro: "profesional",
+  premium: "premium",
+  empresarial: "premium",
+  empresa: "premium",
+};
 
 const Dueno = () => {
-  // ============================================
   // CONTEXTO
-  // ============================================
-  const {
-    data, cargando, error, cargar, refrescar, edadCache
-  } = useDashboard();
-
-  // ============================================
-  // HOOK DE PERMISOS
-  // ============================================
+  const { data, cargando, error, cargar, refrescar, edadCache } = useDashboard();
   const { hasPermission, hasAnyPermission } = usePermissions();
 
-  // ============================================
   // ESTADOS LOCALES
-  // ============================================
   const [refrescandoManual, setRefrescandoManual] = useState(false);
   const [, setTick] = useState(0);
 
@@ -82,11 +233,7 @@ const Dueno = () => {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  // ============================================
   // DATOS HARDCODEADOS DE EJEMPLO
-  // ============================================
-
-  // Comparación vs mes anterior (para las cards)
   const deltas = {
     empenos_activos: { actual: 9, anterior: 6, cambio: 3 },
     empenos_vencidos: { actual: 33, anterior: 28, cambio: 5 },
@@ -94,7 +241,6 @@ const Dueno = () => {
     ingresos_recientes: { actual: 0, anterior: 12500, cambio: -12500 },
   };
 
-  // Rentabilidad
   const rentabilidad = {
     capital: 528964,
     ganancia: 13000.21,
@@ -104,13 +250,11 @@ const Dueno = () => {
     margen_neto: -57.5,
   };
 
-  // Por sucursal
   const sucursales = [
     { nombre: "Casa Matriz - Centro", activos: 5, vencidos: 20, capital: 320000, ganancia: 8500 },
     { nombre: "Sucursal Norte", activos: 4, vencidos: 13, capital: 208964, ganancia: 4500 },
   ];
 
-  // Cohortes de antigüedad
   const cohortes = [
     { rango: "0-30 días", cantidad: 12, monto: 45000, color: "#10b981" },
     { rango: "31-60 días", cantidad: 15, monto: 128000, color: "#f59e0b" },
@@ -118,7 +262,6 @@ const Dueno = () => {
     { rango: "+90 días", cantidad: 9, monto: 270364, color: "#dc2626" },
   ];
 
-  // Actividad reciente mejorada
   const actividadMejorada = [
     { tipo: "pago", descripcion: "Pago recibido de Hank Kilback", fecha: "hoy, 14:32", monto: 700 },
     { tipo: "empeno", descripcion: "Nuevo empeño: Anillo de oro 14k", fecha: "hoy, 12:15", monto: 8500, cliente: "María García" },
@@ -128,7 +271,6 @@ const Dueno = () => {
     { tipo: "empeno", descripcion: "Nuevo empeño: Reloj Rolex vintage", fecha: "ayer, 11:00", monto: 15000, cliente: "Carlos Ruiz" },
   ];
 
-  // Análisis por categoría
   const analisisCategorias = [
     { categoria: "Joyería", cantidad: 10, ganancia_promedio: 1850, tasa_mora: 20, rentabilidad: "Alta" },
     { categoria: "Relojes", cantidad: 12, ganancia_promedio: 2200, tasa_mora: 33, rentabilidad: "Alta" },
@@ -137,17 +279,14 @@ const Dueno = () => {
     { categoria: "Instrumentos", cantidad: 3, ganancia_promedio: 1400, tasa_mora: 33, rentabilidad: "Media" },
   ];
 
-  // Health Score (calculado con datos reales)
   const healthScore = calcularHealthScore(data);
 
-  // Clientes en riesgo
   const clientesEnRiesgo = [
     { nombre: "Ephraim Ledner", dias_sin_pagar: 42, deuda: 69400, alerta: "alto" },
     { nombre: "Hank Kilback", dias_sin_pagar: 38, deuda: 53506, alerta: "alto" },
     { nombre: "Lacey Spencer", dias_sin_pagar: 35, deuda: 32068, alerta: "medio" },
   ];
 
-  // Meta del mes
   const meta = {
     objetivo: 100000,
     actual: 45000,
@@ -156,9 +295,7 @@ const Dueno = () => {
     proyeccion: 90000,
   };
 
-  // ============================================
   // EXTRAER DATOS DEL CONTEXTO
-  // ============================================
   const dashboardData = data?.dashboard || {
     resumen: {
       empenos_activos: 0, empenos_vencidos: 0, proximos_vencer: 0,
@@ -173,9 +310,7 @@ const Dueno = () => {
   const amortizacionesPendientes = data?.amortizaciones || [];
   const proyeccion = calcularProyeccionCobranza(amortizacionesPendientes);
 
-  // ============================================
   // GRÁFICAS
-  // ============================================
   const capitalRetorno = dashboardData.capital_retorno || [];
   const capitalAcumulado = capitalRetorno.map(i => Number(i.capital));
   const retornoAcumulado = capitalRetorno.map(i => Number(i.retorno));
@@ -192,9 +327,7 @@ const Dueno = () => {
   const chartHeight = windowWidth < 480 ? 250 : windowWidth < 768 ? 300 : 380;
   const smallChartHeight = windowWidth < 480 ? 200 : windowWidth < 768 ? 250 : 300;
 
-  // ============================================
   // HOOKS DE PAGO
-  // ============================================
   const [searchParams] = useSearchParams();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentSessionId, setPaymentSessionId] = useState(null);
@@ -213,28 +346,74 @@ const Dueno = () => {
     }
   }, [searchParams]);
 
-  // ============================================
-  // SUSCRIPCIÓN
-  // ============================================
+  // SUSCRIPCIÓN + MODAL
+  const [showSuscripcionModal, setShowSuscripcionModal] = useState(false);
+  const [estadoSuscripcion, setEstadoSuscripcion] = useState(null);
+
   const verificarSuscripcion = async () => {
-    const empresaId = localStorage.getItem('empresa_id');
-    if (!empresaId) return;
-    try {
-      const response = await stripeService.checkSubscription(empresaId);
-      if (response.fecha_fin_plan === null && response.plan_activo === 1) return;
-      if (response.activo) return;
-      alert('Tu suscripción ha vencido. Por favor, renueva.');
-      window.location.href = '/planes';
-    } catch (error) {
-      console.error('Error al verificar suscripción:', error);
+  const empresaId = localStorage.getItem('empresa_id');
+  if (!empresaId) return;
+
+  try {
+    const response = await stripeService.checkSubscription(empresaId);
+
+    const dias = response.dias_restantes ?? 0;
+    const activo = response.activo === true || response.plan_activo === 1;
+    const vencido = !activo;
+    const porVencer = activo && dias > 0 && dias <= 7;
+
+    const planClave = CLAVE_A_PLAN_ID[
+      String(response.plan_nombre || "").toLowerCase()
+    ] || "gratis";
+
+    const estado = {
+      activo,
+      vencido,
+      porVencer,
+      diasRestantes: dias,
+      planId: response.plan_id,
+      planClave,
+      planNombre: response.plan_nombre || "Sin plan",
+      stripeSubscriptionId: response.stripe_subscription_id || null,
+      fechaFin: response.fecha_fin_plan || null,
+    };
+
+    setEstadoSuscripcion(estado);
+
+    // ✅ Solo mostrar si NO se ha mostrado en esta sesión
+    const claveAviso = `aviso_suscripcion_visto_${empresaId}`;
+    const yaVisto = sessionStorage.getItem(claveAviso);
+
+    if ((vencido || porVencer) && !yaVisto) {
+      setShowSuscripcionModal(true);
+      sessionStorage.setItem(claveAviso, '1');
     }
-  };
+  } catch (error) {
+    console.error('Error al verificar suscripción:', error);
+  }
+};
 
   useEffect(() => { verificarSuscripcion(); }, []);
 
-  // ============================================
+  const abrirPortalOGestion = async () => {
+    if (estadoSuscripcion?.stripeSubscriptionId) {
+      try {
+        const { url } = await stripeService.abrirPortal(window.location.href);
+        window.location.href = url;
+        return;
+      } catch (e) {
+        console.error('Error al abrir portal:', e);
+      }
+    }
+    // Si no hay suscripción en Stripe → ir a configuración
+    window.location.href = '/configuracion';
+  };
+
+  const cerrarSuscripcionModal = () => {
+    setShowSuscripcionModal(false);
+  };
+
   // ESTADOS
-  // ============================================
   const [showActivos, setShowActivos] = useState(false);
   const [showVencidos, setShowVencidos] = useState(false);
   const [showProximos, setShowProximos] = useState(false);
@@ -255,7 +434,6 @@ const Dueno = () => {
   const [proximosVencer, setProximosVencer] = useState([]);
   const [ingresosRecientes, setIngresosRecientes] = useState([]);
 
-  // Datos de perfil desde localStorage
   const [datosPerfil, setDatosPerfil] = useState({
     nombre: "Usuario",
     email: "",
@@ -266,27 +444,19 @@ const Dueno = () => {
     fotoPerfil: "https://ui-avatars.com/api/?name=Usuario&size=128&background=1e3a8a&color=fff&bold=true"
   });
 
-  // ============================================
   // CONFIGURACIÓN DE GRÁFICAS
-  // ============================================
   const areaChartOptions = {
     chart: {
       type: 'area', stacked: true,
       toolbar: {
         show: true,
-        tools: {
-          download: true, selection: false, zoom: false,
-          zoomin: false, zoomout: false, pan: false, reset: false
-        }
+        tools: { download: true, selection: false, zoom: false, zoomin: false, zoomout: false, pan: false, reset: false }
       },
       zoom: { enabled: false }
     },
     dataLabels: { enabled: false },
     stroke: { curve: 'smooth', width: 2 },
-    fill: {
-      type: 'gradient',
-      gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3, stops: [0, 90, 100] }
-    },
+    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3, stops: [0, 90, 100] } },
     xaxis: {
       categories: meses,
       title: { text: 'Mes', style: { fontSize: '11px', fontWeight: 500 } },
@@ -299,21 +469,11 @@ const Dueno = () => {
     },
     colors: ["#1e3a8a", "#10b981", "#f59e0b"],
     tooltip: {
-      y: {
-        formatter: (val) => new Intl.NumberFormat('es-MX', {
-          style: 'currency', currency: 'MXN', minimumFractionDigits: 0
-        }).format(val)
-      },
+      y: { formatter: (val) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 }).format(val) },
       shared: true, intersect: false
     },
-    legend: {
-      position: 'top', horizontalAlign: 'center', offsetY: 0,
-      fontSize: '11px', itemMargin: { horizontal: 8, vertical: 4 }
-    },
-    grid: {
-      borderColor: '#e5e7eb', strokeDashArray: 5,
-      padding: { left: 5, right: 5 }
-    }
+    legend: { position: 'top', horizontalAlign: 'center', offsetY: 0, fontSize: '11px', itemMargin: { horizontal: 8, vertical: 4 } },
+    grid: { borderColor: '#e5e7eb', strokeDashArray: 5, padding: { left: 5, right: 5 } }
   };
 
   const areaChartSeries = [
@@ -325,10 +485,7 @@ const Dueno = () => {
   const trendChartOptions = {
     chart: { type: "line", toolbar: { show: false } },
     xaxis: { categories: meses, title: { text: 'Mes' } },
-    yaxis: {
-      title: { text: '$ (pesos)' },
-      labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k` }
-    },
+    yaxis: { title: { text: '$ (pesos)' }, labels: { formatter: (val) => `$${(val / 1000).toFixed(0)}k` } },
     colors: ["#10b981"],
     stroke: { width: 3, curve: 'smooth' },
     tooltip: { y: { formatter: (val) => `$${val.toLocaleString()}` } }
@@ -350,38 +507,19 @@ const Dueno = () => {
           size: "65%",
           labels: {
             show: true,
-            total: {
-              show: true,
-              label: "Total",
-              formatter: (w) => w.globals.seriesTotals.reduce((a, b) => a + b, 0) + " artículos"
-            }
+            total: { show: true, label: "Total", formatter: (w) => w.globals.seriesTotals.reduce((a, b) => a + b, 0) + " artículos" }
           }
         }
       }
     }
   };
 
-  // Gráfica de cohortes (barras horizontales)
   const cohortesChartOptions = {
     chart: { type: "bar", toolbar: { show: false } },
-    plotOptions: {
-      bar: {
-        horizontal: true,
-        distributed: true,
-        borderRadius: 6,
-        barHeight: '70%'
-      }
-    },
+    plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 6, barHeight: '70%' } },
     colors: cohortes.map(c => c.color),
-    dataLabels: {
-      enabled: true,
-      formatter: (val) => `${val} empeños`,
-      style: { fontSize: '12px', fontWeight: 600, colors: ['#fff'] }
-    },
-    xaxis: {
-      categories: cohortes.map(c => c.rango),
-      labels: { style: { fontSize: '12px' } }
-    },
+    dataLabels: { enabled: true, formatter: (val) => `${val} empeños`, style: { fontSize: '12px', fontWeight: 600, colors: ['#fff'] } },
+    xaxis: { categories: cohortes.map(c => c.rango), labels: { style: { fontSize: '12px' } } },
     legend: { show: false },
     tooltip: {
       y: {
@@ -394,24 +532,15 @@ const Dueno = () => {
     grid: { borderColor: '#e5e7eb', strokeDashArray: 5 }
   };
 
-  const cohortesChartSeries = [{
-    name: "Empeños",
-    data: cohortes.map(c => c.cantidad)
-  }];
+  const cohortesChartSeries = [{ name: "Empeños", data: cohortes.map(c => c.cantidad) }];
 
-  // ============================================
   // FUNCIONES AUXILIARES
-  // ============================================
   const formatearMoneda = (monto) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency', currency: 'MXN', minimumFractionDigits: 2
-    }).format(monto || 0);
+    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 }).format(monto || 0);
   };
 
   const formatearPorcentaje = (valor) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2
-    }).format((valor || 0) / 100);
+    return new Intl.NumberFormat('es-MX', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((valor || 0) / 100);
   };
 
   const formatFecha = (fecha) => {
@@ -431,22 +560,12 @@ const Dueno = () => {
 
   const puedeVerEvolucionAcumulada = () =>
     hasPermission('ver_dashboard') && hasAnyPermission(['ver_reportes', 'ver_dashboard']);
+  const puedeVerGraficasBasicas = () => hasAnyPermission(['ver_reportes', 'ver_dashboard']);
+  const puedeVerMorosidad = () => hasAnyPermission(['ver_reportes', 'ver_empenos']);
+  const puedeVerTopClientes = () => hasPermission('ver_clientes');
+  const puedeVerArticulosMasEmpenados = () => hasAnyPermission(['ver_tienda', 'ver_empenos']);
 
-  const puedeVerGraficasBasicas = () =>
-    hasAnyPermission(['ver_reportes', 'ver_dashboard']);
-
-  const puedeVerMorosidad = () =>
-    hasAnyPermission(['ver_reportes', 'ver_empenos']);
-
-  const puedeVerTopClientes = () =>
-    hasPermission('ver_clientes');
-
-  const puedeVerArticulosMasEmpenados = () =>
-    hasAnyPermission(['ver_tienda', 'ver_empenos']);
-
-  // ============================================
   // CARGA SECUNDARIA
-  // ============================================
   const cargarRolUsuario = async () => {
     try {
       const userStr = localStorage.getItem('user');
@@ -488,9 +607,7 @@ const Dueno = () => {
     cargarPreciosQuilates();
   }, []);
 
-  // ============================================
   // CARGAS DE MODALES
-  // ============================================
   const cargarActivos = async () => {
     if (!hasPermission('ver_empenos')) return;
     try {
@@ -499,9 +616,7 @@ const Dueno = () => {
         setEmpenosActivos(response.data.data);
         setShowActivos(true);
       }
-    } catch (error) {
-      console.error('Error:', error);
-    }
+    } catch (error) { console.error('Error:', error); }
   };
 
   const cargarVencidos = async () => {
@@ -512,9 +627,7 @@ const Dueno = () => {
         setEmpenosVencidos(response.data.data);
         setShowVencidos(true);
       }
-    } catch (error) {
-      console.error('Error:', error);
-    }
+    } catch (error) { console.error('Error:', error); }
   };
 
   const cargarProximos = async () => {
@@ -525,9 +638,7 @@ const Dueno = () => {
         setProximosVencer(response.data.data);
         setShowProximos(true);
       }
-    } catch (error) {
-      console.error('Error:', error);
-    }
+    } catch (error) { console.error('Error:', error); }
   };
 
   const cargarIngresos = async () => {
@@ -539,9 +650,7 @@ const Dueno = () => {
     setShowIngresos(true);
   };
 
-  // ============================================
   // MODAL DE PAGO
-  // ============================================
   const handlePaymentSuccess = (data) => {
     verificarSuscripcion();
     setTimeout(() => {
@@ -559,9 +668,7 @@ const Dueno = () => {
     localStorage.removeItem('pending_plan_price');
   };
 
-  // ============================================
   // LOADING
-  // ============================================
   if (cargando && !data) {
     return (
       <div className="dashboard">
@@ -590,14 +697,12 @@ const Dueno = () => {
     );
   }
 
-  // ============================================
   // RENDER
-  // ============================================
   return (
     <div className="dashboard">
       <div className="content">
 
-        {/* HEADER con perfil y alertas */}
+        {/* HEADER */}
         <div className="owner-header">
           <div className="header-top">
             <h1>
@@ -622,9 +727,8 @@ const Dueno = () => {
           </div>
         </div>
 
-        {/* HEALTH SCORE + META DEL MES */}
+        {/* HEALTH SCORE + META */}
         <div className="hero-grid">
-          {/* Health Score */}
           <div className="hero-card health-score-card">
             <div className="hero-card-header">
               <ShieldIcon />
@@ -634,12 +738,7 @@ const Dueno = () => {
               <div className="health-score-circle">
                 <svg viewBox="0 0 100 100" className="health-score-svg">
                   <circle cx="50" cy="50" r="42" className="health-score-track" />
-                  <circle
-                    cx="50" cy="50" r="42"
-                    className="health-score-fill"
-                    strokeDasharray={`${(healthScore.total / 100) * 264} 264`}
-                    stroke={healthScore.color}
-                  />
+                  <circle cx="50" cy="50" r="42" className="health-score-fill" strokeDasharray={`${(healthScore.total / 100) * 264} 264`} stroke={healthScore.color} />
                 </svg>
                 <div className="health-score-number">
                   <strong style={{ color: healthScore.color }}>{healthScore.total}</strong>
@@ -648,60 +747,26 @@ const Dueno = () => {
               </div>
 
               <div className="health-score-info">
-                <span className="health-score-label" style={{ color: healthScore.color }}>
-                  {healthScore.nivel}
-                </span>
-
+                <span className="health-score-label" style={{ color: healthScore.color }}>{healthScore.nivel}</span>
                 <div className="health-score-factores">
                   <div className="factor">
-                    <span title={
-                      healthScore.detalles
-                        ? `${healthScore.detalles.activos} activos de ${healthScore.detalles.activos + healthScore.detalles.vencidos} empeños`
-                        : 'Cargando datos...'
-                    }>
-                      Cartera sana
-                    </span>
-                    <div className="factor-bar">
-                      <div className="factor-fill" style={{ width: `${healthScore.factores.cartera_sana}%` }}></div>
-                    </div>
+                    <span title={healthScore.detalles ? `${healthScore.detalles.activos} activos de ${healthScore.detalles.activos + healthScore.detalles.vencidos} empeños` : 'Cargando datos...'}>Cartera sana</span>
+                    <div className="factor-bar"><div className="factor-fill" style={{ width: `${healthScore.factores.cartera_sana}%` }}></div></div>
                     <span>{healthScore.factores.cartera_sana}</span>
                   </div>
-
                   <div className="factor">
-                    <span title={
-                      healthScore.detalles
-                        ? `Pérdida: $${Number(healthScore.detalles.perdida_total).toLocaleString()} (${healthScore.detalles.tasa_perdida}% del capital)`
-                        : 'Cargando datos...'
-                    }>
-                      Morosidad
-                    </span>
-                    <div className="factor-bar">
-                      <div className="factor-fill warning" style={{ width: `${healthScore.factores.morosidad}%` }}></div>
-                    </div>
+                    <span title={healthScore.detalles ? `Pérdida: $${Number(healthScore.detalles.perdida_total).toLocaleString()} (${healthScore.detalles.tasa_perdida}% del capital)` : 'Cargando datos...'}>Morosidad</span>
+                    <div className="factor-bar"><div className="factor-fill warning" style={{ width: `${healthScore.factores.morosidad}%` }}></div></div>
                     <span>{healthScore.factores.morosidad}</span>
                   </div>
-
                   <div className="factor">
-                    <span title={
-                      healthScore.detalles
-                        ? `Por cobrar en 30 días: $${Number(healthScore.detalles.proximos_30d).toLocaleString()}`
-                        : 'Cargando datos...'
-                    }>
-                      Liquidez
-                    </span>
-                    <div className="factor-bar">
-                      <div className="factor-fill success" style={{ width: `${healthScore.factores.liquidez}%` }}></div>
-                    </div>
+                    <span title={healthScore.detalles ? `Por cobrar en 30 días: $${Number(healthScore.detalles.proximos_30d).toLocaleString()}` : 'Cargando datos...'}>Liquidez</span>
+                    <div className="factor-bar"><div className="factor-fill success" style={{ width: `${healthScore.factores.liquidez}%` }}></div></div>
                     <span>{healthScore.factores.liquidez}</span>
                   </div>
-
                   <div className="factor">
-                    <span title="Comparación de ganancia mes actual vs mes anterior">
-                      Tendencia
-                    </span>
-                    <div className="factor-bar">
-                      <div className="factor-fill" style={{ width: `${healthScore.factores.tendencia}%` }}></div>
-                    </div>
+                    <span title="Comparación de ganancia mes actual vs mes anterior">Tendencia</span>
+                    <div className="factor-bar"><div className="factor-fill" style={{ width: `${healthScore.factores.tendencia}%` }}></div></div>
                     <span>{healthScore.factores.tendencia}</span>
                   </div>
                 </div>
@@ -709,7 +774,6 @@ const Dueno = () => {
             </div>
           </div>
 
-          {/* Meta del Mes */}
           <div className="hero-card meta-card">
             <div className="hero-card-header">
               <FlagIcon />
@@ -722,14 +786,9 @@ const Dueno = () => {
               </div>
               <div className="meta-progress">
                 <div className="meta-progress-bar">
-                  <div
-                    className="meta-progress-fill"
-                    style={{ width: `${(meta.actual / meta.objetivo) * 100}%` }}
-                  ></div>
+                  <div className="meta-progress-fill" style={{ width: `${(meta.actual / meta.objetivo) * 100}%` }}></div>
                 </div>
-                <span className="meta-progress-percent">
-                  {((meta.actual / meta.objetivo) * 100).toFixed(0)}%
-                </span>
+                <span className="meta-progress-percent">{((meta.actual / meta.objetivo) * 100).toFixed(0)}%</span>
               </div>
               <div className="meta-info">
                 <div className="meta-info-item">
@@ -738,9 +797,7 @@ const Dueno = () => {
                 </div>
                 <div className="meta-info-item">
                   <span>Proyección al cierre</span>
-                  <strong className={meta.proyeccion < meta.objetivo ? 'danger' : 'success'}>
-                    ${meta.proyeccion.toLocaleString()}
-                  </strong>
+                  <strong className={meta.proyeccion < meta.objetivo ? 'danger' : 'success'}>${meta.proyeccion.toLocaleString()}</strong>
                 </div>
               </div>
               {meta.proyeccion < meta.objetivo && (
@@ -753,7 +810,7 @@ const Dueno = () => {
           </div>
         </div>
 
-        {/* CARDS CON DELTAS Y PERMISOS */}
+        {/* CARDS */}
         <div className="cards-grid">
           <PermissionGuard permission="ver_empenos">
             <div className="stat-card" onClick={cargarActivos}>
@@ -801,13 +858,9 @@ const Dueno = () => {
             <div className="stat-card" onClick={cargarIngresos}>
               <AttachMoneyIcon className="card-icon" />
               <h3>Ingresos del Mes</h3>
-              <p className="stat-number">
-                ${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}
-              </p>
+              <p className="stat-number">${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}</p>
               {(dashboardData.resumen?.ingresos_recientes === 0) && (
-                <span className="stat-hint-muted">
-                  Sin ingresos este mes
-                </span>
+                <span className="stat-hint-muted">Sin ingresos este mes</span>
               )}
             </div>
           </PermissionGuard>
@@ -838,7 +891,6 @@ const Dueno = () => {
               <h2><TrendingUpIcon /> Tendencia de Ingresos</h2>
               <Chart options={trendChartOptions} series={trendChartSeries} type="line" height={smallChartHeight} />
             </div>
-
             <div className="grafica-nueva-card">
               <h2><PieChartIcon /> Distribución por Categoría</h2>
               <Chart options={categoriaDistribucionOptions} series={distribucionSeries} type="donut" height={smallChartHeight} />
@@ -846,18 +898,13 @@ const Dueno = () => {
           </div>
         )}
 
-        {/* PROYECCIÓN DE COBRANZA */}
+        {/* PROYECCIÓN */}
         <div className="proyeccion-card">
-          <h2>
-            <EventNoteIcon />
-            Proyección de Cobranza (Próximos 30 días)
-          </h2>
+          <h2><EventNoteIcon /> Proyección de Cobranza (Próximos 30 días)</h2>
           <div className="proyeccion-grid">
             <div className="proyeccion-item">
               <span className="proyeccion-label">Por cobrar</span>
-              <span className="proyeccion-valor success">
-                ${proyeccion.por_cobrar_30d.toLocaleString()}
-              </span>
+              <span className="proyeccion-valor success">${proyeccion.por_cobrar_30d.toLocaleString()}</span>
             </div>
             <div className="proyeccion-item">
               <span className="proyeccion-label">Cuotas que vencen</span>
@@ -865,54 +912,36 @@ const Dueno = () => {
             </div>
             <div className="proyeccion-item">
               <span className="proyeccion-label">En riesgo</span>
-              <span className="proyeccion-valor warning">
-                ${proyeccion.en_riesgo.toLocaleString()}
-              </span>
+              <span className="proyeccion-valor warning">${proyeccion.en_riesgo.toLocaleString()}</span>
             </div>
             <div className="proyeccion-item">
               <span className="proyeccion-label">Ya atrasado</span>
-              <span className="proyeccion-valor danger">
-                ${proyeccion.ya_atrasado.toLocaleString()}
-              </span>
+              <span className="proyeccion-valor danger">${proyeccion.ya_atrasado.toLocaleString()}</span>
             </div>
           </div>
         </div>
 
-        {/* COHORTES DE ANTIGÜEDAD */}
+        {/* COHORTES */}
         <div className="nueva-seccion">
-          <h2>
-            <TimelineIcon />
-            Antigüedad de la Cartera
-            <span className="seccion-badge">Riesgo por tiempo</span>
-          </h2>
+          <h2><TimelineIcon /> Antigüedad de la Cartera<span className="seccion-badge">Riesgo por tiempo</span></h2>
           <p className="chart-subtitle">
             Distribución de empeños según hace cuánto tiempo se otorgaron. Los de mayor antigüedad son los más riesgosos.
           </p>
-          <Chart
-            options={cohortesChartOptions}
-            series={cohortesChartSeries}
-            type="bar"
-            height={220}
-          />
+          <Chart options={cohortesChartOptions} series={cohortesChartSeries} type="bar" height={220} />
         </div>
 
         {/* CLIENTES EN RIESGO */}
         <div className="nueva-seccion">
           <h2>
-            <NotificationsActiveIcon />
-            Clientes en Riesgo
-            <span className="seccion-badge warning">
-              {clientesEnRiesgo.length} requieren atención
-            </span>
+            <NotificationsActiveIcon /> Clientes en Riesgo
+            <span className="seccion-badge warning">{clientesEnRiesgo.length} requieren atención</span>
           </h2>
           <div className="clientes-riesgo-lista">
             {clientesEnRiesgo.map((c, i) => (
               <div key={i} className={`cliente-riesgo-item ${c.alerta}`}>
                 <div className="cliente-riesgo-info">
                   <strong>{c.nombre}</strong>
-                  <span className="cliente-riesgo-dias">
-                    {c.dias_sin_pagar} días sin pagar
-                  </span>
+                  <span className="cliente-riesgo-dias">{c.dias_sin_pagar} días sin pagar</span>
                 </div>
                 <div className="cliente-riesgo-deuda">
                   <span>Deuda:</span>
@@ -931,10 +960,7 @@ const Dueno = () => {
             <div className="tabla-container">
               <table className="tabla-moderna">
                 <thead>
-                  <tr>
-                    <th>Cliente</th><th>Empeños</th><th>Monto Prestado</th>
-                    <th>Ganancia Generada</th><th>% Ganancia</th><th>Último Empeño</th>
-                  </tr>
+                  <tr><th>Cliente</th><th>Empeños</th><th>Monto Prestado</th><th>Ganancia Generada</th><th>% Ganancia</th><th>Último Empeño</th></tr>
                 </thead>
                 <tbody>
                   {dashboardData.top_clientes?.map(cliente => (
@@ -963,10 +989,7 @@ const Dueno = () => {
             <div className="tabla-container">
               <table className="tabla-moderna">
                 <thead>
-                  <tr>
-                    <th>Cliente</th><th>Total Prestado</th><th>Deuda Vencida</th>
-                    <th>Pérdida Proyectada</th><th>% Pérdida</th><th>Días en Mora</th><th>Último Pago</th>
-                  </tr>
+                  <tr><th>Cliente</th><th>Total Prestado</th><th>Deuda Vencida</th><th>Pérdida Proyectada</th><th>% Pérdida</th><th>Días en Mora</th><th>Último Pago</th></tr>
                 </thead>
                 <tbody>
                   {morosidad.map((item, index) => {
@@ -1003,11 +1026,7 @@ const Dueno = () => {
             <div className="tabla-container">
               <table className="tabla-moderna">
                 <thead>
-                  <tr>
-                    <th>Cliente</th><th>Artículo</th><th>Folio</th><th>N° Pago</th>
-                    <th>Fecha Programada</th><th>Monto Total</th><th>Pagado</th>
-                    <th>Saldo Restante</th><th>Estado</th>
-                  </tr>
+                  <tr><th>Cliente</th><th>Artículo</th><th>Folio</th><th>N° Pago</th><th>Fecha Programada</th><th>Monto Total</th><th>Pagado</th><th>Saldo Restante</th><th>Estado</th></tr>
                 </thead>
                 <tbody>
                   {amortizacionesPendientes.length === 0 ? (
@@ -1041,21 +1060,11 @@ const Dueno = () => {
 
         {/* ANÁLISIS POR CATEGORÍA */}
         <div className="nueva-seccion">
-          <h2>
-            <CategoryIcon />
-            Análisis por Categoría
-            <span className="seccion-badge">Rentabilidad y riesgo</span>
-          </h2>
+          <h2><CategoryIcon /> Análisis por Categoría<span className="seccion-badge">Rentabilidad y riesgo</span></h2>
           <div className="tabla-container">
             <table className="tabla-moderna">
               <thead>
-                <tr>
-                  <th>Categoría</th>
-                  <th>Cantidad</th>
-                  <th>Ganancia Promedio</th>
-                  <th>Tasa de Mora</th>
-                  <th>Rentabilidad</th>
-                </tr>
+                <tr><th>Categoría</th><th>Cantidad</th><th>Ganancia Promedio</th><th>Tasa de Mora</th><th>Rentabilidad</th></tr>
               </thead>
               <tbody>
                 {analisisCategorias.map((cat, i) => (
@@ -1068,11 +1077,7 @@ const Dueno = () => {
                         {cat.tasa_mora}%
                       </span>
                     </td>
-                    <td>
-                      <span className={`rentabilidad-tag ${cat.rentabilidad.toLowerCase()}`}>
-                        {cat.rentabilidad}
-                      </span>
-                    </td>
+                    <td><span className={`rentabilidad-tag ${cat.rentabilidad.toLowerCase()}`}>{cat.rentabilidad}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -1140,7 +1145,46 @@ const Dueno = () => {
         </div>
       </div>
 
-      {/* MODALES */}
+      {/* ============================================ */}
+      {/* ✅ MODAL DE SUSCRIPCIÓN / PLANES */}
+      {/* ============================================ */}
+      {showSuscripcionModal && estadoSuscripcion && (
+        <div className="modal-suscripcion-overlay" onClick={cerrarSuscripcionModal}>
+          <div className="modal-suscripcion" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={cerrarSuscripcionModal}>
+              <CloseIcon />
+            </button>
+
+            <div className="modal-header">
+              <h2>
+                <CreditCardIcon style={{ color: "#f0d89d" }} /> Mejorar mi plan
+              </h2>
+              <span className="cliente-id">
+                Plan actual: <strong>{estadoSuscripcion.planNombre}</strong>
+                {estadoSuscripcion.diasRestantes > 0 &&
+                  ` · ${estadoSuscripcion.diasRestantes} días restantes`}
+              </span>
+            </div>
+
+            <div className="modal-body">
+              <div className={"suscripcion-banner " + (estadoSuscripcion.vencido ? "danger" : "warning")}>
+                {estadoSuscripcion.vencido
+                  ? "Tu suscripción venció. Renueva ahora para no perder acceso a tus empeños, inventario y reportes."
+                  : "Tu plan vence pronto. Renueva ahora o cambia de plan para no interrumpir tu servicio."}
+              </div>
+
+              <PricingComparison readOnly currentPlanId={estadoSuscripcion.planClave} />
+            </div>
+
+            <div className="modal-acciones">
+              
+              <button className="btn-actualizar" onClick={abrirPortalOGestion}>
+                {estadoSuscripcion.stripeSubscriptionId ? "Gestionar suscripción" : "Configurar plan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL DE PERFIL */}
       {showPerfil && (
@@ -1157,30 +1201,12 @@ const Dueno = () => {
                   <img src={datosPerfil.fotoPerfil} alt={datosPerfil.nombre} />
                 </div>
                 <div className="perfil-info-grid">
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Nombre completo</span>
-                    <span className="perfil-valor">{datosPerfil.nombre}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Email</span>
-                    <span className="perfil-valor">{datosPerfil.email}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Teléfono</span>
-                    <span className="perfil-valor">{datosPerfil.telefono}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Rol</span>
-                    <span className="perfil-valor">{datosPerfil.rol}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Sucursal</span>
-                    <span className="perfil-valor">{datosPerfil.sucursal}</span>
-                  </div>
-                  <div className="perfil-info-item">
-                    <span className="perfil-label">Miembro desde</span>
-                    <span className="perfil-valor">{datosPerfil.fechaRegistro}</span>
-                  </div>
+                  <div className="perfil-info-item"><span className="perfil-label">Nombre completo</span><span className="perfil-valor">{datosPerfil.nombre}</span></div>
+                  <div className="perfil-info-item"><span className="perfil-label">Email</span><span className="perfil-valor">{datosPerfil.email}</span></div>
+                  <div className="perfil-info-item"><span className="perfil-label">Teléfono</span><span className="perfil-valor">{datosPerfil.telefono}</span></div>
+                  <div className="perfil-info-item"><span className="perfil-label">Rol</span><span className="perfil-valor">{datosPerfil.rol}</span></div>
+                  <div className="perfil-info-item"><span className="perfil-label">Sucursal</span><span className="perfil-valor">{datosPerfil.sucursal}</span></div>
+                  <div className="perfil-info-item"><span className="perfil-label">Miembro desde</span><span className="perfil-valor">{datosPerfil.fechaRegistro}</span></div>
                 </div>
               </div>
             </div>
