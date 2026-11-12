@@ -496,9 +496,10 @@ const TiendaOnline = () => {
             <div className="nueva-seccion">
               <h2><SearchIcon /> Filtros y búsqueda</h2>
               <div className="filtros-tienda">
+                
                 <div className="buscador">
-                  <SearchIcon className="buscador-icon" />
-                  <input
+                  
+                  <input 
                     type="text"
                     placeholder="Buscar productos..."
                     value={busqueda}

@@ -705,7 +705,7 @@ const TiendaOnline = () => {
             {/* PENDIENTES */}
             <div className="nueva-seccion">
               <h2>
-                <PendingIcon /> Pendientes de entregar
+                <PendingIcon /> Pendiente
                 <span className="seccion-badge">{pendientes.length}</span>
               </h2>
 
@@ -788,7 +788,7 @@ const TiendaOnline = () => {
             {/* ENTREGADOS */}
             <div className="nueva-seccion">
               <h2>
-                <CheckCircleIcon /> Ya entregados
+                <CheckCircleIcon /> Entregado
                 <span className="seccion-badge">{entregados.length}</span>
               </h2>
               {entregados.length === 0 ? (
