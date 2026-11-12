@@ -1,7 +1,6 @@
-// Reportes.jsx — Versión completa con datos reales
-// Reemplaza el archivo anterior completo
-
+// Reportes.jsx — Versión completa con datos reales + permisos
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import KPIsFinancieros   from "../components/KPIsFinancieros";
 import { useReportes }   from "../hooks/useReportes";
@@ -9,6 +8,8 @@ import ApexCharts        from "apexcharts";
 import jsPDF             from "jspdf";
 import autoTable         from "jspdf-autotable";
 import * as XLSX         from "xlsx";
+import permissionService from "../services/permisoService";
+import "./Reporte.css";
 
 // Iconos MUI
 import AssessmentIcon    from "@mui/icons-material/Assessment";
@@ -22,8 +23,6 @@ import PeopleIcon        from "@mui/icons-material/People";
 import InventoryIcon     from "@mui/icons-material/Inventory";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import RefreshIcon       from "@mui/icons-material/Refresh";
-import CloseIcon         from "@mui/icons-material/Close";
-import "./Reporte.css";
 
 // ─── Tabs del módulo ──────────────────────────────────────────────────────────
 const TABS = [
@@ -36,13 +35,26 @@ const TABS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const hoy        = new Date();
-const isoHoy     = hoy.toISOString().slice(0, 7);           // YYYY-MM
+const isoHoy     = hoy.toISOString().slice(0, 7);
 const isoInicio  = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-                     .toISOString().slice(0, 10);            // primer día del mes
-const isoFin     = hoy.toISOString().slice(0, 10);          // hoy
+                     .toISOString().slice(0, 10);
+const isoFin     = hoy.toISOString().slice(0, 10);
 
 // ══════════════════════════════════════════════════════════════════════════════
 const Reportes = () => {
+  const navigate = useNavigate();
+
+  // ── Permisos ──────────────────────────────────────────────────────────────
+  const puedeVerReportes = permissionService.hasPermission('ver_reportes');
+  const puedeExportar    = permissionService.hasPermission('ver_reportes'); // ajusta si tienes 'exportar_reportes'
+
+  // ── Redirigir si no tiene permiso (vía useEffect) ─────────────────────────
+  useEffect(() => {
+    if (!puedeVerReportes) {
+      navigate('/home');
+    }
+  }, [puedeVerReportes, navigate]);
+
   // ── Estado de filtros ─────────────────────────────────────────────────────
   const [inicio, setInicio]           = useState(isoInicio);
   const [fin,    setFin]              = useState(isoFin);
@@ -102,6 +114,11 @@ const Reportes = () => {
 
   // ── Exportar PDF ──────────────────────────────────────────────────────────
   const exportarPDF = async () => {
+    if (!puedeExportar) {
+      alert('No tienes permiso para exportar reportes');
+      return;
+    }
+
     const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
     // Página 1 — KPIs
@@ -166,7 +183,6 @@ const Reportes = () => {
         headStyles: { fillColor: [30, 58, 138], textColor: 255 },
       });
 
-      // Totales al final
       const y = pdf.lastAutoTable.finalY + 8;
       pdf.setFontSize(11); pdf.setTextColor(30, 58, 138);
       pdf.text(`Total entradas: ${formatMXN(flujoCaja.totales.entradas)}`, 15, y);
@@ -179,9 +195,13 @@ const Reportes = () => {
 
   // ── Exportar Excel ────────────────────────────────────────────────────────
   const exportarExcel = () => {
+    if (!puedeExportar) {
+      alert('No tienes permiso para exportar reportes');
+      return;
+    }
+
     const wb = XLSX.utils.book_new();
 
-    // Hoja 1: KPIs
     XLSX.utils.book_append_sheet(wb,
       XLSX.utils.json_to_sheet([
         { KPI: "Capital prestado",     Valor: kpis.capital_prestado },
@@ -196,7 +216,6 @@ const Reportes = () => {
       "KPIs"
     );
 
-    // Hoja 2: Tendencia de empeños
     if (empeños?.tendencia_mensual?.length) {
       XLSX.utils.book_append_sheet(wb,
         XLSX.utils.json_to_sheet(empeños.tendencia_mensual),
@@ -204,7 +223,6 @@ const Reportes = () => {
       );
     }
 
-    // Hoja 3: Flujo de caja
     if (flujoCaja?.movimientos?.length) {
       XLSX.utils.book_append_sheet(wb,
         XLSX.utils.json_to_sheet(flujoCaja.movimientos),
@@ -212,7 +230,6 @@ const Reportes = () => {
       );
     }
 
-    // Hoja 4: Clientes con atraso
     if (clientes?.con_atraso?.length) {
       XLSX.utils.book_append_sheet(wb,
         XLSX.utils.json_to_sheet(clientes.con_atraso),
@@ -220,7 +237,6 @@ const Reportes = () => {
       );
     }
 
-    // Hoja 5: Inventario más empeñado
     if (inventario?.mas_empenados?.length) {
       XLSX.utils.book_append_sheet(wb,
         XLSX.utils.json_to_sheet(inventario.mas_empenados),
@@ -232,10 +248,12 @@ const Reportes = () => {
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
+  if (!puedeVerReportes) {
+    return null;
+  }
+
   return (
     <div className="dashboard">
-
-
       <div className="content">
 
         {/* HEADER */}
@@ -247,16 +265,21 @@ const Reportes = () => {
               {filtros.inicio} → {filtros.fin}
             </p>
           </h1>
+
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn-exportar" onClick={refetch} title="Actualizar datos">
               <RefreshIcon /> Actualizar
             </button>
-            <button className="btn-exportar" onClick={exportarExcel}>
-              <TableChartIcon /> Excel
-            </button>
-            <button className="btn-exportar" onClick={exportarPDF}>
-              <PictureAsPdfIcon /> PDF
-            </button>
+            {puedeExportar && (
+              <>
+                <button className="btn-exportar" onClick={exportarExcel}>
+                  <TableChartIcon /> Excel
+                </button>
+                <button className="btn-exportar" onClick={exportarPDF}>
+                  <PictureAsPdfIcon /> PDF
+                </button>
+              </>
+            )}
           </div>
         </div>
 

@@ -1,10 +1,12 @@
-// src/DuenoTienda/TiendaOnline.jsx — VERSIÓN FUSIONADA (Productos + Apartados)
+// src/DuenoTienda/TiendaOnline.jsx — VERSIÓN FUSIONADA (Productos + Apartados + Permisos)
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTienda } from "../hooks/useTienda";
 import AppModal from "../components/AppModal";
 import ProductoModal from "./ProductoModal";
 import ApartadosAdminService from "../services/ApartadosAdminService";
 import "./TiendaOnline.css";
+import permissionService from "../services/permisoService";
 
 // Iconos
 import StorefrontIcon from '@mui/icons-material/Storefront';
@@ -41,6 +43,21 @@ const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
 const CLOUDINARY_UPLOAD_PRESET = "ophelina_productos";
 
 const TiendaOnline = () => {
+  const navigate = useNavigate();
+
+  // ========== PERMISOS ==========
+  const puedeVerTienda         = permissionService.hasPermission('ver_tienda');
+  const puedeCrearProductos    = permissionService.hasPermission('crear_productos');
+  const puedeEditarProductos   = permissionService.hasPermission('editar_productos');
+  const puedeEliminarProductos = permissionService.hasPermission('eliminar_productos');
+
+  // ========== REDIRIGIR SI NO TIENE PERMISO (vía useEffect) ==========
+  useEffect(() => {
+    if (!puedeVerTienda) {
+      navigate('/home');
+    }
+  }, [puedeVerTienda, navigate]);
+
   // ========== HOOK DE TIENDA ==========
   const {
     productos,
@@ -116,7 +133,7 @@ const TiendaOnline = () => {
   const categorias = ["Todas", "Joyería", "Electrónica", "Herramientas", "Relojes", "Instrumentos", "Otros"];
   const estados = ["Todos", "Nuevo", "Como nuevo", "Buen estado", "Aceptable"];
 
-  // ========== CARGA DE APARTADOS (solo la 1ra vez al entrar a la tab) ==========
+  // ========== CARGA DE APARTADOS ==========
   useEffect(() => {
     if (tabActiva === "apartados" && !apartadosCargados) {
       cargarApartados("");
@@ -146,7 +163,7 @@ const TiendaOnline = () => {
     }
   };
 
-  // Debounce de búsqueda en apartados
+  // Debounce búsqueda en apartados
   useEffect(() => {
     if (tabActiva !== "apartados") return;
     const timeout = setTimeout(() => {
@@ -212,23 +229,39 @@ const TiendaOnline = () => {
 
   // ========== MANEJADORES DE PRODUCTOS ==========
   const abrirNuevoProducto = () => {
+    if (!puedeCrearProductos) {
+      alert('No tienes permiso para crear productos');
+      return;
+    }
     setModoEdicion(false);
     setProductoSeleccionado(null);
     setModalProductoAbierto(true);
   };
 
   const abrirEditarProducto = (producto) => {
+    if (!puedeEditarProductos) {
+      alert('No tienes permiso para editar productos');
+      return;
+    }
     setModoEdicion(true);
     setProductoSeleccionado(producto);
     setModalProductoAbierto(true);
   };
 
   const abrirDetalleProducto = (producto) => {
+    if (!puedeVerTienda) {
+      alert('No tienes permiso para ver detalles de productos');
+      return;
+    }
     setProductoSeleccionado(producto);
     setModalDetalleAbierto(true);
   };
 
   const abrirEliminarProducto = (producto) => {
+    if (!puedeEliminarProductos) {
+      alert('No tienes permiso para eliminar productos');
+      return;
+    }
     setProductoSeleccionado(producto);
     setModalEliminarAbierto(true);
   };
@@ -280,6 +313,11 @@ const TiendaOnline = () => {
   };
 
   const handleEliminarProducto = async () => {
+    if (!puedeEliminarProductos) {
+      alert('No tienes permiso para eliminar productos');
+      return;
+    }
+
     try {
       await eliminarProducto(productoSeleccionado.id_producto);
       setModalEliminarAbierto(false);
@@ -300,6 +338,10 @@ const TiendaOnline = () => {
   };
 
   const handleToggleVisible = async (id) => {
+    if (!puedeEditarProductos) {
+      alert('No tienes permiso para cambiar la visibilidad del producto');
+      return;
+    }
     try { await toggleVisibilidad(id); }
     catch (err) {
       mostrarModal({ type: "error", title: "Error", message: "No se pudo cambiar la visibilidad." });
@@ -307,6 +349,10 @@ const TiendaOnline = () => {
   };
 
   const handleToggleDestacado = async (id) => {
+    if (!puedeEditarProductos) {
+      alert('No tienes permiso para destacar productos');
+      return;
+    }
     try { await toggleDestacado(id); }
     catch (err) {
       mostrarModal({ type: "error", title: "Error", message: "No se pudo cambiar el estado destacado." });
@@ -414,48 +460,48 @@ const TiendaOnline = () => {
   };
 
   // ========== RENDER ==========
+  if (!puedeVerTienda) {
+    return null;
+  }
+
   return (
     <div className="dashboard">
-      
       <div className="content">
         <div className="tienda-toolbar">
-  {/* Tabs (izquierda) */}
-  <div className="tienda-tabs">
-    <button
-      className={`tienda-tab ${tabActiva === "productos" ? "activo" : ""}`}
-      onClick={() => setTabActiva("productos")}
-    >
-      <StorefrontIcon fontSize="small" />
-      Productos
-    </button>
+          {/* Tabs (izquierda) */}
+          <div className="tienda-tabs">
+            <button
+              className={`tienda-tab ${tabActiva === "productos" ? "activo" : ""}`}
+              onClick={() => setTabActiva("productos")}
+            >
+              <StorefrontIcon fontSize="small" />
+              Productos
+            </button>
 
-    <button
-      className={`tienda-tab ${tabActiva === "apartados" ? "activo" : ""}`}
-      onClick={() => setTabActiva("apartados")}
-    >
-      <ShoppingBagIcon fontSize="small" />
-      Apartados
-      {pendientes.length > 0 && (
-        <span className="tienda-tab-badge">{pendientes.length}</span>
-      )}
-    </button>
-  </div>
+            <button
+              className={`tienda-tab ${tabActiva === "apartados" ? "activo" : ""}`}
+              onClick={() => setTabActiva("apartados")}
+            >
+              <ShoppingBagIcon fontSize="small" />
+              Apartados
+              {pendientes.length > 0 && (
+                <span className="tienda-tab-badge">{pendientes.length}</span>
+              )}
+            </button>
+          </div>
 
-  {/* Botones de acción (derecha) — solo en tab Productos */}
-  {tabActiva === "productos" && (
-    <div className="tienda-toolbar-actions">
-      
-      <button className="btn-nuevo" onClick={abrirNuevoProducto}>
-        <AddIcon fontSize="small" />
-        Nuevo Producto
-      </button>
-    </div>
-  )}
-</div>
-
-        
-
-       
+          {/* Botones de acción (derecha) — solo en tab Productos */}
+          {tabActiva === "productos" && (
+            <div className="tienda-toolbar-actions">
+              {puedeCrearProductos && (
+                <button className="btn-nuevo" onClick={abrirNuevoProducto}>
+                  <AddIcon fontSize="small" />
+                  Nuevo Producto
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* ============================================ */}
         {/* TAB: PRODUCTOS */}
@@ -489,17 +535,14 @@ const TiendaOnline = () => {
                 <h3>Destacados</h3>
                 <p className="stat-number">{estadisticas?.destacados || 0}</p>
               </div>
-              
             </div>
 
             {/* FILTROS */}
             <div className="nueva-seccion">
               <h2><SearchIcon /> Filtros y búsqueda</h2>
               <div className="filtros-tienda">
-                
                 <div className="buscador">
-                  
-                  <input 
+                  <input
                     type="text"
                     placeholder="Buscar productos..."
                     value={busqueda}
@@ -604,18 +647,26 @@ const TiendaOnline = () => {
                             <button className="btn-icono btn-ver" onClick={() => abrirDetalleProducto(producto)} title="Ver detalles">
                               <VisibilityIcon fontSize="small" />
                             </button>
-                            <button className="btn-icono btn-editar" onClick={() => abrirEditarProducto(producto)} title="Editar">
-                              <EditIcon fontSize="small" />
-                            </button>
-                            <button className="btn-icono btn-visible" onClick={() => handleToggleVisible(producto.id_producto)}>
-                              {producto.visible ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                            </button>
-                            <button className="btn-icono btn-destacar" onClick={() => handleToggleDestacado(producto.id_producto)}>
-                              {producto.destacado ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
-                            </button>
-                            <button className="btn-icono btn-eliminar" onClick={() => abrirEliminarProducto(producto)} title="Eliminar">
-                              <DeleteIcon fontSize="small" />
-                            </button>
+                            {puedeEditarProductos && (
+                              <button className="btn-icono btn-editar" onClick={() => abrirEditarProducto(producto)} title="Editar">
+                                <EditIcon fontSize="small" />
+                              </button>
+                            )}
+                            {puedeEditarProductos && (
+                              <button className="btn-icono btn-visible" onClick={() => handleToggleVisible(producto.id_producto)}>
+                                {producto.visible ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                              </button>
+                            )}
+                            {puedeEditarProductos && (
+                              <button className="btn-icono btn-destacar" onClick={() => handleToggleDestacado(producto.id_producto)}>
+                                {producto.destacado ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
+                              </button>
+                            )}
+                            {puedeEliminarProductos && (
+                              <button className="btn-icono btn-eliminar" onClick={() => abrirEliminarProducto(producto)} title="Eliminar">
+                                <DeleteIcon fontSize="small" />
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -882,7 +933,7 @@ const TiendaOnline = () => {
           onError={(err) => mostrarModal({ type: "error", ...err })}
         />
 
-        {/* MODAL DETALLE PRODUCTO (solo cuando tab = productos) */}
+        {/* MODAL DETALLE PRODUCTO */}
         {modalDetalleAbierto && productoSeleccionado && (
           <div className="modal-overlay" onClick={() => setModalDetalleAbierto(false)}>
             <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -918,13 +969,24 @@ const TiendaOnline = () => {
                   </div>
                 </div>
               </div>
+
               <div className="modal-acciones">
-                <button className="btn-gold" onClick={() => { setModalDetalleAbierto(false); abrirEditarProducto(productoSeleccionado); }}>
-                  <EditIcon /> Editar
-                </button>
-                <button className="btn-cancelar" onClick={() => { setModalDetalleAbierto(false); abrirEliminarProducto(productoSeleccionado); }}>
-                  <DeleteIcon /> Eliminar
-                </button>
+                {puedeEditarProductos && (
+                  <button className="btn-gold" onClick={() => { setModalDetalleAbierto(false); abrirEditarProducto(productoSeleccionado); }}>
+                    <EditIcon /> Editar
+                  </button>
+                )}
+                {puedeEliminarProductos && (
+                  <button className="btn-cancelar" onClick={() => { setModalDetalleAbierto(false); abrirEliminarProducto(productoSeleccionado); }}>
+                    <DeleteIcon /> Eliminar
+                  </button>
+                )}
+                {!puedeEditarProductos && !puedeEliminarProductos && (
+                  <div className="sin-permisos-modal">
+                    <LockIcon fontSize="small" />
+                    <span>Solo visualización - No tienes permisos para modificar</span>
+                  </div>
+                )}
                 <button className="btn-cancelar" onClick={() => setModalDetalleAbierto(false)}>
                   <CloseIcon /> Cerrar
                 </button>
@@ -934,7 +996,7 @@ const TiendaOnline = () => {
         )}
 
         {/* MODAL ELIMINAR PRODUCTO */}
-        {modalEliminarAbierto && productoSeleccionado && (
+        {modalEliminarAbierto && productoSeleccionado && puedeEliminarProductos && (
           <div className="modal-overlay" onClick={() => setModalEliminarAbierto(false)}>
             <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
               <div className="modal-icono"><WarningIcon /></div>

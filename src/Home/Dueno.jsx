@@ -1,4 +1,4 @@
-// src/Home/Dueno.jsx - VERSIÓN HARDCODEADA CON MÉTRICAS NUEVAS
+// src/Home/Dueno.jsx - VERSIÓN FUSIONADA (Dashboard + permisos + modales de perfil/alertas)
 import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
 import "./dueno.css";
@@ -7,10 +7,11 @@ import { useSearchParams } from 'react-router-dom';
 import { stripeService } from '../services/stripeService';
 import PaymentModal from '../components/PaymentModal';
 import { useDashboard } from '../contexts/DashboardContext';
+import { usePermissions } from '../hooks/usePermissions';
+import PermissionGuard from '../components/PermissionGuard';
 // Al inicio de Dueno.jsx, importar:
 import { calcularHealthScore } from '../utils/healthScore';
 import { calcularProyeccionCobranza } from '../utils/proyeccionCobranza';
-
 
 // Iconos
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -39,8 +40,10 @@ import FlagIcon from '@mui/icons-material/Flag';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 import ShieldIcon from '@mui/icons-material/Shield';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import CategoryIcon from '@mui/icons-material/Category';
 import TimelineIcon from '@mui/icons-material/Timeline';
+import ErrorIcon from '@mui/icons-material/Error';
 
 const Dueno = () => {
   // ============================================
@@ -49,6 +52,11 @@ const Dueno = () => {
   const {
     data, cargando, error, cargar, refrescar, edadCache
   } = useDashboard();
+
+  // ============================================
+  // HOOK DE PERMISOS
+  // ============================================
+  const { hasPermission, hasAnyPermission } = usePermissions();
 
   // ============================================
   // ESTADOS LOCALES
@@ -75,9 +83,9 @@ const Dueno = () => {
   useEffect(() => { cargar(); }, [cargar]);
 
   // ============================================
-  // ✅ NUEVO: DATOS HARDCODEADOS DE EJEMPLO
+  // DATOS HARDCODEADOS DE EJEMPLO
   // ============================================
-  
+
   // Comparación vs mes anterior (para las cards)
   const deltas = {
     empenos_activos: { actual: 9, anterior: 6, cambio: 3 },
@@ -93,10 +101,8 @@ const Dueno = () => {
     perdida: 320236.33,
     rentabilidad_mensual: 2.45,
     rentabilidad_anualizada: 29.4,
-    margen_neto: -57.5, // si es negativo porque la pérdida supera la ganancia
+    margen_neto: -57.5,
   };
-
-
 
   // Por sucursal
   const sucursales = [
@@ -112,7 +118,7 @@ const Dueno = () => {
     { rango: "+90 días", cantidad: 9, monto: 270364, color: "#dc2626" },
   ];
 
-  // Actividad reciente mejorada (múltiples tipos)
+  // Actividad reciente mejorada
   const actividadMejorada = [
     { tipo: "pago", descripcion: "Pago recibido de Hank Kilback", fecha: "hoy, 14:32", monto: 700 },
     { tipo: "empeno", descripcion: "Nuevo empeño: Anillo de oro 14k", fecha: "hoy, 12:15", monto: 8500, cliente: "María García" },
@@ -131,9 +137,8 @@ const Dueno = () => {
     { categoria: "Instrumentos", cantidad: 3, ganancia_promedio: 1400, tasa_mora: 33, rentabilidad: "Media" },
   ];
 
-  // Health Score
   // Health Score (calculado con datos reales)
-const healthScore = calcularHealthScore(data);
+  const healthScore = calcularHealthScore(data);
 
   // Clientes en riesgo
   const clientesEnRiesgo = [
@@ -234,6 +239,8 @@ const healthScore = calcularHealthScore(data);
   const [showVencidos, setShowVencidos] = useState(false);
   const [showProximos, setShowProximos] = useState(false);
   const [showIngresos, setShowIngresos] = useState(false);
+  const [showAlertas, setShowAlertas] = useState(false);
+  const [showPerfil, setShowPerfil] = useState(false);
   const [showPrecioOroModal, setShowPrecioOroModal] = useState(false);
   const [userRole, setUserRole] = useState('');
 
@@ -247,6 +254,17 @@ const healthScore = calcularHealthScore(data);
   const [empenosVencidos, setEmpenosVencidos] = useState([]);
   const [proximosVencer, setProximosVencer] = useState([]);
   const [ingresosRecientes, setIngresosRecientes] = useState([]);
+
+  // Datos de perfil desde localStorage
+  const [datosPerfil, setDatosPerfil] = useState({
+    nombre: "Usuario",
+    email: "",
+    telefono: "Sin teléfono",
+    rol: "Usuario",
+    fechaRegistro: "Fecha no disponible",
+    sucursal: "Casa Matriz - Mérida",
+    fotoPerfil: "https://ui-avatars.com/api/?name=Usuario&size=128&background=1e3a8a&color=fff&bold=true"
+  });
 
   // ============================================
   // CONFIGURACIÓN DE GRÁFICAS
@@ -343,7 +361,7 @@ const healthScore = calcularHealthScore(data);
     }
   };
 
-  // ✅ NUEVO: gráfica de cohortes (barras horizontales)
+  // Gráfica de cohortes (barras horizontales)
   const cohortesChartOptions = {
     chart: { type: "bar", toolbar: { show: false } },
     plotOptions: {
@@ -410,8 +428,21 @@ const healthScore = calcularHealthScore(data);
 
   const esAdmin = () => userRole === 'Administrador' || userRole === 'Dueño' || userRole === 'Admin';
   const esGerente = () => userRole === 'Gerente' || userRole === 'gerente' || userRole === 'GERENTE';
-  const puedeVerEvolucionAcumulada = () => esAdmin();
-  const puedeVerGraficasBasicas = () => esAdmin() || esGerente();
+
+  const puedeVerEvolucionAcumulada = () =>
+    hasPermission('ver_dashboard') && hasAnyPermission(['ver_reportes', 'ver_dashboard']);
+
+  const puedeVerGraficasBasicas = () =>
+    hasAnyPermission(['ver_reportes', 'ver_dashboard']);
+
+  const puedeVerMorosidad = () =>
+    hasAnyPermission(['ver_reportes', 'ver_empenos']);
+
+  const puedeVerTopClientes = () =>
+    hasPermission('ver_clientes');
+
+  const puedeVerArticulosMasEmpenados = () =>
+    hasAnyPermission(['ver_tienda', 'ver_empenos']);
 
   // ============================================
   // CARGA SECUNDARIA
@@ -422,6 +453,15 @@ const healthScore = calcularHealthScore(data);
       if (userStr) {
         const user = JSON.parse(userStr);
         setUserRole(user.rol || 'Empleado');
+        setDatosPerfil({
+          nombre: user.nombre || "Usuario",
+          email: user.correo || "",
+          telefono: user.telefono || "Sin teléfono",
+          rol: user.rol || "Usuario",
+          fechaRegistro: user.fecha_registro ? new Date(user.fecha_registro).toLocaleDateString('es-MX') : "Fecha no disponible",
+          sucursal: user.sucursal || "Casa Matriz - Mérida",
+          fotoPerfil: user.foto_perfil || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre || 'Usuario')}&size=128&background=1e3a8a&color=fff&bold=true`
+        });
       }
       const response = await api.get('/user');
       if (response.data.success) {
@@ -452,6 +492,7 @@ const healthScore = calcularHealthScore(data);
   // CARGAS DE MODALES
   // ============================================
   const cargarActivos = async () => {
+    if (!hasPermission('ver_empenos')) return;
     try {
       const response = await api.get('/home/activos');
       if (response.data.success) {
@@ -464,6 +505,7 @@ const healthScore = calcularHealthScore(data);
   };
 
   const cargarVencidos = async () => {
+    if (!hasPermission('ver_empenos')) return;
     try {
       const response = await api.get('/home/vencidos');
       if (response.data.success) {
@@ -476,6 +518,7 @@ const healthScore = calcularHealthScore(data);
   };
 
   const cargarProximos = async () => {
+    if (!hasPermission('ver_empenos')) return;
     try {
       const response = await api.get('/home/proximos');
       if (response.data.success) {
@@ -488,6 +531,7 @@ const healthScore = calcularHealthScore(data);
   };
 
   const cargarIngresos = async () => {
+    if (!hasPermission('ver_pagos')) return;
     setIngresosRecientes([
       { id: 1, concepto: "Pago de Juan Pérez", monto: 5000, fecha: "10/03/2024" },
       { id: 2, concepto: "Pago de María García", monto: 3500, fecha: "09/03/2024" }
@@ -551,225 +595,222 @@ const healthScore = calcularHealthScore(data);
   // ============================================
   return (
     <div className="dashboard">
-     
-      
       <div className="content">
 
-        {/* TOOLBAR */}
-        
+        {/* HEADER con perfil y alertas */}
+        <div className="owner-header">
+          <div className="header-top">
+            <h1>
+              Hola, {datosPerfil.nombre.split(' ')[0] || 'Usuario'}
+              <p className="header-sub">Conoce el estado de tu casa de empeño</p>
+            </h1>
 
-      {/* ✅ NUEVO: HEALTH SCORE + META DEL MES */}
-<div className="hero-grid">
-  {/* Health Score */}
-  <div className="hero-card health-score-card">
-    <div className="hero-card-header">
-      <ShieldIcon />
-      <span>Salud del Negocio</span>
-    </div>
-    <div className="health-score-content">
-      <div className="health-score-circle">
-        <svg viewBox="0 0 100 100" className="health-score-svg">
-          <circle cx="50" cy="50" r="42" className="health-score-track" />
-          <circle
-            cx="50" cy="50" r="42"
-            className="health-score-fill"
-            strokeDasharray={`${(healthScore.total / 100) * 264} 264`}
-            stroke={healthScore.color}
-          />
-        </svg>
-        <div className="health-score-number">
-          <strong style={{ color: healthScore.color }}>{healthScore.total}</strong>
-          <small>/ 100</small>
-        </div>
-      </div>
+            <div className="header-botones">
+              <button className="btn-perfil" onClick={() => setShowPerfil(true)} title="Mi Perfil">
+                <img src={datosPerfil.fotoPerfil} alt="Perfil" className="perfil-foto" />
+              </button>
 
-      <div className="health-score-info">
-        <span className="health-score-label" style={{ color: healthScore.color }}>
-          {healthScore.nivel}
-        </span>
-
-        <div className="health-score-factores">
-          {/* Cartera sana */}
-          <div className="factor">
-            <span title={
-              healthScore.detalles
-                ? `${healthScore.detalles.activos} activos de ${healthScore.detalles.activos + healthScore.detalles.vencidos} empeños`
-                : 'Cargando datos...'
-            }>
-              Cartera sana
-            </span>
-            <div className="factor-bar">
-              <div className="factor-fill" style={{ width: `${healthScore.factores.cartera_sana}%` }}></div>
-            </div>
-            <span>{healthScore.factores.cartera_sana}</span>
-          </div>
-
-          {/* Morosidad */}
-          <div className="factor">
-            <span title={
-              healthScore.detalles
-                ? `Pérdida: $${Number(healthScore.detalles.perdida_total).toLocaleString()} (${healthScore.detalles.tasa_perdida}% del capital)`
-                : 'Cargando datos...'
-            }>
-              Morosidad
-            </span>
-            <div className="factor-bar">
-              <div className="factor-fill warning" style={{ width: `${healthScore.factores.morosidad}%` }}></div>
-            </div>
-            <span>{healthScore.factores.morosidad}</span>
-          </div>
-
-          {/* Liquidez */}
-          <div className="factor">
-            <span title={
-              healthScore.detalles
-                ? `Por cobrar en 30 días: $${Number(healthScore.detalles.proximos_30d).toLocaleString()}`
-                : 'Cargando datos...'
-            }>
-              Liquidez
-            </span>
-            <div className="factor-bar">
-              <div className="factor-fill success" style={{ width: `${healthScore.factores.liquidez}%` }}></div>
-            </div>
-            <span>{healthScore.factores.liquidez}</span>
-          </div>
-
-          {/* Tendencia */}
-          <div className="factor">
-            <span title="Comparación de ganancia mes actual vs mes anterior">
-              Tendencia
-            </span>
-            <div className="factor-bar">
-              <div className="factor-fill" style={{ width: `${healthScore.factores.tendencia}%` }}></div>
-            </div>
-            <span>{healthScore.factores.tendencia}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {/* Meta del Mes */}
-  <div className="hero-card meta-card">
-    <div className="hero-card-header">
-      <FlagIcon />
-      <span>Meta del Mes</span>
-    </div>
-    <div className="meta-content">
-      <div className="meta-amount">
-        <span className="meta-actual">${meta.actual.toLocaleString()}</span>
-        <span className="meta-objetivo">de ${meta.objetivo.toLocaleString()}</span>
-      </div>
-      <div className="meta-progress">
-        <div className="meta-progress-bar">
-          <div
-            className="meta-progress-fill"
-            style={{ width: `${(meta.actual / meta.objetivo) * 100}%` }}
-          ></div>
-        </div>
-        <span className="meta-progress-percent">
-          {((meta.actual / meta.objetivo) * 100).toFixed(0)}%
-        </span>
-      </div>
-      <div className="meta-info">
-        <div className="meta-info-item">
-          <span>Días transcurridos</span>
-          <strong>{meta.dias_transcurridos} / {meta.dias_totales}</strong>
-        </div>
-        <div className="meta-info-item">
-          <span>Proyección al cierre</span>
-          <strong className={meta.proyeccion < meta.objetivo ? 'danger' : 'success'}>
-            ${meta.proyeccion.toLocaleString()}
-          </strong>
-        </div>
-      </div>
-      {meta.proyeccion < meta.objetivo && (
-        <div className="meta-warning">
-          <TrendingDownIcon />
-          <span>Vas por debajo de la meta. Necesitas ${(meta.objetivo - meta.proyeccion).toLocaleString()} más.</span>
-        </div>
-      )}
-    </div>
-  </div>
-</div>
-
-        {/* ✅ NUEVO: RENTABILIDAD (destacado) 
-        <div className="rentabilidad-card">
-          <div className="rentabilidad-header">
-            <SpeedIcon />
-            <span>Rentabilidad del Negocio</span>
-          </div>
-          <div className="rentabilidad-grid">
-            <div className="rentabilidad-item">
-              <span className="rentabilidad-label">Capital prestado</span>
-              <span className="rentabilidad-valor">${rentabilidad.capital.toLocaleString()}</span>
-            </div>
-            <div className="rentabilidad-item">
-              <span className="rentabilidad-label">Ganancia total</span>
-              <span className="rentabilidad-valor success">${rentabilidad.ganancia.toLocaleString()}</span>
-            </div>
-            <div className="rentabilidad-item">
-              <span className="rentabilidad-label">Pérdida total</span>
-              <span className="rentabilidad-valor danger">-${rentabilidad.perdida.toLocaleString()}</span>
-            </div>
-            <div className="rentabilidad-item destacado">
-              <span className="rentabilidad-label">Rentabilidad mensual</span>
-              <span className="rentabilidad-valor-big">{rentabilidad.rentabilidad_mensual}%</span>
-              <span className="rentabilidad-sub">≈ {rentabilidad.rentabilidad_anualizada}% anualizado</span>
+              <button className="btn-alertas" onClick={() => setShowAlertas(true)} title="Alertas">
+                <NotificationsIcon className="alerta-icon" />
+                {((dashboardData.resumen?.proximos_vencer || 0) + (dashboardData.resumen?.empenos_vencidos || 0)) > 0 && (
+                  <span className="alerta-badge">
+                    {(dashboardData.resumen?.proximos_vencer || 0) + (dashboardData.resumen?.empenos_vencidos || 0)}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
-        </div> */}
+        </div>
 
-        {/* CARDS CON DELTAS */}
+        {/* HEALTH SCORE + META DEL MES */}
+        <div className="hero-grid">
+          {/* Health Score */}
+          <div className="hero-card health-score-card">
+            <div className="hero-card-header">
+              <ShieldIcon />
+              <span>Salud del Negocio</span>
+            </div>
+            <div className="health-score-content">
+              <div className="health-score-circle">
+                <svg viewBox="0 0 100 100" className="health-score-svg">
+                  <circle cx="50" cy="50" r="42" className="health-score-track" />
+                  <circle
+                    cx="50" cy="50" r="42"
+                    className="health-score-fill"
+                    strokeDasharray={`${(healthScore.total / 100) * 264} 264`}
+                    stroke={healthScore.color}
+                  />
+                </svg>
+                <div className="health-score-number">
+                  <strong style={{ color: healthScore.color }}>{healthScore.total}</strong>
+                  <small>/ 100</small>
+                </div>
+              </div>
+
+              <div className="health-score-info">
+                <span className="health-score-label" style={{ color: healthScore.color }}>
+                  {healthScore.nivel}
+                </span>
+
+                <div className="health-score-factores">
+                  <div className="factor">
+                    <span title={
+                      healthScore.detalles
+                        ? `${healthScore.detalles.activos} activos de ${healthScore.detalles.activos + healthScore.detalles.vencidos} empeños`
+                        : 'Cargando datos...'
+                    }>
+                      Cartera sana
+                    </span>
+                    <div className="factor-bar">
+                      <div className="factor-fill" style={{ width: `${healthScore.factores.cartera_sana}%` }}></div>
+                    </div>
+                    <span>{healthScore.factores.cartera_sana}</span>
+                  </div>
+
+                  <div className="factor">
+                    <span title={
+                      healthScore.detalles
+                        ? `Pérdida: $${Number(healthScore.detalles.perdida_total).toLocaleString()} (${healthScore.detalles.tasa_perdida}% del capital)`
+                        : 'Cargando datos...'
+                    }>
+                      Morosidad
+                    </span>
+                    <div className="factor-bar">
+                      <div className="factor-fill warning" style={{ width: `${healthScore.factores.morosidad}%` }}></div>
+                    </div>
+                    <span>{healthScore.factores.morosidad}</span>
+                  </div>
+
+                  <div className="factor">
+                    <span title={
+                      healthScore.detalles
+                        ? `Por cobrar en 30 días: $${Number(healthScore.detalles.proximos_30d).toLocaleString()}`
+                        : 'Cargando datos...'
+                    }>
+                      Liquidez
+                    </span>
+                    <div className="factor-bar">
+                      <div className="factor-fill success" style={{ width: `${healthScore.factores.liquidez}%` }}></div>
+                    </div>
+                    <span>{healthScore.factores.liquidez}</span>
+                  </div>
+
+                  <div className="factor">
+                    <span title="Comparación de ganancia mes actual vs mes anterior">
+                      Tendencia
+                    </span>
+                    <div className="factor-bar">
+                      <div className="factor-fill" style={{ width: `${healthScore.factores.tendencia}%` }}></div>
+                    </div>
+                    <span>{healthScore.factores.tendencia}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Meta del Mes */}
+          <div className="hero-card meta-card">
+            <div className="hero-card-header">
+              <FlagIcon />
+              <span>Meta del Mes</span>
+            </div>
+            <div className="meta-content">
+              <div className="meta-amount">
+                <span className="meta-actual">${meta.actual.toLocaleString()}</span>
+                <span className="meta-objetivo">de ${meta.objetivo.toLocaleString()}</span>
+              </div>
+              <div className="meta-progress">
+                <div className="meta-progress-bar">
+                  <div
+                    className="meta-progress-fill"
+                    style={{ width: `${(meta.actual / meta.objetivo) * 100}%` }}
+                  ></div>
+                </div>
+                <span className="meta-progress-percent">
+                  {((meta.actual / meta.objetivo) * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="meta-info">
+                <div className="meta-info-item">
+                  <span>Días transcurridos</span>
+                  <strong>{meta.dias_transcurridos} / {meta.dias_totales}</strong>
+                </div>
+                <div className="meta-info-item">
+                  <span>Proyección al cierre</span>
+                  <strong className={meta.proyeccion < meta.objetivo ? 'danger' : 'success'}>
+                    ${meta.proyeccion.toLocaleString()}
+                  </strong>
+                </div>
+              </div>
+              {meta.proyeccion < meta.objetivo && (
+                <div className="meta-warning">
+                  <TrendingDownIcon />
+                  <span>Vas por debajo de la meta. Necesitas ${(meta.objetivo - meta.proyeccion).toLocaleString()} más.</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* CARDS CON DELTAS Y PERMISOS */}
         <div className="cards-grid">
-          <div className="stat-card" onClick={cargarActivos}>
-            <AssignmentIcon className="card-icon" />
-            <h3>Empeños Activos</h3>
-            <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
-            {deltas.empenos_activos && (
-              <span className={`stat-delta ${deltas.empenos_activos.cambio >= 0 ? 'up' : 'down'}`}>
-                {deltas.empenos_activos.cambio >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
-                {deltas.empenos_activos.cambio >= 0 ? '+' : ''}{deltas.empenos_activos.cambio} vs mes ant.
-              </span>
-            )}
-          </div>
+          <PermissionGuard permission="ver_empenos">
+            <div className="stat-card" onClick={cargarActivos}>
+              <AssignmentIcon className="card-icon" />
+              <h3>Empeños Activos</h3>
+              <p className="stat-number">{dashboardData.resumen?.empenos_activos || 0}</p>
+              {deltas.empenos_activos && (
+                <span className={`stat-delta ${deltas.empenos_activos.cambio >= 0 ? 'up' : 'down'}`}>
+                  {deltas.empenos_activos.cambio >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
+                  {deltas.empenos_activos.cambio >= 0 ? '+' : ''}{deltas.empenos_activos.cambio} vs mes ant.
+                </span>
+              )}
+            </div>
+          </PermissionGuard>
 
-          <div className="stat-card" onClick={cargarVencidos}>
-            <WarningIcon className="card-icon" />
-            <h3>Empeños Vencidos</h3>
-            <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
-            {deltas.empenos_vencidos && (
-              <span className={`stat-delta ${deltas.empenos_vencidos.cambio <= 0 ? 'up' : 'down'}`}>
-                {deltas.empenos_vencidos.cambio <= 0 ? <TrendingDownIcon /> : <TrendingUpIcon />}
-                {deltas.empenos_vencidos.cambio >= 0 ? '+' : ''}{deltas.empenos_vencidos.cambio} vs mes ant.
-              </span>
-            )}
-          </div>
+          <PermissionGuard permission="ver_empenos">
+            <div className="stat-card" onClick={cargarVencidos}>
+              <WarningIcon className="card-icon" />
+              <h3>Empeños Vencidos</h3>
+              <p className="stat-number">{dashboardData.resumen?.empenos_vencidos || 0}</p>
+              {deltas.empenos_vencidos && (
+                <span className={`stat-delta ${deltas.empenos_vencidos.cambio <= 0 ? 'up' : 'down'}`}>
+                  {deltas.empenos_vencidos.cambio <= 0 ? <TrendingDownIcon /> : <TrendingUpIcon />}
+                  {deltas.empenos_vencidos.cambio >= 0 ? '+' : ''}{deltas.empenos_vencidos.cambio} vs mes ant.
+                </span>
+              )}
+            </div>
+          </PermissionGuard>
 
-          <div className="stat-card" onClick={cargarProximos}>
-            <AccessTimeIcon className="card-icon" />
-            <h3>Próximos a Vencer</h3>
-            <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
-            {deltas.proximos_vencer && (
-              <span className={`stat-delta ${deltas.proximos_vencer.cambio <= 0 ? 'up' : 'down'}`}>
-                {deltas.proximos_vencer.cambio <= 0 ? <TrendingDownIcon /> : <TrendingUpIcon />}
-                {deltas.proximos_vencer.cambio >= 0 ? '+' : ''}{deltas.proximos_vencer.cambio} vs mes ant.
-              </span>
-            )}
-          </div>
+          <PermissionGuard permission="ver_empenos">
+            <div className="stat-card" onClick={cargarProximos}>
+              <AccessTimeIcon className="card-icon" />
+              <h3>Próximos a Vencer</h3>
+              <p className="stat-number">{dashboardData.resumen?.proximos_vencer || 0}</p>
+              {deltas.proximos_vencer && (
+                <span className={`stat-delta ${deltas.proximos_vencer.cambio <= 0 ? 'up' : 'down'}`}>
+                  {deltas.proximos_vencer.cambio <= 0 ? <TrendingDownIcon /> : <TrendingUpIcon />}
+                  {deltas.proximos_vencer.cambio >= 0 ? '+' : ''}{deltas.proximos_vencer.cambio} vs mes ant.
+                </span>
+              )}
+            </div>
+          </PermissionGuard>
 
-          <div className="stat-card" onClick={cargarIngresos}>
-            <AttachMoneyIcon className="card-icon" />
-            <h3>Ingresos del Mes</h3>
-            <p className="stat-number">
-              ${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}
-            </p>
-            {(dashboardData.resumen?.ingresos_recientes === 0) && (
-              <span className="stat-hint-muted">
-                Sin ingresos este mes
-              </span>
-            )}
-          </div>
+          <PermissionGuard permission="ver_pagos">
+            <div className="stat-card" onClick={cargarIngresos}>
+              <AttachMoneyIcon className="card-icon" />
+              <h3>Ingresos del Mes</h3>
+              <p className="stat-number">
+                ${(dashboardData.resumen?.ingresos_recientes || 0).toLocaleString()}
+              </p>
+              {(dashboardData.resumen?.ingresos_recientes === 0) && (
+                <span className="stat-hint-muted">
+                  Sin ingresos este mes
+                </span>
+              )}
+            </div>
+          </PermissionGuard>
 
           <div className="stat-card gold-card" onClick={() => setShowPrecioOroModal(true)}>
             <MonetizationOnIcon className="card-icon" />
@@ -778,44 +819,7 @@ const healthScore = calcularHealthScore(data);
           </div>
         </div>
 
-        
-
-        {/* ✅ NUEVO: DESGLOSE POR SUCURSAL 
-        {sucursales.length > 1 && (
-          <div className="nueva-seccion">
-            <h2><StoreIcon /> Desglose por Sucursal</h2>
-            <div className="sucursales-grid-dashboard">
-              {sucursales.map((s, i) => (
-                <div key={i} className="sucursal-dashboard-card">
-                  <div className="sucursal-dashboard-header">
-                    <StoreIcon />
-                    <strong>{s.nombre}</strong>
-                  </div>
-                  <div className="sucursal-dashboard-stats">
-                    <div className="sucursal-stat">
-                      <span>Activos</span>
-                      <strong className="success">{s.activos}</strong>
-                    </div>
-                    <div className="sucursal-stat">
-                      <span>Vencidos</span>
-                      <strong className="danger">{s.vencidos}</strong>
-                    </div>
-                    <div className="sucursal-stat">
-                      <span>Capital</span>
-                      <strong>${(s.capital / 1000).toFixed(0)}k</strong>
-                    </div>
-                    <div className="sucursal-stat">
-                      <span>Ganancia</span>
-                      <strong className="success">${s.ganancia.toLocaleString()}</strong>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )} */}
-
-        {/* GRÁFICAS EXISTENTES */}
+        {/* GRÁFICAS */}
         {puedeVerEvolucionAcumulada() && (
           <div className="chart-section">
             <h2><AreaChartIcon /> Rentabilidad del negocio</h2>
@@ -841,40 +845,40 @@ const healthScore = calcularHealthScore(data);
             </div>
           </div>
         )}
-{/* ✅ NUEVO: PROYECCIÓN DE COBRANZA */}
-        <div className="proyeccion-card">
-  <h2>
-    <EventNoteIcon />
-    Proyección de Cobranza (Próximos 30 días)
-  </h2>
-  <div className="proyeccion-grid">
-    <div className="proyeccion-item">
-      <span className="proyeccion-label">Por cobrar</span>
-      <span className="proyeccion-valor success">
-        ${proyeccion.por_cobrar_30d.toLocaleString()}
-      </span>
-    </div>
-    <div className="proyeccion-item">
-      <span className="proyeccion-label">Cuotas que vencen</span>
-      <span className="proyeccion-valor">{proyeccion.cuotas_vencen_30d}</span>
-    </div>
-    <div className="proyeccion-item">
-      <span className="proyeccion-label">En riesgo</span>
-      <span className="proyeccion-valor warning">
-        ${proyeccion.en_riesgo.toLocaleString()}
-      </span>
-    </div>
-    <div className="proyeccion-item">
-      <span className="proyeccion-label">Ya atrasado</span>
-      <span className="proyeccion-valor danger">
-        ${proyeccion.ya_atrasado.toLocaleString()}
-      </span>
-    </div>
-    
-  </div>
-</div>
 
-        {/* ✅ NUEVO: COHORTES DE ANTIGÜEDAD */}
+        {/* PROYECCIÓN DE COBRANZA */}
+        <div className="proyeccion-card">
+          <h2>
+            <EventNoteIcon />
+            Proyección de Cobranza (Próximos 30 días)
+          </h2>
+          <div className="proyeccion-grid">
+            <div className="proyeccion-item">
+              <span className="proyeccion-label">Por cobrar</span>
+              <span className="proyeccion-valor success">
+                ${proyeccion.por_cobrar_30d.toLocaleString()}
+              </span>
+            </div>
+            <div className="proyeccion-item">
+              <span className="proyeccion-label">Cuotas que vencen</span>
+              <span className="proyeccion-valor">{proyeccion.cuotas_vencen_30d}</span>
+            </div>
+            <div className="proyeccion-item">
+              <span className="proyeccion-label">En riesgo</span>
+              <span className="proyeccion-valor warning">
+                ${proyeccion.en_riesgo.toLocaleString()}
+              </span>
+            </div>
+            <div className="proyeccion-item">
+              <span className="proyeccion-label">Ya atrasado</span>
+              <span className="proyeccion-valor danger">
+                ${proyeccion.ya_atrasado.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* COHORTES DE ANTIGÜEDAD */}
         <div className="nueva-seccion">
           <h2>
             <TimelineIcon />
@@ -892,7 +896,7 @@ const healthScore = calcularHealthScore(data);
           />
         </div>
 
-        {/* ✅ NUEVO: CLIENTES EN RIESGO */}
+        {/* CLIENTES EN RIESGO */}
         <div className="nueva-seccion">
           <h2>
             <NotificationsActiveIcon />
@@ -921,69 +925,73 @@ const healthScore = calcularHealthScore(data);
         </div>
 
         {/* TOP CLIENTES */}
-        <div className="nueva-seccion">
-          <h2><EmojiEventsIcon /> Top 5 Clientes (Mayores Ganancias)</h2>
-          <div className="tabla-container">
-            <table className="tabla-moderna">
-              <thead>
-                <tr>
-                  <th>Cliente</th><th>Empeños</th><th>Monto Prestado</th>
-                  <th>Ganancia Generada</th><th>% Ganancia</th><th>Último Empeño</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboardData.top_clientes?.map(cliente => (
-                  <tr key={cliente.id_cliente}>
-                    <td><strong>{cliente.nombre}</strong></td>
-                    <td>{cliente.empenos}</td>
-                    <td>{formatearMoneda(cliente.monto_total)}</td>
-                    <td className="profit-text">{formatearMoneda(cliente.ganancia_generada || (cliente.monto_total * 0.15))}</td>
-                    <td><span className="profit-badge">+{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}</span></td>
-                    <td>{formatFecha(cliente.ultimo_empeno)}</td>
+        {puedeVerTopClientes() && (
+          <div className="nueva-seccion">
+            <h2><EmojiEventsIcon /> Top 5 Clientes (Mayores Ganancias)</h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
+                  <tr>
+                    <th>Cliente</th><th>Empeños</th><th>Monto Prestado</th>
+                    <th>Ganancia Generada</th><th>% Ganancia</th><th>Último Empeño</th>
                   </tr>
-                ))}
-                {dashboardData.top_clientes?.length === 0 && (
-                  <tr><td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td></tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {dashboardData.top_clientes?.map(cliente => (
+                    <tr key={cliente.id_cliente}>
+                      <td><strong>{cliente.nombre}</strong></td>
+                      <td>{cliente.empenos}</td>
+                      <td>{formatearMoneda(cliente.monto_total)}</td>
+                      <td className="profit-text">{formatearMoneda(cliente.ganancia_generada || (cliente.monto_total * 0.15))}</td>
+                      <td><span className="profit-badge">+{formatearPorcentaje(cliente.porcentaje_ganancia || 15)}</span></td>
+                      <td>{formatFecha(cliente.ultimo_empeno)}</td>
+                    </tr>
+                  ))}
+                  {dashboardData.top_clientes?.length === 0 && (
+                    <tr><td colSpan="6" style={{ textAlign: 'center' }}>No hay datos</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* MOROSIDAD */}
-        <div className="nueva-seccion">
-          <h2><WarningIcon /> Morosidad - Clientes con Mayor Pérdida</h2>
-          <div className="tabla-container">
-            <table className="tabla-moderna">
-              <thead>
-                <tr>
-                  <th>Cliente</th><th>Total Prestado</th><th>Deuda Vencida</th>
-                  <th>Pérdida Proyectada</th><th>% Pérdida</th><th>Días en Mora</th><th>Último Pago</th>
-                </tr>
-              </thead>
-              <tbody>
-                {morosidad.map((item, index) => {
-                  let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
-                  if (porcentaje > 100) porcentaje = 100;
-                  return (
-                    <tr key={index}>
-                      <td><strong>{item.nombre}</strong></td>
-                      <td>{formatearMoneda(item.total_prestado)}</td>
-                      <td className="loss-text">{formatearMoneda(item.deuda)}</td>
-                      <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
-                      <td><span className="loss-badge">-{porcentaje.toFixed(2)}%</span></td>
-                      <td><span className="badge-danger">{Math.floor(item.dias_mora)} días</span></td>
-                      <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' ? formatFecha(item.ultimo_pago) : 'Sin registro'}</td>
-                    </tr>
-                  );
-                })}
-                {morosidad.length === 0 && (
-                  <tr><td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td></tr>
-                )}
-              </tbody>
-            </table>
+        {puedeVerMorosidad() && (
+          <div className="nueva-seccion">
+            <h2><WarningIcon /> Morosidad - Clientes con Mayor Pérdida</h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
+                  <tr>
+                    <th>Cliente</th><th>Total Prestado</th><th>Deuda Vencida</th>
+                    <th>Pérdida Proyectada</th><th>% Pérdida</th><th>Días en Mora</th><th>Último Pago</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {morosidad.map((item, index) => {
+                    let porcentaje = item.porcentaje_perdida || ((item.deuda / (item.total_prestado || 1)) * 100);
+                    if (porcentaje > 100) porcentaje = 100;
+                    return (
+                      <tr key={index}>
+                        <td><strong>{item.nombre}</strong></td>
+                        <td>{formatearMoneda(item.total_prestado)}</td>
+                        <td className="loss-text">{formatearMoneda(item.deuda)}</td>
+                        <td className="loss-text">{formatearMoneda(item.perdida_proyectada || item.deuda)}</td>
+                        <td><span className="loss-badge">-{porcentaje.toFixed(2)}%</span></td>
+                        <td><span className="badge-danger">{Math.floor(item.dias_mora)} días</span></td>
+                        <td>{item.ultimo_pago && item.ultimo_pago !== 'Invalid Date' ? formatFecha(item.ultimo_pago) : 'Sin registro'}</td>
+                      </tr>
+                    );
+                  })}
+                  {morosidad.length === 0 && (
+                    <tr><td colSpan="7" style={{ textAlign: 'center' }}>No hay datos de morosidad</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* AMORTIZACIONES */}
         {puedeVerEvolucionAcumulada() && (
@@ -1031,7 +1039,7 @@ const healthScore = calcularHealthScore(data);
           </div>
         )}
 
-        {/* ✅ NUEVO: ANÁLISIS POR CATEGORÍA */}
+        {/* ANÁLISIS POR CATEGORÍA */}
         <div className="nueva-seccion">
           <h2>
             <CategoryIcon />
@@ -1073,31 +1081,33 @@ const healthScore = calcularHealthScore(data);
         </div>
 
         {/* ARTÍCULOS */}
-        <div className="nueva-seccion">
-          <h2><LocalOfferIcon /> Artículos Más Empeñados</h2>
-          <div className="tabla-container">
-            <table className="tabla-moderna">
-              <thead>
-                <tr><th>Artículo</th><th>Categoría</th><th>Cantidad</th><th>Monto Promedio</th></tr>
-              </thead>
-              <tbody>
-                {dashboardData.top_articulos?.map((articulo, index) => (
-                  <tr key={index}>
-                    <td><strong>{articulo.nombre}</strong></td>
-                    <td>{articulo.categoria}</td>
-                    <td>{articulo.cantidad}</td>
-                    <td>{formatearMoneda(articulo.monto_promedio)}</td>
-                  </tr>
-                ))}
-                {dashboardData.top_articulos?.length === 0 && (
-                  <tr><td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td></tr>
-                )}
-              </tbody>
-            </table>
+        {puedeVerArticulosMasEmpenados() && (
+          <div className="nueva-seccion">
+            <h2><LocalOfferIcon /> Artículos Más Empeñados</h2>
+            <div className="tabla-container">
+              <table className="tabla-moderna">
+                <thead>
+                  <tr><th>Artículo</th><th>Categoría</th><th>Cantidad</th><th>Monto Promedio</th></tr>
+                </thead>
+                <tbody>
+                  {dashboardData.top_articulos?.map((articulo, index) => (
+                    <tr key={index}>
+                      <td><strong>{articulo.nombre}</strong></td>
+                      <td>{articulo.categoria}</td>
+                      <td>{articulo.cantidad}</td>
+                      <td>{formatearMoneda(articulo.monto_promedio)}</td>
+                    </tr>
+                  ))}
+                  {dashboardData.top_articulos?.length === 0 && (
+                    <tr><td colSpan="4" style={{ textAlign: 'center' }}>No hay datos</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* ✅ MEJORADO: ACTIVIDAD RECIENTE con múltiples tipos */}
+        {/* ACTIVIDAD RECIENTE */}
         <div className="nueva-seccion">
           <h2><HistoryIcon /> Actividad Reciente</h2>
           <div className="actividad-lista">
@@ -1130,105 +1140,231 @@ const healthScore = calcularHealthScore(data);
         </div>
       </div>
 
-      {/* MODALES (los mismos de antes) */}
+      {/* MODALES */}
+
+      {/* MODAL DE PERFIL */}
+      {showPerfil && (
+        <div className="modal-overlay" onClick={() => setShowPerfil(false)}>
+          <div className="modal-detalle modal-perfil" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={() => setShowPerfil(false)}><CloseIcon /></button>
+            <div className="modal-header perfil-header">
+              <h2>Mi Perfil</h2>
+              <span className="cliente-id">Información personal</span>
+            </div>
+            <div className="modal-body">
+              <div className="perfil-container">
+                <div className="perfil-avatar">
+                  <img src={datosPerfil.fotoPerfil} alt={datosPerfil.nombre} />
+                </div>
+                <div className="perfil-info-grid">
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Nombre completo</span>
+                    <span className="perfil-valor">{datosPerfil.nombre}</span>
+                  </div>
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Email</span>
+                    <span className="perfil-valor">{datosPerfil.email}</span>
+                  </div>
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Teléfono</span>
+                    <span className="perfil-valor">{datosPerfil.telefono}</span>
+                  </div>
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Rol</span>
+                    <span className="perfil-valor">{datosPerfil.rol}</span>
+                  </div>
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Sucursal</span>
+                    <span className="perfil-valor">{datosPerfil.sucursal}</span>
+                  </div>
+                  <div className="perfil-info-item">
+                    <span className="perfil-label">Miembro desde</span>
+                    <span className="perfil-valor">{datosPerfil.fechaRegistro}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ALERTAS */}
+      {showAlertas && (
+        <div className="modal-overlay" onClick={() => setShowAlertas(false)}>
+          <div className="modal-detalle modal-alertas" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={() => setShowAlertas(false)}><CloseIcon /></button>
+            <div className="modal-header">
+              <h2><NotificationsIcon /> Alertas y Notificaciones</h2>
+              <span className="cliente-id">Actualizadas hoy</span>
+            </div>
+            <div className="modal-body">
+              <div className="alertas-modal-lista">
+                <div className="alerta-modal-item warning">
+                  <WarningIcon className="alerta-modal-icon" />
+                  <div className="alerta-modal-contenido">
+                    <h4>{dashboardData.resumen?.proximos_vencer || 0} empeños por vencer esta semana</h4>
+                    <p>Próximos a vencer: Revisa el detalle</p>
+                    <small>Vencen en los próximos 7 días</small>
+                  </div>
+                </div>
+                <div className="alerta-modal-item danger">
+                  <ErrorIcon className="alerta-modal-icon" />
+                  <div className="alerta-modal-contenido">
+                    <h4>{dashboardData.resumen?.empenos_vencidos || 0} empeños vencidos requieren atención</h4>
+                    <small>Requieren acción inmediata</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="modal-acciones">
+              <button className="btn-cancelar" onClick={() => setShowAlertas(false)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE EMPEÑOS ACTIVOS */}
       {showActivos && (
-        <div className="modal-overlay" onClick={() => setShowActivos(false)}>
-          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowActivos(false)}><CloseIcon /></button>
-            <div className="modal-header">
-              <h2><AssignmentIcon /> Empeños Activos</h2>
-              <span className="cliente-id">Total: {empenosActivos.length}</span>
-            </div>
-            <div className="modal-body">
-              <div className="tabla-container-modal">
-                <table className="tabla-modal">
-                  <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Fecha</th></tr></thead>
-                  <tbody>
-                    {empenosActivos.map(item => (
-                      <tr key={item.id_empeno}>
-                        <td><strong>{item.cliente}</strong></td>
-                        <td>{item.nombre}</td>
-                        <td>{formatearMoneda(item.monto)}</td>
-                        <td>{item.fecha}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        <PermissionGuard permission="ver_empenos">
+          <div className="modal-overlay" onClick={() => setShowActivos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowActivos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><AssignmentIcon /> Empeños Activos</h2>
+                <span className="cliente-id">Total: {empenosActivos.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Fecha</th></tr></thead>
+                    <tbody>
+                      {empenosActivos.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowActivos(false)}>Cerrar</button>
               </div>
             </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowActivos(false)}>Cerrar</button>
-            </div>
           </div>
-        </div>
+        </PermissionGuard>
       )}
 
+      {/* MODAL DE EMPEÑOS VENCIDOS */}
       {showVencidos && (
-        <div className="modal-overlay" onClick={() => setShowVencidos(false)}>
-          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowVencidos(false)}><CloseIcon /></button>
-            <div className="modal-header">
-              <h2><WarningIcon /> Empeños Vencidos</h2>
-              <span className="cliente-id">Total: {empenosVencidos.length}</span>
-            </div>
-            <div className="modal-body">
-              <div className="tabla-container-modal">
-                <table className="tabla-modal">
-                  <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vencido</th><th>Días</th></tr></thead>
-                  <tbody>
-                    {empenosVencidos.map(item => (
-                      <tr key={item.id_empeno}>
-                        <td><strong>{item.cliente}</strong></td>
-                        <td>{item.nombre}</td>
-                        <td>{formatearMoneda(item.monto)}</td>
-                        <td>{item.fecha}</td>
-                        <td><span className="badge-danger">{item.dias} días</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        <PermissionGuard permission="ver_empenos">
+          <div className="modal-overlay" onClick={() => setShowVencidos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowVencidos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><WarningIcon /> Empeños Vencidos</h2>
+                <span className="cliente-id">Total: {empenosVencidos.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vencido</th><th>Días</th></tr></thead>
+                    <tbody>
+                      {empenosVencidos.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                          <td><span className="badge-danger">{item.dias} días</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowVencidos(false)}>Cerrar</button>
               </div>
             </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowVencidos(false)}>Cerrar</button>
-            </div>
           </div>
-        </div>
+        </PermissionGuard>
       )}
 
+      {/* MODAL DE PRÓXIMOS A VENCER */}
       {showProximos && (
-        <div className="modal-overlay" onClick={() => setShowProximos(false)}>
-          <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-cerrar" onClick={() => setShowProximos(false)}><CloseIcon /></button>
-            <div className="modal-header">
-              <h2><AccessTimeIcon /> Próximos a Vencer</h2>
-              <span className="cliente-id">Total: {proximosVencer.length}</span>
-            </div>
-            <div className="modal-body">
-              <div className="tabla-container-modal">
-                <table className="tabla-modal">
-                  <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vence</th><th>Días</th></tr></thead>
-                  <tbody>
-                    {proximosVencer.map(item => (
-                      <tr key={item.id_empeno}>
-                        <td><strong>{item.cliente}</strong></td>
-                        <td>{item.nombre}</td>
-                        <td>{formatearMoneda(item.monto)}</td>
-                        <td>{item.fecha}</td>
-                        <td><span className="badge-warning">{item.dias} días</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        <PermissionGuard permission="ver_empenos">
+          <div className="modal-overlay" onClick={() => setShowProximos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowProximos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><AccessTimeIcon /> Próximos a Vencer</h2>
+                <span className="cliente-id">Total: {proximosVencer.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Cliente</th><th>Artículo</th><th>Monto</th><th>Vence</th><th>Días</th></tr></thead>
+                    <tbody>
+                      {proximosVencer.map(item => (
+                        <tr key={item.id_empeno}>
+                          <td><strong>{item.cliente}</strong></td>
+                          <td>{item.nombre}</td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                          <td><span className="badge-warning">{item.dias} días</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowProximos(false)}>Cerrar</button>
               </div>
             </div>
-            <div className="modal-acciones">
-              <button className="btn-cancelar" onClick={() => setShowProximos(false)}>Cerrar</button>
-            </div>
           </div>
-        </div>
+        </PermissionGuard>
       )}
 
+      {/* MODAL DE INGRESOS */}
+      {showIngresos && (
+        <PermissionGuard permission="ver_pagos">
+          <div className="modal-overlay" onClick={() => setShowIngresos(false)}>
+            <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-cerrar" onClick={() => setShowIngresos(false)}><CloseIcon /></button>
+              <div className="modal-header">
+                <h2><AttachMoneyIcon /> Ingresos Recientes</h2>
+                <span className="cliente-id">Total: {ingresosRecientes.length}</span>
+              </div>
+              <div className="modal-body">
+                <div className="tabla-container-modal">
+                  <table className="tabla-modal">
+                    <thead><tr><th>Concepto</th><th>Monto</th><th>Fecha</th></tr></thead>
+                    <tbody>
+                      {ingresosRecientes.map(item => (
+                        <tr key={item.id}>
+                          <td><strong>{item.concepto}</strong></td>
+                          <td>{formatearMoneda(item.monto)}</td>
+                          <td>{item.fecha}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-acciones">
+                <button className="btn-cancelar" onClick={() => setShowIngresos(false)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </PermissionGuard>
+      )}
+
+      {/* MODAL DE PRECIOS DEL ORO */}
       {showPrecioOroModal && (
         <div className="modal-overlay" onClick={() => setShowPrecioOroModal(false)}>
           <div className="modal-detalle modal-oro" onClick={(e) => e.stopPropagation()}>

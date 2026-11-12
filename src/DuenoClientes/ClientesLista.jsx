@@ -5,7 +5,6 @@ import { useDashboard } from "../contexts/DashboardContext";
 
 import "./Clientes.css";
 import clientesService from "../services/clientesService";
-//  AGREGADO DE LOCAL: Importar servicio de permisos
 import permissionService from "../services/permisoService";
 
 // Importar iconos de MUI
@@ -29,7 +28,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
 import GroupIcon from '@mui/icons-material/Group';
 import PinIcon from '@mui/icons-material/Room';
-// ✅ AGREGADO DE LOCAL: Importar LockIcon
 import LockIcon from '@mui/icons-material/Lock';
 
 const ClientesLista = () => {
@@ -39,7 +37,6 @@ const ClientesLista = () => {
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [modalEliminar, setModalEliminar] = useState(false);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  // ✅ AGREGADO DE LOCAL: Estado de carga
   const [cargando, setCargando] = useState(true);
 
   const [formEditar, setFormEditar] = useState({
@@ -61,7 +58,7 @@ const ClientesLista = () => {
   const navigate = useNavigate();
 
   // ============================================
-  // ✅ AGREGADO DE LOCAL: VERIFICAR PERMISOS
+  // VERIFICAR PERMISOS
   // ============================================
   const puedeVerClientes = permissionService.hasPermission('ver_clientes');
   const puedeCrearClientes = permissionService.hasPermission('crear_clientes');
@@ -72,7 +69,7 @@ const ClientesLista = () => {
   const puedeAccederModuloClientes = permissionService.canAccessModule('clientes');
 
   // ============================================
-  // ✅ AGREGADO DE LOCAL: REDIRIGIR SI NO TIENE PERMISO PARA VER
+  // REDIRIGIR SI NO TIENE PERMISO PARA VER
   // ============================================
   useEffect(() => {
     if (!puedeVerClientes) {
@@ -80,7 +77,6 @@ const ClientesLista = () => {
     }
   }, [puedeVerClientes, navigate]);
 
-  // ✅ MEJORADO CON LOCAL: useEffect con verificación de permisos
   useEffect(() => {
     if (puedeVerClientes) {
       cargarClientes();
@@ -88,17 +84,15 @@ const ClientesLista = () => {
   }, [puedeVerClientes]);
 
   // ============================================
-  // FUNCIONES CRUD (MEJORADAS CON LOCAL)
+  // FUNCIONES CRUD
   // ============================================
-  
-  // ✅ MEJORADO CON LOCAL: cargarClientes con manejo de carga y mejor extracción de datos
   const cargarClientes = async () => {
     setCargando(true);
     try {
       const response = await clientesService.obtenerClientes();
       console.log('📦 Respuesta completa:', response);
       
-      // ✅ EXTRAER EL ARRAY CORRECTAMENTE (mejorado de Local)
+      // ✅ EXTRAER EL ARRAY CORRECTAMENTE
       let data = [];
       
       // Si la respuesta tiene { success: true, data: [...] }
@@ -154,7 +148,6 @@ const ClientesLista = () => {
   const clientesActuales = clientesFiltrados.slice(indicePrimero, indiceUltimo);
   const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
 
-  // ✅ MEJORADO CON LOCAL: abrirDetalle con validación de permisos
   const abrirDetalle = async (cliente) => {
     if (!puedeVerClientes) {
       alert('No tienes permiso para ver detalles de clientes');
@@ -190,7 +183,6 @@ const ClientesLista = () => {
     }, 300);
   };
 
-  // ✅ MEJORADO CON LOCAL: abrirModalEditar con validación de permisos
   const abrirModalEditar = (cliente) => {
     if (!puedeEditarClientes) {
       alert('No tienes permiso para editar clientes');
@@ -220,7 +212,6 @@ const ClientesLista = () => {
     setClienteSeleccionado(null);
   };
 
-  // ✅ MEJORADO CON LOCAL: handleEditarSubmit con validación de permisos
   const handleEditarSubmit = async (e) => {
     e.preventDefault();
     
@@ -238,7 +229,6 @@ const ClientesLista = () => {
     }
   };
 
-  // ✅ MEJORADO CON LOCAL: confirmarEliminar con validación de permisos
   const confirmarEliminar = (cliente) => {
     if (!puedeEliminarClientes) {
       alert('No tienes permiso para eliminar clientes');
@@ -249,7 +239,6 @@ const ClientesLista = () => {
     setModalEliminar(true);
   };
 
-  // ✅ MEJORADO CON LOCAL: handleEliminar con validación de permisos
   const handleEliminar = async () => {
     if (!puedeEliminarClientes) {
       alert('No tienes permiso para eliminar clientes');
@@ -300,12 +289,12 @@ const ClientesLista = () => {
     }
   };
 
-  // ✅ AGREGADO DE LOCAL: Si no tiene permiso, no renderizar nada
+  // Si no tiene permiso, no renderizar nada (ya redirigirá el useEffect)
   if (!puedeVerClientes) {
     return null;
   }
 
-  // ✅ AGREGADO DE LOCAL: Mostrar loader mientras carga
+  // Mostrar loader mientras carga
   if (cargando) {
     return (
       <div className="dashboard">
@@ -330,7 +319,7 @@ const ClientesLista = () => {
             </h1>
           </div>
           
-          {/* ✅ AGREGADO DE LOCAL: BOTÓN NUEVO - SOLO CON PERMISO */}
+          {/* BOTÓN NUEVO - SOLO CON PERMISO */}
           {puedeCrearClientes && (
             <button className="btn-nuevo" onClick={() => navigate("nuevo")}>
               <AddIcon fontSize="small" /> Nuevo Registro
@@ -412,7 +401,7 @@ const ClientesLista = () => {
                             <VisibilityIcon fontSize="small" />
                           </button>
                           
-                          {/* ✅ AGREGADO DE LOCAL: BOTÓN EDITAR - SOLO CON PERMISO */}
+                          {/* BOTÓN EDITAR - SOLO CON PERMISO */}
                           {puedeEditarClientes && (
                             <button 
                               className="btn-accion editar" 
@@ -423,7 +412,7 @@ const ClientesLista = () => {
                             </button>
                           )}
                           
-                          {/* ✅ AGREGADO DE LOCAL: BOTÓN ELIMINAR - SOLO CON PERMISO */}
+                          {/* BOTÓN ELIMINAR - SOLO CON PERMISO */}
                           {puedeEliminarClientes && (
                             <button 
                               className="btn-accion eliminar" 
@@ -480,7 +469,7 @@ const ClientesLista = () => {
       </div>
 
       {/* ============================================ */}
-      {/* MODAL DE DETALLE - MEJORADO CON PERMISOS */}
+      {/* MODAL DE DETALLE */}
       {/* ============================================ */}
       {modalAbierto && clienteSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModal}>
@@ -670,7 +659,7 @@ const ClientesLista = () => {
               </div>
             </div>
 
-            {/* ✅ AGREGADO DE LOCAL: ACCIONES DEL MODAL CON PERMISOS */}
+            {/* ACCIONES DEL MODAL CON PERMISOS */}
             <div className="modal-acciones">
               {puedeEditarClientes && (
                 <button 
@@ -693,7 +682,7 @@ const ClientesLista = () => {
                 </button>
               )}
 
-              {/* ✅ AGREGADO DE LOCAL: Mensaje si no tiene permisos */}
+              {/* Mensaje si no tiene permisos */}
               {!puedeEditarClientes && !puedeEliminarClientes && (
                 <div className="sin-permisos-modal">
                   <LockIcon fontSize="small" /> 
@@ -706,7 +695,7 @@ const ClientesLista = () => {
       )}
 
       {/* ============================================ */}
-      {/* ✅ AGREGADO DE LOCAL: MODAL DE EDICIÓN - SOLO CON PERMISO */}
+      {/* MODAL DE EDICIÓN - SOLO CON PERMISO */}
       {/* ============================================ */}
       {modalEditarAbierto && clienteSeleccionado && puedeEditarClientes && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
@@ -812,7 +801,7 @@ const ClientesLista = () => {
       )}
 
       {/* ============================================ */}
-      {/* ✅ AGREGADO DE LOCAL: MODAL DE ELIMINAR - SOLO CON PERMISO */}
+      {/* MODAL DE CONFIRMAR ELIMINACIÓN - SOLO CON PERMISO */}
       {/* ============================================ */}
       {modalEliminar && clienteSeleccionado && puedeEliminarClientes && (
         <div className="modal-overlay" onClick={() => setModalEliminar(false)}>

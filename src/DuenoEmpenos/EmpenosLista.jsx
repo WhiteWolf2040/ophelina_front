@@ -1,4 +1,4 @@
-// EmpenosLista.jsx - VERSIÓN CORREGIDA + IMAGEN
+// EmpenosLista.jsx - VERSIÓN CORREGIDA + IMAGEN + PERMISOS
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,8 +8,11 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteIcon from '@mui/icons-material/Delete';
+import LockIcon from '@mui/icons-material/Lock';
 import api from '../config/api';
-import AgregarImagenPrenda from '../components/AgregarImagenPrenda'; // ← NUEVO (ajusta la ruta si tu carpeta es distinta)
+import AgregarImagenPrenda from '../components/AgregarImagenPrenda';
+import permissionService from "../services/permisoService";
 
 const EmpenosLista = () => {
   const navigate = useNavigate();
@@ -21,6 +24,7 @@ const EmpenosLista = () => {
   const [empenoSeleccionado, setEmpenoSeleccionado] = useState(null);
   const [modalEditar, setModalEditar] = useState(false);
   const [editando, setEditando] = useState(false);
+  const [modalEliminar, setModalEliminar] = useState(false);
 
   // Estados para edición
   const [nombreCliente, setNombreCliente] = useState("");
@@ -30,54 +34,70 @@ const EmpenosLista = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const empenosPorPagina = 8;
 
-  // Cargar todos los empeños
-// EmpenosLista.jsx - Al cargar los empeños
-// EmpenosLista.jsx - cargarTodosEmpenos
-const cargarTodosEmpenos = async () => {
-    try {
-        setLoading(true);
-        const response = await api.get('/empenos/todos');
-        if (response.data.success) {
-            const empenosFormateados = response.data.data.map(emp => ({
-                id: emp.id_empeno,
-                id_prenda: emp.id_prenda,
-                imagen: emp.imagen_url || null,
-                cliente: emp.cliente || 'Cliente no disponible',
-                objeto: emp.articulo || 'Sin artículo',
-                monto: emp.monto_prestado ? emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00',
-                interes: emp.intereses || 0,
-                fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
-                vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
-                estado: emp.estado || 'activo',
-                saldo_pendiente: emp.saldo_total_pendiente || 0,
-                saldo_cuota: emp.saldo_pendiente_cuota || 0,
-                total_pagado: emp.total_pagado || 0,
-                dias_vencidos: emp.dias_vencidos || 0,
-                cliente_id: emp.id_cliente || null,
-                material: emp.material || 'No especificado'
-            }));
-            
-            // ✅ EL BACKEND YA ESTÁ ORDENADO, NO HACER SORT MANUAL
-            setEmpenos(empenosFormateados);
-        }
-    } catch (error) {
-        console.error('Error al cargar empeños:', error);
-        setError('No se pudieron cargar los empeños');
-    } finally {
-        setLoading(false);
+  // ============================================
+  // VERIFICAR PERMISOS
+  // ============================================
+  const puedeVerEmpenos = permissionService.hasPermission('ver_empenos');
+  const puedeCrearEmpenos = permissionService.hasPermission('crear_empenos');
+  const puedeEditarEmpenos = permissionService.hasPermission('editar_empenos');
+  const puedeEliminarEmpenos = permissionService.hasPermission('eliminar_empenos');
+  const puedeCancelarEmpenos = permissionService.hasPermission('cancelar_empenos');
+
+  // ============================================
+  // REDIRIGIR SI NO TIENE PERMISO PARA VER
+  // ============================================
+  useEffect(() => {
+    if (!puedeVerEmpenos) {
+      navigate('/home');
     }
-};
+  }, [puedeVerEmpenos, navigate]);
+
+  // Cargar todos los empeños
+  const cargarTodosEmpenos = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/empenos/todos');
+      if (response.data.success) {
+        const empenosFormateados = response.data.data.map(emp => ({
+          id: emp.id_empeno,
+          id_prenda: emp.id_prenda,
+          imagen: emp.imagen_url || null,
+          cliente: emp.cliente || 'Cliente no disponible',
+          objeto: emp.articulo || 'Sin artículo',
+          monto: emp.monto_prestado ? emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00',
+          interes: emp.intereses || 0,
+          fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
+          vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
+          estado: emp.estado || 'activo',
+          saldo_pendiente: emp.saldo_total_pendiente || 0,
+          saldo_cuota: emp.saldo_pendiente_cuota || 0,
+          total_pagado: emp.total_pagado || 0,
+          dias_vencidos: emp.dias_vencidos || 0,
+          cliente_id: emp.id_cliente || null,
+          material: emp.material || 'No especificado'
+        }));
+
+        // ✅ EL BACKEND YA ESTÁ ORDENADO, NO HACER SORT MANUAL
+        setEmpenos(empenosFormateados);
+      }
+    } catch (error) {
+      console.error('Error al cargar empeños:', error);
+      setError('No se pudieron cargar los empeños');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    cargarTodosEmpenos();
-  }, []);
+    if (puedeVerEmpenos) {
+      cargarTodosEmpenos();
+    }
+  }, [puedeVerEmpenos]);
 
   // ← NUEVO: actualiza la imagen de una fila sin recargar todo el listado
   const actualizarImagenLocal = (idEmpeno, nuevaUrl) => {
     setEmpenos(prev => prev.map(e => e.id === idEmpeno ? { ...e, imagen: nuevaUrl } : e));
   };
-
-
 
   // Filtrar empeños por estado
   const empenosFiltrados = empenos.filter((e) => {
@@ -95,6 +115,10 @@ const cargarTodosEmpenos = async () => {
 
   // Abrir modal de detalles
   const abrirDetalle = (empeno) => {
+    if (!puedeVerEmpenos) {
+      alert('No tienes permiso para ver detalles de empeños');
+      return;
+    }
     setEmpenoSeleccionado(empeno);
     setModalAbierto(true);
   };
@@ -104,8 +128,12 @@ const cargarTodosEmpenos = async () => {
     setEmpenoSeleccionado(null);
   };
 
-  // Abrir modal de edición
+  // Abrir modal de edición (solo nombre y material)
   const abrirEditar = (empeno) => {
+    if (!puedeEditarEmpenos) {
+      alert('No tienes permiso para editar empeños');
+      return;
+    }
     setEmpenoSeleccionado(empeno);
     setNombreCliente(empeno.cliente);
     setMaterial(empeno.material || '');
@@ -147,12 +175,42 @@ const cargarTodosEmpenos = async () => {
       });
 
       cerrarModalEditar();
-
     } catch (error) {
       console.error('Error al actualizar:', error);
       alert('Error al actualizar los datos');
     } finally {
       setEditando(false);
+    }
+  };
+
+  // ============================================
+  // ELIMINAR EMPEÑO
+  // ============================================
+  const confirmarEliminar = (empeno) => {
+    if (!puedeEliminarEmpenos) {
+      alert('No tienes permiso para eliminar empeños');
+      return;
+    }
+    setEmpenoSeleccionado(empeno);
+    setModalEliminar(true);
+  };
+
+  const handleEliminar = async () => {
+    if (!puedeEliminarEmpenos) {
+      alert('No tienes permiso para eliminar empeños');
+      return;
+    }
+
+    try {
+      // Si tienes endpoint real, descomenta:
+      // await api.delete(`/empenos/${empenoSeleccionado.id}`);
+      console.log("Eliminar empeño:", empenoSeleccionado.id);
+      setModalEliminar(false);
+      setEmpenoSeleccionado(null);
+      await cargarTodosEmpenos();
+    } catch (error) {
+      console.error('Error al eliminar empeño:', error);
+      alert('Error al eliminar el empeño');
     }
   };
 
@@ -184,6 +242,11 @@ const cargarTodosEmpenos = async () => {
     }
     return numeros;
   };
+
+  // Si no tiene permiso, no renderizar nada (ya redirigirá el useEffect)
+  if (!puedeVerEmpenos) {
+    return null;
+  }
 
   // Estado de carga
   if (loading) {
@@ -232,12 +295,15 @@ const cargarTodosEmpenos = async () => {
             <p className="header-sub">Gestiona y administra tus empeños</p>
           </div>
 
-          <button
-            className="btn-nuevo"
-            onClick={() => navigate("/empenos/nuevo")}
-          >
-            <AddIcon fontSize="small" /> Nuevo Empeño
-          </button>
+          {/* BOTÓN NUEVO EMPEÑO - SOLO CON PERMISO crear_empenos */}
+          {puedeCrearEmpenos && (
+            <button
+              className="btn-nuevo"
+              onClick={() => navigate("/empenos/nuevo")}
+            >
+              <AddIcon fontSize="small" /> Nuevo Empeño
+            </button>
+          )}
         </div>
 
         {/* FILTRO POR ESTADO */}
@@ -405,6 +471,7 @@ const cargarTodosEmpenos = async () => {
                       </td>
                       <td>
                         <div className="acciones-container">
+                          {/* BOTÓN VER - SIEMPRE VISIBLE */}
                           <button
                             className="btn-accion ver"
                             onClick={() => abrirDetalle(e)}
@@ -413,13 +480,27 @@ const cargarTodosEmpenos = async () => {
                             <VisibilityIcon fontSize="small" />
                           </button>
 
-                          <button
-                            className="btn-accion editar"
-                            onClick={() => abrirEditar(e)}
-                            title="Editar nombre y material"
-                          >
-                            <EditIcon fontSize="small" />
-                          </button>
+                          {/* BOTÓN EDITAR - SOLO CON PERMISO editar_empenos */}
+                          {puedeEditarEmpenos && (
+                            <button
+                              className="btn-accion editar"
+                              onClick={() => abrirEditar(e)}
+                              title="Editar nombre y material"
+                            >
+                              <EditIcon fontSize="small" />
+                            </button>
+                          )}
+
+                          {/* BOTÓN ELIMINAR - SOLO CON PERMISO eliminar_empenos */}
+                          {puedeEliminarEmpenos && (
+                            <button
+                              className="btn-accion eliminar"
+                              onClick={() => confirmarEliminar(e)}
+                              title="Eliminar empeño"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -475,7 +556,9 @@ const cargarTodosEmpenos = async () => {
         </div>
       </div>
 
+      {/* ============================================ */}
       {/* MODAL DE DETALLE DEL EMPEÑO */}
+      {/* ============================================ */}
       {modalAbierto && empenoSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -535,7 +618,52 @@ const cargarTodosEmpenos = async () => {
               </div>
             </div>
 
+            {/* ACCIONES DEL MODAL CON PERMISOS */}
             <div className="modal-acciones">
+              {puedeEditarEmpenos && (
+                <button
+                  className="btn-editar"
+                  onClick={() => {
+                    setModalAbierto(false);
+                    abrirEditar(empenoSeleccionado);
+                  }}
+                >
+                  <EditIcon fontSize="small" /> Editar
+                </button>
+              )}
+
+              {puedeCancelarEmpenos && (
+                <button
+                  className="btn-cancelar"
+                  onClick={() => {
+                    console.log("Cancelar empeño:", empenoSeleccionado.id);
+                    alert('Función de cancelar empeño');
+                  }}
+                >
+                  ⛔ Cancelar
+                </button>
+              )}
+
+              {puedeEliminarEmpenos && (
+                <button
+                  className="btn-eliminar"
+                  onClick={() => {
+                    setModalAbierto(false);
+                    confirmarEliminar(empenoSeleccionado);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" /> Eliminar
+                </button>
+              )}
+
+              {/* Mostrar mensaje si no tiene permisos para modificar */}
+              {!puedeEditarEmpenos && !puedeCancelarEmpenos && !puedeEliminarEmpenos && (
+                <div className="sin-permisos-modal">
+                  <LockIcon fontSize="small" />
+                  <span>Solo visualización - No tienes permisos para modificar</span>
+                </div>
+              )}
+
               <button
                 className="btn-cerrar-modal"
                 onClick={cerrarModal}
@@ -548,7 +676,7 @@ const cargarTodosEmpenos = async () => {
       )}
 
       {/* MODAL DE EDICIÓN - SOLO NOMBRE Y MATERIAL */}
-      {modalEditar && empenoSeleccionado && (
+      {modalEditar && empenoSeleccionado && puedeEditarEmpenos && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
           <div className="modal-editar" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header-editar">
@@ -604,6 +732,35 @@ const cargarTodosEmpenos = async () => {
                 disabled={editando || !nombreCliente.trim()}
               >
                 {editando ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================ */}
+      {/* MODAL DE CONFIRMACIÓN ELIMINAR - SOLO SI TIENE PERMISO */}
+      {/* ============================================ */}
+      {modalEliminar && empenoSeleccionado && puedeEliminarEmpenos && (
+        <div className="modal-overlay" onClick={() => setModalEliminar(false)}>
+          <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icono">⚠️</div>
+            <h3>¿Eliminar empeño?</h3>
+            <p>Estás a punto de eliminar el empeño de <strong>{empenoSeleccionado.cliente}</strong></p>
+            <p className="advertencia">Esta acción no se puede deshacer</p>
+
+            <div className="modal-botones">
+              <button
+                className="btn-cancelar"
+                onClick={() => setModalEliminar(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-confirmar-eliminar"
+                onClick={handleEliminar}
+              >
+                Eliminar
               </button>
             </div>
           </div>

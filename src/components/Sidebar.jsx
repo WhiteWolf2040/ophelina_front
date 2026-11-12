@@ -103,29 +103,35 @@ const Sidebar = () => {
 
   console.log('📋 Menús a renderizar:', menuItems.map(m => m.text));
 
+  // ============================================
+  // FUNCIONES DEL SIDEBAR
+  // ============================================
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => setIsOpen(false);
 
   // ✅ AGREGADO #2: función para alternar colapso
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
- const handleLogout = async () => {
-  // 1. Limpiar TODO el frontend primero (instantáneo)
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  if (clearUserData) clearUserData();
+  const handleLogout = async () => {
+    // 1. Limpiar TODO el frontend primero (instantáneo)
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    if (clearUserData) clearUserData();
 
-  // 2. Redirigir YA (el usuario ve la pantalla de login al instante)
-  navigate("/login");
+    // 2. Redirigir YA (el usuario ve la pantalla de login al instante)
+    navigate("/login");
 
-  // 3. Avisar al backend en segundo plano (si falla, no importa)
-  try {
-    await api.post('/logout').catch(() => {});
-  } catch (e) {
-    // silencio
-  }
-};
+    // 3. Avisar al backend en segundo plano (si falla, no importa)
+    try {
+      await logout().catch(() => {});
+    } catch (e) {
+      // silencio
+    }
+  };
 
+  // ============================================
+  // RENDER - ESTADO DE CARGA
+  // ============================================
   if (loading) {
     return (
       // ✅ AGREGADO #3: clase collapsed también en loading
@@ -138,13 +144,17 @@ const Sidebar = () => {
     );
   }
 
+  // ============================================
+  // RENDER - SIDEBAR COMPLETO
+  // ============================================
   return (
     <>
       {!isOpen && (
-  <button className="mobile-menu-btn" onClick={toggleSidebar}>
-    <MenuIcon />
-  </button>
-)}
+        <button className="mobile-menu-btn" onClick={toggleSidebar}>
+          <MenuIcon />
+        </button>
+      )}
+
       {isOpen && <div className="sidebar-overlay visible" onClick={closeSidebar}></div>}
 
       {/* ✅ AGREGADO #4: clase collapsed en el aside */}

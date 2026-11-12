@@ -1,4 +1,4 @@
-// src/Roles/Roles.jsx - VERSIÓN FUSIONADA (Docker Base + Filtro de Local)
+// src/Roles/Roles.jsx
 import React, { useState, useEffect } from "react";
 
 import "./Roles.css";
@@ -44,7 +44,7 @@ const Roles = () => {
 
   const [permisosDelRol, setPermisosDelRol] = useState([]);
 
-  // Convertir permisos a formato para React-Select
+  // Opciones para React-Select
   const permisosOptions = permisos.map(permiso => ({
     value: permiso.id,
     label: `${permiso.nombre} (${permiso.modulo})`,
@@ -108,6 +108,12 @@ const Roles = () => {
 
   // Cargar datos al montar el componente
   useEffect(() => {
+    // Verificar token y usuario
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    console.log('Token:', token);
+    console.log('Usuario:', user);
+    console.log('Empresa del usuario:', user.id_empresa);
     console.log('rolesService:', rolesService);
     cargarRoles();
     cargarPermisos();
@@ -126,21 +132,21 @@ const Roles = () => {
     }
   };
 
-  // ✅ VERSIÓN FUSIONADA: Cargar permisos con filtro por empresa (de LOCAL)
+  // Cargar permisos con filtro por empresa
   const cargarPermisos = async () => {
     try {
       const response = await rolesService.obtenerPermisos();
       console.log('Todos los permisos:', response.data.data);
-      
-      // ✅ FILTRADO POR EMPRESA (Agregado de LOCAL)
+
+      // El backend ya filtra por empresa en el método index,
+      // pero si devuelve permisos globales se filtran manualmente por id_empresa.
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       console.log('Empresa del usuario:', user.id_empresa);
-      
-      // Filtrar permisos por empresa
+
       const permisosFiltrados = response.data.data.filter(
         p => p.id_empresa === user.id_empresa
       );
-      
+
       console.log('Permisos filtrados por empresa:', permisosFiltrados);
       setPermisos(permisosFiltrados);
     } catch (error) {
@@ -183,21 +189,47 @@ const Roles = () => {
   const handleEditarRol = async (e) => {
     e.preventDefault();
     try {
+      // Verificar que todos los permisos existan
+      const permisosValidos = permisosSeleccionados.filter(id => 
+        permisosOptions.some(p => p.value === id)
+      );
+      
+      if (permisosValidos.length !== permisosSeleccionados.length) {
+        const invalidos = permisosSeleccionados.filter(id => 
+          !permisosOptions.some(p => p.value === id)
+        );
+        console.warn('Permisos inválidos (no existen):', invalidos);
+        alert(`Algunos permisos no existen: ${invalidos.join(', ')}`);
+      }
+      
       const data = {
         nombre: rolSeleccionado.nombre,
         nivel: parseInt(rolSeleccionado.nivel),
         descripcion: rolSeleccionado.descripcion || "",
-        permisos: permisosSeleccionados
+        permisos: permisosValidos
       };
-      await rolesService.actualizarRol(rolSeleccionado.id, data);
-      await cargarRoles();
-      setModalEditar(false);
-      setRolSeleccionado(null);
-      setPermisosSeleccionados([]);
+      
+      console.log('Datos a enviar (válidos):', data);
+      
+      const response = await rolesService.actualizarRol(rolSeleccionado.id, data);
+      
+      if (response.data.success) {
+        alert('Rol actualizado exitosamente');
+        await cargarRoles();
+        setModalEditar(false);
+        setRolSeleccionado(null);
+        setPermisosSeleccionados([]);
+      }
     } catch (error) {
       console.error('Error actualizando rol:', error);
       alert(error.response?.data?.message || 'Error al actualizar el rol');
     }
+  };
+
+  const handlePermisosChange = (selected) => {
+    const selectedIds = selected ? selected.map(opt => opt.value) : [];
+    console.log('Permisos seleccionados:', selectedIds);
+    setPermisosSeleccionados(selectedIds);
   };
 
   const handleEliminar = async () => {
@@ -265,7 +297,6 @@ const Roles = () => {
   if (loading) {
     return (
       <div className="dashboard">
-      
         <div className="content loading-container">
           <div className="spinner"></div>
           <p>Cargando roles...</p>
@@ -277,7 +308,6 @@ const Roles = () => {
   if (error) {
     return (
       <div className="dashboard">
-      
         <div className="content error-container">
           <h3>Error</h3>
           <p>{error}</p>
@@ -292,8 +322,6 @@ const Roles = () => {
 
   return (
     <div className="dashboard">
-   
-
       <div className="content roles-content">
         {/* HEADER */}
         <div className="roles-header">
@@ -711,6 +739,9 @@ const Roles = () => {
                       )}
                       onChange={(selected) => {
                         const selectedIds = selected ? selected.map(opt => opt.value) : [];
+                        console.log('=== CAMBIO EN SELECT ===');
+                        console.log('IDs seleccionados:', selectedIds);
+                        console.log('Cantidad seleccionada:', selectedIds.length);
                         setPermisosSeleccionados(selectedIds);
                       }}
                       formatOptionLabel={(option) => (

@@ -1,4 +1,4 @@
-// InventarioLista.jsx - VERSIÓN CORREGIDA (usando campos reales + imagen vía Cloudinary)
+// InventarioLista.jsx - VERSIÓN CORREGIDA (usando campos reales + imagen vía Cloudinary + permisos)
 
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -8,11 +8,13 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import LockIcon from '@mui/icons-material/Lock';
 
 // 📌 Servicio de inventario
 import inventarioService from "../services/inventarioService";
+import permissionService from "../services/permisoService";
 
-// ✅ NUEVO: mismos datos de Cloudinary que ya usa TiendaOnline.jsx / NuevoInventario.jsx
+// ✅ mismos datos de Cloudinary que ya usa TiendaOnline.jsx / NuevoInventario.jsx
 const CLOUDINARY_CLOUD_NAME = "mbeup6wz";
 const CLOUDINARY_UPLOAD_PRESET = "ophelina_productos";
 
@@ -56,17 +58,34 @@ const InventarioLista = () => {
   const [guardandoEdicion, setGuardandoEdicion] = useState(false);
   const [errorEdicion, setErrorEdicion] = useState("");
 
+  // ============================================
+  // PERMISOS
+  // ============================================
+  const puedeVerTienda = permissionService.hasPermission('ver_tienda');
+  const puedeCrearProductos = permissionService.hasPermission('crear_productos');
+  const puedeEditarProductos = permissionService.hasPermission('editar_productos');
+  const puedeEliminarProductos = permissionService.hasPermission('eliminar_productos');
+
+  // ============================================
+  // REDIRIGIR SI NO TIENE PERMISO (vía useEffect, no en el cuerpo)
+  // ============================================
+  useEffect(() => {
+    if (!puedeVerTienda) {
+      navigate('/home');
+    }
+  }, [puedeVerTienda, navigate]);
+
   // Estado para el formulario de edición (Mapeado a campos reales)
   const [formEditar, setFormEditar] = useState({
-    descripcion: "",      // ← nombre en frontend
-    tipo: "",            // ← categoria en frontend
+    descripcion: "",
+    tipo: "",
     material: "",
-    peso_gramos: "",     // ← peso en frontend
-    valor_estimado: "",  // ← valor en frontend
+    peso_gramos: "",
+    valor_estimado: "",
     estado: ""
   });
 
-  // ✅ NUEVO: estado para la imagen dentro del modal de edición
+  // ✅ estado para la imagen dentro del modal de edición
   const [imagenEditar, setImagenEditar] = useState(null); // File real (si se elige una nueva)
   const [previewImagenEditar, setPreviewImagenEditar] = useState(""); // preview (nueva o la ya existente)
   const inputImagenEditarRef = useRef(null);
@@ -77,21 +96,23 @@ const InventarioLista = () => {
 
   // ========== CARGAR PRENDAS ==========
   useEffect(() => {
-    cargarPrendas();
-  }, []);
+    if (puedeVerTienda) {
+      cargarPrendas();
+    }
+  }, [puedeVerTienda]);
 
   const cargarPrendas = async () => {
     setLoading(true);
     try {
-        const data = await inventarioService.getPrendas();
-        console.log('Prendas recibidas:', data); // ← Verificar en consola
-        setPrendas(data || []);
-        setError(null);
+      const data = await inventarioService.getPrendas();
+      console.log('Prendas recibidas:', data);
+      setPrendas(data || []);
+      setError(null);
     } catch (err) {
-        console.error("Error cargando prendas:", err);
-        setError("Error al cargar el inventario");
+      console.error("Error cargando prendas:", err);
+      setError("Error al cargar el inventario");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -111,6 +132,10 @@ const InventarioLista = () => {
 
   // ========== CRUD ==========
   const abrirDetalle = (prenda) => {
+    if (!puedeVerTienda) {
+      alert('No tienes permiso para ver detalles de prendas');
+      return;
+    }
     setPrendaSeleccionada(prenda);
     setModalAbierto(true);
   };
@@ -132,6 +157,11 @@ const InventarioLista = () => {
   };
 
   const abrirModalEditar = (prenda) => {
+    if (!puedeEditarProductos) {
+      alert('No tienes permiso para editar prendas');
+      return;
+    }
+
     setPrendaSeleccionada(prenda);
     setFormEditar({
       descripcion: prenda.descripcion || "",
@@ -143,7 +173,6 @@ const InventarioLista = () => {
     });
     setErrorEdicion("");
     setImagenEditar(null);
-    // ✅ NUEVO: si la prenda ya tiene imagen, se muestra como preview inicial
     setPreviewImagenEditar(prenda.imagen_url || "");
     setModalEditarAbierto(true);
     setModalAbierto(false);
@@ -155,7 +184,7 @@ const InventarioLista = () => {
     limpiarImagenEditar();
   };
 
-  // ✅ NUEVO: selección de nueva imagen dentro del modal de edición
+  // ✅ selección de nueva imagen dentro del modal de edición
   const handleFileChangeEditar = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -183,14 +212,18 @@ const InventarioLista = () => {
 
   const handleEditarSubmit = async (e) => {
     e.preventDefault();
+
+    if (!puedeEditarProductos) {
+      alert('No tienes permiso para editar prendas');
+      return;
+    }
+
     setGuardandoEdicion(true);
     setErrorEdicion("");
 
     try {
-      // ✅ NUEVO: si se eligió una imagen nueva, se sube primero a
-      // Cloudinary y se manda su URL junto con el resto de los datos.
-      // Si no se tocó la imagen, no se manda `imagen_url` y el backend
-      // conserva la que ya tenía la prenda.
+      // ✅ si se eligió una imagen nueva, se sube primero a Cloudinary
+      // y se manda su URL junto con el resto de los datos.
       const datos = { ...formEditar };
 
       if (imagenEditar) {
@@ -210,6 +243,11 @@ const InventarioLista = () => {
   };
 
   const confirmarEliminar = (prenda) => {
+    if (!puedeEliminarProductos) {
+      alert('No tienes permiso para eliminar prendas');
+      return;
+    }
+
     setPrendaSeleccionada(prenda);
     setModalEliminar(true);
     setModalAbierto(false);
@@ -217,6 +255,11 @@ const InventarioLista = () => {
   };
 
   const handleEliminar = async () => {
+    if (!puedeEliminarProductos) {
+      alert('No tienes permiso para eliminar prendas');
+      return;
+    }
+
     try {
       await inventarioService.eliminarPrenda(prendaSeleccionada.id_prenda);
       await cargarPrendas();
@@ -229,6 +272,11 @@ const InventarioLista = () => {
   };
 
   // ========== RENDER ==========
+  // Si no tiene permiso, no renderizar nada (ya redirige el useEffect)
+  if (!puedeVerTienda) {
+    return null;
+  }
+
   return (
     <>
       {/* HEADER */}
@@ -240,13 +288,17 @@ const InventarioLista = () => {
             <p className="header-sub">Gestiona todas las prendas del negocio</p>
           </h1>
         </div>
-        <button
-          className="btn-nuevo"
-          onClick={() => navigate("/inventario/nuevo")}
-        >
-          <AddIcon />
-          Nueva Prenda
-        </button>
+
+        {/* BOTÓN NUEVA PRENDA - SOLO CON PERMISO */}
+        {puedeCrearProductos && (
+          <button
+            className="btn-nuevo"
+            onClick={() => navigate("/inventario/nuevo")}
+          >
+            <AddIcon fontSize="small" />
+            Nueva Prenda
+          </button>
+        )}
       </div>
 
       {/* FILTROS */}
@@ -383,27 +435,38 @@ const InventarioLista = () => {
                         </span>
                       </td>
                       <td>
-                        <button 
-                          className="btn-accion ver"
-                          onClick={() => abrirDetalle(item)}
-                          title="Ver detalles"
-                        >
-                          <VisibilityIcon fontSize="small" />
-                        </button>
-                        <button 
-                          className="btn-accion editar"
-                          onClick={() => abrirModalEditar(item)}
-                          title="Editar"
-                        >
-                          <EditIcon fontSize="small" />
-                        </button>
-                        <button 
-                          className="btn-accion eliminar"
-                          onClick={() => confirmarEliminar(item)}
-                          title="Eliminar"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </button>
+                        <div className="acciones-container">
+                          {/* BOTÓN VER - SIEMPRE VISIBLE */}
+                          <button 
+                            className="btn-accion ver"
+                            onClick={() => abrirDetalle(item)}
+                            title="Ver detalles"
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </button>
+
+                          {/* BOTÓN EDITAR - SOLO CON PERMISO */}
+                          {puedeEditarProductos && (
+                            <button 
+                              className="btn-accion editar"
+                              onClick={() => abrirModalEditar(item)}
+                              title="Editar"
+                            >
+                              <EditIcon fontSize="small" />
+                            </button>
+                          )}
+
+                          {/* BOTÓN ELIMINAR - SOLO CON PERMISO */}
+                          {puedeEliminarProductos && (
+                            <button 
+                              className="btn-accion eliminar"
+                              onClick={() => confirmarEliminar(item)}
+                              title="Eliminar"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -431,7 +494,6 @@ const InventarioLista = () => {
             </div>
 
             <div className="modal-body">
-              {/* ✅ NUEVO: imagen de la prenda, si tiene */}
               {prendaSeleccionada.imagen_url && (
                 <div style={{ textAlign: 'center', marginBottom: '16px' }}>
                   <img
@@ -487,29 +549,46 @@ const InventarioLista = () => {
             </div>
 
             <div className="modal-acciones">
-              <button 
-                className="btn-editar"
-                onClick={() => abrirModalEditar(prendaSeleccionada)}
+              {puedeEditarProductos && (
+                <button 
+                  className="btn-editar"
+                  onClick={() => abrirModalEditar(prendaSeleccionada)}
+                >
+                  <EditIcon fontSize="small" /> Editar
+                </button>
+              )}
+
+              <button
+                className="btn-nuevo"
+                onClick={() => navigate("/inventario/asignar-imagenes")}
+                style={{ marginLeft: "8px" }}
               >
-                 Editar
+                Asignar imágenes masivamente
               </button>
 
-              <button className="btn-nuevo" onClick={() => navigate("/inventario/asignar-imagenes")} style={{ marginLeft: "8px" }}>
-                 Asignar imágenes masivamente
-              </button>
-              <button 
-                className="btn-eliminar"
-                onClick={() => confirmarEliminar(prendaSeleccionada)}
-              >
-                 Eliminar
-              </button>
+              {puedeEliminarProductos && (
+                <button 
+                  className="btn-eliminar"
+                  onClick={() => confirmarEliminar(prendaSeleccionada)}
+                >
+                  <DeleteIcon fontSize="small" /> Eliminar
+                </button>
+              )}
+
+              {/* Mostrar mensaje si no tiene permisos para modificar */}
+              {!puedeEditarProductos && !puedeEliminarProductos && (
+                <div className="sin-permisos-modal">
+                  <LockIcon fontSize="small" /> 
+                  <span>Solo visualización - No tienes permisos para modificar</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
       {/* MODAL EDITAR - Con campos mapeados + imagen */}
-      {modalEditarAbierto && prendaSeleccionada && (
+      {modalEditarAbierto && prendaSeleccionada && puedeEditarProductos && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
           <div className="modal-editar-prenda" onClick={(e) => e.stopPropagation()}>
             <button className="modal-cerrar" onClick={cerrarModalEditar}>×</button>
@@ -603,7 +682,7 @@ const InventarioLista = () => {
                     </select>
                   </div>
 
-                  {/* ✅ NUEVO: subir/reemplazar imagen */}
+                  {/* subir/reemplazar imagen */}
                   <div className="form-group full-width">
                     <label>Imagen de la prenda</label>
                     <input
@@ -653,7 +732,7 @@ const InventarioLista = () => {
       )}
 
       {/* MODAL ELIMINAR */}
-      {modalEliminar && prendaSeleccionada && (
+      {modalEliminar && prendaSeleccionada && puedeEliminarProductos && (
         <div className="modal-overlay" onClick={() => setModalEliminar(false)}>
           <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icono">⚠️</div>
