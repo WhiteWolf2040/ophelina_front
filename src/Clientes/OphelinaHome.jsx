@@ -45,7 +45,7 @@ export default function OphelinaHome() {
 
         if (response.data.success) {
           const data = response.data.data;
-          
+
           console.log("Datos del Dashboard:", data);
 
           const actividadOrdenada = [...(data.actividadReciente || [])].sort((a, b) => {
@@ -62,14 +62,13 @@ export default function OphelinaHome() {
 
           setResumen({
             activos: data.resumen?.activos || "0",
-            vencidos: data.resumen?.vencidos || "0", 
+            vencidos: data.resumen?.vencidos || "0",
             totalPendiente: data.resumen?.totalPendiente || "$0",
             proximoVencimiento: data.resumen?.proximoVencimiento || "Sin vencimientos",
           });
           setProximosVencer(proximosOrdenados);
           setDeuda(data.deuda || { capital: "$0", intereses: "$0", total: "$0" });
           setActividadReciente(actividadOrdenada);
-          
         } else {
           setError(response.data.message || "No se pudo cargar el dashboard");
         }
@@ -87,8 +86,8 @@ export default function OphelinaHome() {
     return (
       <>
         <Navbar />
-        <div className="me-page">
-          <div className="me-cargando-texto">Cargando tu información...</div>
+        <div className="oh-page">
+          <div className="oh-cargando-texto">Cargando tu información...</div>
         </div>
       </>
     );
@@ -98,10 +97,10 @@ export default function OphelinaHome() {
     return (
       <>
         <Navbar />
-        <div className="me-page">
-          <div className="me-sin-resultados" style={{ margin: "40px auto", maxWidth: "600px" }}>
+        <div className="oh-page">
+          <div className="oh-sin-resultados" style={{ margin: "40px auto", maxWidth: "600px" }}>
             <p>{error}</p>
-            <button className="me-btn-reintentar" onClick={() => window.location.reload()}>
+            <button className="oh-btn-reintentar" onClick={() => window.location.reload()}>
               Reintentar
             </button>
           </div>
@@ -111,80 +110,78 @@ export default function OphelinaHome() {
   }
 
   return (
-    <div className="me-page">
+    <div className="oh-page">
       <Navbar />
-      <div className="me-dashboard">
-        
-        <section className="me-page-header">
-          <h1 className="me-page-title">
-            Hola, <span className="me-welcome-name">{userName}</span>
+      <div className="oh-dashboard">
+
+        <section className="oh-page-header">
+          <h1 className="oh-page-title">
+            Hola, <span className="oh-welcome-name">{userName}</span>
           </h1>
-          <p className="me-page-subtitle">Resumen de tus prendas empeñadas</p>
+          <p className="oh-page-subtitle">Resumen de tus prendas empeñadas</p>
         </section>
 
         {/* TARJETAS DE RESUMEN (SOLO ICONOS CON TOOLTIP) */}
-        <section className="me-stats-grid">
-          
-          <Tooltip 
-            title={<div className="me-tooltip-content"><span className="me-tooltip-label">Empeños Activos</span><span className="me-tooltip-value">{resumen.activos}</span></div>} 
-            arrow 
+        <section className="oh-stats-grid">
+          <Tooltip
+            title={<div className="oh-tooltip-content"><span className="oh-tooltip-label">Empeños Activos</span><span className="oh-tooltip-value">{resumen.activos}</span></div>}
+            arrow
             placement="top"
           >
-            <div className="me-ficha me-ficha-stat">
-              <InventoryIcon className="me-stat-icon-only" style={{ color: "var(--me-acero)" }} />
+            <div className="oh-ficha oh-ficha-stat">
+              <InventoryIcon className="oh-stat-icon-only" style={{ color: "var(--oh-acero)" }} />
             </div>
           </Tooltip>
 
-          <Tooltip 
-            title={<div className="me-tooltip-content"><span className="me-tooltip-label">Vencidos</span><span className="me-tooltip-value" style={{ color: "#ff6b6b" }}>{resumen.vencidos}</span></div>} 
-            arrow 
+          <Tooltip
+            title={<div className="oh-tooltip-content"><span className="oh-tooltip-label">Vencidos</span><span className="oh-tooltip-value" style={{ color: "#ff6b6b" }}>{resumen.vencidos}</span></div>}
+            arrow
             placement="top"
           >
-            <div className="me-ficha me-ficha-stat">
-              <WarningAmberIcon className="me-stat-icon-only" style={{ color: "#c0392b" }} />
+            <div className="oh-ficha oh-ficha-stat">
+              <WarningAmberIcon className="oh-stat-icon-only" style={{ color: "#c0392b" }} />
             </div>
           </Tooltip>
 
-          <Tooltip 
-            title={<div className="me-tooltip-content"><span className="me-tooltip-label">Saldo Pendiente</span><span className="me-tooltip-value">{resumen.totalPendiente}</span></div>} 
-            arrow 
+          <Tooltip
+            title={<div className="oh-tooltip-content"><span className="oh-tooltip-label">Saldo Pendiente</span><span className="oh-tooltip-value">{resumen.totalPendiente}</span></div>}
+            arrow
             placement="top"
           >
-            <div className="me-ficha me-ficha-stat">
-              <AttachMoneyIcon className="me-stat-icon-only" style={{ color: "var(--me-dorado)" }} />
+            <div className="oh-ficha oh-ficha-stat">
+              <AttachMoneyIcon className="oh-stat-icon-only" style={{ color: "var(--oh-dorado)" }} />
             </div>
           </Tooltip>
 
-          <Tooltip 
-            title={<div className="me-tooltip-content"><span className="me-tooltip-label">Próximo Vencimiento</span><span className="me-tooltip-value">{resumen.proximoVencimiento}</span></div>} 
-            arrow 
+          <Tooltip
+            title={<div className="oh-tooltip-content"><span className="oh-tooltip-label">Próximo Vencimiento</span><span className="oh-tooltip-value">{resumen.proximoVencimiento}</span></div>}
+            arrow
             placement="top"
           >
-            <div className="me-ficha me-ficha-stat">
-              <AccessTimeIcon className="me-stat-icon-only" style={{ color: "var(--me-marino)" }} />
+            <div className="oh-ficha oh-ficha-stat">
+              <AccessTimeIcon className="oh-stat-icon-only" style={{ color: "var(--oh-marino)" }} />
             </div>
           </Tooltip>
-
         </section>
 
         {/* PRÓXIMOS A VENCER (CAJA BLANCA) */}
-        <section className="me-contenido-section">
-          <h3 className="me-section-title">
+        <section className="oh-contenido-section">
+          <h3 className="oh-section-title">
             <InventoryIcon sx={{ fontSize: 24 }} /> Empeños Próximos a Vencer
           </h3>
 
           {proximosVencer.length === 0 ? (
-            <p className="me-texto-vacio">No tienes empeños próximos a vencer.</p>
+            <p className="oh-texto-vacio">No tienes empeños próximos a vencer.</p>
           ) : (
-            <div className="me-fichas-grid" style={{ marginBottom: 0 }}>
+            <div className="oh-fichas-grid" style={{ marginBottom: 0 }}>
               {proximosVencer.map((item) => (
-                <div key={item.id} className="me-ficha">
-                  <div className="me-ficha-header">
-                    <div className="me-ficha-titulo">
-                      <span className="me-empeno-nombre">{item.nombre}</span>
-                      <span className="me-empeno-id">Vence: {item.fechaVencimiento}</span>
+                <div key={item.id} className="oh-ficha">
+                  <div className="oh-ficha-header">
+                    <div className="oh-ficha-titulo">
+                      <span className="oh-empeno-nombre">{item.nombre}</span>
+                      <span className="oh-empeno-id">Vence: {item.fechaVencimiento}</span>
                     </div>
-                    <span className={`me-estado ${parseInt(item.diasRestantes) <= 3 ? 'me-estado-vencido' : 'me-estado-porvencer'}`}>
+                    <span className={`oh-estado ${parseInt(item.diasRestantes) <= 3 ? 'oh-estado-vencido' : 'oh-estado-porvencer'}`}>
                       {item.diasRestantes} días
                     </span>
                   </div>
@@ -195,48 +192,48 @@ export default function OphelinaHome() {
         </section>
 
         {/* SECCIONES INFERIORES (CAJAS BLANCAS) */}
-        <div className="me-bottom-sections">
-          <section className="me-contenido-section">
-            <h3 className="me-section-title">
+        <div className="oh-bottom-sections">
+          <section className="oh-contenido-section">
+            <h3 className="oh-section-title">
               <PaymentIcon sx={{ fontSize: 24 }} /> Desglose de Deuda
             </h3>
-            <div className="me-financiero-tabla">
-              <div className="me-financiero-fila">
-                <span className="me-financiero-label">Capital prestado:</span>
-                <span className="me-financiero-valor">{deuda.capital}</span>
+            <div className="oh-financiero-tabla">
+              <div className="oh-financiero-fila">
+                <span className="oh-financiero-label">Capital prestado:</span>
+                <span className="oh-financiero-valor">{deuda.capital}</span>
               </div>
-              <div className="me-financiero-fila">
-                <span className="me-financiero-label">Intereses acumulados:</span>
-                <span className="me-financiero-valor">{deuda.intereses}</span>
+              <div className="oh-financiero-fila">
+                <span className="oh-financiero-label">Intereses acumulados:</span>
+                <span className="oh-financiero-valor">{deuda.intereses}</span>
               </div>
-              <div className="me-financiero-fila me-financiero-total">
-                <span className="me-financiero-label">Total a pagar:</span>
-                <span className="me-financiero-valor">{deuda.total}</span>
+              <div className="oh-financiero-fila oh-financiero-total">
+                <span className="oh-financiero-label">Total a pagar:</span>
+                <span className="oh-financiero-valor">{deuda.total}</span>
               </div>
             </div>
           </section>
 
-          <section className="me-contenido-section">
-            <h3 className="me-section-title">
+          <section className="oh-contenido-section">
+            <h3 className="oh-section-title">
               <AccessTimeIcon sx={{ fontSize: 24 }} /> Actividad Reciente
             </h3>
-            <div className="me-historial-lista">
+            <div className="oh-historial-lista">
               {actividadReciente.length === 0 ? (
-                <p className="me-texto-vacio">Sin actividad reciente.</p>
+                <p className="oh-texto-vacio">Sin actividad reciente.</p>
               ) : (
                 actividadReciente.map((item) => (
-                  <div key={item.id} className="me-historial-item">
+                  <div key={item.id} className="oh-historial-item">
                     <div
-                      className="me-activity-icon"
+                      className="oh-activity-icon"
                       style={{
                         color: item.tipo === "pago" ? "#1e6b34" : item.tipo === "nuevo" ? "#3b507d" : item.tipo === "vencido" ? "#962d22" : "#96500f",
                       }}
                     >
                       {iconMap[item.tipo] || <InventoryIcon sx={{ fontSize: 20 }} />}
                     </div>
-                    <div className="me-historial-main">
-                      <span className="me-historial-monto" style={{ fontSize: "14px" }}>{item.titulo}</span>
-                      <span className="me-historial-fecha">{item.detalle}</span>
+                    <div className="oh-historial-main">
+                      <span className="oh-historial-monto" style={{ fontSize: "14px" }}>{item.titulo}</span>
+                      <span className="oh-historial-fecha">{item.detalle}</span>
                     </div>
                   </div>
                 ))
@@ -244,7 +241,6 @@ export default function OphelinaHome() {
             </div>
           </section>
         </div>
-
       </div>
     </div>
   );

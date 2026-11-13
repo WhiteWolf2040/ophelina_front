@@ -1,0 +1,317 @@
+/* =====================================================
+   MODAL EDITAR PERFIL
+   Todas las clases usan el prefijo "pf-" para que no choquen
+   con otras hojas de estilo (.modal-overlay, .form-group, etc.)
+   ===================================================== */
+
+   .pf-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(13, 27, 62, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: pfFade 0.25s ease-out;
+  }
+  
+  .pf-modal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    max-height: 90dvh;
+    background: #fcf9f5;
+    border: 1px solid rgba(198, 167, 94, 0.6);
+    border-radius: 18px;
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    font-family: 'Montserrat', sans-serif;
+    animation: pfUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  /* ---------- Header ---------- */
+  .pf-header {
+    position: relative;
+    flex-shrink: 0;
+    padding: 18px 64px 16px 22px;
+    background: linear-gradient(135deg, #0d1b3e 0%, #1f2f57 100%);
+    border-bottom: 3px solid #c6a75e;
+  }
+  
+  .pf-header h3 {
+    margin: 0;
+    color: #ffffff;
+    font-family: 'Bodoni Moda', serif;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.3px;
+  }
+  
+  .pf-close {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .pf-close:hover {
+    background: rgba(224, 197, 143, 0.35);
+  }
+  
+  /* ---------- Form: body con scroll + footer fijo ---------- */
+  .pf-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
+  }
+  
+  .pf-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 20px 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .pf-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .pf-field label {
+    margin: 0 0 0 2px;
+    color: #0d1b3e;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  
+  /* Input + icono: el icono se centra respecto al input, no al grupo */
+  .pf-input-wrap {
+    position: relative;
+  }
+  
+  .pf-input-wrap input {
+    display: block;
+    width: 100%;
+    height: 48px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 46px 0 14px;
+    color: #2c3e70;
+    background: #ffffff;
+    border: 1.5px solid #e6dcc8;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 16px; /* 16px evita el zoom automático en iOS */
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .pf-input-wrap input::placeholder {
+    color: #aaa59a;
+  }
+  
+  .pf-input-wrap input:focus {
+    outline: none;
+    border-color: #c6a75e;
+    box-shadow: 0 0 0 4px rgba(198, 167, 94, 0.2);
+  }
+  
+  .pf-input-wrap input:disabled {
+    color: #7a7f93;
+    background: #f1eee8;
+    box-shadow: none;
+    cursor: not-allowed;
+    -webkit-text-fill-color: #7a7f93; /* Safari pone el texto deshabilitado muy claro */
+    opacity: 1;
+  }
+  
+  .pf-input-icon {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    color: #0d1b3e;
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  
+  .pf-hint {
+    margin: 0 0 0 2px;
+    color: #8a8478;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  
+  /* Mensajes de éxito / error */
+  .pf-message {
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  
+  .pf-message--success {
+    color: #155724;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+  }
+  
+  .pf-message--error {
+    color: #721c24;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+  }
+  
+  /* ---------- Footer ---------- */
+  .pf-footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: #ffffff;
+    border-top: 1px solid #eee;
+    box-shadow: 0 -8px 14px -10px rgba(0, 0, 0, 0.15);
+  }
+  
+  .pf-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .pf-btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
+    transform: none;
+  }
+  
+  .pf-btn--cancel {
+    min-width: 120px;
+    color: #0d1b3e;
+    background: #e8c572;
+  }
+  
+  .pf-btn--cancel:hover:not(:disabled) {
+    background: #d4b577;
+    transform: translateY(-2px);
+  }
+  
+  .pf-btn--save {
+    min-width: 160px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #0d1b3e, #253662);
+    box-shadow: 0 8px 18px -6px rgba(13, 27, 62, 0.4);
+  }
+  
+  .pf-btn--save:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1a2b4e, #2f4070);
+    transform: translateY(-2px);
+  }
+  
+  /* ---------- Animaciones ---------- */
+  @keyframes pfFade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  
+  @keyframes pfUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  
+  @keyframes pfSheet {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .pf-overlay,
+    .pf-modal { animation: none; }
+  }
+  
+  /* ---------- Móvil: modal centrado ---------- */
+  @media screen and (max-width: 575px) {
+    .pf-overlay {
+      align-items: center;
+      padding: 16px;
+    }
+  
+    .pf-modal {
+      max-width: 100%;
+      max-height: 88vh;
+      max-height: 88dvh;
+      border-radius: 18px;
+    }
+  
+    .pf-header { padding: 16px 60px 14px 18px; }
+    .pf-header h3 { font-size: 21px; }
+    .pf-close { right: 12px; width: 34px; height: 34px; }
+  
+    .pf-body { gap: 14px; padding: 16px 16px 10px; }
+    .pf-input-wrap input { height: 46px; padding-left: 13px; }
+  
+    /* Dos botones lado a lado; "Guardar" más ancho */
+    .pf-footer {
+      gap: 10px;
+      padding: 12px 16px;
+    }
+    .pf-btn { padding: 0 10px; }
+    .pf-btn--cancel { flex: 1; min-width: 0; }
+    .pf-btn--save { flex: 1.6; min-width: 0; }
+  }
+  
+  /* ---------- Pantallas bajitas (teclado abierto, landscape) ---------- */
+  @media screen and (max-height: 600px) {
+    .pf-header { padding-top: 12px; padding-bottom: 10px; }
+    .pf-header h3 { font-size: 19px; }
+    .pf-body { gap: 10px; padding-top: 12px; padding-bottom: 8px; }
+    .pf-field { gap: 4px; }
+    .pf-input-wrap input { height: 42px; }
+    .pf-footer { padding-top: 10px; padding-bottom: 10px; }
+    .pf-btn { min-height: 42px; }
+  }

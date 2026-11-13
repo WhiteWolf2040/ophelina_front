@@ -1,17 +1,20 @@
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { NavLink, useNavigate } from "react-router-dom";
 import "./Navbar.css";
+import "./Editprofilemodal.css"; // Todo en minúsculas excepto la E
 import logo from "../assets/O_blue.png";
 import PersonIcon from "@mui/icons-material/Person";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import LogoutIcon from "@mui/icons-material/Logout";
 import HomeIcon from "@mui/icons-material/Home";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
-import CreditCardIcon from "@mui/icons-material/CreditCard";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
+import EmailIcon from "@mui/icons-material/Email";
+import PhoneIcon from "@mui/icons-material/Phone";
 
 // 🔥 Importamos las funciones de autenticación
 import {
@@ -25,7 +28,6 @@ export default function Navbar() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const dropdownRef = useRef(null);
-  const modalRef = useRef(null);
   const navigate = useNavigate();
 
   // 🔹 Estados del usuario (se cargan desde localStorage)
@@ -42,7 +44,7 @@ export default function Navbar() {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" }); // type: "success" | "error"
 
-  // 🔔 Estados de notificaciones (ahora vienen del backend)
+  // 🔔 Estados de notificaciones (vienen del backend)
   const [notificaciones, setNotificaciones] = useState([]);
   const [loadingNotificaciones, setLoadingNotificaciones] = useState(true);
 
@@ -70,24 +72,24 @@ export default function Navbar() {
     cargarNotificaciones();
   }, []);
 
-  // 🔹 Sincronizar editName, editEmail, editPhone cuando se abre el modal
+  // 🔹 Sincronizar campos de edición cuando se abre el modal
   const openEditModal = () => {
     setEditName(userName);
     setEditEmail(userEmail);
     setEditPhone(userPhone);
-    setMessage({ text: "", type: "" }); // limpiar mensajes anteriores
+    setMessage({ text: "", type: "" });
     setShowEditModal(true);
     setShowDropdown(false);
   };
 
   const closeEditModal = () => {
+    if (isSaving) return; // no cerrar mientras guarda
     setShowEditModal(false);
     setMessage({ text: "", type: "" });
   };
 
   // 🔹 Guardar cambios con llamada al backend
   const saveUserInfo = async () => {
-    // Validación básica
     if (!editEmail.trim() || !editPhone.trim()) {
       setMessage({ text: "Correo y teléfono son obligatorios", type: "error" });
       return;
@@ -100,7 +102,6 @@ export default function Navbar() {
       const result = await updateProfile(editEmail.trim(), editPhone.trim());
 
       if (result.success) {
-        // Actualizar los estados locales con los datos del backend
         const updatedUser = result.data;
         setUserName(updatedUser.nombre || updatedUser.name || editName);
         setUserEmail(updatedUser.correo || updatedUser.email || editEmail);
@@ -108,7 +109,6 @@ export default function Navbar() {
 
         setMessage({ text: "✅ Perfil actualizado correctamente", type: "success" });
 
-        // Cerrar el modal después de 1.5 segundos (para que vea el mensaje)
         setTimeout(() => {
           setShowEditModal(false);
           setMessage({ text: "", type: "" });
@@ -135,20 +135,139 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  // 🔹 Cerrar si haces click fuera
+  // 🔹 Cerrar el dropdown si haces click fuera
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
       }
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        setShowEditModal(false);
-        setMessage({ text: "", type: "" });
-      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // 🔹 Con el modal abierto: bloquear el scroll de la página y cerrar con Escape
+  useEffect(() => {
+    if (!showEditModal) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" && !isSaving) {
+        setShowEditModal(false);
+        setMessage({ text: "", type: "" });
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [showEditModal, isSaving]);
+
+  // 🔹 Click en el fondo oscuro (no dentro del modal) = cerrar
+  const handleOverlayMouseDown = (e) => {
+    if (e.target === e.currentTarget) closeEditModal();
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    saveUserInfo();
+  };
+
+  // 🔹 Modal: se renderiza en <body> con un portal para que no quede
+  //    atrapado dentro del <nav> sticky (que crea su propio stacking context)
+  const editModal = (
+    <div className="pf-overlay" onMouseDown={handleOverlayMouseDown}>
+      <div
+        className="pf-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pf-title"
+      >
+        <header className="pf-header">
+          <h3 id="pf-title">Editar perfil</h3>
+          <button
+            type="button"
+            className="pf-close"
+            onClick={closeEditModal}
+            aria-label="Cerrar"
+          >
+            <CloseIcon sx={{ fontSize: 20 }} />
+          </button>
+        </header>
+
+        <form className="pf-form" onSubmit={handleSubmit}>
+          <div className="pf-body">
+            {/* Nombre: solo lectura */}
+            <div className="pf-field">
+              <label htmlFor="pf-name">Nombre completo</label>
+              <div className="pf-input-wrap">
+                <input id="pf-name" type="text" value={editName} readOnly disabled />
+                <PersonIcon className="pf-input-icon" sx={{ fontSize: 20 }} />
+              </div>
+              <small className="pf-hint">El nombre no se puede modificar</small>
+            </div>
+
+            <div className="pf-field">
+              <label htmlFor="pf-email">Correo electrónico</label>
+              <div className="pf-input-wrap">
+                <input
+                  id="pf-email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                />
+                <EmailIcon className="pf-input-icon" sx={{ fontSize: 20 }} />
+              </div>
+            </div>
+
+            <div className="pf-field">
+              <label htmlFor="pf-phone">Teléfono</label>
+              <div className="pf-input-wrap">
+                <input
+                  id="pf-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  placeholder="+52 555 123 4567"
+                />
+                <PhoneIcon className="pf-input-icon" sx={{ fontSize: 20 }} />
+              </div>
+            </div>
+
+            {message.text && (
+              <div className={`pf-message pf-message--${message.type}`}>
+                {message.text}
+              </div>
+            )}
+          </div>
+
+          <footer className="pf-footer">
+            <button
+              type="button"
+              className="pf-btn pf-btn--cancel"
+              onClick={closeEditModal}
+              disabled={isSaving}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className="pf-btn pf-btn--save" disabled={isSaving}>
+              <SaveIcon sx={{ fontSize: 18 }} />
+              {isSaving ? "Guardando..." : "Guardar cambios"}
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  );
 
   return (
     <nav className="Ophe-navbar">
@@ -216,17 +335,6 @@ export default function Navbar() {
               <span>Empeños</span>
             </NavLink>
           </li>
-        {/*   <li>
-            <NavLink
-              to="/tarjetas"
-              className={({ isActive }) =>
-                isActive ? "Ophe-icon-item Ophe-icon-active" : "Ophe-icon-item"
-              }
-            >
-              <CreditCardIcon />
-              <span>Tarjetas</span>
-            </NavLink>
-          </li> */}
           <li>
             <NavLink
               to="/ophelina"
@@ -257,14 +365,6 @@ export default function Navbar() {
 
               <div className="divider"></div>
 
-              {/*
-                ✅ CORREGIDO: se agrega el wrapper con la clase
-                "notification-list-scroll" (ya existía en Navbar.css, pero
-                no estaba aplicada a ningún elemento del JSX, por eso el
-                scroll nunca aparecía). Header y "Cerrar sesión" se quedan
-                FUERA de este div para que permanezcan fijos mientras solo
-                la lista interna hace scroll.
-              */}
               <div className="notification-list-scroll">
                 {loadingNotificaciones ? (
                   <div className="notification-item">
@@ -304,85 +404,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Modal de edición de perfil */}
-      {showEditModal && (
-        <div className="modal-overlay">
-          <div className="edit-modal gold-border" ref={modalRef}>
-            <div className="ophe-modal-header">
-              <h3>Editar perfil</h3>
-              <button className="close-modal-btn" onClick={closeEditModal}>
-                <CloseIcon />
-              </button>
-            </div>
-
-            <div className="modal-body">
-              {/* Campo Nombre: BLOQUEADO (solo lectura) */}
-              <div className="form-group">
-                <label>Nombre completo</label>
-                <input
-                  type="text"
-                  value={editName}
-                  readOnly
-                  disabled
-                  style={{ backgroundColor: "#f0f0f0", cursor: "not-allowed" }}
-                />
-                <small style={{ color: "#888" }}>El nombre no se puede modificar</small>
-              </div>
-
-              <div className="form-group">
-                <label>Correo electrónico</label>
-                <input
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Teléfono</label>
-                <input
-                  type="tel"
-                  value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
-                  placeholder="+52 555 123 4567"
-                />
-              </div>
-
-              {/* Mensaje de éxito/error */}
-              {message.text && (
-                <div
-                  className={`edit-message ${message.type}`}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: "6px",
-                    marginTop: "12px",
-                    backgroundColor: message.type === "success" ? "#d4edda" : "#f8d7da",
-                    color: message.type === "success" ? "#155724" : "#721c24",
-                    border: `1px solid ${message.type === "success" ? "#c3e6cb" : "#f5c6cb"}`,
-                  }}
-                >
-                  {message.text}
-                </div>
-              )}
-            </div>
-
-            <div className="modal-footer">
-              <button className="cancel-btn" onClick={closeEditModal} disabled={isSaving}>
-                Cancelar
-              </button>
-              <button
-                className="save-btn"
-                onClick={saveUserInfo}
-                disabled={isSaving}
-              >
-                <SaveIcon sx={{ fontSize: 18 }} />
-                {isSaving ? "Guardando..." : "Guardar cambios"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showEditModal && createPortal(editModal, document.body)}
     </nav>
   );
 }

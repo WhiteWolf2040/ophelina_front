@@ -1,20 +1,13 @@
-// MisTicketDetalle.jsx - versión cliente de DetallePago.jsx
-// Reusa las mismas clases CSS de Pagos.css (recibo-*) para que el ticket se
-// vea IGUAL que el del admin. Diferencias respecto al original:
-//   - Sin botón "Eliminar Pago" ni su modal de confirmación (acción admin-only)
-//   - Nombre de la casa de empeño dinámico (data.empresa.nombre), no "OPHELINA" fijo
-//   - Fetch a /mistickets/{id} en vez de /pagos/{id}
-//   - Navegación de "Volver" apunta a /mistickets en vez de /pagos
+// MisTicketDetalle.jsx - versión cliente del ticket de pago
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Navbar from "../ClientesNav/Navbar";
-import "../DuenoPagos/Pagos.css"; // mismas clases recibo-* que usa el admin
+import TicketRecibo, { parseAmount, imprimirTicket } from "./TicketRecibo";
+import "../DuenoPagos/Pagos.css"; // layout: dashboard, content, btn-volver, spinner
 
-import ReceiptIcon from '@mui/icons-material/Receipt';
-import PrintIcon from '@mui/icons-material/Print';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import PrintIcon from "@mui/icons-material/Print";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ticketsService from "../services/ticketsService";
 
 const MisTicketDetalle = () => {
@@ -37,11 +30,11 @@ const MisTicketDetalle = () => {
       if (response.success) {
         setTicket(response.data);
       } else {
-        setError(response.message || 'No se pudo cargar el ticket');
+        setError(response.message || "No se pudo cargar el ticket");
       }
     } catch (err) {
-      console.error('Error cargando ticket:', err);
-      setError(err.response?.data?.message || 'No se pudo cargar el detalle del ticket');
+      console.error("Error cargando ticket:", err);
+      setError(err.response?.data?.message || "No se pudo cargar el detalle del ticket");
     } finally {
       setLoading(false);
     }
@@ -50,43 +43,40 @@ const MisTicketDetalle = () => {
   const getReciboData = () => {
     if (!ticket) return null;
 
-    const pagoData = ticket.pago || {};
-    const empenoData = ticket.empeno || {};
-    const clienteData = ticket.cliente || {};
-    const empresaData = ticket.empresa || {};
+    const p = ticket.pago || {};
+    const e = ticket.empeno || {};
+    const c = ticket.cliente || {};
+    const emp = ticket.empresa || {};
+
+    const capital = parseAmount(p.capital);
+    const interes = parseAmount(p.interes);
+    const iva = parseAmount(p.iva);
 
     return {
-      folio: empenoData.folio || `PAG-${ticket.id}-${new Date().getFullYear()}`,
-      fechaVencimiento: empenoData.fecha_vencimiento
-        ? new Date(empenoData.fecha_vencimiento).toLocaleDateString('es-MX')
-        : 'N/A',
+      nombreEmpresa: emp.nombre || "Ophelina",
+      rfcEmpresa: emp.rfc,
+      direccionEmpresa: emp.direccion,
+      telefonoEmpresa: emp.telefono,
 
-      capital: pagoData.capital || 0,
-      interes: pagoData.interes || 0,
-      iva: pagoData.iva || 0,
-      subtotal: (pagoData.capital || 0) + (pagoData.interes || 0),
-      total: pagoData.monto_total || 0,
+      folio: e.folio || `PAG-${ticket.id}-${new Date().getFullYear()}`,
+      empenoId: e.id ?? ticket.id,
+      fechaPago: p.fecha || ticket.fecha_pago,
+      fechaVencimiento: e.fecha_vencimiento
+        ? new Date(e.fecha_vencimiento).toLocaleDateString("es-MX")
+        : "N/A",
 
-      metodoPago: pagoData.metodo || "Efectivo",
-      referencia: pagoData.referencia || 'N/A',
-      fechaPago: pagoData.fecha || ticket.fecha_pago,
+      nombreCliente: c.nombre,
+      articulo: e.prenda?.descripcion || "Artículo",
+      concepto: p.tipo || "Abono",
 
-      articulo: empenoData.prenda?.descripcion || 'Artículo',
+      capital,
+      interes,
+      iva,
+      total: parseAmount(p.monto_total) || capital + interes + iva,
 
-      nombreCliente: clienteData.nombre || 'Cliente',
-      telefonoCliente: clienteData.telefono || 'N/A',
-      emailCliente: clienteData.correo || 'N/A',
-
-      // Dinámico, ya no está fijo a "OPHELINA"
-      nombreEmpresa: empresaData.nombre || 'Ophelina',
-      rfcEmpresa: empresaData.rfc,
-      direccionEmpresa: empresaData.direccion,
-      telefonoEmpresa: empresaData.telefono,
+      metodoPago: p.metodo || "Efectivo",
+      referencia: p.referencia || "N/A",
     };
-  };
-
-  const handleImprimir = () => {
-    window.print();
   };
 
   const handleCopiarFolio = () => {
@@ -124,7 +114,6 @@ const MisTicketDetalle = () => {
   }
 
   const reciboData = getReciboData();
-  const empenoData = ticket.empeno || {};
 
   return (
     <div className="dashboard">
@@ -138,7 +127,7 @@ const MisTicketDetalle = () => {
           </button>
 
           <div className="recibo-acciones">
-            <button className="btn-accion-recibo" onClick={handleImprimir}>
+            <button className="btn-accion-recibo" onClick={imprimirTicket}>
               <PrintIcon />
               Imprimir Recibo
             </button>
@@ -149,115 +138,7 @@ const MisTicketDetalle = () => {
           </div>
         </div>
 
-        <div className="recibo-container" id="recibo-para-imprimir">
-          <div className="recibo-encabezado">
-            <div className="recibo-logo">
-              <ReceiptIcon className="recibo-icon" />
-              {/* ✅ Nombre dinámico de la casa de empeño */}
-              <h1>{reciboData.nombreEmpresa.toUpperCase()}</h1>
-            </div>
-            {reciboData.rfcEmpresa && (
-              <p className="recibo-rfc">RFC: {reciboData.rfcEmpresa}</p>
-            )}
-            {reciboData.direccionEmpresa && (
-              <p className="recibo-direccion">{reciboData.direccionEmpresa}</p>
-            )}
-            {reciboData.telefonoEmpresa && (
-              <p className="recibo-tel">Tel: {reciboData.telefonoEmpresa}</p>
-            )}
-          </div>
-
-          <div className="recibo-folio">
-            <div>
-              <span className="folio-label">FOLIO:</span>
-              <span className="folio-valor">{reciboData.folio}</span>
-              <button className="btn-copy-small" onClick={handleCopiarFolio}>
-                <ContentCopyIcon fontSize="small" />
-              </button>
-            </div>
-            <div className="recibo-fechas">
-              <p><span className="label">Emisión:</span> {reciboData.fechaPago}</p>
-              <p><span className="label">Vencimiento:</span> {reciboData.fechaVencimiento}</p>
-            </div>
-          </div>
-
-          <div className="recibo-cliente">
-            <h3>CLIENTE</h3>
-            <div className="cliente-detalle">
-              <p><span>Nombre:</span> {reciboData.nombreCliente}</p>
-              <p><span>Teléfono:</span> {reciboData.telefonoCliente}</p>
-              <p><span>Email:</span> {reciboData.emailCliente}</p>
-            </div>
-          </div>
-
-          <div className="recibo-articulos">
-            <h3>DETALLE DEL EMPEÑO</h3>
-            <table className="recibo-tabla">
-              <thead>
-                <tr>
-                  <th>Descripción</th>
-                  <th>Cant.</th>
-                  <th>Importe</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{reciboData.articulo}</td>
-                  <td className="text-center">1</td>
-                  <td className="text-right">${reciboData.capital.toFixed(2)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="recibo-desglose">
-            <div className="desglose-fila">
-              <span>Capital:</span>
-              <span>${reciboData.capital.toFixed(2)}</span>
-            </div>
-            <div className="desglose-fila">
-              <span>Intereses:</span>
-              <span>${reciboData.interes.toFixed(2)}</span>
-            </div>
-            <div className="desglose-fila">
-              <span>IVA (16% sobre intereses):</span>
-              <span>${reciboData.iva.toFixed(2)}</span>
-            </div>
-            <div className="desglose-fila subtotal">
-              <span>Subtotal:</span>
-              <span>${reciboData.subtotal.toFixed(2)}</span>
-            </div>
-            <div className="desglose-fila total">
-              <span>TOTAL PAGADO:</span>
-              <span>${reciboData.total.toFixed(2)}</span>
-            </div>
-          </div>
-
-          <div className="recibo-pago-info">
-            <div className="pago-info-item">
-              <span className="label">Método de pago:</span>
-              <span className="valor">{reciboData.metodoPago}</span>
-            </div>
-            <div className="pago-info-item">
-              <span className="label">Referencia:</span>
-              <span className="valor valor-referencia">{reciboData.referencia}</span>
-            </div>
-          </div>
-
-          <div className="recibo-footer">
-            <div className="recibo-qr">
-              <QrCodeIcon className="qr-icon" />
-              <div className="qr-placeholder">
-                <small>Código de verificación</small>
-                <p className="qr-folio">{reciboData.folio}</p>
-              </div>
-            </div>
-            <div className="recibo-notas">
-              <p><strong>Nota:</strong> Este recibo es comprobante de pago. Muéstralo al recoger tu artículo.</p>
-              <p className="recibo-garantia">* Artículo en garantía hasta 30 días después del vencimiento</p>
-            </div>
-          </div>
-        </div>
+        <TicketRecibo data={reciboData} />
       </div>
     </div>
   );

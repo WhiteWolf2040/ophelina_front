@@ -7,16 +7,6 @@ import { getProductosTienda, apartarProducto, getMisApartados } from "../config/
 // ================ PAGINACIÓN ================
 const ITEMS_PER_PAGE = 8;
 
-// ================ IMÁGENES ================
-// Si el producto no trae imagen (null) o la URL falla, se muestra el placeholder
-// (public/placeholder.png) en vez del ícono roto.
-const PLACEHOLDER_IMAGE = "/placeholder.png";
-
-const alFallarImagen = (e) => {
-  e.target.onerror = null; // evita bucle si el placeholder también falla
-  e.target.src = PLACEHOLDER_IMAGE;
-};
-
 // ================ MODAL ================
 const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo, apartando }) => {
   if (!isOpen) return null;
@@ -29,10 +19,9 @@ const Modal = ({ isOpen, onClose, onConfirmarApartado, producto, tipo, apartando
         <div className="popup-detalles-flex">
           <div className="popup-imagen-container-left">
             <img
-              src={producto?.imagen || PLACEHOLDER_IMAGE}
+              src={producto?.imagen}
               alt={producto?.nombre}
               className="popup-imagen-left"
-              onError={alFallarImagen}
             />
           </div>
 
@@ -327,9 +316,7 @@ export default function OphelinaTienda() {
               <div className="products-grid-luxury">
                 {itemsPagina.map((producto) => (
                   <article
-                    // En "Mis apartados" el mismo producto podría repetirse, por eso
-                    // se prefiere id_apartado; en el catálogo se usa id.
-                    key={producto.id_apartado ?? producto.id}
+                    key={producto.id}
                     className={`product-card-luxury ${
                       categoriaActiva === "apartados" ? "producto-apartado" : ""
                     }`}
@@ -337,15 +324,14 @@ export default function OphelinaTienda() {
                     <div className="card-media">
                       <div className="image-wrapper">
                         <img
-                          src={producto.imagen || PLACEHOLDER_IMAGE}
+                          src={producto.imagen}
                           alt={producto.nombre}
                           className="product-image"
-                          onError={alFallarImagen}
                         />
                         {producto.exclusivo && (
                           <span className="exclusive-badge">Artículo exclusivo</span>
                         )}
-                        {categoriaActiva === "apartados" && (
+                       {categoriaActiva === "apartados" && (
                           <span className="apartado-badge">
                             {producto.entregado
                               ? "✓ ENTREGADO"
@@ -359,32 +345,29 @@ export default function OphelinaTienda() {
 
                     <div className="card-content">
                       <div className="card-header">
-                        {/* Nombre del producto (si tu CSS ya lo mostraba de otra forma, puedes quitar esta línea) */}
-                        <h3 className="product-name">{producto.nombre}</h3>
-
-                        {categoriaActiva === "apartados" && producto.codigoEntrega && !producto.entregado && (
-                          <div style={{
-                            background: '#fef3c7',
-                            border: '1px dashed #f59e0b',
-                            borderRadius: '8px',
-                            padding: '10px',
-                            margin: '10px 0',
-                            textAlign: 'center'
-                          }}>
-                            <div style={{ fontSize: '11px', color: '#92400e', marginBottom: '4px' }}>
-                              Muestra este código al recoger tu producto:
+                       {categoriaActiva === "apartados" && producto.codigoEntrega && !producto.entregado && (
+                            <div style={{
+                              background: '#fef3c7',
+                              border: '1px dashed #f59e0b',
+                              borderRadius: '8px',
+                              padding: '10px',
+                              margin: '10px 0',
+                              textAlign: 'center'
+                            }}>
+                              <div style={{ fontSize: '11px', color: '#92400e', marginBottom: '4px' }}>
+                                Muestra este código al recoger tu producto:
+                              </div>
+                              <div style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '3px', color: '#0d1b3e' }}>
+                                {producto.codigoEntrega}
+                              </div>
                             </div>
-                            <div style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '3px', color: '#0d1b3e' }}>
-                              {producto.codigoEntrega}
-                            </div>
-                          </div>
-                        )}
+                          )}
 
-                        {categoriaActiva === "apartados" && producto.entregado && (
-                          <div style={{ color: '#27ae60', fontSize: '13px', margin: '8px 0' }}>
-                            ✓ Entregado el {producto.fechaEntrega}
-                          </div>
-                        )}
+                          {categoriaActiva === "apartados" && producto.entregado && (
+                            <div style={{ color: '#27ae60', fontSize: '13px', margin: '8px 0' }}>
+                              ✓ Entregado el {producto.fechaEntrega}
+                            </div>
+                          )}
                       </div>
 
                       <div className="card-footer">

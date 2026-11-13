@@ -25,6 +25,7 @@
     "google-icon-react": "^1.0.5",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
     "react-apexcharts": "^2.0.1",
     "react-bootstrap-icons": "^1.11.6",

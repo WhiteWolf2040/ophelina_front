@@ -1,0 +1,166 @@
+@import url("https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;0,6..96,700;1,6..96,400&display=swap");
+
+/* ---------- Hoja del ticket ---------- */
+.tk-sheet {
+  --ink: #1b1a17;
+  --muted: #6f6a5f;
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  margin: 18px auto;
+  padding: 26px 22px 30px;
+  background: #fffefb;
+  color: var(--ink);
+  font-family: "Bodoni Moda", "Bodoni 72", Didot, "Times New Roman", serif;
+  font-size: 14px;
+  line-height: 1.35;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.22));
+}
+
+/* Bordes de papel rasgado (dientes arriba y abajo) */
+.tk-sheet::before,
+.tk-sheet::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background-repeat: repeat-x;
+  background-size: 16px 8px;
+}
+.tk-sheet::before {
+  top: -7px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 8h16L8 0z' fill='%23fffefb'/%3E%3C/svg%3E");
+}
+.tk-sheet::after {
+  bottom: -7px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 0h16L8 8z' fill='%23fffefb'/%3E%3C/svg%3E");
+}
+
+.tk-head { text-align: center; font-size: 12px; color: var(--muted); }
+.tk-head p { margin: 2px 0; }
+.tk-logo { display: block; margin: 0 auto 8px; max-width: 150px; height: auto; }
+
+.tk-title {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.tk-sep { border: 0; border-top: 1px dashed #b9b3a6; margin: 14px 0; }
+
+.tk-section {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tk-articulo { margin: 0; font-style: italic; }
+
+.tk-row { display: flex; align-items: baseline; gap: 6px; margin: 4px 0; }
+.tk-label { color: var(--muted); white-space: nowrap; }
+.tk-dots { flex: 1; border-bottom: 1px dotted #c9c3b6; transform: translateY(-3px); }
+.tk-value { text-align: right; }
+.tk-strong .tk-value { font-weight: 700; }
+
+/* Números con fuente normal; el resto del texto sigue en Bodoni */
+.tk-num {
+  font-family: "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.tk-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 10px;
+  padding: 7px 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  font-size: 17px;
+  font-weight: 700;
+}
+.tk-total .tk-num { font-size: 16px; }
+
+.tk-qr { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; }
+.tk-qr small { font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
+
+.tk-foot { margin-top: 14px; text-align: center; font-size: 11px; color: var(--muted); }
+.tk-foot p { margin: 3px 0; }
+.tk-thanks { font-size: 14px; font-style: italic; color: var(--ink); }
+.tk-impreso { margin-top: 8px; font-size: 10px; }
+
+/* ---------- Modal ---------- */
+.tk-overlay {
+  position: fixed; inset: 0; z-index: 2147483647;
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: 24px 12px; overflow-y: auto;
+  background: rgba(15, 23, 42, 0.65);
+}
+.tk-modal { width: 100%; max-width: 420px; }
+.tk-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.tk-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px; border: 1px solid #d8d2c4; border-radius: 8px;
+  background: #fff; color: #1b1a17; cursor: pointer; font: inherit; font-size: 13px;
+}
+.tk-btn:hover { border-color: #b08d3e; }
+
+/* ---------- Impresión ---------- */
+.tk-print-only { display: none; }
+
+@media print {
+  @page { margin: 5mm; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  html, body {
+    background: #fff !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Oculta la app, modales, overlays: todo menos la copia del ticket */
+  body > *:not(.tk-print-only) { display: none !important; }
+
+  .tk-print-only {
+    display: block !important;
+    position: static !important;
+  }
+
+  .tk-print-only .tk-sheet {
+    width: 80mm; max-width: 80mm; margin: 0;
+    padding: 4mm; filter: none; box-shadow: none;
+    font-size: 12px; page-break-inside: avoid;
+  }
+  .tk-print-only .tk-sheet::before,
+  .tk-print-only .tk-sheet::after { display: none; }
+}
+/* Botón cerrar: oculto en computadora, visible solo en celular */
+.tk-close {
+  display: none;
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #1b1a17;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .tk-close { display: flex; }
+  .tk-overlay { padding-top: 64px; } /* deja espacio para que la X no tape el ticket */
+}

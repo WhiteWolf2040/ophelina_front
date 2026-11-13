@@ -2,11 +2,87 @@ import React, { useState, useEffect } from "react";
 import "./MisEmpenos.css";
 import Navbar from "../ClientesNav/Navbar";
 import { useMisEmpenos } from "../hooks/useMisEmpenos";
+import ModalTicketRecibo from "./ModalTicketRecibo"; // Asegúrate de que la ruta sea correcta
 
 const PLACEHOLDER_IMAGE = "/placeholder.png";
+const PAGE_SIZE = 10;
+
+const FILTROS = [
+  { id: "todos", label: "Todos" },
+  { id: "vigente", label: "Vigentes" },
+  { id: "porvencer", label: "Por vencer" },
+  { id: "vencido", label: "Vencidos" },
+  { id: "pagado", label: "Pagados" },
+];
 
 const formatMoney = (n) =>
-  Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number(n || 0).toLocaleString("es-MX", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+const formatValue = (val) => {
+  if (val === null || val === undefined || val === "") return "—";
+  const str = String(val).trim();
+  if (/[a-zA-Z$]/.test(str)) return str;
+  const num = Number(str);
+  return isNaN(num) ? str : `$${formatMoney(num)}`;
+};
+
+const getEstado = (e) => {
+  if (e.pagadoCompleto) return { id: "pagado", texto: "Pagado" };
+  if (e.estado === "VENCIDO") return { id: "vencido", texto: "Vencido" };
+  if (e.proximoAVencer) return { id: "porvencer", texto: "Por vencer" };
+  return { id: "vigente", texto: "Vigente" };
+};
+
+const construirPaginas = (actual, total) => {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const set = new Set([1, total, actual - 1, actual, actual + 1]);
+  const orden = [...set].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  const out = [];
+  orden.forEach((p, i) => {
+    if (i > 0 && p - orden[i - 1] > 1) out.push("gap-" + p);
+    out.push(p);
+  });
+  return out;
+};
+
+const ImagenConLoader = ({ src, alt, className }) => {
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(false);
+
+  if (error || !src) {
+    return (
+      <div className={`${className} img-fallback`}>
+        <span>Sin imagen</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${className} img-wrapper`}>
+      {cargando && <div className="img-loading-text">Cargando...</div>}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onLoad={() => setCargando(false)}
+        onError={() => {
+          setCargando(false);
+          setError(true);
+        }}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          opacity: cargando ? 0 : 1,
+          transition: "opacity 0.3s ease",
+        }}
+      />
+    </div>
+  );
+};
 
 export default function MisEmpenos() {
   const {
@@ -23,30 +99,91 @@ export default function MisEmpenos() {
   } = useMisEmpenos();
 
   const [busqueda, setBusqueda] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("todos");
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [paginaIr, setPaginaIr] = useState("");
   const [popupAbierto, setPopupAbierto] = useState(null);
   const [empeñoSeleccionado, setEmpeñoSeleccionado] = useState(null);
   const [montoPago, setMontoPago] = useState("");
   const [errorPago, setErrorPago] = useState(null);
   const [tipoAccion, setTipoAccion] = useState("abono");
-
-  // ✅ NUEVO: reparto vive en su propio estado, actualizado por un efecto
-  // dedicado — ya NO se calcula "en línea" durante el render. Esto elimina
-  // la condición de carrera: sin importar en qué momento llegue la
-  // cotización de la red, este efecto se vuelve a ejecutar en cuanto
-  // CUALQUIERA de sus dependencias reales (montoPago, cotizacion,
-  // tipoAccion) cambie — nunca se queda "pegado" con un valor viejo.
   const [repartoPreview, setRepartoPreview] = useState(null);
+  
+  // ✅ Solo un estado para manejar el modal del recibo
+  const [ticketSeleccionado, setTicketSeleccionado] = useState(null);
 
-  const empenosFiltrados = empenos.filter((empeño) =>
-    (
+  // ✅ useEffect limpio: solo recarga si viene de un pago exitoso
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const pagoExitoso = queryParams.get("pago");
+
+    if (pagoExitoso === "exitoso") {
+      cargarEmpenos();
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [cargarEmpenos]);
+
+  // ✅ Función para abrir el recibo desde el historial
+  const abrirTicketHistorial = (abono, empeno) => {
+    setTicketSeleccionado({ empeno, abono });
+  };
+
+  const empenosFiltrados = empenos.filter((empeño) => {
+    const coincideTexto = (
+      (empeño.id ?? "") +
+      " " +
       (empeño.nombre || "") +
       (empeño.descripcion || "") +
       (empeño.prestado || "") +
       (empeño.vencimiento || "")
     )
+      .toString()
       .toLowerCase()
-      .includes(busqueda.toLowerCase())
+      .includes(busqueda.trim().toLowerCase());
+    const coincideEstado =
+      filtroEstado === "todos" || getEstado(empeño).id === filtroEstado;
+    return coincideTexto && coincideEstado;
+  });
+
+  const conteos = empenos.reduce(
+    (acc, e) => {
+      acc[getEstado(e).id] += 1;
+      return acc;
+    },
+    { vigente: 0, porvencer: 0, vencido: 0, pagado: 0 }
   );
+  conteos.todos = empenos.length;
+
+  const totalRegistros = empenosFiltrados.length;
+  const totalPaginas = Math.max(1, Math.ceil(totalRegistros / PAGE_SIZE));
+  const paginaSegura = Math.min(paginaActual, totalPaginas);
+  const inicio = (paginaSegura - 1) * PAGE_SIZE;
+  const empenosVisibles = empenosFiltrados.slice(inicio, inicio + PAGE_SIZE);
+  const desde = totalRegistros === 0 ? 0 : inicio + 1;
+  const hasta = Math.min(inicio + PAGE_SIZE, totalRegistros);
+
+  const cambiarPagina = (n) => {
+    const destino = Math.min(Math.max(1, n), totalPaginas);
+    setPaginaActual(destino);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleIrAPagina = (e) => {
+    e.preventDefault();
+    const n = parseInt(paginaIr, 10);
+    if (!isNaN(n)) cambiarPagina(n);
+    setPaginaIr("");
+  };
+
+  const handleBusqueda = (e) => {
+    setBusqueda(e.target.value);
+    setPaginaActual(1);
+  };
+
+  const handleFiltro = (id) => {
+    setFiltroEstado(id);
+    setPaginaActual(1);
+  };
 
   const abrirPopup = async (tipo, empeño) => {
     setEmpeñoSeleccionado(empeño);
@@ -56,7 +193,7 @@ export default function MisEmpenos() {
     setTipoAccion("abono");
     setRepartoPreview(null);
 
-    if (tipo === 'pagar') {
+    if (tipo === "pagar") {
       await cargarCotizacion(empeño.id);
     }
   };
@@ -73,31 +210,24 @@ export default function MisEmpenos() {
   const montoNum = parseFloat(montoPago);
   const montoValido = !isNaN(montoNum) && montoNum > 0;
   const saldoMaximo = cotizacion?.saldo_pendiente_con_mora ?? null;
-  const excedeSaldo = montoValido && saldoMaximo !== null && montoNum > saldoMaximo;
+  const excedeSaldo =
+    montoValido && saldoMaximo !== null && montoNum > saldoMaximo;
 
   const calcularRepartoAbono = (monto, cotizacionData) => {
     if (!monto || !cotizacionData || monto <= 0) return null;
-
     const capital = Number(cotizacionData.capital) || 0;
     const interes = Number(cotizacionData.interes) || 0;
     const ivaInteres = Number(cotizacionData.iva_interes) || 0;
     const deudaTotal = capital + interes + ivaInteres;
-
     if (deudaTotal <= 0) return null;
 
     const porcentajeAbono = monto / deudaTotal;
-
-    let capitalPagado = capital * porcentajeAbono;
-    let interesPagado = interes * porcentajeAbono;
-    let ivaPagado = ivaInteres * porcentajeAbono;
-
-    capitalPagado = Math.round(capitalPagado * 100) / 100;
-    interesPagado = Math.round(interesPagado * 100) / 100;
-    ivaPagado = Math.round(ivaPagado * 100) / 100;
+    let capitalPagado = Math.round(capital * porcentajeAbono * 100) / 100;
+    let interesPagado = Math.round(interes * porcentajeAbono * 100) / 100;
+    let ivaPagado = Math.round(ivaInteres * porcentajeAbono * 100) / 100;
 
     const totalCalculado = capitalPagado + interesPagado + ivaPagado;
     const diferencia = monto - totalCalculado;
-
     if (Math.abs(diferencia) > 0.001) {
       capitalPagado = Math.round((capitalPagado + diferencia) * 100) / 100;
     }
@@ -110,23 +240,15 @@ export default function MisEmpenos() {
     };
   };
 
-  // ✅ EFECTO CLAVE — reemplaza el hack de "repartoKey" + cálculo en render.
-  // Se dispara SIEMPRE que montoPago cambia (cada tecla), o cuando la
-  // cotización termina de llegar de la red, o cuando cambias de pestaña.
-  // No hay forma de que quede "congelado" con un monto viejo: si el
-  // usuario sigue tecleando después de que la cotización llegó, este
-  // efecto vuelve a correr con el montoPago más reciente.
   useEffect(() => {
     if (tipoAccion !== "abono") {
       setRepartoPreview(null);
       return;
     }
-
     if (!montoValido || !cotizacion || excedeSaldo) {
       setRepartoPreview(null);
       return;
     }
-
     setRepartoPreview(calcularRepartoAbono(montoNum, cotizacion));
   }, [montoPago, cotizacion, tipoAccion, excedeSaldo]);
 
@@ -134,26 +256,21 @@ export default function MisEmpenos() {
     if (!empeñoSeleccionado) return;
 
     if (tipoAccion === "abono") {
-      const montoIngresado = parseFloat(montoPago.replace(/[^0-9.-]+/g, ""));
-
+      const montoIngresado = parseFloat(String(montoPago).replace(/[^0-9.-]+/g, ""));
       if (isNaN(montoIngresado) || montoIngresado <= 0) {
         setErrorPago("Por favor ingresa un monto válido");
         return;
       }
-
       if (saldoMaximo !== null && montoIngresado > saldoMaximo) {
         setErrorPago(`El monto no puede exceder tu saldo pendiente de $${formatMoney(saldoMaximo)}`);
         return;
       }
-
       try {
         setErrorPago(null);
         await iniciarAbono(empeñoSeleccionado.id, montoIngresado, "abono");
       } catch (err) {
-        console.error("Error al iniciar el abono:", err);
-        setErrorPago(
-          err.response?.data?.message || err.message || "Error al iniciar el pago, intenta de nuevo"
-        );
+        console.error("Error real del servidor (Backend):", err.response?.data || err);
+        setErrorPago("Ocurrió un problema al procesar el pago con el servidor. Por favor, intenta más tarde.");
       }
       return;
     }
@@ -163,12 +280,9 @@ export default function MisEmpenos() {
         setErrorPago(null);
         await iniciarAbono(empeñoSeleccionado.id, null, "refrendo");
       } catch (err) {
-        console.error("Error al iniciar el refrendo:", err);
-        setErrorPago(
-          err.response?.data?.message || err.message || "Error al iniciar el refrendo, intenta de nuevo"
-        );
+        console.error("Error real del servidor (Backend):", err.response?.data || err);
+        setErrorPago("Ocurrió un problema al procesar el refrendo. Por favor, intenta más tarde.");
       }
-      return;
     }
   };
 
@@ -186,7 +300,7 @@ export default function MisEmpenos() {
   };
 
   return (
-    <>
+    <div className="me-page">
       <Navbar />
       <div className="me-dashboard">
         <section className="me-page-header">
@@ -197,118 +311,150 @@ export default function MisEmpenos() {
           <div className="me-search-container">
             <input
               type="text"
-              placeholder="Buscar empeño..."
+              placeholder="Buscar por número o nombre del artículo..."
               className="me-search-input"
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={handleBusqueda}
+              aria-label="Buscar empeño"
             />
             <span className="me-search-icon">🔍</span>
           </div>
+
+          {!loading && !error && empenos.length > 0 && (
+            <div className="me-filtros" role="group" aria-label="Filtrar por estado">
+              {FILTROS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  className={`me-filtro ${filtroEstado === f.id ? "activo" : ""}`}
+                  onClick={() => handleFiltro(f.id)}
+                >
+                  {f.label}
+                  <span className="me-filtro-conteo">{conteos[f.id]}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </section>
 
         {loading && (
-          <p className="me-sin-resultados">Cargando tus empeños...</p>
+          <div className="me-cargando-texto">Cargando tus empeños...</div>
         )}
 
         {error && !loading && (
           <div className="me-sin-resultados">
-            <p>{error}</p>
-            <button onClick={cargarEmpenos}>Reintentar</button>
+            <p>{typeof error === "string" ? error : error?.message || "Error al cargar"}</p>
+            <button className="me-btn-reintentar" onClick={cargarEmpenos}>
+              Reintentar
+            </button>
           </div>
         )}
 
         {!loading && !error && (
           <section className="me-empenos-list">
-            {empenosFiltrados.length > 0 ? (
-              empenosFiltrados.map((empeño) => (
-                <div key={empeño.id} className="me-empeno-card">
-                  <div className="me-empeno-contenido-superior">
-                    <div className="me-empeno-imagen-container">
-                      <img
-                        src={empeño.imagen || PLACEHOLDER_IMAGE}
-                        alt={empeño.nombre}
-                        className="me-empeno-imagen"
-                        loading="lazy"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = PLACEHOLDER_IMAGE;
-                        }}
-                      />
-                      {empeño.pagadoCompleto && (
-                        <div className="me-empeno-pagado-badge">✓ PAGADO</div>
-                      )}
-                      {!empeño.pagadoCompleto && empeño.estado === 'VENCIDO' && (
-                        <div className="me-empeno-vencido-badge">⚠ VENCIDO</div>
-                      )}
-                      {!empeño.pagadoCompleto && empeño.estado !== 'VENCIDO' && empeño.proximoAVencer && (
-                        <div className="me-empeno-porvencer-badge">⏳ POR VENCER</div>
-                      )}
-                    </div>
-
-                    <div className="me-empeno-info">
-                      <h2 className="me-empeno-nombre">{empeño.nombre}</h2>
-
-                      {empeño.descripcion && (
-                        <p className="me-empeno-descripcion">
-                          {empeño.descripcion}
-                        </p>
-                      )}
-
-                      <div className="me-empeno-detalles">
-                        <div className="me-detalle-item">
-                          <span className="me-detalle-label">Prestado:</span>
-                          <span className="me-detalle-valor">
-                            {empeño.prestado}
+            {totalRegistros > 0 ? (
+              <>
+                <div className="me-fichas-grid">
+                  {empenosVisibles.map((empeño) => {
+                    const estado = getEstado(empeño);
+                    const estaVencido = estado.id === "vencido";
+                    
+                    return (
+                      <div key={empeño.id} className="me-ficha">
+                        
+                        <div className="me-ficha-header">
+                          <ImagenConLoader
+                            src={empeño.imagen || PLACEHOLDER_IMAGE}
+                            alt={empeño.nombre}
+                            className="me-ficha-imagen"
+                          />
+                          <div className="me-ficha-titulo">
+                            <span className="me-empeno-nombre">{empeño.nombre}</span>
+                            <span className="me-empeno-id">Empeño #{empeño.id}</span>
+                          </div>
+                          <span className={`me-estado me-estado-${estado.id}`}>
+                            {estado.texto}
                           </span>
                         </div>
 
-                        <div className="me-detalle-item">
-                          <span className="me-detalle-label">Total a pagar:</span>
-                          <span className={`me-detalle-valor me-total ${empeño.pagadoCompleto ? 'pagado' : ''}`}>
-                            {empeño.pagadoCompleto ? "Pagado" : empeño.totalPagar}
-                          </span>
+                        <div className="me-ficha-body">
+                          <div className="me-ficha-dato">
+                            <span className="me-ficha-label">Saldo Pendiente</span>
+                            <span className="me-ficha-valor">
+                              {formatValue(empeño.saldoRestante ?? empeño.saldo_total_pendiente ?? empeño.prestado)}
+                            </span>
+                          </div>
+                          <div className="me-ficha-dato">
+                            <span className="me-ficha-label">Vencimiento</span>
+                            <span className="me-ficha-valor">
+                              {empeño.vencimiento || "—"}
+                            </span>
+                          </div>
                         </div>
 
-                        <div className="me-detalle-item">
-                          <span className="me-detalle-label">Vencimiento:</span>
-                          <span className="me-detalle-valor">
-                            {empeño.vencimiento || "N/A"}
-                          </span>
+                        <div className="me-ficha-acciones">
+                          {!empeño.pagadoCompleto && !estaVencido ? (
+                            <button
+                              className="me-btn-pagar"
+                              onClick={() => abrirPopup("pagar", empeño)}
+                            >
+                              Abonar
+                            </button>
+                          ) : empeño.pagadoCompleto ? (
+                            <div className="me-btn-pagado">✓ Pagado</div>
+                          ) : null}
+                          
+                          <button
+                            className="me-btn-ver-detalles"
+                            onClick={() => abrirPopup("detalles", empeño)}
+                            style={{ flex: estaVencido ? 1 : "initial" }}
+                          >
+                            Ver detalles
+                          </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="me-empeno-acciones">
-                    {!empeño.pagadoCompleto ? (
-                      <>
-                        <button
-                          className="me-btn-pagar"
-                          onClick={() => abrirPopup('pagar', empeño)}
-                        >
-                          Abonar / Refrendar
-                        </button>
-                        <button
-                          className="me-btn-ver-detalles"
-                          onClick={() => abrirPopup('detalles', empeño)}
-                        >
-                          Ver detalles
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="me-btn-pagado">✓ Pagado</div>
-                        <button
-                          className="me-btn-ver-detalles"
-                          onClick={() => abrirPopup('detalles', empeño)}
-                        >
-                          Ver detalles
-                        </button>
-                      </>
-                    )}
-                  </div>
+                    );
+                  })}
                 </div>
-              ))
+
+                <nav className="me-paginacion" aria-label="Paginación de empeños">
+                  <p className="me-paginacion-resumen">
+                    Mostrando {desde}-{hasta} de {totalRegistros} empeños
+                  </p>
+                  <div className="me-paginacion-controles">
+                    <button
+                      type="button"
+                      className="me-pag-btn"
+                      onClick={() => cambiarPagina(paginaSegura - 1)}
+                      disabled={paginaSegura === 1}
+                    >
+                      Anterior
+                    </button>
+                    {construirPaginas(paginaSegura, totalPaginas).map((p) =>
+                      typeof p === "string" ? (
+                        <span key={p} className="me-pag-gap">…</span>
+                      ) : (
+                        <button
+                          key={p}
+                          type="button"
+                          className={`me-pag-num ${p === paginaSegura ? "activo" : ""}`}
+                          onClick={() => cambiarPagina(p)}
+                        >
+                          {p}
+                        </button>
+                      )
+                    )}
+                    <button
+                      type="button"
+                      className="me-pag-btn"
+                      onClick={() => cambiarPagina(paginaSegura + 1)}
+                      disabled={paginaSegura === totalPaginas}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                </nav>
+              </>
             ) : (
               <p className="me-sin-resultados">No se encontraron empeños</p>
             )}
@@ -316,309 +462,129 @@ export default function MisEmpenos() {
         )}
       </div>
 
-      {/* POPUP DE PAGO (ABONO o REFRENDO) */}
-      {popupAbierto === 'pagar' && empeñoSeleccionado && (
+      {/* ==================== POPUP DE DETALLES DEL EMPEÑO ==================== */}
+      {popupAbierto === "detalles" && empeñoSeleccionado && (
         <div className="popup-overlay" onClick={cerrarPopup}>
           <div className="popup-content" onClick={(e) => e.stopPropagation()}>
             <button className="popup-close" onClick={cerrarPopup}>×</button>
 
-            <div className="popup-header">
-              <h2>Realizar pago</h2>
-              <h3>{empeñoSeleccionado.nombre}</h3>
-            </div>
-
-            <div className="popup-body">
-              <div className="pago-tabs" role="tablist">
-                <button
-                  type="button"
-                  className={`pago-tab ${tipoAccion === "abono" ? "activo" : ""}`}
-                  onClick={() => cambiarPestaña("abono")}
-                >
-                  Abonar
-                </button>
-
-                {cotizacion?.aplica_refrendo && (
-                  <button
-                    type="button"
-                    className={`pago-tab ${tipoAccion === "refrendo" ? "activo" : ""}`}
-                    onClick={() => cambiarPestaña("refrendo")}
-                  >
-                    Refrendo ({cotizacion?.plazo_meses || 1} meses)
-                  </button>
-                )}
-              </div>
-
-              {cargandoCotizacion && (
-                <p className="pago-cotizacion-cargando">Calculando lo que debes...</p>
-              )}
-
-              {errorCotizacion && !cargandoCotizacion && (
-                <small className="pago-error" style={{ color: "#c0392b", display: "block", marginBottom: "12px" }}>
-                  {errorCotizacion}
-                </small>
-              )}
-
-              {cotizacion && !cargandoCotizacion && (
-                <div className="pago-detalles pago-desglose">
-                  <div className="pago-item">
-                    <span className="pago-label">Capital:</span>
-                    <span className="pago-valor">${formatMoney(cotizacion.capital)}</span>
-                  </div>
-                  <div className="pago-item">
-                    <span className="pago-label">Interés:</span>
-                    <span className="pago-valor">${formatMoney(cotizacion.interes)}</span>
-                  </div>
-                  {cotizacion.mora > 0 && (
-                    <div className="pago-item pago-item-mora">
-                      <span className="pago-label">
-                        Mora ({cotizacion.dias_atraso} {cotizacion.dias_atraso === 1 ? 'día' : 'días'} de atraso):
-                      </span>
-                      <span className="pago-valor pago-valor-mora">${formatMoney(cotizacion.mora)}</span>
-                    </div>
-                  )}
-                  <div className="pago-item">
-                    <span className="pago-label">IVA (16% sobre interés):</span>
-                    <span className="pago-valor">${formatMoney(cotizacion.iva_interes)}</span>
-                  </div>
-                  <div className="pago-item pago-item-total">
-                    <span className="pago-label">
-                      {tipoAccion === "abono" ? "Saldo pendiente" : "Vencimiento actual"}:
-                    </span>
-                    <span className="pago-valor">
-                      {tipoAccion === "abono"
-                        ? `$${formatMoney(cotizacion.saldo_pendiente_con_mora)}`
-                        : cotizacion.fecha_vencimiento_actual}
-                    </span>
-                  </div>
-                  {tipoAccion === "refrendo" && cotizacion.nueva_fecha_vencimiento && (
-                    <div className="pago-item pago-item-destacado" style={{
-                      borderTop: '2px solid #27ae60',
-                      paddingTop: '12px',
-                      marginTop: '8px'
-                    }}>
-                      <span className="pago-label" style={{ color: '#27ae60', fontWeight: 'bold' }}>
-                        Nueva fecha de vencimiento:
-                      </span>
-                      <span className="pago-valor" style={{ color: '#27ae60', fontWeight: 'bold' }}>
-                        {cotizacion.nueva_fecha_vencimiento}
-                      </span>
-                    </div>
-                  )}
+            <div className="detalles-popup">
+              {getEstado(empeñoSeleccionado).id === "vencido" && (
+                <div className="me-alerta-vencido">
+                  <strong>⚠ Artículo Vencido y en Tienda</strong>
+                  <p>Este empeño ha superado su fecha límite. El artículo se ha declarado en pérdida y ha sido trasladado a nuestra tienda de recuperación. Si deseas recuperarlo, por favor contacta a atención a clientes.</p>
                 </div>
               )}
 
-              {tipoAccion === "abono" ? (
-                <div className="pago-input-group">
-                  <label>Monto a abonar:</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    className={`pago-input ${excedeSaldo ? 'pago-input-error' : ''}`}
-                    placeholder="Ingresa el monto del abono"
-                    value={montoPago}
-                    onChange={handleMontoChange}
+              <div className="detalles-hero">
+                <div className="popup-imagen-container-left">
+                  <ImagenConLoader
+                    src={empeñoSeleccionado.imagen || PLACEHOLDER_IMAGE}
+                    alt={empeñoSeleccionado.nombre}
+                    className="popup-imagen-left"
                   />
-
-                  {excedeSaldo && (
-                    <small className="pago-error" style={{ color: "#c0392b", display: "block", marginTop: "6px" }}>
-                      El monto máximo que puedes abonar es ${formatMoney(saldoMaximo)} (tu saldo pendiente).
-                    </small>
-                  )}
-
-                  {repartoPreview ? (
-                    <>
-                      <div className="pago-reparto-preview">
-                        <p className="pago-reparto-titulo">
-                          Así se aplicará tu abono de ${formatMoney(montoNum)}:
-                        </p>
-                        {repartoPreview.interesMasIva > 0 && (
-                          <div className="pago-reparto-fila">
-                            <span>Interés + IVA del periodo:</span>
-                            <span>${formatMoney(repartoPreview.interesMasIva)}</span>
-                          </div>
-                        )}
-                        <div className="pago-reparto-fila pago-reparto-destacado">
-                          <span>Reduce tu deuda (capital):</span>
-                          <span>${formatMoney(repartoPreview.capitalPagado)}</span>
-                        </div>
-                        <small className="pago-reparto-nota">
-                          Tu abono se reparte proporcionalmente entre capital e
-                          interés + IVA, según cuánto representa cada uno de tu
-                          deuda total — así siempre bajas tu capital, sin importar
-                          el monto que abones.
-                        </small>
-                      </div>
-                      <small className="pago-ayuda">
-                        Tu saldo total pendiente bajará ${formatMoney(montoNum)} pesos completos,
-                        sin importar cómo se reparta arriba.
-                      </small>
-                    </>
-                  ) : (
-                    <small className="pago-ayuda">
-                      Puedes abonar cualquier monto hasta el saldo restante
-                      {cotizacion?.mora > 0 ? " (ya incluye la mora acumulada)" : ""}. El abono
-                      reduce tu deuda pero <strong>no mueve tu fecha de vencimiento</strong>.
-                      Se te redirigirá a la pasarela de pago segura para completarlo.
-                    </small>
+                  {empeñoSeleccionado.pagadoCompleto && (
+                    <div className="popup-pagado-badge">✓ Pagado</div>
                   )}
                 </div>
-              ) : (
-                <div className="pago-input-group">
-                  <small className="pago-ayuda" style={{ fontSize: '0.9rem', lineHeight: '1.6' }}>
-                    <strong>¿Qué es el refrendo?</strong><br />
-                    El refrendo paga los intereses del periodo completo
-                    <strong> ({cotizacion?.plazo_meses || 1} meses)</strong> y
-                    <strong style={{ color: '#27ae60' }}> extiende tu fecha de vencimiento
-                    por {cotizacion?.plazo_meses || 1} meses más</strong>.
-                    <br /><br />
-                    {cotizacion ? (
-                      <>
-                        <span style={{ fontSize: '1.1rem' }}>
-                          Total a pagar: <strong>${formatMoney(cotizacion.monto_refrendo)}</strong>
-                        </span>
-                        <br />
-                        <span style={{ fontSize: '0.85rem', color: '#666' }}>
-                          (Interés: ${formatMoney(cotizacion.monto_refrendo / 1.16)} + IVA: ${formatMoney(cotizacion.monto_refrendo - (cotizacion.monto_refrendo / 1.16))})
-                        </span>
-                        {cotizacion.mora > 0 && (
-                          <span style={{ display: 'block', color: '#e74c3c', marginTop: '4px' }}>
-                            ⚠ Incluye mora: ${formatMoney(cotizacion.mora)}
-                          </span>
-                        )}
-                      </>
-                    ) : null}
-                    <br />
-                    <span style={{ color: '#27ae60', fontWeight: 'bold', display: 'block', marginTop: '8px' }}>
-                      Nueva fecha de vencimiento: {cotizacion?.nueva_fecha_vencimiento || 'Calculando...'}
-                    </span>
-                    <br />
-                    <span style={{ fontSize: '0.85rem', color: '#666' }}>
-                      <strong>Importante:</strong> El refrendo <strong>no abona capital</strong>, solo paga intereses
-                      y extiende el plazo. El capital se paga al recuperar la prenda.
-                    </span>
-                  </small>
-                </div>
-              )}
 
-              {errorPago && (
-                <small className="pago-error" style={{ color: "#c0392b", display: "block", marginTop: "6px" }}>
-                  {errorPago}
-                </small>
-              )}
-
-              <div className="pago-metodos">
-                <h4>Método de pago</h4>
-                <div className="metodo-opcion">
-                  <input type="radio" name="metodo" id="tarjeta" defaultChecked />
-                  <label htmlFor="tarjeta">Tarjeta de crédito/débito</label>
-                </div>
-              </div>
-            </div>
-
-            <div className="popup-footer">
-              <button
-                className="pago-confirmar-btn"
-                onClick={procesarPago}
-                disabled={redirigiendoPago || (tipoAccion === "abono" && excedeSaldo)}
-              >
-                {redirigiendoPago
-                  ? "Redirigiendo..."
-                  : tipoAccion === "abono"
-                    ? "Confirmar Abono"
-                    : `Confirmar Refrendo (${cotizacion?.plazo_meses || 1} meses)`}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* POPUP DE DETALLES */}
-      {popupAbierto === 'detalles' && empeñoSeleccionado && (
-        <div className="popup-overlay" onClick={cerrarPopup}>
-          <div className="popup-content" onClick={(e) => e.stopPropagation()}>
-            <button className="popup-close" onClick={cerrarPopup}>×</button>
-
-            <div className="popup-detalles-flex">
-              <div className="popup-imagen-container-left">
-                <img
-                  src={empeñoSeleccionado.imagen || PLACEHOLDER_IMAGE}
-                  alt={empeñoSeleccionado.nombre}
-                  className="popup-imagen-left"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = PLACEHOLDER_IMAGE;
-                  }}
-                />
-                {empeñoSeleccionado.pagadoCompleto && (
-                  <div className="popup-pagado-badge">✓ PAGADO</div>
-                )}
-              </div>
-
-              <div className="popup-info-right">
-                <h3 className="detalle-titulo">{empeñoSeleccionado.nombre}</h3>
-                <p className="detalle-descripcion">{empeñoSeleccionado.descripcion}</p>
-
-                <div className="detalle-caracteristicas-vertical">
-                  {empeñoSeleccionado.gramos && (
-                    <p><strong>{empeñoSeleccionado.gramos}</strong></p>
+                <div className="detalles-hero-info">
+                  <h2 className="detalle-titulo">{empeñoSeleccionado.nombre}</h2>
+                  {empeñoSeleccionado.descripcion && (
+                    <p className="detalle-descripcion">{empeñoSeleccionado.descripcion}</p>
                   )}
-                  <p><strong>Casa de empeño: {empeñoSeleccionado.casaEmpeño}</strong></p>
-                </div>
-
-                <div className="detalle-seccion">
-                  <h4>Información Financiera</h4>
-                  <div className="detalle-financiero">
-                    <div className="financiero-item">
-                      <span>Monto prestado:</span>
-                      <span>{empeñoSeleccionado.prestado}</span>
-                    </div>
-                    <div className="financiero-item">
-                      <span>
-                        Intereses ({empeñoSeleccionado.tasaPorcentaje ?? '—'}% a {empeñoSeleccionado.plazoMeses}{' '}
-                        {empeñoSeleccionado.plazoMeses === 1 ? 'mes' : 'meses'}):
+                  <div className="detalles-meta">
+                    {empeñoSeleccionado.casaEmpeño && (
+                      <span className="meta-chip">{empeñoSeleccionado.casaEmpeño}</span>
+                    )}
+                    {empeñoSeleccionado.gramos && (
+                      <span className="meta-chip">{empeñoSeleccionado.gramos}</span>
+                    )}
+                    {empeñoSeleccionado.tasaPorcentaje != null && empeñoSeleccionado.plazoMeses != null && (
+                      <span className="meta-chip">
+                        {empeñoSeleccionado.tasaPorcentaje}% · {empeñoSeleccionado.plazoMeses} {empeñoSeleccionado.plazoMeses === 1 ? "mes" : "meses"}
                       </span>
-                      <span>{empeñoSeleccionado.intereses}</span>
-                    </div>
-                    <div className="financiero-item">
-                      <span>Saldo pendiente (capital):</span>
-                      <span>{empeñoSeleccionado.saldoRestante}</span>
-                    </div>
-                    <div className="financiero-item">
-                      <span>Total abonado:</span>
-                      <span>{empeñoSeleccionado.totalAbonado}</span>
-                    </div>
-                    <div className={`financiero-item total ${empeñoSeleccionado.pagadoCompleto ? 'pagado' : ''}`}>
-                      <span>Total a pagar:</span>
-                      <span>{empeñoSeleccionado.pagadoCompleto ? "Pagado" : empeñoSeleccionado.totalPagar}</span>
-                    </div>
+                    )}
+                    {empeñoSeleccionado.vencimiento && (
+                      <span className="meta-chip">Vence: {empeñoSeleccionado.vencimiento}</span>
+                    )}
                   </div>
                 </div>
+              </div>
 
-                <div className="detalle-seccion">
-                  <h4>Historial de Pagos</h4>
-                  {empeñoSeleccionado.abonos && empeñoSeleccionado.abonos.length > 0 ? (
-                    empeñoSeleccionado.abonos.map((abono, index) => (
-                      <div key={index} className="historial-item">
-                        <span>Abono: {abono.monto}</span>
-                        <span className="historial-intereses">
-                          Intereses: {abono.interesesPagados}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <p>Aún no hay abonos registrados.</p>
-                  )}
-                  {empeñoSeleccionado.pagadoCompleto && (
-                    <div className="historial-item pagado-final">
-                      <span>Pago total realizado</span>
-                    </div>
-                  )}
+              <div className="detalles-seccion">
+                <h4 className="detalles-seccion-titulo">Información financiera</h4>
+                <div className="financiero-tabla">
+                  <div className="financiero-fila">
+                    <span className="financiero-label">Monto prestado</span>
+                    <span className="financiero-valor">{formatValue(empeñoSeleccionado.prestado)}</span>
+                  </div>
+                  <div className="financiero-fila">
+                    <span className="financiero-label">Intereses</span>
+                    <span className="financiero-valor">{formatValue(empeñoSeleccionado.intereses)}</span>
+                  </div>
+                  <div className="financiero-fila">
+                    <span className="financiero-label">Saldo pendiente (capital)</span>
+                    <span className="financiero-valor">{formatValue(empeñoSeleccionado.saldoRestante)}</span>
+                  </div>
+                  <div className="financiero-fila">
+                    <span className="financiero-label">Total abonado</span>
+                    <span className="financiero-valor">{formatValue(empeñoSeleccionado.totalAbonado)}</span>
+                  </div>
+                  <div className={`financiero-fila financiero-total ${empeñoSeleccionado.pagadoCompleto ? "pagado" : ""}`}>
+                    <span className="financiero-label">Total a pagar</span>
+                    <span className="financiero-valor">
+                      {empeñoSeleccionado.pagadoCompleto ? "Pagado ✓" : formatValue(empeñoSeleccionado.totalPagar)}
+                    </span>
+                  </div>
                 </div>
+              </div>
+
+              <div className="detalles-seccion">
+                <h4 className="detalles-seccion-titulo">Historial de pagos</h4>
+                {empeñoSeleccionado.abonos && empeñoSeleccionado.abonos.length > 0 ? (
+                  <div className="historial-lista">
+                    {empeñoSeleccionado.abonos.map((abono, index) => (
+                      <div key={index} className="historial-item">
+                        <div className="historial-main">
+                          <span className="historial-monto">{formatValue(abono.monto)}</span>
+                          {abono.fecha && <span className="historial-fecha">{abono.fecha}</span>}
+                        </div>
+                        <div className="historial-detalle">
+                          <div>
+                            <span className="historial-label">Intereses </span>
+                            <span className="historial-intereses">{formatValue(abono.interesesPagados)}</span>
+                          </div>
+                          
+                          {/* ✅ BOTÓN CONECTADO AL NUEVO MODAL */}
+                          <button 
+                            className="btn-ver-recibo"
+                            onClick={() => abrirTicketHistorial(abono, empeñoSeleccionado)}
+                          >
+                            <span className="icon">🧾</span> Ver recibo
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="historial-vacio">Aún no hay abonos registrados.</p>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
-    </>
+
+      {/* ==================== MODAL DE RECIBO (LARGO) ==================== */}
+      {ticketSeleccionado && (
+        <ModalTicketRecibo 
+          empeno={ticketSeleccionado.empeno} 
+          abono={ticketSeleccionado.abono} 
+          onClose={() => setTicketSeleccionado(null)} 
+        />
+      )}
+      
+    </div>
   );
 }
