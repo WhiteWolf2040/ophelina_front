@@ -89,17 +89,13 @@ const Configuraciones = () => {
   const [empresaForm, setEmpresaForm] = useState(empresa);
   const [interesForm, setInteresForm] = useState(interes);
 
-  // ✅ CAMBIO: estado de guardado y error para el bloque de intereses
-  const [guardandoInteres, setGuardandoInteres] = useState(false);
-  const [errorInteres, setErrorInteres] = useState("");
-
   // ✅ Estado de tab activo
   const [tabActiva, setTabActiva] = useState("general");
 
   // ===== SUCURSALES (datos reales del back: /sucursales) =====
   const [sucursales, setSucursales] = useState([]);
   const [modalSucursal, setModalSucursal] = useState(false);
-  const [sucursalForm, setSucursalForm] = useState(null);
+  const [sucursalForm, setSucursalForm] = useState(null); // con id_sucursal = editar, sin id = nueva
   const [errorSucursal, setErrorSucursal] = useState("");
   const [guardandoSucursal, setGuardandoSucursal] = useState(false);
 
@@ -169,7 +165,7 @@ const Configuraciones = () => {
   const [errorGuardarCfg, setErrorGuardarCfg] = useState("");
 
   const [modalCategoria, setModalCategoria] = useState(false);
-  const [categoriaForm, setCategoriaForm] = useState(null);
+  const [categoriaForm, setCategoriaForm] = useState(null); // con id_categoria = editar, sin id = nueva
   const [errorCategoria, setErrorCategoria] = useState("");
   const [guardandoCategoria, setGuardandoCategoria] = useState(false);
 
@@ -383,6 +379,7 @@ const Configuraciones = () => {
     refrescar: refrescarFacturacion,
   } = useFacturacion();
 
+  // Al entrar al tab Plan: si ya está en caché, no hace ninguna petición
   useEffect(() => {
     if (tabActiva !== "plan") return;
     if (!suscripcionContext) cargarSuscripcion();
@@ -433,45 +430,10 @@ const Configuraciones = () => {
     setEditandoEmpresa(false);
   };
 
-  // ✅ CAMBIO CLAVE: guardar la tasa en /configuracion/intereses (tabla tasas_interes),
-  // notificar a NuevoEmpeno y reflejar el cambio en la UI de Configuraciones.
-  const handleInteresSubmit = async (e) => {
+  const handleInteresSubmit = (e) => {
     e.preventDefault();
-    setErrorInteres("");
-    setGuardandoInteres(true);
-
-    try {
-      const porcentaje = parseFloat(interesForm.porcentaje);
-
-      if (Number.isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100) {
-        throw new Error("El porcentaje debe ser un número entre 0 y 100.");
-      }
-
-      // 1) Persistir en la tabla real que consulta NuevoEmpeno
-      await api.put("/configuracion/intereses", { porcentaje });
-
-      // 2) Reflejar en el estado compartido (para que esta pantalla muestre el nuevo %)
-      if (typeof actualizarInteres === "function") {
-        try { await Promise.resolve(actualizarInteres(interesForm)); } catch (_) { /* no-op */ }
-      }
-
-      // 3) Avisar a NuevoEmpeno en la misma pestaña
-      window.dispatchEvent(new Event("tasa:actualizada"));
-
-      // 4) Avisar a otras pestañas abiertas (si las hay)
-      if (typeof BroadcastChannel !== "undefined") {
-        const bc = new BroadcastChannel("tasa");
-        bc.postMessage({ tipo: "actualizada" });
-        bc.close();
-      }
-
-      setEditandoInteres(false);
-    } catch (err) {
-      console.error("No se pudo actualizar la tasa", err);
-      setErrorInteres(err.response?.data?.message || err.message || "No se pudo guardar la tasa de interés.");
-    } finally {
-      setGuardandoInteres(false);
-    }
+    actualizarInteres(interesForm);
+    setEditandoInteres(false);
   };
 
   const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
@@ -497,6 +459,7 @@ const Configuraciones = () => {
   // ============================================
   const formatearFecha = (fecha) => {
     if (!fecha) return "—";
+    // fecha viene como "2026-10-21"; se separa para evitar desfase de zona horaria
     const [anio, mes, dia] = fecha.split("-").map(Number);
     return new Date(anio, mes - 1, dia).toLocaleDateString("es-MX", {
       day: "numeric",
@@ -818,7 +781,7 @@ const Configuraciones = () => {
       {/* ============================================ */}
       {tabActiva === "operacion" && (
         <>
-          {/* SECCIÓN INTERESES (✅ CAMBIO: ahora persiste en /configuracion/intereses) */}
+          {/* SECCIÓN INTERESES (existente) */}
           <div className="config-section">
             <div className="section-header">
               <h3>
@@ -826,7 +789,7 @@ const Configuraciones = () => {
                 Configuración de Intereses
               </h3>
               {!editandoInteres && (
-                <button className="btn-editar-small" onClick={() => { setErrorInteres(""); setEditandoInteres(true); }}>
+                <button className="btn-editar-small" onClick={() => setEditandoInteres(true)}>
                   <EditIcon fontSize="small" />
                   Editar
                 </button>
@@ -841,8 +804,6 @@ const Configuraciones = () => {
                     <input
                       type="number"
                       step="0.1"
-                      min="0"
-                      max="100"
                       value={interesForm.porcentaje}
                       onChange={(e) => setInteresForm({...interesForm, porcentaje: e.target.value})}
                       required
@@ -870,23 +831,12 @@ const Configuraciones = () => {
                     />
                   </div>
                 </div>
-
-                {/* ✅ CAMBIO: mostrar error de guardado si lo hay */}
-                {errorInteres && (
-                  <p className="plan-error" style={{ marginTop: 8 }}>{errorInteres}</p>
-                )}
-
                 <div className="form-buttons">
-                  <button type="submit" className="btn-gold" disabled={guardandoInteres}>
+                  <button type="submit" className="btn-gold">
                     <SaveIcon fontSize="small" />
-                    {guardandoInteres ? "Guardando..." : "Guardar Cambios"}
+                    Guardar Cambios
                   </button>
-                  <button
-                    type="button"
-                    className="btn-cancel"
-                    onClick={() => { setEditandoInteres(false); setErrorInteres(""); }}
-                    disabled={guardandoInteres}
-                  >
+                  <button type="button" className="btn-cancel" onClick={() => setEditandoInteres(false)}>
                     <CancelIcon fontSize="small" />
                     Cancelar
                   </button>
@@ -901,11 +851,11 @@ const Configuraciones = () => {
                   </div>
                   <div className="info-item">
                     <span className="info-label"><AttachMoneyIcon fontSize="small" /> Monto mínimo:</span>
-                    <span className="info-value">${Number(interes.minimo || 0).toLocaleString()}</span>
+                    <span className="info-value">${interes.minimo.toLocaleString()}</span>
                   </div>
                   <div className="info-item">
                     <span className="info-label"><AttachMoneyIcon fontSize="small" /> Monto máximo:</span>
-                    <span className="info-value">${Number(interes.maximo || 0).toLocaleString()}</span>
+                    <span className="info-value">${interes.maximo.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -1687,75 +1637,38 @@ const Configuraciones = () => {
 
       {/* MODAL: CAMBIAR DE PLAN */}
       {modalPlanes && (
-        <div
-          className="plan-modal-overlay"
-          onClick={() => !procesandoPlan && setModalPlanes(false)}
-        >
+        <div className="plan-modal-overlay" onClick={() => !procesandoPlan && setModalPlanes(false)}>
           <div className="plan-modal" onClick={(e) => e.stopPropagation()}>
             <div className="plan-modal-header">
-              <div className="plan-modal-titulo">
-                <div className="plan-modal-icon-wrapper">
-                  <CreditCardIcon className="section-icon" />
-                </div>
-                <h3>Elige tu plan</h3>
-              </div>
-              <button
-                className="btn-cerrar-modal"
-                type="button"
-                aria-label="Cerrar modal"
-                onClick={() => setModalPlanes(false)}
-                disabled={!!procesandoPlan}
-              >
+              <h3><CreditCardIcon className="section-icon" /> Elige tu plan</h3>
+              <button className="btn-icono" type="button" onClick={() => setModalPlanes(false)} disabled={!!procesandoPlan}>
                 <CloseIcon fontSize="small" />
               </button>
             </div>
 
-            <div className="plan-modal-nota">
-              <p>
-                Pagarás de forma segura en <strong>Stripe</strong>. El nuevo plan se cobra completo hoy e inicia un nuevo mes de servicio. Tu plan anterior se cancelará automáticamente sin reembolso por el tiempo restante.
-              </p>
-            </div>
+            <p className="plan-modal-nota">
+              Pagarás en Stripe. El nuevo plan se cobra completo hoy y tu plan anterior se cancela automáticamente.
+            </p>
 
             {planesDisponibles.length === 0 ? (
-              <div className="plan-vacio">
-                <p>No hay planes disponibles por ahora.</p>
-              </div>
+              <p className="plan-vacio">No hay planes disponibles por ahora.</p>
             ) : (
               <div className="planes-opciones">
                 {planesDisponibles.map((p) => {
-                  const esActual =
-                    p.id_plan === suscripcion?.plan_id &&
-                    facturacion?.tiene_stripe &&
-                    suscripcion?.estado !== "vencida";
-
+                  const esActual = p.id_plan === suscripcion?.plan_id && facturacion?.tiene_stripe && suscripcion?.estado !== "vencida";
                   return (
-                    <div
-                      key={p.id_plan}
-                      className={`plan-opcion ${esActual ? "actual" : ""}`}
-                    >
-                      <div className="plan-opcion-header">
-                        <span className="plan-nombre">{p.nombre}</span>
-                        {esActual && <span className="plan-badge-actual">Actual</span>}
-                      </div>
-
-                      <div className="plan-opcion-precio">
-                        <span className="precio-monto">
-                          ${Number(p.precio_mensual).toLocaleString("es-MX")}
-                        </span>
-                        <span className="precio-periodo">/ mes</span>
-                      </div>
-
+                    <div key={p.id_plan} className={`plan-opcion ${esActual ? "actual" : ""}`}>
+                      <strong>{p.nombre}</strong>
+                      <span className="plan-opcion-precio">
+                        ${Number(p.precio_mensual).toLocaleString("es-MX")} <small>/ mes</small>
+                      </span>
                       <button
-                        className={`btn-plan ${esActual ? "btn-plan-actual" : "btn-gold"}`}
+                        className="btn-gold"
                         type="button"
                         disabled={esActual || !!procesandoPlan}
                         onClick={() => elegirPlan(p.id_plan)}
                       >
-                        {esActual
-                          ? "Plan actual"
-                          : procesandoPlan === p.id_plan
-                          ? "Redirigiendo..."
-                          : "Elegir plan"}
+                        {esActual ? "Plan actual" : procesandoPlan === p.id_plan ? "Redirigiendo..." : "Elegir"}
                       </button>
                     </div>
                   );
@@ -1763,7 +1676,7 @@ const Configuraciones = () => {
               </div>
             )}
 
-            {errorPlan && <div className="plan-error">{errorPlan}</div>}
+            {errorPlan && <p className="plan-error">{errorPlan}</p>}
           </div>
         </div>
       )}

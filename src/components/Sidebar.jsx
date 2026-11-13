@@ -23,18 +23,11 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import InsightsIcon from '@mui/icons-material/Insights';
 
-// Menús por defecto (orden correcto)
+// Menús por defecto: SOLO los del plan Free (nunca mostrar todo si algo falla)
 const DEFAULT_MENUS = [
   { path: '/home', icon: <HomeIcon />, text: 'Home' },
   { path: '/clientes', icon: <PeopleIcon />, text: 'Clientes' },
-  { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
-  { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
-  { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
-  { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
-  { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
-  { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
-  { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
-  { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
+  { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' }
 ];
 
 // ✅ ORDEN CORRECTO DE LOS MÓDULOS
@@ -75,6 +68,7 @@ const Sidebar = () => {
       'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
       'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
       'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
+      'apartados': { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
       'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
       'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
       'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
@@ -100,18 +94,21 @@ const Sidebar = () => {
     });
   };
 
-const metabaseItem = { path: '/metabase', icon: <InsightsIcon />, text: 'Dashboard' };
-const baseMenus = getMenus();
+  const metabaseItem = { path: '/metabase', icon: <InsightsIcon />, text: 'Dashboard' };
+  const baseMenus = getMenus();
 
-// Lo inserta después de "Reportes" (o al final si no existe) sin duplicarlo
-const menuItems = baseMenus.some(m => m.path === '/metabase')
-  ? baseMenus
-  : (() => {
-      const i = baseMenus.findIndex(m => m.path === '/reportes');
-      const copia = [...baseMenus];
-      copia.splice(i === -1 ? copia.length : i + 1, 0, metabaseItem);
-      return copia;
-    })();
+  // "Dashboard" (Metabase) solo se muestra si el plan incluye Reportes (Premium).
+  // Se inserta justo después de "Reportes" y sin duplicarlo.
+  const indiceReportes = baseMenus.findIndex(m => m.path === '/reportes');
+  const yaTieneMetabase = baseMenus.some(m => m.path === '/metabase');
+
+  const menuItems = (indiceReportes === -1 || yaTieneMetabase)
+    ? baseMenus
+    : [
+        ...baseMenus.slice(0, indiceReportes + 1),
+        metabaseItem,
+        ...baseMenus.slice(indiceReportes + 1)
+      ];
 
   console.log('📋 Menús a renderizar:', menuItems.map(m => m.text));
 
@@ -180,8 +177,6 @@ const menuItems = baseMenus.some(m => m.path === '/metabase')
           <button className="collapse-btn" onClick={toggleCollapse}>
             <MenuIcon className="collapse-icon" />
           </button>
-
-          
 
           <button className="close-btn" onClick={closeSidebar}>
             <CloseIcon />

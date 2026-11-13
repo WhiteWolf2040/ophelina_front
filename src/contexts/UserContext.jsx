@@ -12,43 +12,11 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import SecurityIcon from '@mui/icons-material/Security';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+
 const UserContext = createContext();
 
-// Configuración de módulos por plan
-const modulesByPlan = {
-  1: {
-    name: 'Free',
-    menus: [
-      { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-      { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-      { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" }
-    ]
-  },
-  2: {
-    name: 'Profesional',
-    menus: [
-      { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-      { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-      { path: "/pagos", icon: <PaymentsIcon />, text: "Pagos", modulo: "pagos" },
-      { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" },
-      { path: "/configuracion", icon: <SettingsIcon />, text: "Configuración", modulo: "configuracion" }
-    ]
-  },
-  3: {
-    name: 'Premium',
-    menus: [
-      { path: "/home", icon: <HomeIcon />, text: "Home", modulo: "home" },
-      { path: "/clientes", icon: <PeopleIcon />, text: "Clientes", modulo: "clientes" },
-      { path: "/pagos", icon: <PaymentsIcon />, text: "Pagos", modulo: "pagos" },
-      { path: "/empenos", icon: <DiamondIcon />, text: "Empeños", modulo: "empenos" },
-      { path: "/tienda", icon: <StorefrontIcon />, text: "Tienda en línea", modulo: "tienda" },
-      { path: "/reportes", icon: <BarChartIcon />, text: "Reportes", modulo: "reportes" },
-      { path: "/roles", icon: <SecurityIcon />, text: "Roles", modulo: "roles" },
-      { path: "/permisos", icon: <VpnKeyIcon />, text: "Permisos", modulo: "permisos" },
-      { path: "/configuracion", icon: <SettingsIcon />, text: "Configuración", modulo: "configuracion" }
-    ]
-  }
-};
+// Plan que se usa si algo falla: el MÁS LIMITADO (Free), nunca Premium
+const PLAN_POR_DEFECTO = 1;
 
 // Mapa de módulo -> item de menú (fuera del componente para no recrearlo en cada render)
 const moduleMap = {
@@ -66,6 +34,30 @@ const moduleMap = {
   'configuracion': { path: '/configuracion', icon: <SettingsIcon />, text: 'Configuración' }
 };
 
+// Respaldo local: DEBE coincidir con SuscripcionService::MODULOS_POR_PLAN del backend.
+// (El backend es la fuente de verdad; esto solo se usa si la API no manda módulos.)
+const MODULOS_POR_PLAN = {
+  1: ['home', 'clientes', 'empenos'],
+  2: ['home', 'clientes', 'pagos', 'inventario', 'empenos', 'roles', 'permisos', 'configuracion'],
+  3: ['home', 'clientes', 'pagos', 'inventario', 'empenos', 'tienda', 'apartados', 'reportes', 'roles', 'permisos', 'configuracion']
+};
+
+const NOMBRES_PLAN = { 1: 'Free', 2: 'Profesional', 3: 'Premium' };
+
+// Misma forma que antes: { [planId]: { name, menus: [{path, icon, text, modulo}] } }
+const modulesByPlan = Object.fromEntries(
+  Object.entries(MODULOS_POR_PLAN).map(([id, mods]) => [
+    id,
+    {
+      name: NOMBRES_PLAN[id],
+      menus: mods.map((modulo) => ({ ...moduleMap[modulo], modulo }))
+    }
+  ])
+);
+
+const modulosDePlan = (planId) =>
+  MODULOS_POR_PLAN[Number(planId)] || MODULOS_POR_PLAN[PLAN_POR_DEFECTO];
+
 // CONVERTIR MÓDULOS DE OBJETO A ARRAY
 const convertModulosToArray = (modulos) => {
   if (!modulos) return [];
@@ -78,26 +70,22 @@ const convertModulosToArray = (modulos) => {
 
 // CONVERTIR MÓDULOS A MENÚS
 const convertModulesToMenus = (modulosArray, planId) => {
+  const desdeModulos = (lista) =>
+    lista
+      .map((modulo) => {
+        const modKey = String(modulo).toLowerCase().trim();
+        const item = moduleMap[modKey];
+        if (!item) console.warn('⚠️ Módulo sin menú definido:', modKey);
+        return item;
+      })
+      .filter(Boolean);
+
   if (!modulosArray || modulosArray.length === 0) {
-    const planMenus = modulesByPlan[planId] || modulesByPlan[3];
-    return planMenus.menus;
+    return desdeModulos(modulosDePlan(planId));
   }
 
-const menus = modulosArray
-  .map(modulo => {
-    const modKey = String(modulo).toLowerCase().trim();
-    const item = moduleMap[modKey];
-    if (!item) console.warn('⚠️ Módulo sin menú definido:', modKey);
-    return item;
-  })
-  .filter(Boolean);
-
-  if (menus.length === 0) {
-    const planMenus = modulesByPlan[planId] || modulesByPlan[3];
-    return planMenus.menus;
-  }
-
-  return menus;
+  const menus = desdeModulos(modulosArray);
+  return menus.length === 0 ? desdeModulos(modulosDePlan(planId)) : menus;
 };
 
 export const UserProvider = ({ children }) => {
@@ -121,7 +109,7 @@ export const UserProvider = ({ children }) => {
         return;
       }
 
-      // Si no es refresh forzado, intentar cargar desde localStorage
+      // Si no es refresh forzado, intentar cargar desde localStorage (rápido)
       if (!forceRefresh) {
         const storedUser = localStorage.getItem('user');
         const storedModules = localStorage.getItem('modulos');
@@ -129,18 +117,14 @@ export const UserProvider = ({ children }) => {
         if (storedUser) {
           try {
             const parsedUser = JSON.parse(storedUser);
+            const planId = parsedUser.plan_id || PLAN_POR_DEFECTO;
             console.log('Cargando usuario desde localStorage:', parsedUser.nombre || parsedUser.correo);
 
-            let modulosArray = [];
-            if (storedModules) {
-              modulosArray = convertModulosToArray(JSON.parse(storedModules));
-            } else {
-              const planId = parsedUser.plan_id || 3;
-              const planMenus = modulesByPlan[planId] || modulesByPlan[3];
-              modulosArray = planMenus.menus.map(m => m.modulo);
-            }
+            const modulosArray = storedModules
+              ? convertModulosToArray(JSON.parse(storedModules))
+              : modulosDePlan(planId);
 
-            setModules(convertModulesToMenus(modulosArray, parsedUser.plan_id || 3));
+            setModules(convertModulesToMenus(modulosArray, planId));
             setUserData(parsedUser);
             setIsAuthenticated(true);
             return;
@@ -156,7 +140,7 @@ export const UserProvider = ({ children }) => {
 
       if (response.data.success) {
         const usuario = response.data.data.usuario || response.data.data;
-        const planId = usuario.plan_id || 3;
+        const planId = usuario.plan_id || PLAN_POR_DEFECTO;
 
         console.log('Plan ID:', planId);
 
@@ -164,8 +148,7 @@ export const UserProvider = ({ children }) => {
         console.log('Módulos desde API:', modulosArray);
 
         if (modulosArray.length === 0) {
-          const planMenus = modulesByPlan[planId] || modulesByPlan[3];
-          modulosArray = planMenus.menus.map(m => m.modulo);
+          modulosArray = modulosDePlan(planId);
         }
 
         // Guardar en localStorage (sobrescribe lo viejo)
@@ -201,7 +184,7 @@ export const UserProvider = ({ children }) => {
     }
   }, []);
 
-  // REFRESCAR DATOS (usar después de pagar / cambiar de plan)
+  // REFRESCAR DATOS (usar después de pagar / cambiar de plan / renovar)
   const refreshUserData = useCallback(async () => {
     console.log('Refrescando datos del usuario...');
     await loadUserData(true, true);
@@ -223,9 +206,22 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   // CARGAR DATOS AL INICIAR
+  // 1) rápido, desde localStorage  2) en segundo plano, corrige con lo que diga el backend
   useEffect(() => {
     loadUserData();
+    if (localStorage.getItem('token') && localStorage.getItem('user')) {
+      loadUserData(true, true);
+    }
   }, [loadUserData]);
+
+  // REFRESCAR AL VOLVER A LA PESTAÑA (por si el plan cambió mientras tanto)
+  useEffect(() => {
+    const onFocus = () => {
+      if (localStorage.getItem('token')) refreshUserData();
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [refreshUserData]);
 
   // ESCUCHAR CAMBIOS EN EL TOKEN (otras pestañas)
   useEffect(() => {
