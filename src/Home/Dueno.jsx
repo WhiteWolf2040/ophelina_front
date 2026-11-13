@@ -40,6 +40,9 @@ import ErrorIcon from '@mui/icons-material/Error';
 
 const PLAN_PREMIUM = 3;
 
+// Interruptor: pon true para volver a mostrar la sección "Clientes en Riesgo" (Premium)
+const MOSTRAR_CLIENTES_RIESGO = false;
+
 const Dueno = () => {
   // ============================================================
   // TODOS LOS HOOKS VAN AQUÍ ARRIBA, ANTES DE CUALQUIER return.
@@ -552,7 +555,7 @@ const Dueno = () => {
                 <ShieldIcon />
                 <span>Salud del Negocio</span>
               </div>
-              <div className="health-score-content">
+              <div className="health-score-contenta">
                 <div className="health-score-circle">
                   <svg viewBox="0 0 100 100" className="health-score-svg">
                     <circle cx="50" cy="50" r="42" className="health-score-track" />
@@ -811,8 +814,8 @@ const Dueno = () => {
           )}
         </div>
 
-        {/* CLIENTES EN RIESGO (solo Premium) */}
-        {esPremium && (
+        {/* CLIENTES EN RIESGO (solo Premium) - DESHABILITADO con MOSTRAR_CLIENTES_RIESGO */}
+        {MOSTRAR_CLIENTES_RIESGO && esPremium && (
           <div className="nueva-seccion">
             <h2>
               <NotificationsActiveIcon />

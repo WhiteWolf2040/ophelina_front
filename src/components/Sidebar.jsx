@@ -102,13 +102,8 @@ const Sidebar = () => {
   const indiceReportes = baseMenus.findIndex(m => m.path === '/reportes');
   const yaTieneMetabase = baseMenus.some(m => m.path === '/metabase');
 
-  const menuItems = (indiceReportes === -1 || yaTieneMetabase)
-    ? baseMenus
-    : [
-        ...baseMenus.slice(0, indiceReportes + 1),
-        metabaseItem,
-        ...baseMenus.slice(indiceReportes + 1)
-      ];
+   // Metabase desactivado temporalmente
+  const menuItems = getMenus();
 
   console.log('📋 Menús a renderizar:', menuItems.map(m => m.text));
 

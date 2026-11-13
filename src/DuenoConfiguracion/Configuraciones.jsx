@@ -415,6 +415,59 @@ const Configuraciones = () => {
     }
   };
 
+  // ===== CANCELAR SUSCRIPCIÓN (conserva el acceso hasta la fecha de fin) =====
+  const [cancelaLocal, setCancelaLocal] = useState(null); // null = lo que diga el servidor
+  const [modalCancelar, setModalCancelar] = useState(false);
+  const [procesandoCancelar, setProcesandoCancelar] = useState(false);
+  const [mensajeCancelar, setMensajeCancelar] = useState("");
+  const [errorCancelar, setErrorCancelar] = useState("");
+
+  const cerrarModalPlanes = () => setModalPlanes(false);
+
+  // Abre el modal de cancelación (lo usan el botón de la pestaña Plan y el del modal "Elige tu plan")
+  const abrirCancelar = () => {
+    setErrorCancelar("");
+    setMensajeCancelar("");
+    setModalPlanes(false);
+    setModalCancelar(true);
+  };
+
+  const cerrarCancelar = () => {
+    setModalCancelar(false);
+    setMensajeCancelar("");
+    setErrorCancelar("");
+  };
+
+  const cancelarSuscripcion = async () => {
+    setProcesandoCancelar(true);
+    setErrorCancelar("");
+    try {
+      const { data } = await api.post("/stripe/cancelar-suscripcion");
+      setCancelaLocal(true);
+      setMensajeCancelar(data?.message || "Suscripción cancelada. Conservas el acceso hasta el fin de tu periodo.");
+      refrescarPlan();
+    } catch (error) {
+      setErrorCancelar(error.response?.data?.message || error.response?.data?.error || "No se pudo cancelar la suscripción. Intenta de nuevo.");
+    } finally {
+      setProcesandoCancelar(false);
+    }
+  };
+
+  const reanudarSuscripcion = async () => {
+    setProcesandoCancelar(true);
+    setErrorCancelar("");
+    try {
+      const { data } = await api.post("/stripe/reanudar-suscripcion");
+      setCancelaLocal(false);
+      setMensajeCancelar(data?.message || "Suscripción reanudada.");
+      refrescarPlan();
+    } catch (error) {
+      setErrorCancelar(error.response?.data?.message || error.response?.data?.error || "No se pudo reanudar la suscripción.");
+    } finally {
+      setProcesandoCancelar(false);
+    }
+  };
+
   // Estados para paginación de usuarios
   const [paginaActual, setPaginaActual] = useState(1);
   const usuariosPorPagina = 6;
@@ -511,6 +564,13 @@ const Configuraciones = () => {
   const facturas = facturacion?.facturas || [];
   const ultimaFactura = facturas.find((f) => f.estado === "paid") || facturas[0];
   const planesDisponibles = facturacion?.planes || [];
+
+  // ¿La suscripción ya está programada para terminar al fin del periodo?
+  const cancelaAlVencer = cancelaLocal !== null
+    ? cancelaLocal
+    : Boolean(facturacion?.cancela_al_vencer ?? suscripcion?.cancela_al_vencer);
+  // Solo se puede cancelar si hay una suscripción de pago activa en Stripe
+  const puedeCancelar = !esGratis && Boolean(facturacion?.tiene_stripe) && suscripcion?.estado !== "vencida";
 
   const textoMetodoPago = () => {
     if (errorFact) return "No se pudo cargar";
@@ -1170,7 +1230,13 @@ const Configuraciones = () => {
             </div>
           ) : (
             <>
-              {avisoEstado && (
+              {cancelaAlVencer && (
+                <div className="plan-aviso plan-aviso-por_vencer">
+                  Cancelaste tu suscripción. Conservas el acceso hasta el {formatearFecha(suscripcion.fecha_fin)} y no se te volverá a cobrar.
+                </div>
+              )}
+
+              {avisoEstado && !cancelaAlVencer && (
                 <div className={`plan-aviso plan-aviso-${suscripcion.estado}`}>{avisoEstado}</div>
               )}
 
@@ -1637,11 +1703,11 @@ const Configuraciones = () => {
 
       {/* MODAL: CAMBIAR DE PLAN */}
       {modalPlanes && (
-        <div className="plan-modal-overlay" onClick={() => !procesandoPlan && setModalPlanes(false)}>
+        <div className="plan-modal-overlay" onClick={() => !procesandoPlan && !procesandoCancelar && cerrarModalPlanes()}>
           <div className="plan-modal" onClick={(e) => e.stopPropagation()}>
             <div className="plan-modal-header">
               <h3><CreditCardIcon className="section-icon" /> Elige tu plan</h3>
-              <button className="btn-icono" type="button" onClick={() => setModalPlanes(false)} disabled={!!procesandoPlan}>
+              <button className="btn-icono" type="button" onClick={cerrarModalPlanes} disabled={!!procesandoPlan || procesandoCancelar}>
                 <CloseIcon fontSize="small" />
               </button>
             </div>
@@ -1676,7 +1742,89 @@ const Configuraciones = () => {
               </div>
             )}
 
+            {/* ===== CANCELAR / REANUDAR SUSCRIPCIÓN ===== */}
+            {puedeCancelar && (
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid #e5e7eb" }}>
+                {cancelaAlVencer ? (
+                  <>
+                    <p className="plan-modal-nota">
+                      Tu suscripción está cancelada: conservas el acceso hasta el {formatearFecha(suscripcion?.fecha_fin)} y no se te volverá a cobrar.
+                    </p>
+                    <button className="btn-cancel" type="button" onClick={reanudarSuscripcion} disabled={procesandoCancelar}>
+                      {procesandoCancelar ? "Procesando..." : "Reanudar suscripción"}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="plan-modal-nota">
+                      ¿Ya no quieres seguir pagando? Puedes cancelar y conservar tu acceso hasta que termine el periodo ya pagado.
+                    </p>
+                    <button className="btn-cancel" type="button" onClick={abrirCancelar} disabled={!!procesandoPlan}>
+                      Cancelar suscripción
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
             {errorPlan && <p className="plan-error">{errorPlan}</p>}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CANCELAR SUSCRIPCIÓN */}
+      {modalCancelar && (
+        <div className="plan-modal-overlay" onClick={() => !procesandoCancelar && cerrarCancelar()}>
+          <div className="plan-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="plan-modal-header">
+              <h3><CreditCardIcon className="section-icon" /> Cancelar suscripción</h3>
+              <button className="btn-icono" type="button" onClick={cerrarCancelar} disabled={procesandoCancelar}>
+                <CloseIcon fontSize="small" />
+              </button>
+            </div>
+
+            {cancelaAlVencer ? (
+              <>
+                <p className="plan-modal-nota" style={{ color: "#2e7d32", fontWeight: 600 }}>
+                  {mensajeCancelar || "Tu suscripción está cancelada."}
+                </p>
+                <p className="plan-modal-nota">
+                  Seguirás usando tu plan {suscripcion?.plan_nombre || ""} hasta el <strong>{formatearFecha(suscripcion?.fecha_fin)}</strong>.
+                  Después de esa fecha no se te volverá a cobrar. Si cambias de opinión, puedes reanudarla antes de que termine.
+                </p>
+                <div className="form-buttons">
+                  <button className="btn-cancel" type="button" onClick={reanudarSuscripcion} disabled={procesandoCancelar}>
+                    {procesandoCancelar ? "Procesando..." : "Reanudar suscripción"}
+                  </button>
+                  <button className="btn-gold" type="button" onClick={cerrarCancelar} disabled={procesandoCancelar}>
+                    Entendido
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="plan-modal-nota">
+                  Si cancelas, <strong>no perderás el acceso</strong>: seguirás usando tu plan {suscripcion?.plan_nombre || ""} hasta
+                  el <strong>{formatearFecha(suscripcion?.fecha_fin)}</strong>, que es lo que ya pagaste. Después de esa fecha ya no se te cobrará.
+                </p>
+                <div className="form-buttons">
+                  <button
+                    className="btn-cancel"
+                    type="button"
+                    style={{ color: "#d32f2f", borderColor: "#d32f2f" }}
+                    onClick={cancelarSuscripcion}
+                    disabled={procesandoCancelar}
+                  >
+                    {procesandoCancelar ? "Cancelando..." : "Sí, cancelar suscripción"}
+                  </button>
+                  <button className="btn-gold" type="button" onClick={cerrarCancelar} disabled={procesandoCancelar}>
+                    No, mantenerla
+                  </button>
+                </div>
+              </>
+            )}
+
+            {errorCancelar && <p className="plan-error">{errorCancelar}</p>}
           </div>
         </div>
       )}
