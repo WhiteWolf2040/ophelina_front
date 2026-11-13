@@ -1,9 +1,8 @@
-// src/Roles/Roles.jsx - VERSIÓN FUSIONADA (Docker Base + Filtro de Local) + caché
+// src/Roles/Roles.jsx
 import React, { useState, useEffect } from "react";
 
 import "./Roles.css";
 import rolesService from "../services/rolService";
-import { useDashboard } from "../contexts/DashboardContext";
 import Select from 'react-select';
 
 // Iconos MUI
@@ -22,22 +21,10 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
-// Tiempo de vida de la caché (15 min, igual que el dashboard)
-const CACHE_TTL_MS = 15 * 60 * 1000;
-const CACHE_ROLES = 'roles';
-const CACHE_PERMISOS = 'roles:permisos'; // cuelga de 'roles': invalidarCache('roles') también la borra
-const vigente = (c) => c && Date.now() - c.timestamp < CACHE_TTL_MS;
-
 const Roles = () => {
-  const { getCache, setCache, invalidarCache } = useDashboard();
-
-  // Si ya hay caché, el componente arranca con los datos y sin spinner
-  const rolesCacheInicial = getCache(CACHE_ROLES);
-  const permisosCacheInicial = getCache(CACHE_PERMISOS);
-
-  const [roles, setRoles] = useState(rolesCacheInicial?.data ?? []);
-  const [permisos, setPermisos] = useState(permisosCacheInicial?.data ?? []);
-  const [loading, setLoading] = useState(!rolesCacheInicial);
+  const [roles, setRoles] = useState([]);
+  const [permisos, setPermisos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [modalDetalle, setModalDetalle] = useState(false);
@@ -45,7 +32,7 @@ const Roles = () => {
   const [modalEliminar, setModalEliminar] = useState(false);
   const [rolSeleccionado, setRolSeleccionado] = useState(null);
   const [permisosSeleccionados, setPermisosSeleccionados] = useState([]);
-
+  
   // Para nuevo rol
   const [showNuevoRol, setShowNuevoRol] = useState(false);
   const [nuevoRol, setNuevoRol] = useState({
@@ -57,7 +44,7 @@ const Roles = () => {
 
   const [permisosDelRol, setPermisosDelRol] = useState([]);
 
-  // Convertir permisos a formato para React-Select
+  // Opciones para React-Select
   const permisosOptions = permisos.map(permiso => ({
     value: permiso.id,
     label: `${permiso.nombre} (${permiso.modulo})`,
@@ -119,30 +106,24 @@ const Roles = () => {
     })
   };
 
-  // Cargar datos al montar el componente (usa caché si está vigente)
+  // Cargar datos al montar el componente
   useEffect(() => {
+    // Verificar token y usuario
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    console.log('Token:', token);
+    console.log('Usuario:', user);
+    console.log('Empresa del usuario:', user.id_empresa);
+    console.log('rolesService:', rolesService);
     cargarRoles();
     cargarPermisos();
   }, []);
 
-  const cargarRoles = async (forzar = false) => {
-    const cache = getCache(CACHE_ROLES);
-
-    // Caché vigente: no se llama a la API
-    if (!forzar && vigente(cache)) {
-      setRoles(cache.data);
-      setLoading(false);
-      return;
-    }
-
+  const cargarRoles = async () => {
     try {
-      // Si hay caché (aunque vieja) se muestra mientras se actualiza, sin spinner
-      if (!cache) setLoading(true);
-
+      setLoading(true);
       const response = await rolesService.obtenerRoles();
-      setCache(CACHE_ROLES, response.data.data);
       setRoles(response.data.data);
-      setError(null);
     } catch (error) {
       console.error('Error cargando roles:', error);
       setError('No se pudieron cargar los roles');
@@ -151,27 +132,22 @@ const Roles = () => {
     }
   };
 
-  // ✅ VERSIÓN FUSIONADA: Cargar permisos con filtro por empresa (de LOCAL)
-  const cargarPermisos = async (forzar = false) => {
-    const cache = getCache(CACHE_PERMISOS);
-
-    if (!forzar && vigente(cache)) {
-      setPermisos(cache.data);
-      return;
-    }
-
+  // Cargar permisos con filtro por empresa
+  const cargarPermisos = async () => {
     try {
       const response = await rolesService.obtenerPermisos();
+      console.log('Todos los permisos:', response.data.data);
 
-      // ✅ FILTRADO POR EMPRESA (Agregado de LOCAL)
+      // El backend ya filtra por empresa en el método index,
+      // pero si devuelve permisos globales se filtran manualmente por id_empresa.
       const user = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('Empresa del usuario:', user.id_empresa);
 
-      // Filtrar permisos por empresa
       const permisosFiltrados = response.data.data.filter(
         p => p.id_empresa === user.id_empresa
       );
 
-      setCache(CACHE_PERMISOS, permisosFiltrados);
+      console.log('Permisos filtrados por empresa:', permisosFiltrados);
       setPermisos(permisosFiltrados);
     } catch (error) {
       console.error('Error cargando permisos:', error);
@@ -191,12 +167,6 @@ const Roles = () => {
     }
   };
 
-  // Después de modificar roles: invalida la caché y recarga
-  const refrescarRoles = async () => {
-    invalidarCache('roles'); // borra 'roles' y 'roles:permisos'
-    await Promise.all([cargarRoles(true), cargarPermisos(true)]);
-  };
-
   const handleCrearRol = async (e) => {
     e.preventDefault();
     try {
@@ -207,7 +177,7 @@ const Roles = () => {
         permisos: nuevoRol.permisos
       };
       await rolesService.crearRol(data);
-      await refrescarRoles();
+      await cargarRoles();
       setShowNuevoRol(false);
       setNuevoRol({ nombre: "", nivel: "", descripcion: "", permisos: [] });
     } catch (error) {
@@ -219,27 +189,53 @@ const Roles = () => {
   const handleEditarRol = async (e) => {
     e.preventDefault();
     try {
+      // Verificar que todos los permisos existan
+      const permisosValidos = permisosSeleccionados.filter(id => 
+        permisosOptions.some(p => p.value === id)
+      );
+      
+      if (permisosValidos.length !== permisosSeleccionados.length) {
+        const invalidos = permisosSeleccionados.filter(id => 
+          !permisosOptions.some(p => p.value === id)
+        );
+        console.warn('Permisos inválidos (no existen):', invalidos);
+        alert(`Algunos permisos no existen: ${invalidos.join(', ')}`);
+      }
+      
       const data = {
         nombre: rolSeleccionado.nombre,
         nivel: parseInt(rolSeleccionado.nivel),
         descripcion: rolSeleccionado.descripcion || "",
-        permisos: permisosSeleccionados
+        permisos: permisosValidos
       };
-      await rolesService.actualizarRol(rolSeleccionado.id, data);
-      await refrescarRoles();
-      setModalEditar(false);
-      setRolSeleccionado(null);
-      setPermisosSeleccionados([]);
+      
+      console.log('Datos a enviar (válidos):', data);
+      
+      const response = await rolesService.actualizarRol(rolSeleccionado.id, data);
+      
+      if (response.data.success) {
+        alert('Rol actualizado exitosamente');
+        await cargarRoles();
+        setModalEditar(false);
+        setRolSeleccionado(null);
+        setPermisosSeleccionados([]);
+      }
     } catch (error) {
       console.error('Error actualizando rol:', error);
       alert(error.response?.data?.message || 'Error al actualizar el rol');
     }
   };
 
+  const handlePermisosChange = (selected) => {
+    const selectedIds = selected ? selected.map(opt => opt.value) : [];
+    console.log('Permisos seleccionados:', selectedIds);
+    setPermisosSeleccionados(selectedIds);
+  };
+
   const handleEliminar = async () => {
     try {
       await rolesService.eliminarRol(rolSeleccionado.id);
-      await refrescarRoles();
+      await cargarRoles();
       setModalEliminar(false);
       setRolSeleccionado(null);
     } catch (error) {
@@ -250,8 +246,6 @@ const Roles = () => {
 
   const handleVerDetalle = (rol) => {
     setRolSeleccionado(rol);
-    // Carga los permisos del rol para mostrarlos en el detalle
-    cargarPermisosDelRol(rol.id);
     setModalDetalle(true);
   };
 
@@ -303,7 +297,6 @@ const Roles = () => {
   if (loading) {
     return (
       <div className="dashboard">
-
         <div className="content loading-container">
           <div className="spinner"></div>
           <p>Cargando roles...</p>
@@ -315,11 +308,10 @@ const Roles = () => {
   if (error) {
     return (
       <div className="dashboard">
-
         <div className="content error-container">
           <h3>Error</h3>
           <p>{error}</p>
-          <button onClick={() => cargarRoles(true)} className="btn-reintentar">
+          <button onClick={cargarRoles} className="btn-reintentar">
             <RefreshIcon />
             Reintentar
           </button>
@@ -330,8 +322,6 @@ const Roles = () => {
 
   return (
     <div className="dashboard">
-
-
       <div className="content roles-content">
         {/* HEADER */}
         <div className="roles-header">
@@ -386,7 +376,7 @@ const Roles = () => {
 
         {/* BUSCADOR */}
         <div className="buscador-roles">
-          <div className="search-wrapper">
+          <div className="search-wrapper">   
             <input
               type="text"
               placeholder="Buscar roles..."
@@ -429,21 +419,21 @@ const Roles = () => {
                   <td className="text-center">{rol.permisos || 0}</td>
                   <td>
                     <div className="acciones-cell">
-                      <button
+                      <button 
                         className="btn-accion ver"
                         onClick={() => handleVerDetalle(rol)}
                         title="Ver detalles"
                       >
                         <VisibilityIcon />
                       </button>
-                      <button
+                      <button 
                         className="btn-accion editar"
                         onClick={() => handleEditar(rol)}
                         title="Editar"
                       >
                         <EditIcon />
                       </button>
-                      <button
+                      <button 
                         className="btn-accion eliminar"
                         onClick={() => handleEliminarClick(rol)}
                         title="Eliminar"
@@ -467,7 +457,7 @@ const Roles = () => {
           </table>
         </div>
       </div>
-
+      
       {/* MODAL NUEVO ROL */}
       {showNuevoRol && (
         <div className="modal-overlay" onClick={() => setShowNuevoRol(false)}>
@@ -475,7 +465,7 @@ const Roles = () => {
             <button className="modal-cerrar" onClick={() => setShowNuevoRol(false)}>
               <CloseIcon />
             </button>
-
+            
             <div className="modal-header">
               <h2>
                 <AddIcon />
@@ -532,7 +522,7 @@ const Roles = () => {
                       noOptionsMessage={() => "No se encontraron permisos"}
                       loadingMessage={() => "Cargando permisos..."}
                       styles={customStyles}
-                      value={permisosOptions.filter(option =>
+                      value={permisosOptions.filter(option => 
                         nuevoRol.permisos.includes(option.value)
                       )}
                       onChange={(selected) => {
@@ -543,9 +533,9 @@ const Roles = () => {
                         });
                       }}
                       formatOptionLabel={(option) => (
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
                           alignItems: 'center',
                           width: '100%'
                         }}>
@@ -557,8 +547,8 @@ const Roles = () => {
                               {option.descripcion || `Permiso para ${option.label.split(' (')[0]}`}
                             </div>
                           </div>
-                          <span style={{
-                            fontSize: '0.7rem',
+                          <span style={{ 
+                            fontSize: '0.7rem', 
                             backgroundColor: '#e9ecef',
                             padding: '2px 8px',
                             borderRadius: '20px',
@@ -590,7 +580,7 @@ const Roles = () => {
           </div>
         </div>
       )}
-
+      
       {/* MODAL DETALLE DE ROL */}
       {modalDetalle && rolSeleccionado && (
         <div className="modal-overlay" onClick={() => setModalDetalle(false)}>
@@ -598,7 +588,7 @@ const Roles = () => {
             <button className="modal-cerrar" onClick={() => setModalDetalle(false)}>
               <CloseIcon />
             </button>
-
+            
             <div className="modal-header">
               <h2>
                 {getIconoPorNivel(rolSeleccionado.nivel)}
@@ -651,7 +641,7 @@ const Roles = () => {
             </div>
 
             <div className="modal-acciones">
-              <button
+              <button 
                 className="btn-editar"
                 onClick={() => {
                   setModalDetalle(false);
@@ -669,7 +659,7 @@ const Roles = () => {
           </div>
         </div>
       )}
-
+      
       {/* MODAL EDITAR ROL */}
       {modalEditar && rolSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
@@ -677,7 +667,7 @@ const Roles = () => {
             <button className="modal-cerrar" onClick={cerrarModalEditar}>
               <CloseIcon />
             </button>
-
+            
             <div className="modal-header">
               <h2>
                 <EditIcon />
@@ -744,17 +734,20 @@ const Roles = () => {
                       noOptionsMessage={() => "No se encontraron permisos"}
                       loadingMessage={() => "Cargando permisos..."}
                       styles={customStyles}
-                      value={permisosOptions.filter(option =>
+                      value={permisosOptions.filter(option => 
                         permisosSeleccionados.includes(option.value)
                       )}
                       onChange={(selected) => {
                         const selectedIds = selected ? selected.map(opt => opt.value) : [];
+                        console.log('=== CAMBIO EN SELECT ===');
+                        console.log('IDs seleccionados:', selectedIds);
+                        console.log('Cantidad seleccionada:', selectedIds.length);
                         setPermisosSeleccionados(selectedIds);
                       }}
                       formatOptionLabel={(option) => (
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
                           alignItems: 'center',
                           width: '100%'
                         }}>
@@ -766,8 +759,8 @@ const Roles = () => {
                               {option.descripcion || `Permiso para ${option.label.split(' (')[0]}`}
                             </div>
                           </div>
-                          <span style={{
-                            fontSize: '0.7rem',
+                          <span style={{ 
+                            fontSize: '0.7rem', 
                             backgroundColor: '#e9ecef',
                             padding: '2px 8px',
                             borderRadius: '20px',
@@ -810,7 +803,7 @@ const Roles = () => {
             <h3>¿Eliminar Rol?</h3>
             <p>Estás a punto de eliminar el rol <strong>{rolSeleccionado.nombre}</strong></p>
             <p className="advertencia">Esta acción no se puede deshacer</p>
-
+            
             <div className="modal-botones">
               <button className="btn-cancelar" onClick={() => setModalEliminar(false)}>
                 Cancelar

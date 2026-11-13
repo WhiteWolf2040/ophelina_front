@@ -921,7 +921,9 @@ const Landing = () => {
               <p className="features-description">
                 Características que marcan la diferencia y potencian tu negocio
               </p>
-              <a href="#contacto"><button className="features-btn">Solicitar Demo</button></a>
+              <a href="#contacto">
+                <button className="features-btn">Solicitar Demo</button>
+                </a>
             </header>
 
             <div className="features-grid">

@@ -1,5 +1,5 @@
-// EmpenosLista.jsx - corregido + imagen + caché (useListaCache)
-import React, { useState } from "react";
+// EmpenosLista.jsx - VERSIÓN CORREGIDA + IMAGEN + PERMISOS
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import "./Empenos.css";
@@ -8,115 +8,93 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteIcon from '@mui/icons-material/Delete';
+import LockIcon from '@mui/icons-material/Lock';
 import api from '../config/api';
-import AgregarImagenPrenda from '../components/AgregarImagenPrenda'; // ajusta la ruta si tu carpeta es distinta
-import useListaCache from "../hooks/useListaCache";
-
-// ============================================
-// "POR VENCER": empeños activos que vencen en los próximos N días
-// ============================================
-const DIAS_POR_VENCER = 7;
-
-// Convierte "2026-11-09" (o "2026-11-09T00:00:00Z") en una fecha LOCAL.
-// new Date("2026-11-09") la interpreta como UTC y en México la muestra un día antes.
-const parseFechaLocal = (valor) => {
-  if (!valor) return null;
-  const [y, m, d] = String(valor).slice(0, 10).split('-').map(Number);
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
-};
-
-const formatearFecha = (valor) => {
-  const f = parseFechaLocal(valor);
-  return f ? f.toLocaleDateString('es-MX') : '';
-};
-
-const diasParaVencer = (valor) => {
-  const f = parseFechaLocal(valor);
-  if (!f) return null;
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  return Math.round((f - hoy) / 86400000);
-};
-
-const esPorVencer = (emp) => {
-  const dias = diasParaVencer(emp.fecha_vencimiento);
-  return (emp.estado || 'activo') === 'activo' && dias !== null && dias >= 0 && dias <= DIAS_POR_VENCER;
-};
-
-const textoVence = (dias) =>
-  dias === 0 ? 'Vence hoy' : dias === 1 ? 'Vence mañana' : `Vence en ${dias} días`;
-
-const BadgeEstado = ({ e }) => {
-  if (e.estado !== 'activo') return <span className="badge-vencido">Vencido</span>;
-  if (e.por_vencer) {
-    return <span className="badge-por-vencer" title={textoVence(e.dias_para_vencer)}>Por vencer</span>;
-  }
-  return <span className="badge-activo">Activo</span>;
-};
-
-// Fetcher FUERA del componente (referencia estable): trae y formatea los empeños
-const obtenerEmpenosFormateados = async () => {
-  const response = await api.get('/empenos/todos');
-  if (!response.data.success) {
-    throw new Error('Respuesta inválida del servidor');
-  }
-
-  // El backend ya viene ordenado: no se hace sort manual
-  return response.data.data.map(emp => ({
-    id: emp.id_empeno,
-    id_prenda: emp.id_prenda,
-    imagen: emp.imagen_url || null,
-    cliente: emp.cliente || 'Cliente no disponible',
-    objeto: emp.articulo || 'Sin artículo',
-    monto: emp.monto_prestado ? emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00',
-    interes: emp.intereses || 0,
-    fecha_inicio: formatearFecha(emp.fecha_empeno),
-    vencimiento: formatearFecha(emp.fecha_vencimiento),
-    estado: emp.estado || 'activo',
-    por_vencer: esPorVencer(emp),
-    dias_para_vencer: diasParaVencer(emp.fecha_vencimiento),
-    saldo_pendiente: emp.saldo_total_pendiente || 0,
-    saldo_cuota: emp.saldo_pendiente_cuota || 0,
-    total_pagado: emp.total_pagado || 0,
-    dias_vencidos: emp.dias_vencidos || 0,
-    cliente_id: emp.id_cliente || null,
-    material: emp.material || 'No especificado'
-  }));
-};
+import AgregarImagenPrenda from '../components/AgregarImagenPrenda';
+import permissionService from "../services/permisoService";
 
 const EmpenosLista = () => {
   const navigate = useNavigate();
-
-  // ============================================
-  // DATOS CON CACHÉ (TTL corto: saldos y estados "vencido" cambian seguido)
-  // ============================================
-  const {
-    data: empenos,
-    setData: setEmpenos,
-    cargando: loading,
-    error: errorCarga,
-    recargar: cargarTodosEmpenos
-  } = useListaCache('empenos', obtenerEmpenosFormateados, { ttl: 2 * 60 * 1000 });
-
-  const error = errorCarga ? 'No se pudieron cargar los empeños' : null;
-
-  // Estado de UI
+  const [empenos, setEmpenos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [empenoSeleccionado, setEmpenoSeleccionado] = useState(null);
   const [modalEditar, setModalEditar] = useState(false);
   const [editando, setEditando] = useState(false);
+  const [modalEliminar, setModalEliminar] = useState(false);
 
   // Estados para edición
   const [nombreCliente, setNombreCliente] = useState("");
   const [material, setMaterial] = useState("");
 
-  // Paginación
+  // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const empenosPorPagina = 8;
 
-  // Actualiza la imagen de una fila sin recargar todo el listado (y mantiene la caché al día)
+  // ============================================
+  // VERIFICAR PERMISOS
+  // ============================================
+  const puedeVerEmpenos = permissionService.hasPermission('ver_empenos');
+  const puedeCrearEmpenos = permissionService.hasPermission('crear_empenos');
+  const puedeEditarEmpenos = permissionService.hasPermission('editar_empenos');
+  const puedeEliminarEmpenos = permissionService.hasPermission('eliminar_empenos');
+  const puedeCancelarEmpenos = permissionService.hasPermission('cancelar_empenos');
+
+  // ============================================
+  // REDIRIGIR SI NO TIENE PERMISO PARA VER
+  // ============================================
+  useEffect(() => {
+    if (!puedeVerEmpenos) {
+      navigate('/home');
+    }
+  }, [puedeVerEmpenos, navigate]);
+
+  // Cargar todos los empeños
+  const cargarTodosEmpenos = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/empenos/todos');
+      if (response.data.success) {
+        const empenosFormateados = response.data.data.map(emp => ({
+          id: emp.id_empeno,
+          id_prenda: emp.id_prenda,
+          imagen: emp.imagen_url || null,
+          cliente: emp.cliente || 'Cliente no disponible',
+          objeto: emp.articulo || 'Sin artículo',
+          monto: emp.monto_prestado ? emp.monto_prestado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00',
+          interes: emp.intereses || 0,
+          fecha_inicio: emp.fecha_empeno ? new Date(emp.fecha_empeno).toLocaleDateString('es-MX') : '',
+          vencimiento: emp.fecha_vencimiento ? new Date(emp.fecha_vencimiento).toLocaleDateString('es-MX') : '',
+          estado: emp.estado || 'activo',
+          saldo_pendiente: emp.saldo_total_pendiente || 0,
+          saldo_cuota: emp.saldo_pendiente_cuota || 0,
+          total_pagado: emp.total_pagado || 0,
+          dias_vencidos: emp.dias_vencidos || 0,
+          cliente_id: emp.id_cliente || null,
+          material: emp.material || 'No especificado'
+        }));
+
+        // ✅ EL BACKEND YA ESTÁ ORDENADO, NO HACER SORT MANUAL
+        setEmpenos(empenosFormateados);
+      }
+    } catch (error) {
+      console.error('Error al cargar empeños:', error);
+      setError('No se pudieron cargar los empeños');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (puedeVerEmpenos) {
+      cargarTodosEmpenos();
+    }
+  }, [puedeVerEmpenos]);
+
+  // ← NUEVO: actualiza la imagen de una fila sin recargar todo el listado
   const actualizarImagenLocal = (idEmpeno, nuevaUrl) => {
     setEmpenos(prev => prev.map(e => e.id === idEmpeno ? { ...e, imagen: nuevaUrl } : e));
   };
@@ -125,7 +103,6 @@ const EmpenosLista = () => {
   const empenosFiltrados = empenos.filter((e) => {
     if (filtroEstado === "todos") return true;
     if (filtroEstado === "activos") return e.estado === "activo";
-    if (filtroEstado === "por_vencer") return e.por_vencer;
     if (filtroEstado === "vencidos") return e.estado === "vencido";
     return true;
   });
@@ -138,6 +115,10 @@ const EmpenosLista = () => {
 
   // Abrir modal de detalles
   const abrirDetalle = (empeno) => {
+    if (!puedeVerEmpenos) {
+      alert('No tienes permiso para ver detalles de empeños');
+      return;
+    }
     setEmpenoSeleccionado(empeno);
     setModalAbierto(true);
   };
@@ -147,8 +128,12 @@ const EmpenosLista = () => {
     setEmpenoSeleccionado(null);
   };
 
-  // Abrir modal de edición
+  // Abrir modal de edición (solo nombre y material)
   const abrirEditar = (empeno) => {
+    if (!puedeEditarEmpenos) {
+      alert('No tienes permiso para editar empeños');
+      return;
+    }
     setEmpenoSeleccionado(empeno);
     setNombreCliente(empeno.cliente);
     setMaterial(empeno.material || '');
@@ -164,20 +149,24 @@ const EmpenosLista = () => {
   };
 
   // Guardar cambios (solo nombre y material)
-  // ⚠️ PENDIENTE: esto solo modifica el estado local y NO llama al backend.
-  // Antes el cambio se perdía al recargar; ahora se quedaría en la caché unos minutos.
-  // Falta agregar aquí un `await api.put(...)` con el endpoint real antes de actualizar el estado.
   const guardarCambios = async () => {
     if (!nombreCliente.trim() || !empenoSeleccionado) return;
 
     try {
       setEditando(true);
 
-      setEmpenos(prev => prev.map(emp =>
-        emp.id === empenoSeleccionado.id
-          ? { ...emp, cliente: nombreCliente, material: material }
-          : emp
-      ));
+      const empenosActualizados = empenos.map(emp => {
+        if (emp.id === empenoSeleccionado.id) {
+          return {
+            ...emp,
+            cliente: nombreCliente,
+            material: material
+          };
+        }
+        return emp;
+      });
+
+      setEmpenos(empenosActualizados);
 
       setEmpenoSeleccionado({
         ...empenoSeleccionado,
@@ -191,6 +180,37 @@ const EmpenosLista = () => {
       alert('Error al actualizar los datos');
     } finally {
       setEditando(false);
+    }
+  };
+
+  // ============================================
+  // ELIMINAR EMPEÑO
+  // ============================================
+  const confirmarEliminar = (empeno) => {
+    if (!puedeEliminarEmpenos) {
+      alert('No tienes permiso para eliminar empeños');
+      return;
+    }
+    setEmpenoSeleccionado(empeno);
+    setModalEliminar(true);
+  };
+
+  const handleEliminar = async () => {
+    if (!puedeEliminarEmpenos) {
+      alert('No tienes permiso para eliminar empeños');
+      return;
+    }
+
+    try {
+      // Si tienes endpoint real, descomenta:
+      // await api.delete(`/empenos/${empenoSeleccionado.id}`);
+      console.log("Eliminar empeño:", empenoSeleccionado.id);
+      setModalEliminar(false);
+      setEmpenoSeleccionado(null);
+      await cargarTodosEmpenos();
+    } catch (error) {
+      console.error('Error al eliminar empeño:', error);
+      alert('Error al eliminar el empeño');
     }
   };
 
@@ -223,7 +243,12 @@ const EmpenosLista = () => {
     return numeros;
   };
 
-  // Estado de carga (solo cuando NO hay datos en caché)
+  // Si no tiene permiso, no renderizar nada (ya redirigirá el useEffect)
+  if (!puedeVerEmpenos) {
+    return null;
+  }
+
+  // Estado de carga
   if (loading) {
     return (
       <div className="dashboard">
@@ -248,7 +273,7 @@ const EmpenosLista = () => {
           </div>
           <div className="tabla-card">
             <p style={{ color: 'red', textAlign: 'center', padding: '40px' }}>{error}</p>
-            <button onClick={() => cargarTodosEmpenos()} style={{ margin: '0 auto', display: 'block', padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+            <button onClick={cargarTodosEmpenos} style={{ margin: '0 auto', display: 'block', padding: '8px 16px', background: '#1e3a8a', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
               Reintentar
             </button>
           </div>
@@ -270,12 +295,15 @@ const EmpenosLista = () => {
             <p className="header-sub">Gestiona y administra tus empeños</p>
           </div>
 
-          <button
-            className="btn-nuevo"
-            onClick={() => navigate("/empenos/nuevo")}
-          >
-            <AddIcon fontSize="small" /> Nuevo Empeño
-          </button>
+          {/* BOTÓN NUEVO EMPEÑO - SOLO CON PERMISO crear_empenos */}
+          {puedeCrearEmpenos && (
+            <button
+              className="btn-nuevo"
+              onClick={() => navigate("/empenos/nuevo")}
+            >
+              <AddIcon fontSize="small" /> Nuevo Empeño
+            </button>
+          )}
         </div>
 
         {/* FILTRO POR ESTADO */}
@@ -298,15 +326,6 @@ const EmpenosLista = () => {
               }}
             >
               Activos ({empenos.filter(e => e.estado === "activo").length})
-            </button>
-            <button
-              className={`filtro-btn ${filtroEstado === "por_vencer" ? "activo" : ""}`}
-              onClick={() => {
-                setFiltroEstado("por_vencer");
-                setPaginaActual(1);
-              }}
-            >
-              Por vencer ({empenos.filter(e => e.por_vencer).length})
             </button>
             <button
               className={`filtro-btn ${filtroEstado === "vencidos" ? "activo" : ""}`}
@@ -368,14 +387,19 @@ const EmpenosLista = () => {
                     </div>
                     <div className="tarjeta-fila">
                       <span className="tarjeta-label">Vence:</span>
-                      <span>
-                        {e.vencimiento}
-                        {e.por_vencer && <div className="texto-por-vencer">{textoVence(e.dias_para_vencer)}</div>}
-                      </span>
+                      <span>{e.vencimiento}</span>
                     </div>
                     <div className="tarjeta-fila">
                       <span className="tarjeta-label">Estado:</span>
-                      <BadgeEstado e={e} />
+                      <span
+                        className={
+                          e.estado === "activo"
+                            ? "badge-activo"
+                            : "badge-vencido"
+                        }
+                      >
+                        {e.estado === "activo" ? "Activo" : "Vencido"}
+                      </span>
                     </div>
                     {e.saldo_pendiente > 0 && (
                       <div className="tarjeta-fila">
@@ -426,12 +450,17 @@ const EmpenosLista = () => {
                       <td>{e.material}</td>
                       <td>${e.monto}</td>
                       <td>${e.interes?.toLocaleString()}</td>
+                      <td>{e.vencimiento}</td>
                       <td>
-                        {e.vencimiento}
-                        {e.por_vencer && <div className="texto-por-vencer">{textoVence(e.dias_para_vencer)}</div>}
-                      </td>
-                      <td>
-                        <BadgeEstado e={e} />
+                        <span
+                          className={
+                            e.estado === "activo"
+                              ? "badge-activo"
+                              : "badge-vencido"
+                          }
+                        >
+                          {e.estado === "activo" ? "Activo" : "Vencido"}
+                        </span>
                       </td>
                       <td>
                         {e.saldo_pendiente > 0 ? (
@@ -442,6 +471,7 @@ const EmpenosLista = () => {
                       </td>
                       <td>
                         <div className="acciones-container">
+                          {/* BOTÓN VER - SIEMPRE VISIBLE */}
                           <button
                             className="btn-accion ver"
                             onClick={() => abrirDetalle(e)}
@@ -450,13 +480,27 @@ const EmpenosLista = () => {
                             <VisibilityIcon fontSize="small" />
                           </button>
 
-                          <button
-                            className="btn-accion editar"
-                            onClick={() => abrirEditar(e)}
-                            title="Editar nombre y material"
-                          >
-                            <EditIcon fontSize="small" />
-                          </button>
+                          {/* BOTÓN EDITAR - SOLO CON PERMISO editar_empenos */}
+                          {puedeEditarEmpenos && (
+                            <button
+                              className="btn-accion editar"
+                              onClick={() => abrirEditar(e)}
+                              title="Editar nombre y material"
+                            >
+                              <EditIcon fontSize="small" />
+                            </button>
+                          )}
+
+                          {/* BOTÓN ELIMINAR - SOLO CON PERMISO eliminar_empenos */}
+                          {puedeEliminarEmpenos && (
+                            <button
+                              className="btn-accion eliminar"
+                              onClick={() => confirmarEliminar(e)}
+                              title="Eliminar empeño"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -512,7 +556,9 @@ const EmpenosLista = () => {
         </div>
       </div>
 
+      {/* ============================================ */}
       {/* MODAL DE DETALLE DEL EMPEÑO */}
+      {/* ============================================ */}
       {modalAbierto && empenoSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-detalle" onClick={(e) => e.stopPropagation()}>
@@ -572,7 +618,52 @@ const EmpenosLista = () => {
               </div>
             </div>
 
+            {/* ACCIONES DEL MODAL CON PERMISOS */}
             <div className="modal-acciones">
+              {puedeEditarEmpenos && (
+                <button
+                  className="btn-editar"
+                  onClick={() => {
+                    setModalAbierto(false);
+                    abrirEditar(empenoSeleccionado);
+                  }}
+                >
+                  <EditIcon fontSize="small" /> Editar
+                </button>
+              )}
+
+              {puedeCancelarEmpenos && (
+                <button
+                  className="btn-cancelar"
+                  onClick={() => {
+                    console.log("Cancelar empeño:", empenoSeleccionado.id);
+                    alert('Función de cancelar empeño');
+                  }}
+                >
+                  ⛔ Cancelar
+                </button>
+              )}
+
+              {puedeEliminarEmpenos && (
+                <button
+                  className="btn-eliminar"
+                  onClick={() => {
+                    setModalAbierto(false);
+                    confirmarEliminar(empenoSeleccionado);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" /> Eliminar
+                </button>
+              )}
+
+              {/* Mostrar mensaje si no tiene permisos para modificar */}
+              {!puedeEditarEmpenos && !puedeCancelarEmpenos && !puedeEliminarEmpenos && (
+                <div className="sin-permisos-modal">
+                  <LockIcon fontSize="small" />
+                  <span>Solo visualización - No tienes permisos para modificar</span>
+                </div>
+              )}
+
               <button
                 className="btn-cerrar-modal"
                 onClick={cerrarModal}
@@ -585,7 +676,7 @@ const EmpenosLista = () => {
       )}
 
       {/* MODAL DE EDICIÓN - SOLO NOMBRE Y MATERIAL */}
-      {modalEditar && empenoSeleccionado && (
+      {modalEditar && empenoSeleccionado && puedeEditarEmpenos && (
         <div className="modal-overlay" onClick={cerrarModalEditar}>
           <div className="modal-editar" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header-editar">
@@ -641,6 +732,35 @@ const EmpenosLista = () => {
                 disabled={editando || !nombreCliente.trim()}
               >
                 {editando ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================ */}
+      {/* MODAL DE CONFIRMACIÓN ELIMINAR - SOLO SI TIENE PERMISO */}
+      {/* ============================================ */}
+      {modalEliminar && empenoSeleccionado && puedeEliminarEmpenos && (
+        <div className="modal-overlay" onClick={() => setModalEliminar(false)}>
+          <div className="modal-confirmar" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icono">⚠️</div>
+            <h3>¿Eliminar empeño?</h3>
+            <p>Estás a punto de eliminar el empeño de <strong>{empenoSeleccionado.cliente}</strong></p>
+            <p className="advertencia">Esta acción no se puede deshacer</p>
+
+            <div className="modal-botones">
+              <button
+                className="btn-cancelar"
+                onClick={() => setModalEliminar(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-confirmar-eliminar"
+                onClick={handleEliminar}
+              >
+                Eliminar
               </button>
             </div>
           </div>

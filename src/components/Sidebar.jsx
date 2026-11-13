@@ -30,7 +30,6 @@ const DEFAULT_MENUS = [
   { path: '/pagos', icon: <PaymentsIcon />, text: 'Pagos' },
   { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
   { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
-  { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
   { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
   { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
   { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
@@ -41,7 +40,7 @@ const DEFAULT_MENUS = [
 // ✅ ORDEN CORRECTO DE LOS MÓDULOS
 const ORDEN_MODULOS = [
   'home', 'clientes', 'pagos', 'empenos',
-  'tienda', 'apartados', 'inventario',
+  'tienda', 'inventario',
   'reportes', 'roles', 'permisos', 'configuracion'
 ];
 
@@ -76,7 +75,6 @@ const Sidebar = () => {
       'empenos': { path: '/empenos', icon: <DiamondIcon />, text: 'Empeños' },
       'inventario': { path: '/inventario', icon: <InventoryIcon />, text: 'Inventario' },
       'tienda': { path: '/tienda', icon: <StorefrontIcon />, text: 'Tienda en línea' },
-      'apartados': { path: '/tienda/apartados', icon: <ShoppingBagIcon />, text: 'Apartados de clientes' },
       'reportes': { path: '/reportes', icon: <BarChartIcon />, text: 'Reportes' },
       'roles': { path: '/roles', icon: <SecurityIcon />, text: 'Roles' },
       'permisos': { path: '/permisos', icon: <VpnKeyIcon />, text: 'Permisos' },
@@ -117,6 +115,9 @@ const menuItems = baseMenus.some(m => m.path === '/metabase')
 
   console.log('📋 Menús a renderizar:', menuItems.map(m => m.text));
 
+  // ============================================
+  // FUNCIONES DEL SIDEBAR
+  // ============================================
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => setIsOpen(false);
 
@@ -124,11 +125,25 @@ const menuItems = baseMenus.some(m => m.path === '/metabase')
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
   const handleLogout = async () => {
-    await logout();
+    // 1. Limpiar TODO el frontend primero (instantáneo)
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     if (clearUserData) clearUserData();
+
+    // 2. Redirigir YA (el usuario ve la pantalla de login al instante)
     navigate("/login");
+
+    // 3. Avisar al backend en segundo plano (si falla, no importa)
+    try {
+      await logout().catch(() => {});
+    } catch (e) {
+      // silencio
+    }
   };
 
+  // ============================================
+  // RENDER - ESTADO DE CARGA
+  // ============================================
   if (loading) {
     return (
       // ✅ AGREGADO #3: clase collapsed también en loading
@@ -141,13 +156,17 @@ const menuItems = baseMenus.some(m => m.path === '/metabase')
     );
   }
 
+  // ============================================
+  // RENDER - SIDEBAR COMPLETO
+  // ============================================
   return (
     <>
       {!isOpen && (
-  <button className="mobile-menu-btn" onClick={toggleSidebar}>
-    <MenuIcon />
-  </button>
-)}
+        <button className="mobile-menu-btn" onClick={toggleSidebar}>
+          <MenuIcon />
+        </button>
+      )}
+
       {isOpen && <div className="sidebar-overlay visible" onClick={closeSidebar}></div>}
 
       {/* ✅ AGREGADO #4: clase collapsed en el aside */}

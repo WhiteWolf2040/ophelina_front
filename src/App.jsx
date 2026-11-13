@@ -62,7 +62,7 @@ const AppLayout = ({ children }) => {
       <Sidebar />
       <div className="main-content-wrapper">
         <TopBar />           {/* ← AQUÍ, dentro del wrapper */}
-        {children}
+        {children} 
       </div>
     </div>
   );

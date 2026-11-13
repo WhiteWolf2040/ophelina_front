@@ -882,48 +882,443 @@
   }
 }
 
-.plan-vacio { text-align: center; padding: 16px; color: #777; }
-
-.plan-aviso { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
-.plan-aviso-por_vencer, .plan-aviso-en_gracia { background: #fff4e0; color: #8a5a00; }
-.plan-aviso-vencida { background: #fdecea; color: #a12622; }
-
-.link-recibo { color: #1a73e8; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 2px; }
-
+/* Fondo oscuro con desenfoque sutil */
 .plan-modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.5);
-  display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
 }
+
+/* Contenedor principal del modal */
 .plan-modal {
-  background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 640px;
-  max-height: 85vh; overflow-y: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  color: #1e293b;
 }
-.plan-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.plan-modal-header h3 { display: flex; align-items: center; gap: 8px; margin: 0; }
-.plan-modal-nota { font-size: 13px; color: #666; margin-bottom: 16px; }
 
-.tabla-facturas-wrapper { overflow-x: auto; }
-.tabla-facturas { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 460px; }
-.tabla-facturas th, .tabla-facturas td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; }
-
-.chip-factura { padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #eee; }
-.chip-paid { background: #e3f5e6; color: #2e7d32; }
-.chip-open { background: #fff4e0; color: #8a5a00; }
-.chip-uncollectible, .chip-void { background: #fdecea; color: #a12622; }
-
-.planes-opciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-.plan-opcion { border: 1px solid #ddd; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-.plan-opcion.actual { border-color: #2e7d32; background: #f3fbf4; }
-.plan-opcion-precio { font-size: 22px; font-weight: 700; }
-.plan-opcion-precio small { font-size: 13px; font-weight: 400; color: #777; }
-.plan-error { color: #d32f2f; margin-top: 12px; font-size: 14px; }
-
-@media (max-width: 768px) {
-  .config-tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
-  .config-tab { flex: 0 0 auto; white-space: nowrap; }
-  .plan-modal { padding: 16px; }
+/* Cabecera alineada horizontalmente */
+.plan-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
 }
-@media (max-width: 480px) {
-  .form-buttons { flex-direction: column; }
-  .form-buttons button { width: 100%; }
+
+.plan-modal-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.plan-modal-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background-color: #f1f5f9;
+  color: #1e3a8a;
+}
+
+.plan-modal-header h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.btn-cerrar-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-cerrar-modal:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Banner informativo de Stripe */
+.plan-modal-nota {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #3b82f6;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+}
+
+.plan-modal-nota p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
+/* Grid de tarjetas de planes */
+.planes-opciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* Tarjeta individual de plan */
+.plan-opcion {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  background: #ffffff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.plan-opcion:hover:not(.actual) {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06);
+}
+
+/* Estilo diferenciado para el plan actual */
+.plan-opcion.actual {
+  border-color: #d4af37;
+  background-color: #fffdf7;
+}
+
+.plan-opcion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.plan-nombre {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.plan-badge-actual {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background-color: #fef3c7;
+  color: #92400e;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+/* Precio bien espaciado */
+.plan-opcion-precio {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.precio-monto {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.precio-periodo {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Botones */
+.btn-plan {
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.btn-plan.btn-gold {
+  background-color: #cfa961;
+  color: #ffffff;
+}
+
+.btn-plan.btn-gold:hover:not(:disabled) {
+  background-color: #be974d;
+}
+
+.btn-plan:disabled:not(.btn-plan-actual) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Botón del plan que ya tiene el usuario */
+.btn-plan-actual {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  cursor: default;
+}
+
+/* Estados vacío y error */
+.plan-vacio {
+  text-align: center;
+  padding: 32px 16px;
+  color: #64748b;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.plan-error {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* =====================================================================
+   FALTANTES en tu archivo (si ya los tienes en otro CSS, borra el duplicado)
+   ===================================================================== */
+ 
+/* Botón "Agregar ..." */
+.btn-nuevo {
+  background: #d3b372;
+  border: none;
+  color: #ffffff;
+  padding: 9px 18px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+ 
+.btn-nuevo:hover {
+  background: #c5a45f;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(211, 179, 114, 0.3);
+}
+ 
+/* Tabs */
+.config-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+ 
+.config-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 25px;
+  color: #666;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.25s;
+}
+ 
+.config-tab:hover {
+  border-color: #d3b372;
+  color: #1e3a8a;
+}
+ 
+.config-tab.activo {
+  background: #1e3a8a;
+  border-color: #1e3a8a;
+  color: #ffffff;
+}
+ 
+/* Tarjeta del plan actual */
+.plan-actual-card {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2d4a9e 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(30, 58, 138, 0.25);
+}
+ 
+.plan-actual-card h4 {
+  margin: 10px 0 4px;
+  font-size: 22px;
+}
+ 
+.plan-badge {
+  display: inline-block;
+  background: #d3b372;
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+ 
+.plan-precio {
+  margin: 4px 0 14px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #d3b372;
+}
+ 
+.plan-precio span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #dbe4ff;
+}
+ 
+.plan-fecha,
+.plan-estado {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #dbe4ff;
+}
+ 
+.plan-estado strong {
+  color: #ffffff;
+}
+ 
+/* En fondo azul, los colores de estado necesitan más claridad */
+.plan-actual-card .plan-estado span {
+  background: #ffffff;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+ 
+/* Avisos de estado */
+.plan-aviso {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  border-left: 4px solid;
+}
+ 
+.plan-aviso-por_vencer,
+.plan-aviso-en_gracia {
+  background: #fff7e0;
+  border-color: #ed9c00;
+  color: #7a5200;
+}
+ 
+.plan-aviso-vencida {
+  background: #fdecea;
+  border-color: #d32f2f;
+  color: #b71c1c;
+}
+ 
+/* Categorías de prendas */
+.categorias-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+}
+ 
+.categoria-item {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid #d3b372;
+}
+ 
+.categoria-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+ 
+.categoria-info strong {
+  display: block;
+  color: #1e3a8a;
+}
+ 
+.categoria-icon {
+  font-size: 22px !important;
+  color: #1e3a8a;
+  background: #f0f4ff;
+  padding: 6px;
+  border-radius: 8px;
+}
+ 
+.categoria-avaluo {
+  font-size: 13px;
+  color: #666;
+}
+ 
+.categoria-acciones {
+  display: flex;
+  gap: 8px;
+}
+ 
+/* ===== Responsive de los modales ===== */
+@media (max-width: 600px) {
+  .plan-modal-overlay {
+    padding: 10px;
+    align-items: flex-end; /* en móvil sube desde abajo */
+  }
+ 
+  .plan-modal {
+    padding: 0 18px 20px;
+    border-radius: 20px 20px 14px 14px;
+    max-height: 92vh;
+  }
+ 
+  .plan-modal .form-grid {
+    grid-template-columns: 1fr;
+  }
+ 
+  .planes-opciones {
+    grid-template-columns: 1fr;
+  }
 }

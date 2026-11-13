@@ -178,10 +178,13 @@ const NuevoEmpeno = () => {
     if (onAceptar) onAceptar();
   };
 
-  // Tasa real, cargada desde /tasas-interes. Este objeto es la ÚNICA fuente
-  // de verdad para %, tanto en la simulación en pantalla como en lo que se
-  // envía al backend al guardar (ver handleSubmit).
-  const [tasaActual, setTasaActual] = useState({ id_tasa: 1, porcentaje: 15 }); // fallback mientras carga
+  // ✅ Tasa real, cargada desde /tasas-interes (la que se configura en
+  // Configuraciones). Es la ÚNICA fuente de verdad para %, tanto en la
+  // simulación en pantalla como en lo que se envía al backend al guardar.
+  // Ya NO hay un 15% de respaldo: hasta que cargue la tasa real no se calcula.
+  const [tasaActual, setTasaActual] = useState({ id_tasa: null, porcentaje: 0 });
+  const [tasaCargada, setTasaCargada] = useState(false);
+  const [errorTasa, setErrorTasa] = useState(false);
 
   // Estado para el cálculo de pagos
   const [simulacionPago, setSimulacionPago] = useState({
@@ -193,7 +196,7 @@ const NuevoEmpeno = () => {
     total_intereses: 0,
     monto_prestado: 0,
     plazo_meses: 1,
-    tasa_porcentaje: 15, // se sincroniza con tasaActual.porcentaje en cuanto carga
+    tasa_porcentaje: 0, // se sincroniza con tasaActual.porcentaje en cuanto carga
     fecha_vencimiento: ""
   });
 
@@ -320,6 +323,9 @@ const NuevoEmpeno = () => {
 
   // Calcular simulación de pago
   const calcularSimulacion = () => {
+    // ✅ No se calcula hasta tener la tasa real configurada
+    if (!tasaCargada) return;
+
     const monto = parseFloat(form.monto_prestado) || 0;
     const plazoMeses = parseInt(form.plazo_meses) || 1;
 
@@ -356,28 +362,49 @@ const NuevoEmpeno = () => {
     }
   };
 
-  // Único useEffect que recalcula la simulación. Se dispara con monto, plazo
-  // Y tasaActual — si no incluyéramos tasaActual aquí, la simulación mostrada
-  // se quedaría con el valor fallback (15%) hasta que el usuario tocara el
-  // monto o el plazo después de que la tasa real ya hubiera cargado.
+  // Único useEffect que recalcula la simulación. Se dispara con monto, plazo,
+  // tasaActual y tasaCargada: así, si se cambia la tasa en Configuraciones y
+  // aquí se vuelve a cargar, el cálculo se rehace solo.
   useEffect(() => {
     calcularSimulacion();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.monto_prestado, form.plazo_meses, tasaActual]);
+  }, [form.monto_prestado, form.plazo_meses, tasaActual, tasaCargada]);
+
+  // ✅ Si hay varias filas en /tasas-interes: prefiere las activas y, entre
+  // ellas, la más reciente (id más alto).
+  const elegirTasa = (lista) => {
+    const activas = lista.filter(t => Number(t.activa ?? t.activo ?? 1) === 1);
+    const candidatas = activas.length ? activas : lista;
+    return candidatas.reduce((a, b) =>
+      Number(b.id_tasa) > Number(a.id_tasa) ? b : a
+    );
+  };
 
   const cargarTasaActual = async () => {
     try {
       const response = await api.get('/tasas-interes');
       const resultado = procesarRespuesta(response);
+
       if (resultado.success && Array.isArray(resultado.data) && resultado.data.length > 0) {
-        // Toma la primera tasa activa como la tasa por defecto del sistema
-        setTasaActual({
-          id_tasa: resultado.data[0].id_tasa,
-          porcentaje: parseFloat(resultado.data[0].porcentaje),
-        });
+        const t = elegirTasa(resultado.data);
+        const porcentaje = parseFloat(t.porcentaje);
+
+        if (!Number.isNaN(porcentaje)) {
+          // Solo actualiza el estado si realmente cambió (evita recálculos innecesarios)
+          setTasaActual(prev =>
+            prev.id_tasa === t.id_tasa && prev.porcentaje === porcentaje
+              ? prev
+              : { id_tasa: t.id_tasa, porcentaje }
+          );
+          setTasaCargada(true);
+          setErrorTasa(false);
+          return;
+        }
       }
+      setErrorTasa(true);
     } catch (error) {
-      console.error('Error al cargar tasa de interés, usando valor por defecto:', error);
+      console.error('Error al cargar tasa de interés:', error);
+      setErrorTasa(true);
     }
   };
 
@@ -386,6 +413,16 @@ const NuevoEmpeno = () => {
     cargarClientes();
     cargarPrendas();
     cargarTasaActual();
+
+    // ✅ Si cambian la tasa en Configuraciones (otra pestaña/ventana, o el
+    // evento 'tasa:actualizada'), se vuelve a pedir y se recalcula sola.
+    window.addEventListener('focus', cargarTasaActual);
+    window.addEventListener('tasa:actualizada', cargarTasaActual);
+    return () => {
+      window.removeEventListener('focus', cargarTasaActual);
+      window.removeEventListener('tasa:actualizada', cargarTasaActual);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const procesarRespuesta = (response) => {
@@ -539,6 +576,15 @@ const NuevoEmpeno = () => {
 
     if (!form.prenda_id) {
       mostrarError("Falta la prenda", "Por favor selecciona una prenda para continuar.");
+      return;
+    }
+
+    // ✅ No se guarda sin una tasa real cargada (evita mandar tasa_id nulo)
+    if (!tasaCargada || !tasaActual.id_tasa) {
+      mostrarError(
+        "Tasa no disponible",
+        "No se pudo cargar la tasa de interés configurada. Intenta de nuevo."
+      );
       return;
     }
 
@@ -738,13 +784,37 @@ const NuevoEmpeno = () => {
               )}
             </div>
 
-            {/* Tasa real (solo información) */}
+            {/* ✅ Tasa real configurada en Configuraciones (solo información) */}
             <div className="form-group">
               <label>Tasa de Interés</label>
               <div className="tasa-fija-info">
-                <span className="tasa-valor">{tasaActual.porcentaje}% </span>
+                <span className="tasa-valor">
+                  {tasaCargada
+                    ? `${tasaActual.porcentaje}%`
+                    : errorTasa
+                    ? "No disponible"
+                    : "Cargando..."}
+                </span>
               </div>
-              <small>Tasa aplicable a este empeño</small>
+              <small>
+                {errorTasa ? (
+                  <button
+                    type="button"
+                    onClick={cargarTasaActual}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#f59e0b',
+                      cursor: 'pointer',
+                      padding: 0
+                    }}
+                  >
+                    Reintentar
+                  </button>
+                ) : (
+                  "Tasa mensual configurada en Configuraciones"
+                )}
+              </small>
             </div>
 
             {/* Plazo en meses */}
@@ -904,7 +974,7 @@ const NuevoEmpeno = () => {
 
             {/* Botones */}
             <div className="form-buttons full-width">
-              <button type="submit" className="btn-gold" disabled={loading}>
+              <button type="submit" className="btn-gold" disabled={loading || !tasaCargada}>
                 {loading ? "Guardando..." : "Guardar Empeño"}
               </button>
               <button

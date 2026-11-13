@@ -1,16 +1,29 @@
 // components/Topbar.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import "./Topbar.css";
 import { useDashboard } from "../contexts/DashboardContext";
 
-// Iconos
+// Iconos generales
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import WarningIcon from '@mui/icons-material/Warning';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import CloseIcon from '@mui/icons-material/Close';
 import ErrorIcon from '@mui/icons-material/Error';
-import RefreshIcon from '@mui/icons-material/Refresh';   // ✅ Nuevo: para el modal de alertas
+import RefreshIcon from '@mui/icons-material/Refresh';
+
+// Iconos por ruta
+import HomeIcon from '@mui/icons-material/Home';
+import PeopleIcon from '@mui/icons-material/People';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import DiamondIcon from '@mui/icons-material/Diamond';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import SecurityIcon from '@mui/icons-material/Security';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 
 const Topbar = () => {
   // ============================================
@@ -26,10 +39,40 @@ const Topbar = () => {
 
   const location = useLocation();
 
-  // Estados de UI
+  // ============================================
+  // ESTADOS DE UI
+  // ============================================
   const [showPerfil, setShowPerfil] = useState(false);
   const [showAlertas, setShowAlertas] = useState(false);
-  const [refrescandoAlertas, setRefrescandoAlertas] = useState(false);
+  const [refrescandoManual, setRefrescandoManual] = useState(false);
+
+  // ============================================
+  // DETECTAR SI ESTAMOS EN EL DASHBOARD
+  // ============================================
+  const esDashboard = location.pathname === '/home';
+
+  // ============================================
+  // TICK PARA ACTUALIZAR "HACE X MIN"
+  // ============================================
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  const minutosDesde = edadCache !== null ? Math.floor(edadCache / 60000) : null;
+
+  // ============================================
+  // REFRESCAR MANUAL
+  // ============================================
+  const handleRefrescarManual = async () => {
+    setRefrescandoManual(true);
+    try {
+      await refrescar();
+    } finally {
+      setTimeout(() => setRefrescandoManual(false), 600);
+    }
+  };
 
   // ============================================
   // DATOS DEL USUARIO
@@ -80,7 +123,7 @@ const Topbar = () => {
   };
 
   // ============================================
-  // SUBTÍTULOS POR RUTA
+  // SUBTÍTULOS E ÍCONOS POR RUTA
   // ============================================
   const subtitulosPorRuta = {
     '/home': 'Estado general de tu casa de empeño',
@@ -99,46 +142,86 @@ const Topbar = () => {
     '/roles/nuevo': 'Crear un nuevo rol',
     '/permisos': 'Permisos de usuarios',
     '/permisos/nuevo': 'Crear un nuevo permiso',
-    '/configuracion': 'Configura tu casa de empeño'
+    '/configuracion': 'Configuración'
   };
 
-  const getSubtitulo = () => {
+  const iconosPorRuta = {
+    '/home': <HomeIcon />,
+    '/clientes': <PeopleIcon />,
+    '/pagos': <PaymentsIcon />,
+    '/empenos': <DiamondIcon />,
+    '/inventario': <InventoryIcon />,
+    '/tienda': <StorefrontIcon />,
+    '/tienda/apartados': <ShoppingBagIcon />,
+    '/reportes': <BarChartIcon />,
+    '/roles': <SecurityIcon />,
+    '/permisos': <VpnKeyIcon />,
+    '/configuracion': <SettingsIcon />
+  };
+
+  // ✅ DENTRO del componente, usa `location`
+  const getInfoRuta = () => {
     const path = location.pathname;
-    if (subtitulosPorRuta[path]) return subtitulosPorRuta[path];
-    const match = Object.keys(subtitulosPorRuta).find(key =>
-      path.startsWith(key)
-    );
-    return match ? subtitulosPorRuta[match] : 'Bienvenido a Ophelina';
+
+    let keyMatch = subtitulosPorRuta[path] ? path : null;
+
+    if (!keyMatch) {
+      keyMatch = Object.keys(subtitulosPorRuta).find(key =>
+        path.startsWith(key)
+      );
+    }
+
+    return {
+      texto: keyMatch ? subtitulosPorRuta[keyMatch] : 'Bienvenido a Ophelina',
+      icono: keyMatch ? iconosPorRuta[keyMatch] : null
+    };
   };
 
-  // ============================================
-  // REFRESCAR DESDE EL MODAL DE ALERTAS
-  // ============================================
-  const handleRefrescarAlertas = async () => {
-    setRefrescandoAlertas(true);
-    try {
-      await refrescar();
-    } finally {
-      setTimeout(() => setRefrescandoAlertas(false), 600);
-    }
-  };
+  const { texto: tituloPagina, icono: iconoPagina } = getInfoRuta();
 
   const totalAlertas = contadores.vencidos + contadores.proximos;
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <>
       <header className="topbar">
         <div className="topbar-left">
           <h1 className="topbar-saludo">
-             {getSubtitulo()}
-           
+            {iconoPagina}
+            {tituloPagina}
           </h1>
-           <span className="topbar-subtitulo">Bienvenido, {datosPerfil.nombre.split(' ')[0] || 'Usuario'}</span>
+
+          <span className="topbar-subtitulo">
+            Bienvenido, {datosPerfil.nombre.split(' ')[0] || 'Usuario'} |
+            <span className="topbar-freshness-text">
+              {minutosDesde === null
+                ? ' Cargando...'
+                : minutosDesde < 1
+                ? ' Dashboard actualizado ahora mismo'
+                : ` Actualizado hace ${minutosDesde} min`}
+            </span>
+          </span>
         </div>
 
         <div className="topbar-actions">
-          {/* ✅ Ya NO hay botón de refrescar aquí */}
+          {/* Toolbar con refresh SOLO en /home */}
+          {esDashboard && (
+            <div className="dashboard-toolbar-inline">
+              <button
+                type="button"
+                className={`dashboard-btn-refresh ${refrescandoManual ? 'girando' : ''}`}
+                onClick={handleRefrescarManual}
+                disabled={cargando || refrescandoManual}
+                title="Actualizar datos del dashboard"
+              >
+                <RefreshIcon />
+              </button>
+            </div>
+          )}
 
+          {/* Campanita de alertas */}
           <button
             className="topbar-btn-alertas"
             onClick={() => setShowAlertas(true)}
@@ -150,6 +233,7 @@ const Topbar = () => {
             )}
           </button>
 
+          {/* Perfil */}
           <button
             className="topbar-btn-perfil"
             onClick={() => setShowPerfil(true)}
@@ -160,7 +244,7 @@ const Topbar = () => {
         </div>
       </header>
 
-      {/* MODAL DE PERFIL (igual que antes) */}
+      {/* MODAL DE PERFIL */}
       {showPerfil && (
         <div className="topbar-modal-overlay" onClick={() => setShowPerfil(false)}>
           <div className="topbar-modal" onClick={(e) => e.stopPropagation()}>
@@ -206,23 +290,13 @@ const Topbar = () => {
         </div>
       )}
 
-      {/* MODAL DE ALERTAS (con botón de refrescar dentro) */}
+      {/* MODAL DE ALERTAS */}
       {showAlertas && (
         <div className="topbar-modal-overlay" onClick={() => setShowAlertas(false)}>
           <div className="topbar-modal topbar-modal-alertas" onClick={(e) => e.stopPropagation()}>
             <button className="topbar-modal-cerrar" onClick={() => setShowAlertas(false)}>
               <CloseIcon />
             </button>
-            
-          <button
-                className={`topbar-btn-refresh ${refrescandoAlertas ? 'girando' : ''}`}
-                onClick={handleRefrescarAlertas}
-                disabled={cargando || refrescandoAlertas}
-                title="Actualizar alertas"
-              >
-                <RefreshIcon />
-              </button>
-            
             <div className="topbar-modal-header">
               <h2><NotificationsIcon /> Alertas y Notificaciones</h2>
               <span className="topbar-modal-badge">Actualizadas hoy</span>
@@ -262,7 +336,22 @@ const Topbar = () => {
                 </div>
               </div>
             </div>
-           
+            <div className="topbar-modal-acciones">
+              <button
+                className={`topbar-btn-refresh-alertas ${refrescandoManual ? 'girando' : ''}`}
+                onClick={handleRefrescarManual}
+                disabled={cargando || refrescandoManual}
+                title="Actualizar alertas"
+              >
+                <RefreshIcon />
+              </button>
+              <button
+                className="topbar-btn-cerrar"
+                onClick={() => setShowAlertas(false)}
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

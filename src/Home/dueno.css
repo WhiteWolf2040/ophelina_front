@@ -1336,3 +1336,788 @@
     font-size: 18px !important;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================
+   HERO GRID (Health Score + Meta)
+   ============================================ */
+/* ============================================
+   HERO GRID (Health Score + Meta)
+   ============================================ */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.hero-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(30, 58, 138, 0.06);
+  border: 1px solid rgba(30, 58, 138, 0.04);
+}
+
+.hero-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Georgia', serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+.hero-card-header svg {
+  font-size: 20px !important;
+  color: #d3b372;
+}
+
+/* ============================================
+   HEALTH SCORE
+   ============================================ */
+.health-score-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.health-score-circle {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  flex-shrink: 0;
+}
+
+.health-score-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.health-score-track {
+  fill: none;
+  stroke: #f1f5f9;
+  stroke-width: 8;
+}
+
+.health-score-fill {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.8s ease;
+}
+
+.health-score-number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  font-family: 'Georgia', serif;
+}
+
+.health-score-number strong {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.health-score-number small {
+  font-size: 11px;
+  color: #6b7280;
+  display: block;
+  margin-top: 2px;
+}
+
+.health-score-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.health-score-label {
+  display: inline-block;
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.health-score-factores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.factor {
+  display: grid;
+  grid-template-columns: 90px 1fr 40px;
+  gap: 8px;
+  align-items: center;
+  font-family: 'Georgia', serif;
+  font-size: 11px;
+  color: #666;
+}
+
+.factor-bar {
+  width: 100%;
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.factor-fill {
+  height: 100%;
+  background: #1e3a8a;
+  border-radius: 20px;
+  transition: width 0.6s ease;
+}
+
+.factor-fill.success { background: #10b981; }
+.factor-fill.warning { background: #f59e0b; }
+
+/* ============================================
+   META DEL MES
+   ============================================ */
+.meta-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.meta-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.meta-actual {
+  font-family: 'Georgia', serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: #1e3a8a;
+  line-height: 1;
+}
+
+.meta-objetivo {
+  font-family: 'Georgia', serif;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.meta-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.meta-progress-bar {
+  flex: 1;
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.meta-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1e3a8a 0%, #d3b372 100%);
+  border-radius: 20px;
+  transition: width 0.6s ease;
+}
+
+.meta-progress-percent {
+  font-family: 'Georgia', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e3a8a;
+  min-width: 40px;
+  text-align: right;
+}
+
+.meta-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.meta-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-info-item span {
+  font-family: 'Georgia', serif;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.meta-info-item strong {
+  font-family: 'Georgia', serif;
+  font-size: 14px;
+  color: #1e3a8a;
+}
+
+.meta-info-item strong.danger { color: #dc2626; }
+.meta-info-item strong.success { color: #10b981; }
+
+.meta-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  border-radius: 8px;
+  font-family: 'Georgia', serif;
+  font-size: 12px;
+  color: #92400e;
+}
+
+.meta-warning svg {
+  font-size: 18px !important;
+  flex-shrink: 0;
+  color: #f59e0b;
+}
+
+/* ============================================
+   RENTABILIDAD
+   ============================================ */
+.rentabilidad-card {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2d4a9e 100%);
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(30, 58, 138, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.rentabilidad-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 60%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(211, 179, 114, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.rentabilidad-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Georgia', serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #d3b372;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 18px;
+}
+
+.rentabilidad-header svg {
+  font-size: 20px !important;
+}
+
+.rentabilidad-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.rentabilidad-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rentabilidad-item.destacado {
+  padding: 12px 16px;
+  background: rgba(211, 179, 114, 0.15);
+  border: 1px solid rgba(211, 179, 114, 0.3);
+  border-radius: 12px;
+}
+
+.rentabilidad-label {
+  font-family: 'Georgia', serif;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.rentabilidad-valor {
+  font-family: 'Georgia', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.rentabilidad-valor.success { color: #6ee7b7; }
+.rentabilidad-valor.danger { color: #fca5a5; }
+
+.rentabilidad-valor-big {
+  font-family: 'Georgia', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #f5d363;
+  line-height: 1;
+}
+
+.rentabilidad-sub {
+  font-family: 'Georgia', serif;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ============================================
+   STAT DELTA
+   ============================================ */
+.stat-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Georgia', serif;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-top: 6px;
+}
+
+.stat-delta.up {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.stat-delta.down {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.stat-delta svg {
+  font-size: 12px !important;
+}
+
+.stat-hint-muted {
+  display: block;
+  font-family: 'Georgia', serif;
+  font-size: 10px;
+  color: #9ca3af;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* ============================================
+   PROYECCIÓN DE COBRANZA
+   ============================================ */
+.proyeccion-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px rgba(30, 58, 138, 0.06);
+  border: 1px solid rgba(30, 58, 138, 0.04);
+}
+
+.proyeccion-card h2 {
+  font-family: 'Georgia', serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e3a8a;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.proyeccion-card h2 svg {
+  font-size: 20px !important;
+  color: #d3b372;
+}
+
+.proyeccion-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.proyeccion-item {
+  padding: 14px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border-left: 3px solid #1e3a8a;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.proyeccion-label {
+  font-family: 'Georgia', serif;
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.proyeccion-valor {
+  font-family: 'Georgia', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e3a8a;
+  line-height: 1;
+}
+
+.proyeccion-valor.success { color: #10b981; }
+.proyeccion-valor.warning { color: #f59e0b; }
+.proyeccion-valor.danger { color: #dc2626; }
+
+/* ============================================
+   SUCURSALES DASHBOARD
+   ============================================ */
+.sucursales-grid-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.sucursal-dashboard-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px;
+  border-left: 4px solid #1e3a8a;
+  transition: all 0.25s ease;
+}
+
+.sucursal-dashboard-card:hover {
+  background: #eef2fb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(30, 58, 138, 0.1);
+}
+
+.sucursal-dashboard-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sucursal-dashboard-header svg {
+  font-size: 20px !important;
+  color: #d3b372;
+}
+
+.sucursal-dashboard-header strong {
+  font-family: 'Georgia', serif;
+  font-size: 14px;
+  color: #1e3a8a;
+}
+
+.sucursal-dashboard-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.sucursal-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sucursal-stat span {
+  font-family: 'Georgia', serif;
+  font-size: 10px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.sucursal-stat strong {
+  font-family: 'Georgia', serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.sucursal-stat strong.success { color: #10b981; }
+.sucursal-stat strong.danger { color: #dc2626; }
+
+/* ============================================
+   CLIENTES EN RIESGO
+   ============================================ */
+.seccion-badge.warning {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.clientes-riesgo-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cliente-riesgo-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+  flex-wrap: wrap;
+}
+
+.cliente-riesgo-item.alto {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+.cliente-riesgo-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.cliente-riesgo-info {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cliente-riesgo-info strong {
+  font-family: 'Georgia', serif;
+  font-size: 15px;
+  color: #1e3a8a;
+}
+
+.cliente-riesgo-dias {
+  font-family: 'Georgia', serif;
+  font-size: 12px;
+  color: #92400e;
+}
+
+.cliente-riesgo-item.alto .cliente-riesgo-dias {
+  color: #991b1b;
+}
+
+.cliente-riesgo-deuda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Georgia', serif;
+  font-size: 13px;
+}
+
+.cliente-riesgo-deuda span {
+  color: #6b7280;
+}
+
+.cliente-riesgo-deuda strong {
+  color: #1e3a8a;
+  font-size: 15px;
+}
+
+.btn-contactar {
+  padding: 8px 16px;
+  background: #1e3a8a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Georgia', serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-contactar:hover {
+  background: #2d4a9e;
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   RENTABILIDAD TAG
+   ============================================ */
+.rentabilidad-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: 'Georgia', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.rentabilidad-tag.alta {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.rentabilidad-tag.media {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.rentabilidad-tag.baja {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ============================================
+   ACTIVIDAD RECIENTE (iconos adicionales)
+   ============================================ */
+.actividad-cliente {
+  font-family: 'Georgia', serif;
+  color: #6b7280;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.actividad-icon.warning {
+  color: #f59e0b;
+}
+
+.actividad-icon.primary {
+  color: #2d4a9e;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1024px) {
+  .rentabilidad-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .proyeccion-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .rentabilidad-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .proyeccion-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .health-score-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .health-score-info {
+    width: 100%;
+  }
+
+  .factor {
+    grid-template-columns: 1fr;
+    gap: 3px;
+    text-align: left;
+  }
+
+  .factor-bar {
+    height: 5px;
+  }
+
+  .cliente-riesgo-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .cliente-riesgo-deuda {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .btn-contactar {
+    width: 100%;
+  }
+
+  .sucursales-grid-dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .rentabilidad-valor-big {
+    font-size: 26px;
+  }
+
+  .meta-actual {
+    font-size: 24px;
+  }
+
+  .health-score-circle {
+    width: 90px;
+    height: 90px;
+  }
+
+  .health-score-number strong {
+    font-size: 26px;
+  }
+
+  .proyeccion-valor {
+    font-size: 16px;
+  }
+
+  .proyeccion-label {
+    font-size: 10px;
+  }
+
+  .proyeccion-item {
+    padding: 10px;
+  }
+
+  .hero-card {
+    padding: 16px;
+  }
+}

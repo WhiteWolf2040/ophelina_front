@@ -1,4 +1,4 @@
-// src/services/rolService.js - VERSIÓN FUSIONADA (Docker Base + Manejo de Errores)
+// src/services/rolService.js
 import api from "../config/api";
 
 const rolesService = {
